@@ -1,8 +1,13 @@
 # Checkpoints – wo jede Stufe endet und wo die nächste beginnt
 
-Diese Datei beschreibt die 3 Übergänge A→B, B→C und C→D.
+Diese Datei beschreibt den Ausgangspunkt (Cartpole-Vorlage → A) und die 3 Übergänge A→B, B→C und C→D.
 Für jeden Übergang steht hier: der letzte Stand der alten Stufe, der erste Stand der neuen Stufe, der Grund und was sich geändert hat.
 Die vollen Werte jeder Stufe stehen in [STAENDE.md](STAENDE.md).
+
+So liest man die Änderungstabellen:
+- Die Spalte „neu“ zeigt den Stand am **Ende** der neuen Stufe.
+- „Art“: **geplant** = vor dem Beginn der Stufe entschieden. **Reaktion** = während der Stufe als Antwort auf ein Ergebnis eingeführt.
+- „Beleg“: die Entscheidung (D-Nummer) oder der Commit (SHA), der die Änderung trägt.
 
 Alle Belege sind Commits (SHA) oder Entscheidungen (D-Nummer).
 - A und B: Repo `RLexMech/ur10e-peg-insertion-rl`, `DECISIONS.md`.
@@ -16,6 +21,31 @@ Alle Belege sind Commits (SHA) oder Entscheidungen (D-Nummer).
 | B Quader | `e18a4b8` (28.07.) | `stufe-B-quader` = `97df8bf` (16.08.) | 99,19 % mit Versatz ±2 cm, Neigung 0–10°, Gier ±45° |
 | C Aufnahme | `a9f2d9cf` (30.08.) | `stufe-C-aufnahme` = `5a6cc8e` (15.09.) | Evaluation 98,2 % (RT-224, AutoDR s1) |
 | D Factory | `83f6033c` (25.09.) | `stufe-D-factory` = **offen bis RT-244** | vorläufig, siehe STAENDE.md |
+
+---
+
+## Checkpoint 0: Cartpole-Vorlage → A
+
+A beginnt mit der Direct-Vorlage von Isaac Lab (Cartpole, rsl_rl). Die Vorlage liegt unverändert im Repo `RLexMech/proxytask-transfer` (25.07.). Sie kam mit `3f81a96` in `ur10e-peg-insertion-rl` (D-021).
+
+| Größe | Cartpole-Vorlage | A | Beleg |
+|---|---|---|---|
+| Aufgabe | Wagen balanciert Stab | UR10e fügt Zylinder in Bohrung | – |
+| Aufbau der Umgebung | Direct-Umgebung | übernommen | `3f81a96` |
+| Bibliothek | rsl_rl, PPO | übernommen | `3f81a96` |
+| Takt der Policy | 60 Hz (1/120 s, Faktor 2) | übernommen | `proxytask_env_cfg.py` |
+| Parallele Umgebungen | 4096 | Code 128, Läufe 1024 | `proxytask_env_cfg.py`, `demo_sprint_results.md:242` |
+| Episodenlänge | 5 s | 4 s (ab `a3807db`, vorher 5 s) | `a3807db` |
+| Aktion | 1 Kraft auf den Wagen, Skala 100 N | 6 Änderungen der Gelenkwinkel, 0,02 rad je Schritt | `proxytask_env_cfg.py` |
+| Beobachtung | 4 (Wagen, Stab) | 19: Gelenkwinkel (6), Gelenkgeschwindigkeiten (6), Spitze zur Bohrung (3), Quaternion (4) | `proxytask_env_cfg.py` |
+| Reward | Überleben +1, Abbruch −2, Stabwinkel −1, Wagengeschw. −0,01, Stabgeschw. −0,005 | Annäherung −2, Tiefenfortschritt +100, Erfolg +10, Aktion −0,01, Tiefe außerhalb der Bohrung −20, Ausrichtung −2; Abbruch unter der Platte kostet die Strafen der restlichen Schritte | `proxytask_env_cfg.py:82-103`, `a3807db`, `c53ebbc` |
+| Streuung beim Start | Stabwinkel ±0,25·π rad (±45°) | Gelenkwinkel ±0,01 rad | Cartpole: `proxytask_env.py` multipliziert den Bereich mit π |
+| PPO: Lernrate, γ, λ, Clip, Entropie, Epochen, Mini-Batches, Schritte | 1e-3 adaptiv, 0,99, 0,95, 0,2, 0,005, 5, 4, 16 | übernommen | `agents/rsl_rl_ppo_cfg.py` |
+| Netz Actor/Critic | 2 × 32, ELU | 2 × 128, ELU | `agents/rsl_rl_ppo_cfg.py` |
+| Normierung der Beobachtung | aus | ein | `agents/rsl_rl_ppo_cfg.py` |
+| Iterationen, Obergrenze | 150 | 1500 (gelaufen: 600) | `agents/rsl_rl_ppo_cfg.py` |
+
+Hinweis: D-012 nennt Factory als Vorlage für die Struktur, D-013 wollte die PPO-Werte von Factory. Im Code steht die Cartpole-Vorlage.
 
 ---
 
@@ -36,13 +66,18 @@ Alle Belege sind Commits (SHA) oder Entscheidungen (D-Nummer).
 
 **Was sich am Übergang ändert:**
 
-| | A (Ende) | B (Beginn) |
-|---|---|---|
-| Teil | Zylinder Ø25/Ø28 mm in Bohrung Ø30 mm | Quader 30×30×50 mm in Tasche 32×32×35 mm (1,0 mm Spiel je Achse) |
-| Beobachtung | 19 | 21 (+ cos 4φ, sin 4φ) |
-| Reward | 6 Terme | + Gier-Term (Gewicht 2,0) |
-| Startstreuung | Gelenke ±0,01 rad | + Handgelenk 3 ±45° |
-| Regler, Aktion, PPO | Gelenk-Deltas, 0,02 rad, rsl_rl | unverändert |
+| Größe | A | B | Art | Beleg |
+|---|---|---|---|---|
+| Fügeobjekt | Zylinder Ø25 / Ø28 mm | Quader 30 × 30 × 50 mm | geplant | D-029 |
+| Gegenstück | Bohrung Ø30 mm | Tasche mit quadratischem Querschnitt, Kante 45 → 36 → 32 mm, 35 mm tief (1,0 mm Spiel je Achse bei 32 mm) | geplant | D-029, D-033 |
+| Beobachtung | 19 | + Drehwinkel als (cos 4φ, sin 4φ) → 21 | geplant | `ef995e8` |
+| | | + Orientierung der Tasche als Quaternion → 25 | Reaktion | D-037, `7728a07` |
+| Reward | 6 Terme | + Term für den Drehwinkel (Gewicht 2,0) → 7 | geplant | D-029, `ef995e8` |
+| Erfolgsbedingung | Spitze in der Bohrung | alle 4 Ecken in der Tasche | geplant | `ef995e8` |
+| Startlage | Gelenke ±0,01 rad | + letztes Handgelenk ±45° (Drehung um die Fügeachse) | geplant | D-029 |
+| Lage der Tasche | fest | Versatz ±5 cm (allein), Kippung bis 10°, Gier ±45°; Endstand kombiniert: ±2 cm + 10° + ±45° | Reaktion (D-035: feste Policy 0 % bei +2 cm) | D-034, D-036, D-037, D-038 |
+| Parallele Umgebungen | 1024 | 1024 → 4096 (Endstand) | – | D-038 |
+| Regelung, Aktion, Takt, Episodenlänge, PPO | Gelenk-Deltas, 0,02 rad, 60 Hz, 4 s, rsl_rl | unverändert | – | `git diff a7c7ebb 97df8bf -- agents` leer |
 
 ---
 
@@ -69,15 +104,26 @@ Grenze: Die Kombination lief mit ±2 cm, nicht mit ±5 cm. Die Streuwerte sind n
 
 **Was sich am Übergang ändert:**
 
-| | B (Ende) | C (Beginn) |
-|---|---|---|
-| Roboter | UR10e | UR5e |
-| Teil / Aufnahme | Quader, Tasche aus dem Generator | echtes Teil 143,5 × 90 mm, Aufnahme aus CAD. Spiel in der Sim 0,59 mm quer / 1,60 mm längs, in echt 0,4 / 0,9 mm (D-087, D-088, D-121) |
-| Beobachtung | 25 (cos 4φ) | 28 (cos φ, + 3 Kraftkanäle, D-107, D-114) |
-| Reward | 7 Terme der Vorstudie | neu hergeleitet: SDF-Kerne, Boni, Kraftstrafe (D-109) |
-| Streuung | Versatz, Neigung, Gier an | alles 0 |
-| Regler, Aktion | Gelenk-Deltas, 0,02 rad, 60 Hz | unverändert (D-108) |
-| PPO | rsl_rl, Cartpole-Vorlage | unverändert (nur `experiment_name`) |
+| Größe | B | C | Art | Beleg |
+|---|---|---|---|---|
+| Roboter | UR10e | UR5e | geplant | D-043, D-058, D-092 |
+| Fügeobjekt | Quader | Werkzeugkörper aus Sauggreifer und Fügeteil (143,5 × 90 mm) | geplant | D-088, D-121 |
+| Gegenstück | Tasche | Aufnahme aus CAD, etwas mehr Spiel als die echte: 0,59 / 1,60 mm statt 0,4 / 0,9 mm; frei stehend | geplant; frei stehend: Reaktion | D-087, D-121, D-156 |
+| Kollisionsmodell | Stift: Box (konvexe Hülle = exakt); Tasche: 9 Quader als Box-Kollider | Aufnahme als SDF-Netz | geplant | `scripts/add_fixture_collision.py` |
+| Regelung | Gelenkraum (Gelenk-Deltas auf PD-Antriebe) | Impedanzregler im Arbeitsraum (OSC), kp 100 / 30 | Reaktion (RT-144a: im Gelenkraum alle 6 Gelenke in Sättigung, ≥ 250 N) | D-177 |
+| Aktion | 6 Gelenk-Deltas, 0,02 rad | 6-D Posen-Delta, 0,02 m / 0,097 rad, Kegel 8,52°, Box ±0,08 m | Reaktion (mit OSC) | D-177 |
+| Takt | 60 Hz | 15 Hz (1/120 s, Faktor 8, wie Factory) | Reaktion | D-177 |
+| Startlage | über der Öffnung | in der Tasche (−30 mm), Curriculum über die Starthöhe bis 120 mm | Reaktion | `e6e7d874`, D-178..181 |
+| Episodenlänge | 4 s (240 Schritte) | 256 Schritte: 4,3 s bei 60 Hz, 17,1 s bei 15 Hz | geplant | D-113 |
+| Beobachtung | 25 (cos 4φ) | 28: cos φ statt cos 4φ, dazu geglättete, tarierte Kraft | geplant | D-107, D-114 |
+| Reward | 7 Terme | neu aufgebaut (SDF-Kerne, Boni, Fortschritt, Zeit, Aktionsrate) | geplant | D-109 |
+| Erfolgs- und Abbruchbedingungen | 4 Ecken in der Tasche, Tiefe ≥ 25 mm | Tiefe 33–36 mm, Durchdringung < 0,29 mm, im Taschenvolumen; Abbruch bei 30 N | geplant | D-113 |
+| Rauschen der Beobachtung | keins | Taschenlage ±5 mm, Griff ±3 mm (je Episode), Kraft σ 3,5 N (je Schritt) | geplant | D-182, D-183 |
+| Streuung | Versatz, Kippung, Gier (Befehlszeile) | AutoDR: seitlicher Start, Gier ±5°, Neigung 0–10°, Starthöhe, Reibung; Aufnahme ±5 mm | geplant | D-178..181 |
+| Trainingsbedingungen | eine | No-DR, AutoDR, Fixed-DR | geplant | D-178, D-192 |
+| Auswertung | Training und Sichtprüfung | mehrere Seeds, eingefrorene Policies, gleiche Testfälle | geplant | `eval_plan.md`, RT-222..225 |
+| Parallele Umgebungen | 4096 | 256 | – | RT-206 |
+| Bibliothek und Netz | rsl_rl, MLP 128 × 128 | unverändert (nur `experiment_name`) | – | D-116 |
 
 ---
 
@@ -102,14 +148,20 @@ Grenze: Die Kombination lief mit ±2 cm, nicht mit ±5 cm. Die Streuwerte sind n
 
 **Was sich am Übergang ändert** (C-Ende → D heute):
 
-| | C (Ende) | D (vorläufig) |
-|---|---|---|
-| Aktion | 6-D, Clip ±1, kein EMA | 6-D, Clip ±1, **EMA 0,2**, Gier-Band ±12,30° |
-| Beobachtung | 28, keine vorige Aktion | **34** (+ vorige Aktion = EMA-Zustand), Gier-Glaubensfehler ±1,28° |
-| Netz | MLP 128×128, Actor = Critic | **LSTM 2×1024** + MLP [512,128,64], eigener Critic mit wahrer Taschenlage |
-| PPO | rsl_rl, Cartpole-Vorlage | **rl_games**, Factory-YAML (100 Epochen, Minibatch 1024) |
-| Streuung | Start bis 0,120 m, Aufnahme ±5 mm | Start bis 0,270 m, Aufnahme ±0,05 m in x/y/z, Home 0,400 m |
-| Reward | action_rate 0,0034 | action_rate 0 |
-| Regler, Erfolg | OSC 15 Hz, kp 100/30 | unverändert |
+| Größe | C | D (vorläufig) | Art | Beleg |
+|---|---|---|---|---|
+| Beobachtung | 28 | + letzte Aktion (EMA-Zustand) → 34 | geplant | D-193, D-195 |
+| Glaubensfehler | Taschenlage, Griff | + Gier der Tasche ±1,28° je Episode | geplant | D-194 |
+| Netz des Actors | MLP 128 × 128 | LSTM 2 × 1024 vor MLP [512, 128, 64] | geplant | D-195 |
+| Critic | gleiche Beobachtung wie der Actor | eigenes Netz; ohne Rauschen, Taschenlage aus dem wahren Zustand | geplant | D-195, `insertion_env.py:2226-2246` |
+| Aktion | 0,02 m / 0,097 rad je Schritt, ohne Glättung | gleiche Schritte, mit Glättung (EMA 0,2), Gier-Band ±12,3° | Reaktion (RT-235s1/RT-236s1) | D-196, D-197 |
+| Bibliothek und PPO | rsl_rl, Cartpole-Werte | rl_games mit der Factory-Konfiguration | Reaktion (Lernrate am Boden / an der Decke, RT-238s1/RT-239s1) | D-198, D-200 |
+| Streuung der Aufnahme | ±5 mm in der Ebene | ±0,05 m in drei Raumrichtungen, wie PegInsert | geplant | D-203; Factory `fixed_asset_init_pos_noise` |
+| Obere Starthöhe | 0,120 m | 0,270 m | Reaktion | D-202 |
+| Grundstellung und Zielbereich des Reglers | Home 0,150 m, Box ±0,08 m / z 0,1435 m | Home 0,400 m, Box ±0,100 m / z 0,2915 m | Reaktion | D-204 |
+| Trainingsbudget | 1500 Iterationen × 16 Schritte × 256 Envs ≈ 6,1 Mio. Schritte | 100 Epochen × 128 × 256 ≈ 3,3 Mio. Schritte | Reaktion | D-201, D-205 |
+| Reward | Aktionsrate −0,0034 | Aktionsrate 0 | – | `insertion_env_cfg.py` |
+| Auswertung | rsl_rl-Evaluation (T-nominal, T-final, T-grenze) | für rl_games noch nicht gebaut | – | D-206 |
+| Regelung, Takt, Erfolg | OSC 15 Hz, kp 100 / 30 | unverändert | – | – |
 
 **Stand von D heute:** noch offen. RT-244 (No-DR, 5 Seeds) läuft. Die Evaluation für rl_games ist geplant (D-206), aber noch nicht gebaut. Der Tag `stufe-D-factory` kommt danach.
