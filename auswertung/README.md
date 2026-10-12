@@ -14,7 +14,8 @@ Jede Datei steht mit Quelle und sha256 in [HERKUNFT.csv](HERKUNFT.csv). Es gibt 
 
 ## Code
 
-- `scripts/` = Kopie aus Commit `ff2aadd8` („Commit the thesis evaluation scripts and their training extracts“): `eval_collect.py`, `eval_stats.py`, `eval_figures.py`, alle `plot_*.py`, `tools/plot_*.py`, `tools/table_*.py`.
+- `scripts/` = Kopie aus Commit `ff2aadd8` („Commit the thesis evaluation scripts and their training extracts“): `eval_collect.py`, `eval_stats.py`, alle `plot_*.py`, `tools/plot_*.py`, `tools/table_*.py`.
+  Ausnahme: `eval_figures.py` kommt aus `597ff0b7`. Mit dieser Fassung entstehen die Bilder der Arbeit (v14). `ff2aadd8` ändert danach nur die Zahl über dem Balken („M = 99,2 %“, 9 pt).
   Dazu die Dateien, die diese Skripte laden: `check_eval_conditions.py`, `check_autodr.py`, `tools/run_axis.py`, die Testtabellen `scripts/eval/eval_table_*`.
 - Python mit `matplotlib`, `numpy`, `pandas`, `scipy`, `statsmodels`; für `tools/table_*.py` zusätzlich `python-docx`. Schrift Arial muss installiert sein (`eval_figures.py` bricht sonst ab).
 - Alle Befehle unten in diesem Ordner (`auswertung/`) ausführen. `Q` = `daten`.
@@ -115,8 +116,7 @@ daten/
 
 - Jede Datei aus `Quelldaten` hat hier eine Kopie mit gleichem Inhalt (1413 Dateien; 919 davon unterscheiden sich nur in den Zeilenenden, weil `Quelldaten` aus der Arbeitskopie mit CRLF stammt).
 - Abbildungen neu gebaut mit den Befehlen oben, sha256 gegen `Abgabe\Abbildungen\Abb_*.png`:
-  - byte-gleich: 5-3, 5-5, 5-6, 5-8, 5-c, A-1, H25.
-  - anders: 5-7, 5-9, 5-11, 5-a, A-2, A-3. Grund: `ff2aadd8` ändert in `eval_figures.py` nur die Zahl über dem Balken („M = 99,2 %“, 9 pt). Mit `eval_figures.py` aus `597ff0b7` und denselben Daten sind alle sechs byte-gleich.
+  alle 13 byte-gleich (5-3, 5-5, 5-6, 5-7, 5-8, 5-9, 5-11, 5-a, 5-c, A-1, A-2, A-3, H25).
 - `check_kap5_werte.py` (Original-Repo, `scripts/tools/`) gegen die Daten hier: Die Anker gehören zu `Bachelorarbeit_Alex_v5.docx`. Mit v5 entstehen 203 Prüfzeilen, identisch mit dem Lauf im Original-Repo. Mit v14 bricht das Skript beim ersten geänderten Satz ab (Absatz Tab. 5-1).
 
 ## Hinweise

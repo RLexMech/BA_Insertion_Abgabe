@@ -2082,10 +2082,8 @@ def draw_f12(plt, d):
 # Hollow = the reference test, filled = the test under study (Grafik_Regelwerk G, user 2026-10-11).
 H_CONDITION = (("T-nominal", f"hohl: {TEST_NOMINAL}"), ("T-final", f"voll: {TEST_MAIN}"))
 H_RUN_LABEL = POLICY_DOT_LABEL
-# The mean above each bar as "M = 99,2 %" (M = mean, APA symbol; user 2026-10-12): at 12 pt
-# the seven numbers of 5-9 and the pairs of 5-7/5-a run into each other, so 9 pt.
-BAR_NUMBER_PT = 9
-MEAN_SYMBOL = "$M$"
+# The mean above each bar: two numbers per group must not run into each other.
+BAR_NUMBER_PT = FONT_PT
 
 
 def _h_legend(fig, handles, ncol, **kw):
@@ -2109,7 +2107,7 @@ def _mean_bar(ax, x, r, c, ls, filled, w, y_num=104):
     lo, hi = r["ci"]
     ax.errorbar(x + w / 2 - 0.05, 100 * r["mean"], yerr=[[100 * (r["mean"] - lo)], [100 * (hi - r["mean"])]],
                 fmt="none", ecolor=INK, elinewidth=1.0, capsize=2.5, zorder=3)   # INK: grey vanished on the filled bar (user 2026-10-12)
-    ax.text(x, y_num, f"{MEAN_SYMBOL} = {_num(100 * r['mean'], '.1f')} %", ha="center", va="bottom", fontsize=BAR_NUMBER_PT,
+    ax.text(x, y_num, f"{_num(100 * r['mean'], '.1f')} %", ha="center", va="bottom", fontsize=BAR_NUMBER_PT,
             color=INK)
 
 
@@ -2135,7 +2133,7 @@ def _bars_legend(fig, hollow: str | None = None, filled: str | None = None):
     kw = {} if hollow is not None else {"columnspacing": 1.0}
     leg = _h_legend(fig, tests + [Line2D([], [], color=INK, marker="o", linestyle="none", markersize=4,
                                          label=H_RUN_LABEL),
-                                  Line2D([], [], linestyle="none", label=f"{MEAN_SYMBOL}: Mittelwert"),
+                                  Line2D([], [], linestyle="none", label="Zahl über dem Balken: Mittelwert"),
                                   # Two lines: at 12 pt one line runs past the figure width (Grafik_Regelwerk E1).
                                   _bar_handle("Strich: " + CI_LABEL.replace(" des ", "\ndes ", 1), INK)], 2, **kw)
     _legend_room(fig, leg)
@@ -2625,9 +2623,7 @@ def draw_all(results: pathlib.Path, training: pathlib.Path, out: pathlib.Path, o
         raise FigError(f"font {FONT!r} not installed; matplotlib would fall back silently") from exc
     plt.rcParams.update({"font.size": FONT_PT, "pdf.fonttype": 42, "svg.fonttype": "none",
                          "svg.hashsalt": "eval_figures",   # fixed element ids: SVG bytes repeat
-                         "font.family": "sans-serif", "font.sans-serif": [FONT],
-                         # MEAN_SYMBOL's italic M in Arial, not matplotlib's DejaVu math font.
-                         "mathtext.fontset": "custom", "mathtext.it": f"{FONT}:italic", "mathtext.rm": FONT})
+                         "font.family": "sans-serif", "font.sans-serif": [FONT]})
     summary = json.loads((results / "summary.json").read_text(encoding="utf-8"))
     # Git-ignored; results/eval (Experiment C) has none on the laptop. Only F6, F9, F10, H8 read it.
     episodes = results / "episodes_all.csv"

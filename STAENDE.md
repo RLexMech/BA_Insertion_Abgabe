@@ -161,4 +161,4 @@ git sparse-checkout set --no-cone "/rt_logs/**" "/scripts/**" "/source/**" "!**/
 git rev-parse HEAD
 Copy-Item -Recurse ..\Phase5_RlGames_v1\source\insertion\insertion\tasks\direct\insertion\assets source\insertion\insertion\tasks\direct\insertion\assets
 ```
-Erwartet: `c1a635e969f72efd5b9062d2c8994befd29ff100`. Am 2026-10-12 geprüft mit `git checkout --detach c1a635e969f72efd5b9062d2c8994befd29ff100` statt `--branch` (der Tag fehlt noch). Die Läufe von D nutzten `pip install -e source\insertion` aus `Phase5_RlGames_v1`. Es darf nur eine solche Installation geben (RT-242a–d waren ungültig, weil `insertion` aus einem anderen Klon kam, `rt_logs/VERDICTS.md:93`).
+Erwartet: `c1a635e969f72efd5b9062d2c8994befd29ff100`. Auf dem Laptop am 2026-10-12 geprüft: Klon von GitHub mit `--branch stufe-D-factory`, `git rev-parse HEAD` gibt diesen Wert. Die Läufe von D nutzten `pip install -e source\insertion` aus `Phase5_RlGames_v1`. Es darf nur eine solche Installation geben (RT-242a–d waren ungültig, weil `insertion` aus einem anderen Klon kam, `rt_logs/VERDICTS.md:93`).
