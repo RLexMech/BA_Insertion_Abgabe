@@ -41,7 +41,7 @@ import json
 import pathlib
 import sys
 
-SCRIPT_MARKER = "check_episode_log-2026-09-15a"
+SCRIPT_MARKER = "check_episode_log-2026-09-16a"
 
 # The agreed column set (user, 2026-09-15). The check's OWN literal: importing
 # the env's tuple would assert it against itself.
@@ -74,7 +74,7 @@ CHECK_NAMES = (
     "C12 the CSV holds demo_metrics.json's episode count",
     "C13 demo window: interpenetration maximum matches",
     "C14 demo window: over_thresh count matches",
-    "C15 demo window: force-abort rate matches",
+    "C15 demo window: force-abort rate matches the rows at the force limit",
     "C16 demo window: filtered force maximum matches",
 )
 
@@ -151,9 +151,19 @@ def judge(header, rows, meta, demo) -> dict:
     edge = sum(1 for v in ips if abs(v - thresh) <= TOL_MM)
     put(13, abs(count - int(istat.get("over_thresh", -1))) <= edge,
         f"csv {count} demo {istat.get('over_thresh')} ({edge} within the written precision of t1)")
-    rate = sum(1 for r in win if r["outcome"] == "force_abort") / w
-    put(14, abs(rate - float(demo.get("force_abort_rate", float("nan")))) <= 1e-9,
-        f"csv {rate} demo {demo.get('force_abort_rate')}")
+    # Counted by FORCE, not by outcome: the env's abort window takes every
+    # episode whose filtered force reached the limit (compute_dones: >=), also
+    # one that succeeded in the same step; the row's outcome says success
+    # there (RT-206s2: 5 of 2000). Rows within the written precision of the
+    # limit may fall either way, like C14.
+    f_lim = float(((meta or {}).get("force") or {}).get("abort_limit_n", float("nan")))
+    forces = [float(r["force_max_filtered_n"]) for r in win]
+    n_abort = sum(1 for f in forces if f >= f_lim - TOL_N)
+    edge = sum(1 for f in forces if abs(f - f_lim) <= TOL_N)
+    demo_n = float(demo.get("force_abort_rate", float("nan"))) * w
+    put(14, f_lim == f_lim and abs(n_abort - demo_n) <= edge + 1e-6,
+        f"csv {n_abort} at or over {f_lim} N, demo {demo_n:g} "
+        f"({edge} within the written precision of the limit)")
     fmax = max(float(r["force_max_filtered_n"]) for r in win)
     dmax = float((demo.get("force_norm_n") or {}).get("max_n", float("nan")))
     put(15, abs(fmax - dmax) <= TOL_N, f"csv {fmax:.4f} demo {dmax}")
@@ -225,16 +235,19 @@ def _good():
                 "bounds_version": "0", "dr_phase": "floor",
             })
         it += 1
-    meta = {"episode_cap_steps": 256, "interpenetration": {
+    # RT-206s2: success and abort fire in the SAME step. The row says success
+    # (tested first), the env's abort window counts it as an abort.
+    rows[9]["force_max_filtered_n"] = "12.5000"
+    meta = {"episode_cap_steps": 256, "force": {"abort_limit_n": 11.5},"interpenetration": {
         "method": "m", "body_pair": "b", "unit": "mm", "rate_hz": 15.0,
         "t1_mm": t1, "t1_meaning": "algorithmic"}}
     win = rows[4:12]
     demo = {
         "episodes": 12,
-        "force_abort_rate": sum(1 for r in win if r["outcome"] == "force_abort") / 8,
+        "force_abort_rate": sum(1 for r in win if float(r["force_max_filtered_n"]) >= 11.5) / 8,
         "interpen_max_mm": {"episodes": 8, "max_mm": 0.5, "thresh_mm": t1,
                             "over_thresh": sum(1 for r in win if float(r["ip_max_mm"]) > t1)},
-        "force_norm_n": {"max_n": 12.0},
+        "force_norm_n": {"max_n": 12.5},
     }
     return list(EXPECTED_COLUMNS), rows, meta, demo
 
@@ -271,7 +284,8 @@ CASES = (
     ("demo-over-thresh-differs",
      lambda h, r, m, d: d["interpen_max_mm"].update(over_thresh=d["interpen_max_mm"]["over_thresh"] + 2),
      ("C14",)),
-    ("demo-abort-rate-differs", lambda h, r, m, d: d.update(force_abort_rate=0.5), ("C15",)),
+    ("demo-abort-rate-differs", lambda h, r, m, d: d.update(force_abort_rate=0.25), ("C15",)),
+    ("meta-without-abort-limit", lambda h, r, m, d: m.pop("force"), ("C15",)),
     ("demo-force-max-differs", lambda h, r, m, d: d["force_norm_n"].update(max_n=13.0), ("C16",)),
 )
 

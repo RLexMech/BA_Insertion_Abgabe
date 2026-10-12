@@ -1345,6 +1345,75 @@ class FixedWidth(_Provider):
         self._fixed_steps = steps
 
 
+class FixedDR(AutoDR):
+    """The Fixed-DR training arm (D-192): AutoDR's start floor, then full width.
+
+    Phase "floor" is AutoDR's, line for line: the same floor buffer, the same
+    boundary episodes nailed to the floor, every other quantity on its
+    centre. From the reset after the floor reaches H_min (phase "dr") every
+    quantity draws from its full maximum -- the same formula as
+    ``FixedWidth.at_max`` -- and NO episode is a boundary episode, so the draw
+    is uniform, the literature's Fixed-DR (DORAEMON). That is the second
+    difference to AutoDR besides "grow vs fixed" (`eval_plan.md` 3.1).
+
+    The seven boundaries stand on their maximum step from the start and
+    never move: phase floor sends every boundary episode to the floor key,
+    phase dr sends none, so their buffers never fill. ``value`` reports the
+    width that is DRAWN (centre in phase floor), so the ``dr/<key>`` curves
+    read like AutoDR's. Own state format: an AutoDR run refuses a Fixed-DR
+    sidecar and the other way round.
+    """
+
+    FORMAT = "fixed-dr-1"
+
+    def __init__(self, dims: tuple, *, floor: "FloorSpec", **kwargs) -> None:
+        if floor is None:
+            raise AutoDRError(
+                "FixedDR needs a start floor; without one it is FixedWidth.at_max"
+            )
+        super().__init__(dims, floor=floor, **kwargs)
+        for key in self.keys:
+            if key != FLOOR_KEY:
+                self._steps[key] = self._n_steps_of(key)
+
+    def value(self, key: str) -> float:
+        if key != FLOOR_KEY and key in self._steps and self.phase == "floor":
+            dim, side = self._split(key)
+            return dim.bound_at(side, 0)
+        return super().value(key)
+
+    def boundary_assignment(self, rand_a, rand_b):
+        """Phase floor: AutoDR's draw. Phase dr: no boundary env at all."""
+        if self.phase == "floor":
+            return super().boundary_assignment(rand_a, rand_b)
+        return boundary_assignment(rand_a, rand_b, self.n_boundaries - 1, 0.0)
+
+    def as_dict(self) -> dict:
+        out = super().as_dict()
+        out["mode"] = "fixed_dr"
+        return out
+
+    def state_dict(self) -> dict:
+        out = super().state_dict()
+        out["format"] = self.FORMAT
+        return out
+
+    def load_state_dict(self, state: dict) -> None:
+        if not isinstance(state, dict) or state.get("format") != self.FORMAT:
+            raise AutoDRError(
+                f"unknown fixed-dr state format "
+                f"{state.get('format') if isinstance(state, dict) else state!r}"
+            )
+        # Checked BEFORE the load, which assigns: a refused state must leave
+        # the provider as it was.
+        steps_in = _field(state, "steps", dict)
+        moved = [k for k in self.keys
+                 if k != FLOOR_KEY and steps_in.get(k) != self._n_steps_of(k)]
+        if moved:
+            raise AutoDRError(f"fixed-dr state has boundaries off their maximum: {moved}")
+        super().load_state_dict(dict(state, format="autodr-3"))
+
+
 class RowTable:
     """A pre-drawn evaluation table: N rows, 16 columns, in [0, 1].
 
@@ -1489,7 +1558,7 @@ class GridTable(RowTable):
 
 # ---------------------------------------------------------------------------
 # The array helpers. Tensors in, tensors out; this module imports NOTHING, so
-# all three work with real torch on the training machine and with the numpy
+# every one of them works with real torch on the training machine and with the numpy
 # stand-in (scripts/tools/torch_shim.py) on the laptop.
 # ---------------------------------------------------------------------------
 def map_unit_to_bounds(unit, lo, hi):
@@ -1533,6 +1602,18 @@ def apply_boundary(unit, rows, cols, side):
     """
     unit[rows, cols] = side
     return unit
+
+
+def table_rows(table_unit, env_ids):
+    """The evaluation rows of the resetting envs: env ``i`` plays row ``i``.
+
+    ``table_unit`` is the whole table, ``(num_envs, 16)``; ``env_ids`` the
+    resetting envs, ``(k,)``. Returns ``(k, 16)``. This is the ONE place the
+    env-to-row identity is written down (`eval_plan.md` step B2): the result
+    files carry ``env_id`` as the row id, so an offset here would score every
+    test case under another one's conditions and no number would look wrong.
+    """
+    return table_unit[env_ids]
 
 
 def boundary_assignment(rand_a, rand_b, n_boundaries: int, p_boundary: float):

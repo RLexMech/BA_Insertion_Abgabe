@@ -1,0 +1,84 @@
+{
+  "kind": "ood",
+  "seed": 10,
+  "from": {
+    "file": "eval_table_boundary_seed10_c18.csv",
+    "sha256": "f17d12d8d35f3acf06da22ef244b9e6bba1fd30764110370e239da9711ad9876"
+  },
+  "rows_per_block": 150,
+  "factor": 1.5,
+  "factor_cap": {
+    "start_height_hi": 1.0
+  },
+  "centres": {
+    "lat_r": 0.0,
+    "yaw": 0.0,
+    "tilt": 0.0,
+    "start_height": 0.02,
+    "friction": 0.14
+  },
+  "source": "D-206 (3), D-055/D-191; x1.5 from IndustReal (Tang et al. 2023) Table X; cap: OSC z box, start inside the box (make_eval_table.py OOD_FACTOR_CAP)",
+  "blocks": [
+    {
+      "block": 0,
+      "key": "lat_r_hi",
+      "column": 0,
+      "nailed_to": 2.25,
+      "factor": 1.5,
+      "physical": 0.045
+    },
+    {
+      "block": 1,
+      "key": "yaw_lo",
+      "column": 2,
+      "nailed_to": -0.25,
+      "factor": 1.5,
+      "physical": -0.1308996938995747
+    },
+    {
+      "block": 2,
+      "key": "yaw_hi",
+      "column": 2,
+      "nailed_to": 1.25,
+      "factor": 1.5,
+      "physical": 0.13089969389957473
+    },
+    {
+      "block": 3,
+      "key": "tilt_hi",
+      "column": 3,
+      "nailed_to": 1.5,
+      "factor": 1.5,
+      "physical": 0.2617993877991494
+    },
+    {
+      "block": 4,
+      "key": "start_height_hi",
+      "column": 5,
+      "nailed_to": 1.0,
+      "factor": 1.0,
+      "physical": 0.27
+    },
+    {
+      "block": 5,
+      "key": "friction_lo",
+      "column": 6,
+      "nailed_to": -0.25000000000000006,
+      "factor": 1.5,
+      "physical": 0.04999999999999999
+    },
+    {
+      "block": 6,
+      "key": "friction_hi",
+      "column": 6,
+      "nailed_to": 1.25,
+      "factor": 1.5,
+      "physical": 0.23000000000000004
+    }
+  ],
+  "file": "eval_table_ood_seed10_c18.csv",
+  "n_rows": 1050,
+  "n_columns": 18,
+  "sha256": "02adce218ae2c98fba2b0eb1431ded8e4aa1fb897ada4b12e5837d61996e64f6",
+  "numpy": "2.5.0rc1"
+}

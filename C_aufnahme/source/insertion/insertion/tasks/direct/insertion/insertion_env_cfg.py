@@ -685,10 +685,18 @@ class InsertionEnvCfg(DirectRLEnvCfg):
     #               read: no boundary tracks it, it is not refused below, and
     #               it moves the fixture on its own.
     #
-    # "table" (the evaluation of plan section 3) is NOT accepted yet -- it
-    # arrives with `play.py --eval-table` in Phase C. The env refuses it
-    # rather than falling back to "off", which would score a policy against
-    # a distribution nobody asked for and say nothing.
+    #   "fixed_dr" -- `autodr.FixedDR`, the Fixed-DR training arm (D-192):
+    #               AutoDR's start-floor phase line for line, then all five
+    #               quantities at full width, drawn uniformly, fixed to the
+    #               end. Needs `start_floor_m`. Same refusals as "autodr".
+    #
+    #   "table"  -- the evaluation (`eval_plan.md`): env i plays row i of the
+    #               pre-drawn table `dr_table_path`, mapped onto the FIXED
+    #               width `dr_table_width`. `validate_table_mode` below refuses
+    #               the combinations that must never start. THE ENV STILL
+    #               REFUSES THE MODE until its table branch exists (eval plan
+    #               step B2) -- rather than falling back to "off", which would
+    #               score a policy against a distribution nobody asked for.
     #
     # "autodr" and the FIVE BOUNDARY-OWNED static fields are MUTUALLY
     # EXCLUSIVE -- the env refuses that combination: with both live the pocket
@@ -699,6 +707,19 @@ class InsertionEnvCfg(DirectRLEnvCfg):
     #
     # Hydra per run:  env.dr_mode=autodr
     dr_mode: str = "off"
+
+    # THE EVALUATION TABLE (`eval_plan.md` step B1). Read ONLY under
+    # `dr_mode='table'`; `validate_table_mode` refuses a path that nothing
+    # reads. `play.py --eval-table` sets both (step C), never a person.
+    #   dr_table_path   the committed CSV under scripts/eval/ (its raw-byte
+    #                   SHA-256 is the identity of the test cases).
+    #   dr_table_width  "target"  = every autodr.DR_DIMS maximum
+    #                               (`FixedWidth.at_max`, eval_plan 1.2);
+    #                   "nominal" = lateral, yaw, tilt, friction on their
+    #                               centre, start height at its full band --
+    #                               the No-DR training distribution (3.2).
+    dr_table_path: str | None = None
+    dr_table_width: str = "target"
 
     # Per-episode fixture-pose randomisation (D-034). Uniform +- range in
     # metres applied to x and y of the fixture (and with it the pocket
@@ -1862,6 +1883,52 @@ class RlConfigIncomplete(RuntimeError):
     """An env that cannot be configured is a hard stop, never a default."""
 
 
+DR_TABLE_WIDTHS: tuple[str, ...] = ("target", "nominal")
+
+
+def validate_table_mode(cfg) -> None:
+    """Refuse every ``dr_mode='table'`` combination that must never start.
+
+    `eval_plan.md` step B1 / G8. An evaluation that starts on a wrong
+    combination still writes a full set of plausible numbers, so each of
+    these is a refusal, never a fallback. Pure -- reads four cfg fields and
+    nothing else -- so `check_env_wiring.py` EXECUTES it offline.
+
+    The ladder is not refused here: `validate_rl_config` already refuses
+    ``curriculum_enabled`` with any ``dr_mode`` but 'off'.
+    """
+    path = cfg.dr_table_path
+    if str(cfg.dr_mode) != "table":
+        if path is not None:
+            raise RlConfigIncomplete(
+                f"dr_table_path is {path!r} while dr_mode={cfg.dr_mode!r}. Nothing "
+                "reads the table in that mode, so the run would LOOK like an "
+                "evaluation and draw its own resets. Set dr_mode='table' or leave "
+                "the path None."
+            )
+        return
+    if path is None or not str(path).strip():
+        raise RlConfigIncomplete(
+            "dr_mode='table' without dr_table_path. The table IS the test cases; "
+            "there is no default table."
+        )
+    if str(cfg.dr_table_width) not in DR_TABLE_WIDTHS:
+        raise RlConfigIncomplete(
+            f"dr_table_width is {cfg.dr_table_width!r}; known widths: {DR_TABLE_WIDTHS}."
+        )
+    # The floor is ON exactly when it lies below the start height -- the same
+    # test `InsertionEnv.__init__` applies. A floor is a curriculum on the
+    # start height: it would move the band the table is mapped onto.
+    high = cfg.start_tip_above_entrance
+    if high is None or float(cfg.start_floor_m) != float(high):
+        raise RlConfigIncomplete(
+            f"dr_mode='table' with start_floor_m={cfg.start_floor_m!r} and "
+            f"start_tip_above_entrance={high!r}. An evaluation has NO start floor "
+            "and needs a start height: leave start_floor_m equal to "
+            "start_tip_above_entrance (eval_plan.md G8)."
+        )
+
+
 def validate_rl_config(cfg) -> None:
     """Refuse to build an env while a decided-but-unmeasured number is unset.
 
@@ -1895,6 +1962,7 @@ def validate_rl_config(cfg) -> None:
         "action_rate_scale", "w_depth_progress",
         "w_tilt", "shaping_gamma", "kernel_a_tilt",
         "dr_mode",
+        "dr_table_path", "dr_table_width", "start_floor_m", "start_tip_above_entrance",
     )
     absent = [name for name in named if not hasattr(cfg, name)]
     if absent:
@@ -1950,6 +2018,9 @@ def validate_rl_config(cfg) -> None:
             "Run the ladder (dr_mode='off') or run AutoDR "
             "(curriculum_enabled=False) -- never both."
         )
+    # A SIXTH failure, eval plan step B1: a table evaluation on a combination
+    # that must never start. Own function, so the wiring check executes it.
+    validate_table_mode(cfg)
     if not ladder_on:
         set_anyway = [name for name in CURRICULUM_PENDING if getattr(cfg, name) is not None]
         if set_anyway:

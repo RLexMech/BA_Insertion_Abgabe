@@ -50,6 +50,7 @@ from __future__ import annotations
 
 import ast
 import concurrent.futures
+import csv
 import hashlib
 import importlib.util
 import math
@@ -920,6 +921,32 @@ def build_checks(ns, torch) -> list:
           and float(unit[1, 3]) == 0.5,
           f"{float(unit[0, 3])}, {float(unit[2, 6])}, {float(unit[1, 3])}")
 
+    # THE EVALUATION ROWS (eval plan step B2), through the SAME call the env
+    # makes and with the SHAPES the env passes (L-14): the committed practice
+    # table, (1000, 16) on the "device", a partial reset `(k,)` and the full
+    # first reset `(1000,)`, written into a (1000, 16) `_reset_unit`.
+    # Read with the csv module, NOT with RowTable.from_csv: a mutation that
+    # breaks the reader must flip the reader's checks, not this one.
+    with open(ROOT / "scripts" / "eval" / "eval_table_seed20.csv", newline="",
+              encoding="utf-8") as _fh:
+        _eval_rows = [[float(v) for v in r] for r in list(csv.reader(_fh))[1:]]
+    # The width of the FILE, not `width`: a mutation that shortens
+    # TABLE_COLUMNS must flip the layout checks, not crash this one.
+    _w = len(_eval_rows[0])
+    _tbl = torch.tensor(_eval_rows)
+    _part = torch.tensor([0, 7, 999]).long()
+    _got = ns["table_rows"](_tbl, _part)
+    _reset_unit = torch.zeros(len(_eval_rows), _w)
+    _all = torch.arange(len(_eval_rows)).long()
+    _reset_unit[_all] = ns["table_rows"](_tbl, _all)
+    check("table_rows: env i plays row i, for a partial reset and for the full first reset",
+          tuple(_tbl.shape) == (1000, _w) and tuple(_got.shape) == (3, _w)
+          and all(abs(float(_got[j, c]) - _eval_rows[i][c]) < 1e-6
+                  for j, i in enumerate((0, 7, 999)) for c in range(_w))
+          and all(abs(float(_reset_unit[i, c]) - _eval_rows[i][c]) < 1e-6
+                  for i in (0, 1, 500, 999) for c in (0, 5, 15)),
+          f"table {tuple(_tbl.shape)}, partial {tuple(_got.shape)}")
+
     n = 10_000
     # THREE seeds, not one: with a single seed the tolerance is decoration
     # and the check is really an exact-value assertion.
@@ -1220,6 +1247,81 @@ def build_checks(ns, torch) -> list:
     refuses("a resume with a last_rate above 1 refuses",
             lambda: AutoDR(DIMS, stall_buffers=2).load_state_dict(
                 {**st_s, "last_rate": {**st_s["last_rate"], "tilt_hi": 2.0}}))
+
+    # -- FIXED-DR (D-192): AutoDR's floor phase, then the full width ---------
+    FixedDR = ns["FixedDR"]
+
+    def fixed_dr():
+        return FixedDR(DIMS, floor=FLOOR)
+
+    a_ref, x = floored(), fixed_dr()
+    same = True
+    for rate in (240, 0, 240, 0, 240, 240, 240, 240, 240):
+        if x.phase != "floor":
+            break
+        same = (same and x.bounds() == a_ref.bounds()
+                and [bool(v) for v in x.boundary_assignment(ra, rb)[0]]
+                == [bool(v) for v in a_ref.boundary_assignment(ra, rb)[0]]
+                and [int(v) for v in x.boundary_assignment(ra, rb)[1]]
+                == [int(v) for v in a_ref.boundary_assignment(ra, rb)[1]])
+        fill(x, FLOOR_KEY, rate, 240)
+        fill(a_ref, FLOOR_KEY, rate, 240)
+        ex, ea = x.update(), a_ref.update()
+        same = same and [e.line() for e in ex] == [e.line() for e in ea]
+    check("Fixed-DR phase floor: bounds, boundary draw and floor events equal AutoDR's, "
+          "step for step",
+          same and x.phase == "dr" and a_ref.phase == "dr"
+          and x.bounds_version == a_ref.bounds_version,
+          f"{same}, {x.phase}/{a_ref.phase}, version {x.bounds_version}/{a_ref.bounds_version}")
+    check("Fixed-DR phase dr: bounds equal FixedWidth.at_max exactly",
+          x.bounds() == FixedWidth.at_max(DIMS).bounds(), str(x.bounds()))
+    is_bx, _ = x.boundary_assignment(ra, rb)
+    check("Fixed-DR phase dr: no env is a boundary env, for any draw",
+          not any(bool(v) for v in is_bx), str(sum(1 for v in is_bx if v)))
+    sc_f, sc_d = fixed_dr().scalars(), x.scalars()
+    check("Fixed-DR: dr/<key> reads the centre in phase floor and the maximum in phase dr; "
+          "all_at_max only in phase dr",
+          all(sc_f[f"dr/{k}"] == dim_of[k.rsplit('_', 1)[0]].centre for k in EXPECTED_KEYS)
+          and all(sc_d[f"dr/{k}"] == dim_of[k.rsplit('_', 1)[0]].bound_max(k.rsplit('_', 1)[1])
+                  for k in EXPECTED_KEYS)
+          and fixed_dr().all_at_max() is False and x.all_at_max() is True,
+          f"{[sc_f[f'dr/{k}'] for k in EXPECTED_KEYS]} / {[sc_d[f'dr/{k}'] for k in EXPECTED_KEYS]}")
+    refuses("Fixed-DR without a floor refuses", lambda: FixedDR(DIMS, floor=None))
+    st_x = x.state_dict()
+    y, err = attempt(lambda: (lambda p_: (p_.load_state_dict(st_x), p_)[1])(fixed_dr()))
+    _auto_takes, _ = attempt(lambda: floored().load_state_dict(st_x) or True)
+    _fixed_takes, _ = attempt(lambda: fixed_dr().load_state_dict(st_h) or True)
+    check("a Fixed-DR state round-trips under its own format; AutoDR refuses it and it "
+          "refuses AutoDR's",
+          err is None and st_x.get("format") == "fixed-dr-1" and y.as_dict() == x.as_dict()
+          and _auto_takes is None and _fixed_takes is None,
+          f"{err!r}, auto takes {_auto_takes}, fixed takes {_fixed_takes}")
+    refuses("a Fixed-DR state with a boundary off its maximum refuses",
+            lambda: fixed_dr().load_state_dict(
+                {**st_x, "steps": {**st_x["steps"], "lat_r_hi": 0}}))
+    # A run in miniature: the env's record/update order, 1000 resets per
+    # pass, success 1 in phase floor and 0 in phase dr. The floor must rise
+    # to H_min and the seven must never leave their maximum.
+    def simulated_run():
+        sim = fixed_dr()
+        rng_s = random.Random(7)
+        for _ in range(20):
+            sa = torch.tensor([rng_s.random() for _ in range(1000)])
+            sb = torch.tensor([rng_s.random() for _ in range(1000)])
+            ok = sim.phase == "floor"
+            s_is, s_idx = sim.boundary_assignment(sa, sb)
+            for v, i in zip(s_is, s_idx):
+                if bool(v):
+                    sim.record(sim.keys[int(i)], ok)
+            sim.update()
+        return sim
+
+    sim, err = attempt(simulated_run)
+    check("Fixed-DR in a simulated run: the floor reaches H_min and the seven never move",
+          err is None and sim.phase == "dr"
+          and sim.bounds() == FixedWidth.at_max(DIMS).bounds()
+          and all(sim.as_dict()["fill"][k] == 0 for k in EXPECTED_KEYS),
+          f"{err!r}" if err else f"{sim.phase}, {sim.bounds()}")
 
     return out
 
@@ -1832,6 +1934,13 @@ MUTATIONS: tuple = (
         ),
     ),
     (
+        # eval plan step B2, the plan's own mutation: env i plays row i+1.
+        "table-rows-shifted-by-one",
+        (("return table_unit[env_ids]",
+          "return table_unit[(env_ids + 1) % table_unit.shape[0]]"),),
+        ("table_rows: env i plays row i, for a partial reset and for the full first reset",),
+    ),
+    (
         "testwert-marker-dropped",
         (("return tuple(d.name for d in dims if TESTWERT in d.source)", "return ()"),),
         (
@@ -2317,7 +2426,68 @@ STALL_MUTATIONS: tuple = (
         ("a resume with a last_rate above 1 refuses",),
     ),
 )
-MUTATIONS = MUTATIONS + STALL_MUTATIONS
+
+# FIXED-DR (D-192, 2026-09-23). Every expected flip below was confirmed by
+# --self-test on 2026-09-23.
+FIXED_DR_MUTATIONS: tuple = (
+    (
+        "fixed-dr-seven-start-at-width-0",
+        (("                self._steps[key] = self._n_steps_of(key)", "                pass"),),
+        (
+            "Fixed-DR phase dr: bounds equal FixedWidth.at_max exactly",
+            "Fixed-DR: dr/<key> reads the centre in phase floor and the maximum in phase dr; "
+            "all_at_max only in phase dr",
+            "a Fixed-DR state round-trips under its own format; AutoDR refuses it and it "
+            "refuses AutoDR's",
+            "Fixed-DR in a simulated run: the floor reaches H_min and the seven never move",
+        ),
+    ),
+    (
+        "fixed-dr-value-reports-the-maximum-in-phase-floor",
+        (('        if key != FLOOR_KEY and key in self._steps and self.phase == "floor":',
+          "        if False:"),),
+        ("Fixed-DR: dr/<key> reads the centre in phase floor and the maximum in phase dr; "
+         "all_at_max only in phase dr",),
+    ),
+    (
+        "fixed-dr-keeps-boundary-sampling-in-phase-dr",
+        (("        return boundary_assignment(rand_a, rand_b, self.n_boundaries - 1, 0.0)",
+          "        return boundary_assignment(rand_a, rand_b, self.n_boundaries - 1, self.p_boundary)"),),
+        (
+            "Fixed-DR phase dr: no env is a boundary env, for any draw",
+            "Fixed-DR in a simulated run: the floor reaches H_min and the seven never move",
+        ),
+    ),
+    (
+        "fixed-dr-floor-phase-without-boundary-episodes",
+        (("            return super().boundary_assignment(rand_a, rand_b)",
+          "            return boundary_assignment(rand_a, rand_b, self.n_boundaries - 1, 0.0)"),),
+        (
+            "Fixed-DR phase floor: bounds, boundary draw and floor events equal AutoDR's, "
+            "step for step",
+            "Fixed-DR in a simulated run: the floor reaches H_min and the seven never move",
+        ),
+    ),
+    (
+        "fixed-dr-accepts-no-floor",
+        (('        if floor is None:\n            raise AutoDRError(\n                "FixedDR needs',
+          '        if False:\n            raise AutoDRError(\n                "FixedDR needs'),),
+        ("Fixed-DR without a floor refuses",),
+    ),
+    (
+        "fixed-dr-writes-the-autodr-format",
+        (('        out["format"] = self.FORMAT', "        pass"),),
+        ("a Fixed-DR state round-trips under its own format; AutoDR refuses it and it "
+         "refuses AutoDR's",),
+    ),
+    (
+        "fixed-dr-accepts-a-moved-boundary",
+        (('        if moved:\n            raise AutoDRError(f"fixed-dr state',
+          '        if False:\n            raise AutoDRError(f"fixed-dr state'),),
+        ("a Fixed-DR state with a boundary off its maximum refuses",),
+    ),
+)
+MUTATIONS = MUTATIONS + STALL_MUTATIONS + FIXED_DR_MUTATIONS
 
 FLOOR_EXTRA_FLIPS: dict = {
     # Stagnation pins (2026-09-14) that the OLDER mutations also flip.
@@ -2414,8 +2584,36 @@ FLOOR_EXTRA_FLIPS: dict = {
 }
 
 
+_FD_FLOOR = ("Fixed-DR phase floor: bounds, boundary draw and floor events equal AutoDR's, "
+             "step for step")
+_FD_AT_MAX = "Fixed-DR phase dr: bounds equal FixedWidth.at_max exactly"
+_FD_NO_B = "Fixed-DR phase dr: no env is a boundary env, for any draw"
+_FD_CURVES = ("Fixed-DR: dr/<key> reads the centre in phase floor and the maximum in phase dr; "
+              "all_at_max only in phase dr")
+_FD_STATE = ("a Fixed-DR state round-trips under its own format; AutoDR refuses it and it "
+             "refuses AutoDR's")
+_FD_SIM = "Fixed-DR in a simulated run: the floor reaches H_min and the seven never move"
+
+FIXED_DR_EXTRA_FLIPS: dict = {
+    # Fixed-DR pins (2026-09-23) that the OLDER mutations also flip: FixedDR
+    # inherits every AutoDR line these break, so the flip is the point.
+    "floor-not-excluded-from-the-dr-draw": (_FD_SIM,),
+    "floor-envs-not-nailed": (_FD_SIM,),
+    "phase-never-leaves-floor": (_FD_SIM, _FD_AT_MAX, _FD_NO_B, _FD_FLOOR, _FD_CURVES),
+    "all-at-max-ignores-the-floor": (_FD_CURVES,),
+    "state-dict-drops-the-floor-block": (_FD_STATE,),
+    "floor-key-appended-first-not-last": (_FD_SIM,),
+    "resume-drops-the-version": (_FD_STATE,),
+    "all_at_max-ignores-the-step-count": (_FD_CURVES,),
+    "step-fraction-drifts": (_FD_CURVES,),
+    "all_at_max-never-turns-true": (_FD_CURVES,),
+    "eval-provider-does-not-start-at-full-width": (_FD_SIM, _FD_AT_MAX),
+}
+
+
 def _expected_flips(name: str, expected) -> tuple:
-    return tuple(expected) + tuple(FLOOR_EXTRA_FLIPS.get(name, ()))
+    return (tuple(expected) + tuple(FLOOR_EXTRA_FLIPS.get(name, ()))
+            + tuple(FIXED_DR_EXTRA_FLIPS.get(name, ())))
 
 
 def _run(torch, mutations=()) -> dict:

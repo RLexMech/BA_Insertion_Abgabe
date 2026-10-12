@@ -1,0 +1,10 @@
+{
+  "kind": "rows",
+  "seed": 10,
+  "rng": "numpy.random.default_rng(10)",
+  "file": "eval_table_seed10.csv",
+  "n_rows": 1000,
+  "n_columns": 16,
+  "sha256": "1613635bd5f942e355d2e413deba25a5e97b368dce4798ad9030ed89cf27aba3",
+  "numpy": "2.5.0rc1"
+}

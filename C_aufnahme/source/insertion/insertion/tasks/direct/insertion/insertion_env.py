@@ -52,6 +52,7 @@ from .insertion_env_cfg import (
     resolve_proxy_task_values,
     resolve_start_lateral_offset,
     validate_rl_config,
+    validate_table_mode,
 )
 from .insertion_tasks_cfg import (
     resolve_workcell_block_usd_path,
@@ -84,6 +85,21 @@ EPISODE_LOG_COLUMNS = (
     "run", "seed", "iteration", "env_id", "episode", "outcome", "steps",
     "ip_max_mm", "ip_steps_ge_t1", "force_max_filtered_n", "force_max_raw_n",
     "bounds_version", "dr_phase",
+)
+
+# THE APPLIED CONDITIONS (eval_plan.md step B2, check G3): one row per env in
+# `<run folder>/applied.csv`, written ONCE under `dr_mode='table'`. SI units.
+# Everything is what the env COMMANDED for that env, read out of the buffers
+# the consumers realise -- except the four `friction_*` read-backs, which come
+# out of PhysX. Definitions and frames: `applied_meta.json`
+# (`_applied_log_meta`). `scripts/check_eval_conditions.py` maps the table row
+# itself and compares; check_env_wiring.py pins this tuple.
+APPLIED_LOG_COLUMNS = (
+    "row_id", "lat_x_m", "lat_y_m", "start_height_m", "yaw_rad",
+    "pocket_qw", "pocket_qx", "pocket_qy", "pocket_qz",
+    "pocket_dx_m", "pocket_dy_m", "grasp_obs_x_m", "friction_cmd",
+    "friction_robot_min", "friction_robot_max",
+    "friction_fixture_min", "friction_fixture_max",
 )
 
 
@@ -446,7 +462,12 @@ class InsertionEnv(DirectRLEnv):
                 floor=_floor_spec,
                 stall_buffers=int(cfg.autodr_stall_buffers),
             )
-        if str(cfg.dr_mode) == "autodr":
+        # SHARED BY 'autodr', 'fixed_dr' AND 'table' (eval plan step B2,
+        # D-192): in all three a provider owns the five quantities, so all
+        # refuse the same static fields. Under table width 'nominal' four of
+        # them sit on the centre instead -- which is the same demand: the
+        # static field must be 0.
+        if str(cfg.dr_mode) in ("autodr", "fixed_dr", "table"):
             if cfg.start_tip_above_entrance is None:
                 raise ValueError(
                     "dr_mode='autodr' with start_tip_above_entrance = None (the home-pose "
@@ -502,7 +523,55 @@ class InsertionEnv(DirectRLEnv):
                     "azimuth are NOT in this set -- no boundary tracks them and they stay "
                     "live (plan section 1)."
                 )
+        # THE EVALUATION TABLE (eval plan step B2). Env i plays row i, so the
+        # table must have EXACTLY num_envs rows -- equality, not "enough": a
+        # longer table would silently drop test cases, a shorter one would
+        # repeat them. The provider is a FIXED width: 'target' = every
+        # maximum; 'nominal' = the start height alone at its maximum while the
+        # other four read their static centre through `_live_bounds` -- the
+        # same one-dimension shape the No-DR floor provider above has, and
+        # the No-DR training distribution (eval_plan.md 3.2).
+        self._eval_table = None
+        if str(cfg.dr_mode) == "table":
+            validate_table_mode(cfg)
+            self._eval_table = autodr.RowTable.from_csv(cfg.dr_table_path)
+            if self._eval_table.n_rows != int(self.num_envs):
+                raise ValueError(
+                    f"dr_mode='table': {cfg.dr_table_path} has "
+                    f"{self._eval_table.n_rows} rows and the env has {int(self.num_envs)} "
+                    "envs. Env i plays row i; the two counts must be equal."
+                )
+            _table_dims = autodr.bind_centres(
+                {
+                    "lat_r": 0.0,
+                    "yaw": 0.0,
+                    "tilt": 0.0,
+                    "start_height": float(cfg.start_tip_above_entrance),
+                    "friction": insertion_tasks_cfg.CONTACT_FRICTION,
+                }
+            )
+            if str(cfg.dr_table_width) == "nominal":
+                _table_dims = tuple(d for d in _table_dims if d.name == "start_height")
+            self._dr = autodr.FixedWidth.at_max(_table_dims)
+        elif str(cfg.dr_mode) == "autodr":
             self._dr = autodr.AutoDR(
+                autodr.bind_centres(
+                    {
+                        "lat_r": 0.0,
+                        "yaw": 0.0,
+                        "tilt": 0.0,
+                        "start_height": float(cfg.start_tip_above_entrance),
+                        "friction": insertion_tasks_cfg.CONTACT_FRICTION,
+                    }
+                ),
+                floor=_floor_spec,
+                stall_buffers=int(cfg.autodr_stall_buffers),
+            )
+        elif str(cfg.dr_mode) == "fixed_dr":
+            # THE FIXED-DR ARM (D-192): AutoDR's start floor, then every
+            # quantity at full width, uniform. Same five centres as above;
+            # FixedDR refuses a missing floor itself (no floor = at_max).
+            self._dr = autodr.FixedDR(
                 autodr.bind_centres(
                     {
                         "lat_r": 0.0,
@@ -518,9 +587,10 @@ class InsertionEnv(DirectRLEnv):
         elif str(cfg.dr_mode) != "off":
             raise ValueError(
                 f"dr_mode={cfg.dr_mode!r} is not a mode this env can run. Known: 'off' "
-                "(static cfg fields) and 'autodr'. 'table' is the plan's evaluation mode "
-                "and arrives with play.py in Phase C; it is refused rather than silently "
-                "run as 'off', which would score a policy against the wrong distribution."
+                "(static cfg fields), 'autodr', 'fixed_dr' (D-192) and 'table' (the "
+                "evaluation). Anything "
+                "else is refused rather than silently run as 'off', which would train or "
+                "score a policy against the wrong distribution."
             )
 
         # THE REACH: how far each quantity can EVER open in this run.
@@ -930,6 +1000,14 @@ class InsertionEnv(DirectRLEnv):
             (self.num_envs, len(autodr.TABLE_COLUMNS)), device=self.device
         )
         self._col = dict(autodr.COLUMN_INDEX)
+        # The evaluation table on the device, (num_envs, 16), or None. Same
+        # dtype as `_reset_unit`: the row is copied, never converted per reset.
+        self._eval_table_unit = (
+            None if self._eval_table is None
+            else torch.tensor(
+                self._eval_table.rows, dtype=self._reset_unit.dtype, device=self.device
+            )
+        )
 
         # WHICH BOUNDARY each env's CURRENT episode is nailed to (Phase 5
         # step B5), -1 for a regular episode. Same lifetime and the same
@@ -1087,6 +1165,8 @@ class InsertionEnv(DirectRLEnv):
         self._episode_index = torch.zeros(self.num_envs, dtype=torch.int64, device=self.device)
         # (file handle, csv writer), opened on the first harvested episode.
         self._episode_log = None
+        # `applied.csv` is written exactly once per run (`_write_applied_csv`).
+        self._applied_written = False
         # RAW-ACTION INSTRUMENT (D-168, 2026-09-05). The action-rate term is
         # the only price on the UNCLAMPED command, and D-168 cuts its scale by
         # a factor of 29. The named risk is that the action mean now drifts
@@ -2107,6 +2187,11 @@ class InsertionEnv(DirectRLEnv):
         if self._obs_calls in self._report_at_obs_calls:
             self._print_startup_report(joint_vel_fd)
 
+        # `applied.csv` (eval plan G3), once. The writer itself waits for the
+        # first physics step; see its docstring.
+        if self._eval_table is not None and not self._applied_written:
+            self._write_applied_csv()
+
         return {"policy": obs}
 
     def _get_dones(self) -> tuple[torch.Tensor, torch.Tensor]:
@@ -2736,9 +2821,16 @@ class InsertionEnv(DirectRLEnv):
         if idx.numel() == 0:
             return
         n = int(idx.numel())
-        self._reset_unit[idx] = torch.rand(
-            n, len(autodr.TABLE_COLUMNS), device=self.device
-        )
+        if self._eval_table_unit is not None:
+            # THE EVALUATION (eval plan step B2): env i plays table row i, in
+            # EVERY episode of that env -- the first is the test case, a later
+            # one is its repeat (G4). Nothing downstream changes; the
+            # FixedWidth provider below has p_boundary 0, so no env is nailed.
+            self._reset_unit[idx] = autodr.table_rows(self._eval_table_unit, idx)
+        else:
+            self._reset_unit[idx] = torch.rand(
+                n, len(autodr.TABLE_COLUMNS), device=self.device
+            )
         if self._dr is None:
             return
         # TWO INDEPENDENT DRAWS, and deliberately NOT two more table columns.
@@ -3787,7 +3879,8 @@ class InsertionEnv(DirectRLEnv):
         n = int(idx.numel())
         if self._dr is not None:
             bounds = self._bounds_stamp[idx].to(torch.float64)
-            phase = str(self._dr.phase)
+            # FixedWidth (the evaluation) has no phase: nothing ever moves.
+            phase = str(getattr(self._dr, "phase", "fixed"))
         else:
             bounds = torch.full((n,), -1.0, dtype=torch.float64, device=self.device)
             phase = "none"
@@ -3822,6 +3915,131 @@ class InsertionEnv(DirectRLEnv):
         )
         fh.flush()
         self._episode_index[idx] += 1
+
+    def _write_applied_csv(self) -> None:
+        """Write ``<run folder>/applied.csv``: ALL envs, one row each, once.
+
+        Check G3 of ``eval_plan.md`` holds this file against the table. Under
+        ``dr_mode='table'`` env i replays row i in EVERY episode, so the
+        buffers hold the same values whichever episode an env is in when this
+        runs -- an env that already reset again carries the identical row.
+
+        COMMANDED, not realised: the start pose is what the solver was asked
+        for, not where the IK residual left the tip. The friction is the one
+        exception: four columns are read BACK out of PhysX, min and max over
+        every shape and over static and dynamic, per asset. min != max in one
+        row is a partial write.
+
+        REFUSED without ``cfg.log_dir``: an evaluation whose applied values
+        nobody can check is not an evaluation.
+
+        NOT BEFORE THE FIRST PHYSICS STEP, and not on an observation count:
+        ``reset()`` and the rsl_rl wrapper's ``get_observations()`` both call
+        ``_get_observations`` with no physics in between.
+        ``common_step_counter`` is raised only inside ``step()``
+        (direct_rl_env.py:389), so >= 1 means the first reset's writes have
+        been through one full policy step -- the reset-step trap does not
+        apply to the PhysX friction read-back.
+        """
+        if int(self.common_step_counter) < 1:
+            return
+        log_dir = getattr(self.cfg, "log_dir", None)
+        if not log_dir:
+            raise RuntimeError(
+                "dr_mode='table' without cfg.log_dir: applied.csv (eval plan G3) "
+                "has no folder to go to. play.py sets log_dir; set it here too."
+            )
+        n = int(self.num_envs)
+        _fric = [
+            _asset.root_physx_view.get_material_properties()[..., 0:2]
+            .reshape(n, -1).to(device=self.device, dtype=torch.float64)
+            for _asset in (self.robot, self._fixture)
+        ]
+        _pocket_d = self._entrance_pos - self._entrance_base.unsqueeze(0)
+        table = torch.stack(
+            [
+                torch.arange(n, device=self.device, dtype=torch.float64),
+                self._start_lat_off[:, 0].to(torch.float64),
+                self._start_lat_off[:, 1].to(torch.float64),
+                self._start_height.to(torch.float64),
+                self._fixture_yaw.to(torch.float64),
+                self._fixture_quat[:, 0].to(torch.float64),
+                self._fixture_quat[:, 1].to(torch.float64),
+                self._fixture_quat[:, 2].to(torch.float64),
+                self._fixture_quat[:, 3].to(torch.float64),
+                _pocket_d[:, 0].to(torch.float64),
+                _pocket_d[:, 1].to(torch.float64),
+                self._grasp_obs_off[:, 0].to(torch.float64),
+                self._friction_applied.to(torch.float64),
+                _fric[0].min(dim=1).values,
+                _fric[0].max(dim=1).values,
+                _fric[1].min(dim=1).values,
+                _fric[1].max(dim=1).values,
+            ],
+            dim=1,
+        ).cpu().tolist()
+        run_dir = pathlib.Path(log_dir)
+        run_dir.mkdir(parents=True, exist_ok=True)
+        path = run_dir / "applied.csv"
+        # "w", not "a": one run, one file. A rerun into the same folder must
+        # not leave two runs' rows under one header.
+        with open(path, "w", newline="", encoding="utf-8") as fh:
+            writer = csv.writer(fh)
+            writer.writerow(APPLIED_LOG_COLUMNS)
+            # Host-side loop over rows already on the CPU -- file I/O. `.9g`
+            # round-trips a float32, which is what every buffer above is.
+            writer.writerows(
+                [int(row[0])] + [f"{v:.9g}" for v in row[1:]] for row in table
+            )
+        with open(run_dir / "applied_meta.json", "w", encoding="utf-8") as mf:
+            json.dump(self._applied_log_meta(), mf, indent=2)
+        self._applied_written = True
+        print(f"[insertion] applied conditions: {path} ({n} rows, "
+              f"{len(APPLIED_LOG_COLUMNS)} columns, written at policy step "
+              f"{int(self.common_step_counter)})")
+
+    def _applied_log_meta(self) -> dict:
+        """What ``applied.csv`` carries -- written once per run beside it."""
+        cfg = self.cfg
+        return {
+            "schema": "applied-v1",
+            "code_marker": CODE_MARKER,
+            "table": {
+                "path": str(self._eval_table.path),
+                "sha256": str(self._eval_table.sha256),
+                "rows": int(self._eval_table.n_rows),
+                "width": str(cfg.dr_table_width),
+            },
+            "bounds": {k: [float(v[0]), float(v[1])] for k, v in self._live_bounds().items()},
+            "fixture_pos_noise_xy_m": float(cfg.fixture_pos_noise_xy),
+            "grasp_obs_offset_x_m": float(cfg.grasp_obs_offset_x_m),
+            "reset_joint_noise_scale_rad": [float(v) for v in self._reset_noise_scale.tolist()],
+            "written_at_policy_step": int(self.common_step_counter),
+            "columns": {
+                "row_id": "env index = table row index (autodr.table_rows)",
+                "lat_x_m": "commanded lateral start offset of the tip, x, POCKET frame, m",
+                "lat_y_m": "same, y",
+                "start_height_m": "commanded tip height above the entrance, pocket z, m",
+                "yaw_rad": "commanded pocket yaw about env z, rad",
+                "pocket_qw": "commanded pocket orientation quat_yaw * quat_tilt, wxyz, w >= 0; "
+                             "the tensor that went to write_root_pose_to_sim",
+                "pocket_qx": "see pocket_qw",
+                "pocket_qy": "see pocket_qw",
+                "pocket_qz": "see pocket_qw",
+                "pocket_dx_m": "commanded pocket position minus its base position, x, ENV frame, m",
+                "pocket_dy_m": "same, y",
+                "grasp_obs_x_m": "grasp belief error on the OBSERVATION only (D-183), m",
+                "friction_cmd": "friction _apply_friction commanded; the one-shot D-111 value "
+                                "when the provider carries no friction",
+                "friction_robot_min": "PhysX read-back, robot, min over shapes and static+dynamic",
+                "friction_robot_max": "same, max",
+                "friction_fixture_min": "PhysX read-back, fixture, min",
+                "friction_fixture_max": "same, max",
+            },
+            "not_recorded": "the six joint-noise columns: their scale is "
+                            "reset_joint_noise_scale_rad above; the realised start pose "
+                            "(IK residual); the per-step observation noise",
+        }
 
     def _episode_log_meta(self) -> dict:
         """What ``episodes.csv`` measures -- written once per run beside it."""
@@ -4700,21 +4918,29 @@ class InsertionEnv(DirectRLEnv):
             # mark: the line itself.
             for _line in autodr.provenance_lines(self._dr.dims):
                 print(f"  [provenance] {_line}")
-            print(f"  ALL FIVE QUANTITIES ARE WIRED (Phase 5 step B5): every reset maps "
-                  f"its draw onto the band above, through the one seam _live_bounds(). "
-                  f"Until B5 only FRICTION did, and the other quantities read the static "
-                  f"cfg fields this mode refuses non-zero -- their boundaries could reach "
-                  f"their maximum while every episode ran at the centre. "
-                  f"BOUNDARY SAMPLING is on: p_boundary {self._dr.p_boundary:.2f} over "
-                  f"{self._dr.n_boundaries} boundaries, buffer m {self._dr.buffer_m}, "
-                  f"advance at {self._dr.advance_at:.2f} / retreat at "
-                  f"{self._dr.retreat_at:.2f}. The frame is there too -- _tilt_rot exists "
-                  f"({self._tilt_rot is not None}), the reset writes a fixture pose "
-                  f"({self._fixture_pose_reach}) and the tilt reach is "
-                  f"{self._tilt_reach}. fixture_pos_noise_xy "
-                  f"({float(cfg.fixture_pos_noise_xy):.4f} m), the joint noise, the "
-                  f"tilt azimuth and the lateral angle lat_phi stay LIVE by design (plan "
-                  f"section 1, D-178 (2)) and no boundary tracks them.")
+            if self._eval_table is not None:
+                # G1 of eval_plan.md reads THIS line against the laptop hash.
+                print(f"  [eval-table] {self._eval_table.path}  rows "
+                      f"{self._eval_table.n_rows}  sha256 {self._eval_table.sha256}  "
+                      f"width {cfg.dr_table_width}. Env i plays row i in every "
+                      f"episode; no boundary sampling (p_boundary "
+                      f"{self._dr.p_boundary:.2f}), nothing moves.")
+            if isinstance(self._dr, autodr.AutoDR):
+                print(f"  ALL FIVE QUANTITIES ARE WIRED (Phase 5 step B5): every reset maps "
+                      f"its draw onto the band above, through the one seam _live_bounds(). "
+                      f"Until B5 only FRICTION did, and the other quantities read the static "
+                      f"cfg fields this mode refuses non-zero -- their boundaries could reach "
+                      f"their maximum while every episode ran at the centre. "
+                      f"BOUNDARY SAMPLING is on: p_boundary {self._dr.p_boundary:.2f} over "
+                      f"{self._dr.n_boundaries} boundaries, buffer m {self._dr.buffer_m}, "
+                      f"advance at {self._dr.advance_at:.2f} / retreat at "
+                      f"{self._dr.retreat_at:.2f}. The frame is there too -- _tilt_rot exists "
+                      f"({self._tilt_rot is not None}), the reset writes a fixture pose "
+                      f"({self._fixture_pose_reach}) and the tilt reach is "
+                      f"{self._tilt_reach}. fixture_pos_noise_xy "
+                      f"({float(cfg.fixture_pos_noise_xy):.4f} m), the joint noise, the "
+                      f"tilt azimuth and the lateral angle lat_phi stay LIVE by design (plan "
+                      f"section 1, D-178 (2)) and no boundary tracks them.")
             # NOT VERIFIED IN A SIMULATOR, and the report says so itself
             # rather than leaving the reader to assume the opposite. Every
             # claim in the paragraph above was read off the source on a

@@ -2,7 +2,33 @@
 
 Bachelor thesis project. Goal: contact-rich insertion with a Universal Robots UR5e.
 
-## Status (v2, 2026-09-06)
+## Branch `p5-kraftsensor` — what was reached (2026-09-23)
+
+Numbers from `rt_logs/VERDICTS.md` and `results/eval/summary.json`.
+
+- **Ten policies trained on the same budget:** AutoDR RT-206s1..s5 and
+  No-DR RT-207s1..s5, 1500 iterations each, force observation
+  (`obs_wrench_mode=force`, 28 channels).
+- **Evaluation built and run, all four blocks PASS** on one code commit
+  (`8299485d`): T-nominal RT-222, T-auswahl RT-223, T-final RT-224,
+  T-grenze RT-225; G1–G3 checked per run, collector over all blocks OK.
+- **K1 met:** on T-final AutoDR 0.970 vs No-DR 0.262, difference +70.8
+  percentage points, Welch 95 % [+66.3, +75.3]. No-DR fails by timeout,
+  not by force.
+- **K2 and K3 met, both only just:** nominal difference −1.7 points (Welch
+  upper bound +0.04 points; the bootstrap disagrees); boundary block
+  `tilt_hi` upper bound +0.19 points. Final policy AutoDR seed 1 (D-190),
+  98.2 % on T-final.
+- **Figures F1–F10 and a one-command report** (`scripts/eval_report.py`,
+  `docs/figures/eval/`); limits for the thesis text in
+  `InBachelorErwähnen.md`.
+
+**Next branch: `p6-TestAusserhalb`** (worktree `Thesis Workflow Phase 6/p6-TestAusserhalb`):
+the out-of-distribution test at ×1.5 of the target range (D-055), a film strip
+and a force trace — plan `docs/eval_extra_runs_plan.md`. It needs new code, so
+it lives on its own branch; `p5-kraftsensor` keeps the evaluated state.
+
+## Status v2 (2026-09-06) — SUPERSEDED, history only (e.g. the force abort is 30 N today, `episodes_meta.json`)
 
 Every number below names the run that produced it. Nothing here is claimed
 without a training-PC run; see `rt_logs/VERDICTS.md`.

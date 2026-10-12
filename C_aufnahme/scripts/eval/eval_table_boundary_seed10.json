@@ -1,0 +1,55 @@
+{
+  "kind": "boundary",
+  "seed": 10,
+  "rng": "numpy.random.default_rng([10, 1])",
+  "rows_per_block": 150,
+  "blocks": [
+    {
+      "block": 0,
+      "key": "lat_r_hi",
+      "column": 0,
+      "nailed_to": 1.0
+    },
+    {
+      "block": 1,
+      "key": "yaw_lo",
+      "column": 2,
+      "nailed_to": 0.0
+    },
+    {
+      "block": 2,
+      "key": "yaw_hi",
+      "column": 2,
+      "nailed_to": 1.0
+    },
+    {
+      "block": 3,
+      "key": "tilt_hi",
+      "column": 3,
+      "nailed_to": 1.0
+    },
+    {
+      "block": 4,
+      "key": "start_height_hi",
+      "column": 5,
+      "nailed_to": 1.0
+    },
+    {
+      "block": 5,
+      "key": "friction_lo",
+      "column": 6,
+      "nailed_to": 0.0
+    },
+    {
+      "block": 6,
+      "key": "friction_hi",
+      "column": 6,
+      "nailed_to": 1.0
+    }
+  ],
+  "file": "eval_table_boundary_seed10.csv",
+  "n_rows": 1050,
+  "n_columns": 16,
+  "sha256": "03623206a216bde98e1d15dc11097281e8de1d985a6458ce341c2b0f586fb1a8",
+  "numpy": "2.5.0rc1"
+}

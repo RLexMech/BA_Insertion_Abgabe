@@ -1,0 +1,63 @@
+{
+  "schema": "applied-v1",
+  "code_marker": "insertion-osc-2026-09-03a",
+  "table": {
+    "path": "C:\\Users\\Simon\\Desktop\\Alexander_Pett\\temp\\Contactrich_Insertion\\Phase5_Robustheit_v1\\scripts\\eval\\eval_table_seed30.csv",
+    "sha256": "d26610dc6838b4b2e2b453e267468a898dde7f20bb2af8291047ad9cf50a0ece",
+    "rows": 1000,
+    "width": "target"
+  },
+  "bounds": {
+    "lat_r": [
+      0.0,
+      0.03
+    ],
+    "yaw": [
+      -0.08726646259971647,
+      0.08726646259971647
+    ],
+    "tilt": [
+      0.0,
+      0.17453292519943295
+    ],
+    "start_height": [
+      0.02,
+      0.12
+    ],
+    "friction": [
+      0.08,
+      0.2
+    ]
+  },
+  "fixture_pos_noise_xy_m": 0.005,
+  "grasp_obs_offset_x_m": 0.003,
+  "reset_joint_noise_scale_rad": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "written_at_policy_step": 1,
+  "columns": {
+    "row_id": "env index = table row index (autodr.table_rows)",
+    "lat_x_m": "commanded lateral start offset of the tip, x, POCKET frame, m",
+    "lat_y_m": "same, y",
+    "start_height_m": "commanded tip height above the entrance, pocket z, m",
+    "yaw_rad": "commanded pocket yaw about env z, rad",
+    "pocket_qw": "commanded pocket orientation quat_yaw * quat_tilt, wxyz, w >= 0; the tensor that went to write_root_pose_to_sim",
+    "pocket_qx": "see pocket_qw",
+    "pocket_qy": "see pocket_qw",
+    "pocket_qz": "see pocket_qw",
+    "pocket_dx_m": "commanded pocket position minus its base position, x, ENV frame, m",
+    "pocket_dy_m": "same, y",
+    "grasp_obs_x_m": "grasp belief error on the OBSERVATION only (D-183), m",
+    "friction_cmd": "friction _apply_friction commanded; the one-shot D-111 value when the provider carries no friction",
+    "friction_robot_min": "PhysX read-back, robot, min over shapes and static+dynamic",
+    "friction_robot_max": "same, max",
+    "friction_fixture_min": "PhysX read-back, fixture, min",
+    "friction_fixture_max": "same, max"
+  },
+  "not_recorded": "the six joint-noise columns: their scale is reset_joint_noise_scale_rad above; the realised start pose (IK residual); the per-step observation noise"
+}

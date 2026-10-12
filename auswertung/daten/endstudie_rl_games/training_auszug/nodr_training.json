@@ -1,0 +1,19 @@
+{
+  "env": {
+    "dr_mode": "off",
+    "fixture_tilt_noise_rad": "0.0",
+    "fixture_tilt_rad": "0.0",
+    "fixture_yaw_noise_rad": "0.0",
+    "fixture_yaw_rad": "0.0",
+    "start_lateral_offset": "0.0"
+  },
+  "friction": 0.14,
+  "lat_r_mm": 0.0,
+  "source": "RT-244s1..s5 env.yaml + last scalars row",
+  "start_height_m": [
+    0.02,
+    0.27
+  ],
+  "tilt_deg": 0.0,
+  "yaw_abs_deg": 0.0
+}

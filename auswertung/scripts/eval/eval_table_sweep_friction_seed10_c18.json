@@ -1,0 +1,86 @@
+{
+  "kind": "sweep",
+  "dim": "friction",
+  "seed": 10,
+  "rng": "numpy.random.default_rng([10, 2]), one block drawn and tiled",
+  "rows_per_block": 125,
+  "centres": {
+    "lat_r": 0.0,
+    "yaw": 0.0,
+    "tilt": 0.0,
+    "start_height": 0.02,
+    "friction": 0.14
+  },
+  "source": "RT-264; x2.0 = farther OOD step of IndustReal (Tang et al. 2023) Table X; make_eval_table.py SWEEP_STEPS",
+  "blocks": [
+    {
+      "block": 0,
+      "key": "friction_lo_x0.5",
+      "column": 6,
+      "nailed_to": 0.25000000000000006,
+      "factor": 0.5,
+      "physical": 0.11000000000000001
+    },
+    {
+      "block": 1,
+      "key": "friction_lo_x1",
+      "column": 6,
+      "nailed_to": 0.0,
+      "factor": 1.0,
+      "physical": 0.08
+    },
+    {
+      "block": 2,
+      "key": "friction_lo_x1.5",
+      "column": 6,
+      "nailed_to": -0.25000000000000006,
+      "factor": 1.5,
+      "physical": 0.04999999999999999
+    },
+    {
+      "block": 3,
+      "key": "friction_lo_x2",
+      "column": 6,
+      "nailed_to": -0.5000000000000001,
+      "factor": 2.0,
+      "physical": 0.019999999999999983
+    },
+    {
+      "block": 4,
+      "key": "friction_hi_x0.5",
+      "column": 6,
+      "nailed_to": 0.75,
+      "factor": 0.5,
+      "physical": 0.17
+    },
+    {
+      "block": 5,
+      "key": "friction_hi_x1",
+      "column": 6,
+      "nailed_to": 1.0,
+      "factor": 1.0,
+      "physical": 0.2
+    },
+    {
+      "block": 6,
+      "key": "friction_hi_x1.5",
+      "column": 6,
+      "nailed_to": 1.25,
+      "factor": 1.5,
+      "physical": 0.23000000000000004
+    },
+    {
+      "block": 7,
+      "key": "friction_hi_x2",
+      "column": 6,
+      "nailed_to": 1.5,
+      "factor": 2.0,
+      "physical": 0.26
+    }
+  ],
+  "file": "eval_table_sweep_friction_seed10_c18.csv",
+  "n_rows": 1000,
+  "n_columns": 18,
+  "sha256": "ae1392ceeaaad034f824090a4c07bead0d796f332904c07c705353323759305c",
+  "numpy": "2.5.3"
+}

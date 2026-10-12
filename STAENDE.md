@@ -73,11 +73,14 @@ Erwartet: `97df8bf385e6138ba30b37d56852fb411fe6f5ce`. USD-Dateien aus `C:\Users\
 
 | | |
 |---|---|
-| Repo / Tag | `Ur5e_ContactRich_Insertion` / `stufe-C-aufnahme` = `5a6cc8e` (Linie `p2-rl-code` → … → `p5-kraftsensor`) |
-| Ordner hier | [C_aufnahme/](C_aufnahme/) |
+| Repo / Endstand | `Ur5e_ContactRich_Insertion` / `153b8b4` (24.09., Linie `p2-rl-code` → … → `p5-kraftsensor`) |
+| Tag | `stufe-C-aufnahme` = `5a6cc8e` (15.09.) = Trainingscode von RT-206s/RT-207s. Der Tag bleibt dort. |
+| Ordner hier | [C_aufnahme/](C_aufnahme/) = `153b8b4`. Dazu aus `ff2aadd8`: `rt_logs/RT-232_expectation.md`, `rt_logs/RT-272_expectation.md` (Läufe nach dem Commit). |
+| Code der Läufe (Kopfzeile `[rt_log] git:`) | Training RT-206s/RT-207s `5a6cc8e`, RT-231s `153b8b4`. Tests RT-222…225, RT-232 und Spur RT-272b `8299485d` (`code_commit` in jeder `eval_manifest.json`). |
+| Abstand zum Endstand | `git diff --stat 5a6cc8e 153b8b4 -- source`: 4 Dateien, +408/−29. Commits: `5f97b08c`, `deb51c02`, `500f59dd` (Modus `dr_mode=table` für die Tests), `3c6dabcd` (Modus `dr_mode=fixed_dr`, D-192). `git diff --stat 8299485d 153b8b4 -- source` enthält nur `3c6dabcd`. |
 | Endpolicy | RT-206s1 (AutoDR, Seed 1, `model_1499.pt`), gewählt in D-190. Training: 97,3 %. |
-| Trainingsbefehl | `.\scripts\rt_log.ps1 RT-206s1 python -u scripts/rsl_rl/train.py --task Ur5e-Insertion-Direct-v0 --num_envs 256 --headless --seed 1 --max_iterations 1500 env.dr_mode=autodr env.start_floor_m=-0.030 env.autodr_stall_buffers=3` (`rt_logs/RT-206_expectation.md`) |
-| Evaluation | Code `8299485d`, `play.py --eval-table`, deterministisch, 1000 Envs, je 1 Episode. RT-224 T-final: AutoDR s1 **0,982**, AutoDR-Mittel 0,970, No-DR-Mittel 0,262. RT-222 T-nominal 0,987, RT-223 T-auswahl 0,979, RT-225 T-grenze PASS (`rt_logs/VERDICTS.md:77-81`). Fixed-DR-Arm: RT-231/232. |
+| Trainingsbefehl | `.\scripts\rt_log.ps1 RT-206s1 python -u scripts/rsl_rl/train.py --task Ur5e-Insertion-Direct-v0 --num_envs 256 --headless --seed 1 --max_iterations 1500 env.dr_mode=autodr env.start_floor_m=-0.030 env.autodr_stall_buffers=3` (`rt_logs/RT-206_expectation.md`). No-DR (RT-207): `env.dr_mode=off`. Fixed-DR (RT-231): `env.dr_mode=fixed_dr` (`rt_logs/RT-231_expectation.md`). |
+| Evaluation | Code `8299485d`, `play.py --eval-table`, deterministisch, 1000 Envs, je 1 Episode. RT-224 T-final: AutoDR s1 **0,982**, AutoDR-Mittel 0,970, No-DR-Mittel 0,262. RT-222 T-nominal 0,987, RT-223 T-auswahl 0,979, RT-225 T-grenze PASS (`rt_logs/VERDICTS.md:77-81`). Fixed-DR-Arm: Training RT-231, Test RT-232, T-final-F je Seed 0 / 0 / 0,925 / 0,995 / 0,949 (Urteile in `D_factory/rt_logs/VERDICTS.md:82-83`). Daten: `auswertung/daten/experiment_C_rsl_rl/`. |
 | Roboter / Regler | UR5e + angeschweißtes Werkzeug, Schwerkraft an. **OSC** (Isaac Lab `OperationalSpaceController`), kp 100 N/m / 30, kritisch gedämpft (`T/insertion_env_cfg.py:213, 246-248`). |
 | Aktion | 6-D Posen-Delta (0:3 m, 3:6 rad), Clip ±1, 0,02 m / 0,097 rad pro Schritt, kein EMA. Neigungskegel 8,52°, Box ±0,08 m. 15 Hz, 256 Schritte = 17 s. |
 | Beobachtung | 28: Gelenkpos 0:6, Gelenkgeschw. 6:12, tip_rel 12:15, EE-Quat 15:19, cos/sin φ 19:21, Taschen-Quat 21:25, Kraft 25:28. Actor = Critic. MLP 128×128, **kein LSTM, keine vorige Aktion**. |
@@ -101,21 +104,61 @@ Copy-Item -Recurse ..\Phase5_Robustheit_v1\source\insertion\insertion\tasks\dire
 ```
 Erwartet: `5a6cc8e3f0f40e34952f5092e742ad9a28e1cff1`. Die Läufe von C nutzten `pip install -e source\insertion`. Es gibt immer nur eine solche Installation.
 
+**Endstand C (Fixed-DR-Training und Tests) holen (PowerShell):**
+```powershell
+cd C:\Users\Simon\Desktop\Alexander_Pett\temp\Contactrich_Insertion
+git clone --filter=blob:none --sparse --no-checkout https://github.com/RLexMech/Ur5e_ContactRich_Insertion.git Stufe_C_endstand
+cd Stufe_C_endstand
+git sparse-checkout set --no-cone "/rt_logs/**" "/scripts/**" "/source/**" "!**/CLAUDE.md"
+git checkout --detach 153b8b432b92b3218a392c5d1a1f377861603563
+git rev-parse HEAD
+```
+Erwartet: `153b8b432b92b3218a392c5d1a1f377861603563` (auf dem Laptop am 2026-10-12 geprüft: Klon von GitHub, `git rev-parse HEAD` gibt diesen Wert). Assets wie oben kopieren.
+
 ---
 
-## Stufe D – Annäherung an Factory (vorläufig bis RT-244)
+## Stufe D – Annäherung an Factory, Endkonfiguration (Kap. 4.5)
 
 | | |
 |---|---|
-| Repo / Tag | `Ur5e_ContactRich_Insertion` / `stufe-D-factory` = **offen** (Linie `p5_mitAktion` → `p5-rlgames`) |
-| Läufe bisher | RT-242s1..s5 AutoDR: 98,96–99,70 % (Epoche 91–100). RT-243s1..s5 Fixed-DR: s3 99,22 %, s4 99,63 %, s1/s2 0 %, s5 steigt noch. RT-244s1..s5 No-DR: läuft. |
-| Roboter / Regler | wie C (OSC, kp 100/30, 15 Hz, 256 Schritte). |
-| Aktion | 6-D, Clip ±1, **EMA 0,2**, 0,02 m / 0,097 rad, Box ±0,100 m / z 0,2915 m, Kegel 8,52°, Gier-Band ±12,30°. |
-| Beobachtung | 34 = C-Kanäle + vorige Aktion 28:34 (EMA-Zustand). Nur über die Befehlszeile (`env.obs_wrench_mode=force_prevact`). Critic mit wahrer Taschenlage. **LSTM 2×1024** + MLP [512,128,64]. |
-| Rauschen auf der Beobachtung | wie C + Gier-Glaubensfehler ±1,28° pro Episode (Befehlszeile). |
-| Reward / Erfolg | wie C, aber action_rate 0. |
-| Streuung | wie C, dazu Start bis 0,270 m, Aufnahme ±0,05 m in x/y/z (alle Arme), Home 0,400 m. Arme: AutoDR / Fixed-DR / No-DR. |
-| PPO | **rl_games**, `T/agents/rl_games_ppo_cfg.yaml` = Factory-YAML von Isaac Lab 2.3.2. Geändert: max_epochs 200 → 100, save_frequency 100 → 25, minibatch 512 → 1024. γ 0,995, lr 1e-4 adaptiv (KL 0,008), horizon 128, 4 Mini-Epochen, Entropie 0, Critic lr 1e-4. |
-| Evaluation | noch nicht gebaut (geplant in D-206). |
+| Repo / Tag | `Ur5e_ContactRich_Insertion` / `stufe-D-factory` = `c1a635e9` (30.09., Linie `p5_mitAktion` → `p5-rlgames`) |
+| Ordner hier | [D_factory/](D_factory/) = `c1a635e9`. `rt_logs/` nur mit den Dateien der zitierten Läufe: aus dem Commit `VERDICTS.md` und RT-233, 235, 236, 238, 239, 242, 243; aus `ff2aadd8` RT-244 (Fassung mit Ergebnis), 247, 253, 254, 260, 271. |
+| Code der Läufe (Kopfzeile `[rt_log] git:`) | Training RT-242s `e10c18b`, RT-243s `9219ab0`, RT-244s `7cd3992`. Tests (alle Blöcke der Endstudie) `c1a635e9` (`code_commit` in jeder `eval_manifest.json`). Fortsetzung RT-253s `c1a635e`. MLP-Ablation RT-260s `ddc9d0b`. Spur RT-271: s2 `13072c3`, s4 `8be1e99`. D8: kein Commit im Log (Wiedergabe von RT-243s4, 03.10.). |
+| Abstand zum Endstand | `git diff --stat e10c18bb c1a635e9 -- source scripts/rl_games`: `play.py`, `run_eval.ps1` (Evaluation) und in `source/` nur D-206 (3), die Option `dr_table_allow_outside` (Standard aus, außerhalb von `dr_mode=table` verweigert). `9219ab0` und `7cd3992` haben in `source/` denselben Abstand. `ddc9d0b`: `git diff c1a635e9 ddc9d0b -- source scripts/rl_games` ist leer. RT-271 läuft auf späterem Code (u. a. `00d01d49`: `--trace-obs` in `play.py`). |
+| Ergebnis Training (Epoche 100) | Mittel über 5 Seeds: Auto-DR 99,4 %, No-DR 99,7 %, Fixed-DR 40,9 % (Tab. A-3, `auswertung/daten/endstudie_rl_games/training_auszug/curves.csv`). |
+| Ergebnis Haupttest (RT-247/248, je 1000 Testfälle) | Auto-DR 997 / 989 / 989 / 991 / 992. Fixed-DR 0 / 0 / 982 / 995 / 78. No-DR 99 / 155 / 178 / 98 / 96 (Seeds 1–5, Tab. A-4, `…/evaluation/summary.json`). Keine finale Policy (D-225, nur im Original-Repo). |
+| Trainingsbefehl | `.\scripts\rt_log.ps1 RT-242s1 python -u scripts/rl_games/train.py --task Ur5e-Insertion-Direct-v0 --num_envs 256 --headless --seed 1 env.dr_mode=autodr env.start_floor_m=-0.030 env.autodr_stall_buffers=3 env.obs_wrench_mode=force_prevact env.pocket_obs_yaw_rad=0.0223402` (`rt_logs/RT-242_expectation.md`). Fixed-DR (RT-243): `env.dr_mode=fixed_dr`. No-DR (RT-244): `env.dr_mode=off`. MLP-Ablation (RT-260): dazu `"~agent.params.network.rnn" "~agent.params.config.central_value_config.network.rnn"`. Fortsetzung (RT-253): `--checkpoint <ep_100> --max_iterations 250`. |
+| Testbefehle | `.\scripts\rl_games\run_eval.ps1 -Block T-final -Rt RT-247`, `-Block T-final-F -Rt RT-248`, `-Block T-nominal -Rt RT-249`, `-Block T-nominal-F -Rt RT-250` (`rt_logs/RT-247_expectation.md:78-81`). `-Block T-ood -Rt RT-254`, `-Block T-final -Rt RT-255 -Noise pn2` / `RT-256 -Noise gx2` / `RT-257 -Noise py2` (`rt_logs/RT-254_expectation.md:83-86`). Fixed-DR für T-ood und Rauschen: `rt_log.ps1`-Schleife RT-258/259 (`rt_logs/RT-254_expectation.md:108`). |
+| Roboter / Regler | wie C: OSC, kp 100 / 30 (`T/insertion_env_cfg.py:250-251`), `control_mode = "osc"` (`T/insertion_env_cfg.py:213`). OSC setzt 8 Physikschritte je Aktion (`osc_decimation`, `T/insertion_env_cfg.py:339`, angewandt in `T/insertion_env_cfg.py:1952-1958`): 120 Hz Physik, 15 Hz Policy, 256 Schritte = 17,1 s. |
+| Aktion | 6-D, Clip ±1, **EMA 0,2** (`T/insertion_env_cfg.py:272`), 0,02 m / 0,097 rad (`T/insertion_env_cfg.py:260-261`). Box ±0,100 m (`:293`), z 0,2915 m (`:316`), Kegel 8,52° (`:321`), Gier-Band ±12,30° (`:330`). |
+| Beobachtung | 34 = C-Kanäle + vorige, geglättete Aktion 28:34. Nur über die Befehlszeile (`env.obs_wrench_mode=force_prevact`, Standard `"force"` in `T/insertion_env_cfg.py:236`). Critic: dieselben 34 aus dem wahren Zustand (`T/insertion_env.py:2226-2246`). **LSTM 2×1024** + MLP [512,128,64] (`T/agents/rl_games_ppo_cfg.yaml:32, 41-47`). |
+| Rauschen auf der Beobachtung | Taschenlage ±5 mm je Achse (`T/insertion_env_cfg.py:1233`, Name `std`, wirkt als Halbbreite der Gleichverteilung), Griff ±3 mm (`:1267`), Kraft σ 3,5 N je Schritt. Gier-Glaubensfehler ±1,28° je Episode nur über die Befehlszeile (`env.pocket_obs_yaw_rad=0.0223402`, Standard 0 in `:1278`). |
+| Reward / Erfolg | wie C, aber Aktionsrate 0 (`T/insertion_env_cfg.py:1456`). SDF mit 64 000 Punkten (`:1486`). Abbruch bei 30 N. |
+| Streuung | Aufnahme ±0,05 m in x/y/z, alle Arme (`T/insertion_env_cfg.py:791, 800`). Starthöhe bis 0,270 m (`T/autodr.py:458`), Reibung 0,08–0,20 (`T/autodr.py:464`), Home 0,400 m (`T/insertion_tasks_cfg.py:119`). Arme: Auto-DR / Fixed-DR / No-DR. |
+| PPO | **rl_games**, `T/agents/rl_games_ppo_cfg.yaml` = Factory-YAML von Isaac Lab 2.3.2. Geändert: max_epochs 200 → 100 (`:74`), save_frequency 100 → 25 (`:76`), minibatch 512 → 1024 (`:83`). γ 0,995 (`:67`), λ 0,95 (`:68`), lr 1e-4 adaptiv, KL 0,008 (`:69-72`), horizon 128 (`:82`), 4 Mini-Epochen (`:84`), Entropie 0 (`:79`), Critic lr 1e-4 (`:93`). |
+| Evaluation | `scripts/rl_games/run_eval.ps1` + `scripts/rl_games/play.py`, deterministisch, Tabelle `scripts/eval/eval_table_seed10_c18.csv` (T-final), T-ood `eval_table_ood_seed10_c18.csv`. Daten: `auswertung/daten/endstudie_rl_games/`. |
 
-Karte, Tag und Pull-Befehl werden nach RT-244 und der Evaluation festgelegt.
+**Tabellen der Arbeit → Code** (geprüft am 2026-10-12 gegen `D_factory/` und `RT-242s1_env.yaml` / `_agent.yaml`). Die Werte der Tabellen 4-10, 4-11, 4-12, 4-13, 4-14 und 4-15 stehen in den Zeilen oben oder in diesen Zeilen:
+- Tab. 4-11: Antriebe ohne Steifigkeit (`T/insertion_env.py:1649-1652`), Aufnahme kinematisch (`T/insertion_env.py:1560-1562`), Schnittkraft mit Abzug der Gewichtskraft (`T/insertion_env.py:2141-2149`), Glättung 0,25 (`T/insertion_env_cfg.py:1286`), Schwerkraft und TGS 16 / 1 (`T/ur5e_cfg.py:189, 199-200`), dt 1/120 (`T/insertion_env_cfg.py:620`).
+- Tab. 4-14: Kernbreiten und b (`T/insertion_tasks_cfg.py:1623, 891, 1520, 1627-1629`), δth 0,2938 mm (`T/insertion_tasks_cfg.py:1591`), Mindesttiefe 10,8 mm (`T/insertion_env_cfg.py:1319`), w_p 100 (`T/insertion_env_cfg.py:1334`), Zeitstrafe (`T/insertion_env_cfg.py:1393, 1401`), Kraftabbruch (`T/insertion_env_cfg.py:1080, 1106`).
+- Tab. 4-15: alle Werte in `T/agents/rl_games_ppo_cfg.yaml` (Zeilen oben), 256 Envs über `--num_envs 256`.
+
+Abweichungen zwischen Arbeit und Code (die Arbeit wurde nicht geändert):
+1. Tab. 4-8 nennt das Spiel von C (0,588 / 1,600 mm) als **Gesamtspiel**, das von B (1,0 mm) **je Seite**. Je Seite wären es bei C 0,294 / 0,800 mm.
+2. Kap. 4.5.5 sagt, abweichend von Factory seien nur Epochen und Mini-Batch-Größe. Im Code weichen auch das Checkpoint-Intervall (25 statt 100) und die Zahl der Envs (256 statt 128) ab (Kommentare in `T/agents/rl_games_ppo_cfg.yaml:76, 83`).
+3. Tab. 4-15 nennt für den Critic eine feste Lernrate 1e-4. Die YAML setzt auch für den Critic `lr_schedule: adaptive` mit KL 0,008 (`:94-95`). Ob rl_games 1.6.1 sie anpasst, ist nicht geprüft.
+4. Tab. 4-13 nennt den Gierfehler nur beim Quaternion der Aufnahme. Er dreht auch die Lage des Bezugspunkts und cos φ / sin φ (`T/insertion_env.py:2092-2113`). Der Text in Kap. 4.5.3 sagt das richtig.
+5. `RT-242s1_env.yaml` zeigt `decimation: 2` und `observation_space: 28`. Grund: `scripts/rl_games/train.py` schreibt die YAML vor dem Aufbau der Umgebung. `RT-242s1_demo_metrics.json` zeigt die echten Werte: 15 Hz, 17,07 s, `force_prevact-34`.
+
+Nicht geprüft: Verhalten der Bibliotheken (Anpassung der Lernrate, Start-log σ), die SDF-Auflösung in den USD-Dateien.
+
+**Stand auf den Trainings-PC holen (PowerShell):**
+```powershell
+cd C:\Users\Simon\Desktop\Alexander_Pett\temp\Contactrich_Insertion
+git clone --filter=blob:none --sparse --branch stufe-D-factory https://github.com/RLexMech/Ur5e_ContactRich_Insertion.git Stufe_D_factory
+cd Stufe_D_factory
+git sparse-checkout set --no-cone "/rt_logs/**" "/scripts/**" "/source/**" "!**/CLAUDE.md"
+git rev-parse HEAD
+Copy-Item -Recurse ..\Phase5_RlGames_v1\source\insertion\insertion\tasks\direct\insertion\assets source\insertion\insertion\tasks\direct\insertion\assets
+```
+Erwartet: `c1a635e969f72efd5b9062d2c8994befd29ff100`. Am 2026-10-12 geprüft mit `git checkout --detach c1a635e969f72efd5b9062d2c8994befd29ff100` statt `--branch` (der Tag fehlt noch). Die Läufe von D nutzten `pip install -e source\insertion` aus `Phase5_RlGames_v1`. Es darf nur eine solche Installation geben (RT-242a–d waren ungültig, weil `insertion` aus einem anderen Klon kam, `rt_logs/VERDICTS.md:93`).

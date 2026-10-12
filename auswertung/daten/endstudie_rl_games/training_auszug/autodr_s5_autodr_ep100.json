@@ -1,0 +1,142 @@
+{
+ "format": "autodr-envstate-1",
+ "run": "09-28_20-01-53__RT-242s5_autodr_offset50mm_currOFF_start+20mm_floor-30mm_seed5",
+ "seed": 5,
+ "autodr": {
+  "format": "autodr-3",
+  "floor": {
+   "f0": -0.03,
+   "top": 0.02,
+   "n_steps": 5
+  },
+  "keys": [
+   "lat_r_hi",
+   "yaw_lo",
+   "yaw_hi",
+   "tilt_hi",
+   "start_height_hi",
+   "friction_lo",
+   "friction_hi",
+   "start_height_floor"
+  ],
+  "steps": {
+   "lat_r_hi": 10,
+   "yaw_lo": 10,
+   "yaw_hi": 10,
+   "tilt_hi": 10,
+   "start_height_hi": 10,
+   "friction_lo": 10,
+   "friction_hi": 10,
+   "start_height_floor": 5
+  },
+  "buf_n": {
+   "lat_r_hi": 14,
+   "yaw_lo": 87,
+   "yaw_hi": 101,
+   "tilt_hi": 216,
+   "start_height_hi": 198,
+   "friction_lo": 101,
+   "friction_hi": 56,
+   "start_height_floor": 98
+  },
+  "buf_s": {
+   "lat_r_hi": 14,
+   "yaw_lo": 85,
+   "yaw_hi": 101,
+   "tilt_hi": 214,
+   "start_height_hi": 198,
+   "friction_lo": 101,
+   "friction_hi": 56,
+   "start_height_floor": 43
+  },
+  "dropped": {
+   "lat_r_hi": 2,
+   "yaw_lo": 1,
+   "yaw_hi": 0,
+   "tilt_hi": 1,
+   "start_height_hi": 1,
+   "friction_lo": 1,
+   "friction_hi": 2,
+   "start_height_floor": 4
+  },
+  "last_rate": {
+   "lat_r_hi": 1.0,
+   "yaw_lo": 0.9916666666666667,
+   "yaw_hi": 1.0,
+   "tilt_hi": 0.9875,
+   "start_height_hi": 0.9958333333333333,
+   "friction_lo": 1.0,
+   "friction_hi": 0.9875,
+   "start_height_floor": 0.8291666666666667
+  },
+  "holds": {
+   "lat_r_hi": 0,
+   "yaw_lo": 0,
+   "yaw_hi": 0,
+   "tilt_hi": 0,
+   "start_height_hi": 0,
+   "friction_lo": 0,
+   "friction_hi": 0,
+   "start_height_floor": 0
+  },
+  "stall_buffers": 3,
+  "bounds_version": 75,
+  "buffer_m": 240,
+  "p_boundary": 0.5,
+  "advance_at": 0.8,
+  "retreat_at": 0.1,
+  "dims": [
+   {
+    "name": "lat_r",
+    "unit": "m",
+    "centre": 0.0,
+    "lo_max": 0.0,
+    "hi_max": 0.03,
+    "one_sided": true,
+    "n_steps": 10,
+    "source": "[TESTWERT] Phase-5 ceiling, decided not derived -- D-178 (5)"
+   },
+   {
+    "name": "yaw",
+    "unit": "rad",
+    "centre": 0.0,
+    "lo_max": -0.08726646259971647,
+    "hi_max": 0.08726646259971647,
+    "one_sided": false,
+    "n_steps": 10,
+    "source": "[TESTWERT] Phase-5 ceiling, decided not derived -- D-178 (5)"
+   },
+   {
+    "name": "tilt",
+    "unit": "rad",
+    "centre": 0.0,
+    "lo_max": 0.0,
+    "hi_max": 0.17453292519943295,
+    "one_sided": true,
+    "n_steps": 10,
+    "source": "[TESTWERT] Phase-5 ceiling, decided not derived -- D-178 (5)"
+   },
+   {
+    "name": "start_height",
+    "unit": "m",
+    "centre": 0.02,
+    "lo_max": 0.02,
+    "hi_max": 0.27,
+    "one_sided": true,
+    "n_steps": 10,
+    "source": "[TESTWERT] hi = ceiling, decided not derived -- D-202 (was 0.120, D-179 (1)); lo = the centre H_min, not yet measured -- D-179 (4)"
+   },
+   {
+    "name": "friction",
+    "unit": "1",
+    "centre": 0.14,
+    "lo_max": 0.08,
+    "hi_max": 0.2,
+    "one_sided": false,
+    "n_steps": 10,
+    "source": "DuPont PA66/POM table span, assumed PA6/POM pairing, no PA6 value -- D-181 (2)"
+   }
+  ]
+ },
+ "checkpoint": "last_ur5e_insertion_ep_100_rew_565.5173.pth"
+}

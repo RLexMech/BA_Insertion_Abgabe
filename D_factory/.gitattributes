@@ -1,0 +1,8 @@
+# Both machines run Windows (CLAUDE.md, "Two machines, one repository").
+# The rule below is kept anyway: a .sh file is read by a POSIX shell
+# (Git Bash, WSL), and those want LF. No .sh file is tracked today.
+*.sh text eol=lf
+# The evaluation tables: RowTable.from_csv hashes the RAW BYTES, and
+# core.autocrlf is true on the laptop. -text = git never touches a line
+# ending, so the SHA-256 is the same on both machines (eval_plan.md step A).
+scripts/eval/*.csv -text

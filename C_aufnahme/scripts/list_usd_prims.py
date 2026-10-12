@@ -99,6 +99,13 @@ def main() -> None:
             ("physics:mass", "mass"),
             ("physics:diagonalInertia", "diagInertia"),
             ("physics:centerOfMass", "com"),
+            # Solver iteration counts AS AUTHORED IN THE FILE, i.e. before any
+            # ArticulationRootPropertiesCfg override at spawn. The env's startup
+            # report reads the stage after that override and cannot show this.
+            ("physxArticulation:solverPositionIterationCount", "artPosIters"),
+            ("physxArticulation:solverVelocityIterationCount", "artVelIters"),
+            ("physxRigidBody:solverPositionIterationCount", "rbPosIters"),
+            ("physxRigidBody:solverVelocityIterationCount", "rbVelIters"),
         ):
             attr = prim.GetAttribute(attr_name)
             if attr and attr.IsValid() and attr.HasAuthoredValue():

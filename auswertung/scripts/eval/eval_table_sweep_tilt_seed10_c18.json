@@ -1,0 +1,86 @@
+{
+  "kind": "sweep",
+  "dim": "tilt",
+  "seed": 10,
+  "rng": "numpy.random.default_rng([10, 2]), one block drawn and tiled",
+  "rows_per_block": 125,
+  "centres": {
+    "lat_r": 0.0,
+    "yaw": 0.0,
+    "tilt": 0.0,
+    "start_height": 0.02,
+    "friction": 0.14
+  },
+  "source": "RT-264; x2.0 = farther OOD step of IndustReal (Tang et al. 2023) Table X; make_eval_table.py SWEEP_STEPS",
+  "blocks": [
+    {
+      "block": 0,
+      "key": "tilt_hi_x0.25",
+      "column": 3,
+      "nailed_to": 0.25,
+      "factor": 0.25,
+      "physical": 0.04363323129985824
+    },
+    {
+      "block": 1,
+      "key": "tilt_hi_x0.5",
+      "column": 3,
+      "nailed_to": 0.5,
+      "factor": 0.5,
+      "physical": 0.08726646259971647
+    },
+    {
+      "block": 2,
+      "key": "tilt_hi_x0.75",
+      "column": 3,
+      "nailed_to": 0.75,
+      "factor": 0.75,
+      "physical": 0.1308996938995747
+    },
+    {
+      "block": 3,
+      "key": "tilt_hi_x1",
+      "column": 3,
+      "nailed_to": 1.0,
+      "factor": 1.0,
+      "physical": 0.17453292519943295
+    },
+    {
+      "block": 4,
+      "key": "tilt_hi_x1.25",
+      "column": 3,
+      "nailed_to": 1.25,
+      "factor": 1.25,
+      "physical": 0.2181661564992912
+    },
+    {
+      "block": 5,
+      "key": "tilt_hi_x1.5",
+      "column": 3,
+      "nailed_to": 1.5,
+      "factor": 1.5,
+      "physical": 0.2617993877991494
+    },
+    {
+      "block": 6,
+      "key": "tilt_hi_x1.75",
+      "column": 3,
+      "nailed_to": 1.75,
+      "factor": 1.75,
+      "physical": 0.30543261909900765
+    },
+    {
+      "block": 7,
+      "key": "tilt_hi_x2",
+      "column": 3,
+      "nailed_to": 2.0,
+      "factor": 2.0,
+      "physical": 0.3490658503988659
+    }
+  ],
+  "file": "eval_table_sweep_tilt_seed10_c18.csv",
+  "n_rows": 1000,
+  "n_columns": 18,
+  "sha256": "f6a3f53858a65e5b26008681a937030e4b17b90385cfb4ffa9e201ade1bb0df5",
+  "numpy": "2.5.3"
+}

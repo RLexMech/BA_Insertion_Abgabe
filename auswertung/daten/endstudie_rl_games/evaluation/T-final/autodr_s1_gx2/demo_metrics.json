@@ -1,0 +1,483 @@
+{
+  "episodes": 6006,
+  "success_rate_recent": 0.998,
+  "episodes_to_threshold": 519,
+  "threshold": 0.9,
+  "recent_window_episodes": 2000,
+  "success_rate_cumulative": 0.9975024975024975,
+  "mean_max_depth_mm": 34.99950260296464,
+  "peg_side_m": 0.03,
+  "pocket_side_m": 0.032,
+  "side_clearance_mm": 1.0000000000000009,
+  "yaw_window_deg": 3.9596380797353943,
+  "play_x_mm": 0.5876000000000076,
+  "play_y_mm": 1.600000000000018,
+  "reset_joint_noise_rad": 0.0,
+  "reset_yaw_noise_rad": 0.0,
+  "start_tip_above_entrance_mm": 20.0,
+  "start_lateral_offset_m": 0.0,
+  "success_by_lateral_bin": [
+    {
+      "lateral_mm_from": 0.0,
+      "lateral_mm_to": 6.0,
+      "episodes": 109,
+      "success_rate": 1.0
+    },
+    {
+      "lateral_mm_from": 6.0,
+      "lateral_mm_to": 12.0,
+      "episodes": 245,
+      "success_rate": 1.0
+    },
+    {
+      "lateral_mm_from": 12.0,
+      "lateral_mm_to": 18.0,
+      "episodes": 366,
+      "success_rate": 1.0
+    },
+    {
+      "lateral_mm_from": 18.0,
+      "lateral_mm_to": 24.0,
+      "episodes": 521,
+      "success_rate": 0.9980806142034548
+    },
+    {
+      "lateral_mm_from": 24.0,
+      "lateral_mm_to": 30.0,
+      "episodes": 759,
+      "success_rate": 0.9960474308300395
+    }
+  ],
+  "start_tip_above_entrance_low_mm": 20.0,
+  "start_floor_m": null,
+  "start_floor_steps": null,
+  "autodr_stall_buffers": 0,
+  "success_by_start_height_bin": [
+    {
+      "start_mm_from": null,
+      "start_mm_to": -20.0,
+      "episodes": 0,
+      "success_rate": null
+    },
+    {
+      "start_mm_from": -20.0,
+      "start_mm_to": -10.0,
+      "episodes": 0,
+      "success_rate": null
+    },
+    {
+      "start_mm_from": -10.0,
+      "start_mm_to": 0.0,
+      "episodes": 0,
+      "success_rate": null
+    },
+    {
+      "start_mm_from": 0.0,
+      "start_mm_to": 10.0,
+      "episodes": 0,
+      "success_rate": null
+    },
+    {
+      "start_mm_from": 10.0,
+      "start_mm_to": 20.0,
+      "episodes": 0,
+      "success_rate": null
+    },
+    {
+      "start_mm_from": 20.0,
+      "start_mm_to": 70.0,
+      "episodes": 511,
+      "success_rate": 1.0
+    },
+    {
+      "start_mm_from": 70.0,
+      "start_mm_to": 120.0,
+      "episodes": 487,
+      "success_rate": 0.997946611909651
+    },
+    {
+      "start_mm_from": 120.0,
+      "start_mm_to": 170.0,
+      "episodes": 392,
+      "success_rate": 0.9974489795918368
+    },
+    {
+      "start_mm_from": 170.0,
+      "start_mm_to": 220.0,
+      "episodes": 349,
+      "success_rate": 0.997134670487106
+    },
+    {
+      "start_mm_from": 220.0,
+      "start_mm_to": 270.0,
+      "episodes": 261,
+      "success_rate": 0.9961685823754789
+    }
+  ],
+  "force_abort_by_start_height_bin": [
+    {
+      "start_mm_from": null,
+      "start_mm_to": -20.0,
+      "episodes": 0,
+      "force_abort_rate": null
+    },
+    {
+      "start_mm_from": -20.0,
+      "start_mm_to": -10.0,
+      "episodes": 0,
+      "force_abort_rate": null
+    },
+    {
+      "start_mm_from": -10.0,
+      "start_mm_to": 0.0,
+      "episodes": 0,
+      "force_abort_rate": null
+    },
+    {
+      "start_mm_from": 0.0,
+      "start_mm_to": 10.0,
+      "episodes": 0,
+      "force_abort_rate": null
+    },
+    {
+      "start_mm_from": 10.0,
+      "start_mm_to": 20.0,
+      "episodes": 0,
+      "force_abort_rate": null
+    },
+    {
+      "start_mm_from": 20.0,
+      "start_mm_to": 70.0,
+      "episodes": 511,
+      "force_abort_rate": 0.0
+    },
+    {
+      "start_mm_from": 70.0,
+      "start_mm_to": 120.0,
+      "episodes": 487,
+      "force_abort_rate": 0.002053388090349076
+    },
+    {
+      "start_mm_from": 120.0,
+      "start_mm_to": 170.0,
+      "episodes": 392,
+      "force_abort_rate": 0.002551020408163265
+    },
+    {
+      "start_mm_from": 170.0,
+      "start_mm_to": 220.0,
+      "episodes": 349,
+      "force_abort_rate": 0.0028653295128939827
+    },
+    {
+      "start_mm_from": 220.0,
+      "start_mm_to": 270.0,
+      "episodes": 261,
+      "force_abort_rate": 0.0038314176245210726
+    }
+  ],
+  "home_tip_above_entrance_mm": 415.00000000000006,
+  "start_pose_solve_last_residual_mm": 0.00800498037278885,
+  "start_pose_solve_worst_residual_mm": 0.04802995681529865,
+  "start_pose_solve_last_iterations": 6,
+  "start_pose_solve_tol_mm": 0.05,
+  "start_pose_solve_unconverged_resets": 0,
+  "start_pose_solve_flags_dropped_envs": 0,
+  "dr_mode": "table",
+  "dr_state": {
+    "mode": "fixed",
+    "bounds_version": 0,
+    "bounds": {
+      "lat_r": [
+        0.0,
+        0.03
+      ],
+      "yaw": [
+        -0.08726646259971647,
+        0.08726646259971647
+      ],
+      "tilt": [
+        0.0,
+        0.17453292519943295
+      ],
+      "start_height": [
+        0.02,
+        0.27
+      ],
+      "friction": [
+        0.08,
+        0.2
+      ]
+    },
+    "steps": {
+      "lat_r_hi": 10,
+      "yaw_lo": 10,
+      "yaw_hi": 10,
+      "tilt_hi": 10,
+      "start_height_hi": 10,
+      "friction_lo": 10,
+      "friction_hi": 10
+    },
+    "fill": {
+      "lat_r_hi": 0,
+      "yaw_lo": 0,
+      "yaw_hi": 0,
+      "tilt_hi": 0,
+      "start_height_hi": 0,
+      "friction_lo": 0,
+      "friction_hi": 0
+    },
+    "all_at_max": true,
+    "testwert": [
+      "lat_r",
+      "yaw",
+      "tilt",
+      "start_height"
+    ]
+  },
+  "dr_fresh": {
+    "n": 2000,
+    "min": 2000,
+    "rate": 0.998,
+    "boundary_n": 0,
+    "boundary_rate": null,
+    "all_at_max": true
+  },
+  "friction_applied": {
+    "mean": 0.13973090781271458,
+    "min": 0.08001416176557541,
+    "max": 0.19988498091697693,
+    "episodes_in_window": 2000
+  },
+  "friction_write_ms": {
+    "mean": 0.5894050636733509,
+    "max": 15.479599824175239,
+    "samples_in_window": 237,
+    "window": 1000
+  },
+  "fixture_pos_noise_xy_m": 0.05,
+  "fixture_pos_noise_z_m": 0.05,
+  "fixture_yaw_noise_rad": 0.0,
+  "obs_noise_pocket_pos_std_m": 0.005,
+  "force_obs_noise_std_n": 3.5,
+  "obs_wrench_mode": "force_prevact",
+  "obs_version": "force_prevact-34",
+  "torque_obs_noise_std_nm": 0.0,
+  "grasp_obs_offset_x_m": 0.006,
+  "pocket_obs_yaw_rad": 0.0223402,
+  "fixture_tilt_rad": 0.0,
+  "fixture_yaw_rad": 0.0,
+  "fixture_tilt_noise_rad": 0.0,
+  "success_by_tilt_bin": [
+    {
+      "tilt_deg_from": 0.0,
+      "tilt_deg_to": 2.0,
+      "episodes": 469,
+      "success_rate": 1.0
+    },
+    {
+      "tilt_deg_from": 2.0,
+      "tilt_deg_to": 4.0,
+      "episodes": 429,
+      "success_rate": 0.9976689976689976
+    },
+    {
+      "tilt_deg_from": 4.0,
+      "tilt_deg_to": 6.0,
+      "episodes": 336,
+      "success_rate": 1.0
+    },
+    {
+      "tilt_deg_from": 6.0,
+      "tilt_deg_to": 8.0,
+      "episodes": 396,
+      "success_rate": 0.9949494949494949
+    },
+    {
+      "tilt_deg_from": 8.0,
+      "tilt_deg_to": 10.0,
+      "episodes": 370,
+      "success_rate": 0.9972972972972973
+    }
+  ],
+  "success_by_yaw_bin": [
+    {
+      "yaw_deg_from": 0.0,
+      "yaw_deg_to": 1.0,
+      "episodes": 403,
+      "success_rate": 0.9975186104218362
+    },
+    {
+      "yaw_deg_from": 1.0,
+      "yaw_deg_to": 2.0,
+      "episodes": 371,
+      "success_rate": 1.0
+    },
+    {
+      "yaw_deg_from": 2.0,
+      "yaw_deg_to": 3.0,
+      "episodes": 418,
+      "success_rate": 0.9976076555023924
+    },
+    {
+      "yaw_deg_from": 3.0,
+      "yaw_deg_to": 4.0,
+      "episodes": 404,
+      "success_rate": 0.995049504950495
+    },
+    {
+      "yaw_deg_from": 4.0,
+      "yaw_deg_to": 5.0,
+      "episodes": 404,
+      "success_rate": 1.0
+    }
+  ],
+  "action_scale_rad": 0.02,
+  "joint_target_lag_rad": {
+    "episodes": 2000,
+    "max": 0.0,
+    "max_steps": 0.0,
+    "success_mean": 0.0,
+    "success_p95": 0.0,
+    "success_max": 0.0,
+    "success_mean_steps": 0.0,
+    "success_p95_steps": 0.0,
+    "success_max_steps": 0.0,
+    "success_episodes": 1996,
+    "failure_mean": 0.0,
+    "failure_p95": 0.0,
+    "failure_max": 0.0,
+    "failure_mean_steps": 0.0,
+    "failure_p95_steps": 0.0,
+    "failure_max_steps": 0.0,
+    "failure_episodes": 4
+  },
+  "force_norm_n": {
+    "episodes": 2000,
+    "mean_n": 9.921278192102909,
+    "p50_n": 8.921213150024414,
+    "p95_n": 19.40483856201172,
+    "p99_n": 24.51865005493164,
+    "max_n": 32.596561431884766,
+    "success_p95_n": 19.348161697387695,
+    "failure_p95_n": 32.596561431884766,
+    "f_max_n": 30.0,
+    "over_f_max": 4
+  },
+  "torque_norm_nm": {
+    "episodes": 2000,
+    "obs_wrench_mode": "force_prevact",
+    "wrench_valid_frac": 0.9724150197628458,
+    "mean_nm": 0.36446119704656305,
+    "p50_nm": 0.3434083163738251,
+    "p95_nm": 0.6434146761894226,
+    "p99_nm": 0.8474233150482178,
+    "max_nm": 1.2442331314086914
+  },
+  "interpen_max_mm": {
+    "episodes": 2000,
+    "mean_mm": 0.1495533019162849,
+    "p50_mm": 0.12067705392837524,
+    "p95_mm": 0.3356561064720154,
+    "p99_mm": 0.7340870797634125,
+    "max_mm": 1.104503870010376,
+    "thresh_mm": 0.2938000000000038,
+    "over_thresh": 169
+  },
+  "stage1_lateral_y_mm": {
+    "episodes": 2000,
+    "mean_mm": 4.240968026468181,
+    "p50_mm": 3.439205000177026,
+    "p95_mm": 10.80708485096693,
+    "p99_mm": 15.212342143058777,
+    "max_mm": 25.35860985517502,
+    "reach_offset_mm": 7.8847000000000085,
+    "stage1_allows_mm": 8.7,
+    "over_reach": 248
+  },
+  "reward_terms_recent_mean": {
+    "episodes": 2000,
+    "kernels": 7.455082082509994,
+    "engaged": 5.448619691371918,
+    "success": 0.9697473162412643,
+    "progress": 3.3074300321936607,
+    "time": -0.14923046875,
+    "action_rate": 0.0,
+    "success_lump": 580.2364708824158,
+    "abort": -0.002,
+    "tilt_shaping": 0.0,
+    "total": 597.2661195359827
+  },
+  "success_depth_invariant_violations": {
+    "recent": 0,
+    "cumulative": 0,
+    "window_episodes": 2000
+  },
+  "below_fixture_rate": {
+    "recent": 0.0,
+    "episodes": 0,
+    "window_episodes": 2000,
+    "underside_depth_mm": 46.0
+  },
+  "force_abort_rate": 0.002,
+  "mean_success_episode_steps": 38.188,
+  "episode_length_s": 17.066666666666666,
+  "num_envs": 1000,
+  "code_marker": "insertion-osc-2026-09-03a",
+  "rl_placeholders": {
+    "force_abort_f_max_n": 30.0,
+    "engaged_depth_m": 0.010799999999999999,
+    "abort_payment": -1.0,
+    "osc_kp_pos": 100.0,
+    "osc_kp_rot": 30.0,
+    "osc_pos_step_limit_m": 0.02,
+    "osc_rot_step_limit_rad": 0.097,
+    "action_ema_factor": 0.2,
+    "osc_pos_clamp_m": 0.1,
+    "osc_pos_clamp_z_m": 0.2915,
+    "osc_yaw_clamp_rad": 0.21467549799530256,
+    "osc_decimation": 8,
+    "obs_noise_pocket_pos_std_m": 0.005,
+    "force_obs_noise_std_n": 3.5,
+    "torque_obs_noise_std_nm": 0.0,
+    "grasp_obs_offset_x_m": 0.006,
+    "pocket_obs_yaw_rad": 0.0223402
+  },
+  "control_mode": "osc",
+  "policy_rate_hz": 15.0,
+  "curriculum_enabled": false,
+  "rung_step_sizes": null,
+  "spawn_workcell_block": false,
+  "proxy_task_values": {
+    "cfg.w_depth_progress": {
+      "value": 100.0,
+      "mark": "[proxy] the square-peg proxy's reward_w_depth, paid per metre of NEW gated max depth (D-165). The proxy solved 1 mm clearance with it at 100; nothing on this task has sized it. Zero switches the term off and reproduces the pre-D-165 reward."
+    },
+    "cfg.held_asset.side": {
+      "value": 0.03,
+      "mark": "[proxy] the held body modelled as a SQUARE of this side. The real part is rectangular with lugs (PART_BODY_X / PART_BBOX_M). Read by the four-corner gate; moves with the SDF rework (D-109), not alone."
+    },
+    "cfg.fixed_asset.side": {
+      "value": 0.032,
+      "mark": "[proxy] the square pocket edge the gate tests against. The real opening is POCKET_OPENING_X x POCKET_OPENING_Y and is not square. Read by the four-corner gate; moves with the SDF rework (D-109)."
+    },
+    "cfg.gate_min_alignment": {
+      "value": 0.99,
+      "mark": "[proxy] tool-axis alignment floor, calibrated on the square peg. The real bound is D-106's across-tilt limit, which D-121 reopened and the concept stream has not recomputed."
+    },
+    "tasks.SIDE_CLEARANCE": {
+      "value": 0.0010000000000000009,
+      "mark": "[proxy] half-clearance per axis of the square pair. The real task has TWO different total plays, PLAY_X and PLAY_Y, which the report now prints instead. Kept only because compare_runs.py reads the metrics key side_clearance_mm."
+    },
+    "tasks.YAW_WINDOW_RAD": {
+      "value": 0.06910872167872839,
+      "mark": "[proxy] the C4 free-yaw window of a square in a square. The real part fits ONE way round, so there is no equivalent; D-106's yaw bound was reopened by D-121 and is not recomputed. The report no longer prints it. Kept only because compare_runs.py reads the metrics key yaw_window_deg."
+    }
+  },
+  "proxy_metrics_keys": {
+    "peg_side_m": "cfg.held_asset.side",
+    "pocket_side_m": "cfg.fixed_asset.side",
+    "side_clearance_mm": "tasks.SIDE_CLEARANCE",
+    "yaw_window_deg": "tasks.YAW_WINDOW_RAD"
+  }
+}

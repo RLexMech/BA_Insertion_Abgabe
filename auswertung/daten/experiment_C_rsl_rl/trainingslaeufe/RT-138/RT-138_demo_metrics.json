@@ -1,0 +1,173 @@
+{
+  "episodes": 1096000,
+  "success_rate_recent": 0.3735,
+  "episodes_to_threshold": null,
+  "threshold": 0.9,
+  "recent_window_episodes": 2000,
+  "success_rate_cumulative": 0.20355839416058394,
+  "mean_max_depth_mm": 20.781662307679653,
+  "peg_side_m": 0.03,
+  "pocket_side_m": 0.032,
+  "side_clearance_mm": 1.0000000000000009,
+  "yaw_window_deg": 3.9596380797353943,
+  "play_x_mm": 0.5876000000000076,
+  "play_y_mm": 1.600000000000018,
+  "reset_joint_noise_rad": 0.0,
+  "reset_yaw_noise_rad": 0.0,
+  "start_tip_above_entrance_mm": 30.0,
+  "start_tip_above_entrance_low_mm": -30.0,
+  "success_by_start_height_bin": [
+    {
+      "start_mm_from": null,
+      "start_mm_to": -20.0,
+      "episodes": 325,
+      "success_rate": 0.8246153846153846
+    },
+    {
+      "start_mm_from": -20.0,
+      "start_mm_to": -10.0,
+      "episodes": 332,
+      "success_rate": 0.4036144578313253
+    },
+    {
+      "start_mm_from": -10.0,
+      "start_mm_to": 0.0,
+      "episodes": 342,
+      "success_rate": 0.18128654970760233
+    },
+    {
+      "start_mm_from": 0.0,
+      "start_mm_to": 10.0,
+      "episodes": 327,
+      "success_rate": 0.36085626911314983
+    },
+    {
+      "start_mm_from": 10.0,
+      "start_mm_to": 20.0,
+      "episodes": 335,
+      "success_rate": 0.2656716417910448
+    },
+    {
+      "start_mm_from": 20.0,
+      "start_mm_to": 30.0,
+      "episodes": 339,
+      "success_rate": 0.22418879056047197
+    }
+  ],
+  "home_tip_above_entrance_mm": 164.99999999999997,
+  "start_pose_solve_last_residual_mm": 0.007486410140700173,
+  "start_pose_solve_worst_residual_mm": 0.049985963414656,
+  "start_pose_solve_last_iterations": 5,
+  "start_pose_solve_tol_mm": 0.05,
+  "start_pose_solve_unconverged_resets": 0,
+  "fixture_pos_noise_xy_m": 0.005,
+  "fixture_yaw_noise_rad": 0.0,
+  "fixture_tilt_rad": 0.0,
+  "fixture_yaw_rad": 0.0,
+  "fixture_tilt_noise_rad": 0.0,
+  "success_by_tilt_bin": [
+    {
+      "tilt_deg_from": 0.0,
+      "tilt_deg_to": 3.0,
+      "episodes": 2000,
+      "success_rate": 0.3735
+    },
+    {
+      "tilt_deg_from": 3.0,
+      "tilt_deg_to": 6.0,
+      "episodes": 0,
+      "success_rate": null
+    },
+    {
+      "tilt_deg_from": 6.0,
+      "tilt_deg_to": 9.0,
+      "episodes": 0,
+      "success_rate": null
+    },
+    {
+      "tilt_deg_from": 9.0,
+      "tilt_deg_to": 12.0,
+      "episodes": 0,
+      "success_rate": null
+    },
+    {
+      "tilt_deg_from": 12.0,
+      "tilt_deg_to": 15.0,
+      "episodes": 0,
+      "success_rate": null
+    }
+  ],
+  "action_scale_rad": 0.02,
+  "joint_target_lag_rad": {
+    "episodes": 2000,
+    "max": 1.2266699075698853,
+    "max_steps": 61.33349537849426,
+    "success_mean": 0.27504357085170517,
+    "success_p95": 0.6489784717559814,
+    "success_max": 1.2266699075698853,
+    "success_mean_steps": 13.752178542585257,
+    "success_p95_steps": 32.44892358779907,
+    "success_max_steps": 61.33349537849426,
+    "success_episodes": 747,
+    "failure_mean": 0.134635489746179,
+    "failure_p95": 0.3593566417694092,
+    "failure_max": 0.9831888675689697,
+    "failure_mean_steps": 6.73177448730895,
+    "failure_p95_steps": 17.96783208847046,
+    "failure_max_steps": 49.159443378448486,
+    "failure_episodes": 1253
+  },
+  "force_norm_n": {
+    "episodes": 2000,
+    "mean_n": 295.00564109623434,
+    "p50_n": 304.8817443847656,
+    "p95_n": 338.6076965332031,
+    "p99_n": 361.795166015625,
+    "max_n": 396.2781982421875,
+    "success_p95_n": 299.6792297363281,
+    "failure_p95_n": 345.4358215332031,
+    "f_max_n": 300.0,
+    "over_f_max": 1282
+  },
+  "stage1_lateral_y_mm": {
+    "episodes": 2000,
+    "mean_mm": 0.7146512493491173,
+    "p50_mm": 0.0,
+    "p95_mm": 3.1437426805496216,
+    "p99_mm": 5.303084850311279,
+    "max_mm": 17.793551087379456,
+    "reach_offset_mm": 7.8847000000000085,
+    "stage1_allows_mm": 8.7,
+    "over_reach": 5
+  },
+  "reward_terms_recent_mean": {
+    "episodes": 2000,
+    "kernels": 3.1726683268919587,
+    "engaged": 5.308560456514359,
+    "success": 0.3399150125682354,
+    "progress": 1.1569365052600624,
+    "time": -0.049205078125,
+    "action_rate": -1.71428794259578,
+    "success_lump": 208.57464836120604,
+    "abort": -0.6265,
+    "total": 216.16273564171988
+  },
+  "success_depth_invariant_violations": {
+    "recent": 0,
+    "cumulative": 0,
+    "window_episodes": 2000
+  },
+  "force_abort_rate": 0.641,
+  "mean_success_episode_steps": 18.0615,
+  "episode_length_s": 4.266666666666667,
+  "num_envs": 1024,
+  "code_marker": "insertion-rung0-start-2026-08-31-p1",
+  "rl_placeholders": {
+    "force_abort_f_max_n": 300.0,
+    "engaged_depth_m": 0.010799999999999999,
+    "abort_payment": -1.0
+  },
+  "curriculum_enabled": false,
+  "rung_step_sizes": null,
+  "spawn_workcell_block": false
+}

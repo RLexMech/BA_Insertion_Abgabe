@@ -19,8 +19,10 @@ Alle Belege sind Commits (SHA) oder Entscheidungen (D-Nummer).
 |---|---|---|---|
 | A Zylinder | `2420516` (27.07.) | `stufe-A-zylinder` = `a7c7ebb` (27.07.) | Zylinder gefügt, Reward-Hacks behoben |
 | B Quader | `e18a4b8` (28.07.) | `stufe-B-quader` = `97df8bf` (16.08.) | 99,19 % mit Versatz ±2 cm, Neigung 0–10°, Gier ±45° |
-| C Aufnahme | `a9f2d9cf` (30.08.) | `stufe-C-aufnahme` = `5a6cc8e` (15.09.) | Evaluation 98,2 % (RT-224, AutoDR s1) |
-| D Factory | `83f6033c` (25.09.) | `stufe-D-factory` = **offen bis RT-244** | vorläufig, siehe STAENDE.md |
+| C Aufnahme | `a9f2d9cf` (30.08.) | Endstand `153b8b4` (24.09.); Tag `stufe-C-aufnahme` = `5a6cc8e` (15.09., Trainingscode RT-206s/207s) | Haupttest Auto-DR im Mittel 97,0 %, No-DR 26,2 % (RT-224) |
+| D Factory | `83f6033c` (25.09.) | `stufe-D-factory` = `c1a635e9` (30.09.) | Haupttest Auto-DR im Mittel 99,2 %, No-DR 12,5 %, Fixed-DR 41,1 % (RT-247/248) |
+
+Die Ergebnisse stammen aus `auswertung/daten/…/evaluation/summary.json` (`K1`, `K5`). Die Werte je Seed stehen in [STAENDE.md](STAENDE.md).
 
 ---
 
@@ -129,10 +131,11 @@ Grenze: Die Kombination lief mit ±2 cm, nicht mit ±5 cm. Die Streuwerte sind n
 
 ## Checkpoint 3: C → D (Robustheit → Annäherung an Factory)
 
-**Letzter Stand C:**
-- Code der Endpolicy: `5a6cc8e` (15.09.), Lauf RT-206s1, gewählt in D-190.
+**Letzter Stand C:** Endstand `153b8b4` (24.09.). Auf diesem Stand laufen alle Läufe von C, die die Arbeit nennt:
+- Training Auto-DR / No-DR: Code `5a6cc8e` (15.09.), RT-206s/RT-207s. Policy RT-206s1, gewählt in D-190.
 - Evaluation: Code `8299485d`, RT-222 bis RT-225. RT-224: AutoDR s1 0,982, No-DR-Mittel 0,262.
-- Danach, noch in C: D-192 Fixed-DR-Arm (`3c6dabcd`, RT-231/232). Letzter Commit von C: `e5ee168e` (25.09., D-193).
+- Fixed-DR-Arm (D-192): Training RT-231 auf `153b8b4` selbst, Evaluation RT-232 auf `8299485d`.
+- Danach folgt `e5ee168e` (25.09., D-193). Er ändert schon D und gehört nicht mehr zum Endstand C.
 
 **Was C gezeigt hat:** Mit OSC, AutoDR und Rauschen auf der Beobachtung fügt die Policy das echte Teil robust. Mit AutoDR schafft sie 98,2 %, ohne Randomisierung nur 26 %.
 
@@ -146,9 +149,9 @@ Grenze: Die Kombination lief mit ±2 cm, nicht mit ±5 cm. Die Streuwerte sind n
 5. D-198/D-200: Die Lernrate von rsl_rl hing am Boden (RT-238s1) oder an der Decke (RT-239s1). Darum Wechsel auf rl_games mit der Factory-YAML.
 6. D-201 bis D-205: Budget 100 Epochen, Start bis 0,270 m, Streuung der Aufnahme ±0,05 m, Home 0,400 m.
 
-**Was sich am Übergang ändert** (C-Ende → D heute):
+**Was sich am Übergang ändert** (Endstand C → Endstand D):
 
-| Größe | C | D (vorläufig) | Art | Beleg |
+| Größe | C | D | Art | Beleg |
 |---|---|---|---|---|
 | Beobachtung | 28 | + letzte Aktion (EMA-Zustand) → 34 | geplant | D-193, D-195 |
 | Glaubensfehler | Taschenlage, Griff | + Gier der Tasche ±1,28° je Episode | geplant | D-194 |
@@ -161,7 +164,9 @@ Grenze: Die Kombination lief mit ±2 cm, nicht mit ±5 cm. Die Streuwerte sind n
 | Grundstellung und Zielbereich des Reglers | Home 0,150 m, Box ±0,08 m / z 0,1435 m | Home 0,400 m, Box ±0,100 m / z 0,2915 m | Reaktion | D-204 |
 | Trainingsbudget | 1500 Iterationen × 16 Schritte × 256 Envs ≈ 6,1 Mio. Schritte | 100 Epochen × 128 × 256 ≈ 3,3 Mio. Schritte | Reaktion | D-201, D-205 |
 | Reward | Aktionsrate −0,0034 | Aktionsrate 0 | – | `insertion_env_cfg.py` |
-| Auswertung | rsl_rl-Evaluation (T-nominal, T-final, T-grenze) | für rl_games noch nicht gebaut | – | D-206 |
+| Auswertung | rsl_rl-Evaluation (T-nominal, T-final, T-grenze) | rl_games-Evaluation (`scripts/rl_games/run_eval.ps1`): T-nominal, T-final, T-ood, erhöhter Beobachtungsfehler | geplant | D-206 |
 | Regelung, Takt, Erfolg | OSC 15 Hz, kp 100 / 30 | unverändert | – | – |
 
-**Stand von D heute:** noch offen. RT-244 (No-DR, 5 Seeds) läuft. Die Evaluation für rl_games ist geplant (D-206), aber noch nicht gebaut. Der Tag `stufe-D-factory` kommt danach.
+**Ende D:** Endstand `c1a635e9` (30.09.). Zum Trainingscode `e10c18bb` (RT-242s) kommt in `source/` nur die Option für die Tabelle des Tests außerhalb des Prüfbereichs dazu (D-206 (3), `dr_table_allow_outside`, Standard aus). Auf `c1a635e9` laufen alle Tests der Endstudie (`code_commit` in jeder `eval_manifest.json`) und die Fortsetzung RT-253. Der Endstand D ist die Endkonfiguration aus Kap. 4.5.
+
+**Was D gezeigt hat:** Im Haupttest fügt Auto-DR in allen 5 Seeds (98,9–99,7 %). No-DR fügt ohne Streuung fast immer (99,9 %), im Haupttest aber nur in 12,5 %. Fixed-DR lernt nur in 2 von 5 Seeds (98,2 % und 99,5 %). Kapitel 5.2 bis 5.4 der Arbeit.

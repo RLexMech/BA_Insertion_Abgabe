@@ -1,0 +1,500 @@
+==============================================================
+[rt_log] 2026-10-12 00:24:19  cwd: C:\Users\Simon\Desktop\Alexander_Pett\temp\Contactrich_Insertion\Phase5_Robustheit_v1
+[rt_log] cmd: python -u scripts/rsl_rl/play.py --task Ur5e-Insertion-Direct-v0 --num_envs 1 --seed 100 --checkpoint C:\Users\Simon\Desktop\Alexander_Pett\view\RT-272\model_1499.pt --fixture-yaw=-4.87 --trace-obs rt_logs/RT-272b_trace.json --trace-steps 256 env.start_tip_above_entrance=0.1095 env.start_tip_above_entrance_low=0.1095 env.start_floor_m=0.1095 env.viewer.eye=[0.99,0.672,0.947] env.viewer.lookat=[0.413,0.095,0.369]
+[rt_log] git: 8299485
+==============================================================
+[0.212s] [ext: omni.kit.async_engine-0.0.3] startup
+[0.638s] [ext: omni.metrics.core-0.0.3] startup
+[0.641s] [ext: omni.client.lib-1.1.0] startup
+[0.666s] [ext: omni.blobkey-1.1.2] startup
+[0.667s] [ext: omni.stats-1.0.1] startup
+[0.671s] [ext: omni.datastore-0.0.0] startup
+[0.675s] [ext: omni.client-1.3.0] startup
+[0.943s] [ext: omni.ujitso.default-1.0.0] startup
+[0.949s] [ext: omni.hsscclient-1.1.2] startup
+[0.962s] [ext: omni.gpu_foundation.shadercache.vulkan-1.0.0] startup
+[0.973s] [ext: omni.assets.plugins-0.0.0] startup
+[0.982s] [ext: omni.gpu_foundation-0.0.0] startup
+[1.022s] [ext: carb.windowing.plugins-1.0.0] startup
+[1.123s] [ext: omni.kit.renderer.init-0.0.0] startup
+[1.126s] [ext: omni.kit.pipapi-0.0.0] startup
+[1.130s] [ext: omni.materialx.libs-1.0.7] startup
+[1.153s] [ext: omni.kit.telemetry-0.5.2] startup
+[1.217s] [ext: omni.kit.loop-isaac-1.3.7] startup
+[1.222s] [ext: omni.kit.test-2.0.1] startup
+[1.368s] [ext: omni.usd.config-1.0.6] startup
+[1.399s] [ext: omni.gpucompute.plugins-0.0.0] startup
+[1.406s] [ext: omni.usd.libs-1.0.1] startup
+[1.674s] [ext: omni.mdl-56.0.3] startup
+[1.890s] [ext: omni.iray.libs-0.0.0] startup
+[1.960s] [ext: omni.mdl.neuraylib-0.2.12] startup
+[1.989s] [ext: omni.kit.usd.mdl-1.1.5] startup
+[2.199s] [ext: omni.kit.pip_archive-0.0.0] startup
+[2.200s] [ext: omni.appwindow-1.1.10] startup
+[2.218s] [ext: omni.kit.renderer.core-1.1.0] startup
+[2.232s] [ext: omni.kit.renderer.capture-0.0.0] startup
+[2.245s] [ext: omni.kit.renderer.imgui-2.0.5] startup
+[2.280s] [ext: omni.ui-2.27.1] startup
+[2.307s] [ext: omni.kit.mainwindow-1.0.3] startup
+[2.314s] [ext: carb.audio-0.1.0] startup
+[2.318s] [ext: omni.uiaudio-1.0.0] startup
+[2.324s] [ext: omni.kit.uiapp-0.0.0] startup
+[2.324s] [ext: omni.usd.schema.metrics.assembler-107.3.1] startup
+[2.342s] [ext: omni.usd.schema.audio-0.0.0] startup
+[2.365s] [ext: omni.usd.schema.omnigraph-1.0.0] startup
+[2.390s] [ext: omni.usd_resolver-1.0.0] startup
+[2.411s] [ext: omni.usd.core-1.5.3] startup
+[2.415s] [ext: omni.usd.schema.render_settings.rtx-0.0.0] startup
+[2.460s] [ext: omni.usd.schema.physx-107.3.26] startup
+[2.524s] [ext: omni.usd.schema.anim-0.0.0] startup
+[2.592s] [ext: omni.usd.schema.semantics-0.0.0] startup
+[2.605s] [ext: isaacsim.robot.schema-3.6.0] startup
+[2.641s] [ext: omni.usd.schema.geospatial-0.0.0] startup
+[2.657s] [ext: omni.kit.window.popup_dialog-2.0.24] startup
+[2.674s] [ext: omni.resourcemonitor-107.0.1] startup
+[2.686s] [ext: omni.activity.core-1.0.3] startup
+[2.693s] [ext: omni.timeline-1.0.14] startup
+[2.702s] [ext: omni.kit.widget.nucleus_connector-2.0.1] startup
+[2.718s] [ext: omni.graph.exec-0.9.6] startup
+[2.722s] [ext: omni.kit.actions.core-1.0.0] startup
+[2.735s] [ext: usdrt.scenegraph-7.6.1] startup
+[2.874s] [ext: omni.kit.usd_undo-0.1.8] startup
+[2.877s] [ext: omni.kit.audiodeviceenum-1.0.2] startup
+[2.889s] [ext: omni.kit.exec.core-0.13.4] startup
+[2.902s] [ext: omni.kit.commands-1.4.10] startup
+[2.929s] [ext: omni.hydra.usdrt_delegate-7.5.1] startup
+[2.952s] [ext: omni.hydra.scene_delegate-0.3.4] startup
+[2.962s] [ext: omni.usd-1.13.10] startup
+[3.020s] [ext: omni.kit.asset_converter-5.0.17] startup
+[3.048s] [ext: omni.usd.schema.omni_sensors-0.0.0] startup
+[3.052s] [ext: omni.pip.cloud-1.4.3] startup
+[3.064s] [ext: omni.usd.schema.omniscripting-1.0.0] startup
+[3.084s] [ext: omni.usd.schema.omni_lens_distortion-0.0.0] startup
+[3.087s] [ext: omni.kit.menu.core-1.1.2] startup
+[3.090s] [ext: omni.kit.property.adapter.core-1.0.2] startup
+[3.101s] [ext: omni.kit.widget.context_menu-1.2.5] startup
+[3.106s] [ext: omni.kit.usd.layers-2.2.11] startup
+[3.130s] [ext: omni.kit.widget.options_menu-1.1.6] startup
+[3.140s] [ext: omni.kit.property.adapter.fabric-1.0.3] startup
+[3.145s] [ext: omni.kit.context_menu-1.8.6] startup
+[3.152s] [ext: omni.kit.widget.filter-1.1.4] startup
+[3.156s] [ext: omni.kit.helper.file_utils-0.1.9] startup
+[3.163s] [ext: omni.kit.widget.path_field-2.0.11] startup
+[3.166s] [ext: omni.kit.notification_manager-1.0.10] startup
+[3.173s] [ext: omni.kit.widget.filebrowser-2.12.3] startup
+[3.197s] [ext: omni.kit.widget.browser_bar-2.0.10] startup
+[3.200s] [ext: omni.kit.clipboard-1.0.5] startup
+[3.204s] [ext: omni.kit.hotkeys.core-1.3.10] startup
+[3.216s] [ext: omni.ui.scene-1.11.5] startup
+[3.232s] [ext: omni.kit.widget.options_button-1.0.3] startup
+[3.235s] [ext: omni.index.libs-380600.8087.0] startup
+[3.235s] [ext: omni.kit.window.filepicker-2.13.4] startup
+[3.297s] [ext: omni.hydra.rtx.shadercache.vulkan-1.0.0] startup
+[3.301s] [ext: omni.index-1.0.1] startup
+[3.306s] [ext: omni.kit.window.file_importer-1.1.18] startup
+[3.317s] [ext: omni.kit.menu.utils-2.0.5] startup
+[3.333s] [ext: omni.kit.widget.searchable_combobox-1.0.6] startup
+[3.336s] [ext: omni.volume-0.5.2] startup
+[3.348s] [ext: omni.ujitso.client-0.0.0] startup
+[3.352s] [ext: omni.kit.widget.settings-1.2.6] startup
+[3.361s] [ext: omni.hydra.rtx-1.0.0] startup
+[3.459s] [ext: omni.kit.material.library-2.0.7] startup
+[3.475s] [ext: omni.kit.viewport.legacy_gizmos-1.0.19] startup
+[3.480s] [ext: omni.kit.raycast.query-1.1.0] startup
+[3.490s] [ext: omni.hydra.engine.stats-1.0.3] startup
+[3.498s] [ext: omni.kit.window.file_exporter-1.0.33] startup
+[3.502s] [ext: omni.kit.viewport.scene_camera_model-1.0.6] startup
+[3.508s] [ext: omni.kit.hydra_texture-1.4.6] startup
+[3.516s] [ext: omni.kit.window.drop_support-1.0.5] startup
+[3.518s] [ext: omni.kit.widget.viewport-107.1.3] startup
+[3.536s] [ext: omni.kit.viewport.registry-104.0.6] startup
+[3.539s] [ext: omni.kit.widget.searchfield-1.1.8] startup
+[3.544s] [ext: omni.kit.viewport.window-107.2.0] startup
+[4.138s] [ext: omni.kit.window.content_browser_registry-0.0.6] startup
+[4.142s] [ext: omni.kit.widget.stage-3.1.4] startup
+[4.188s] [ext: omni.kit.property.adapter.usd-1.0.2] startup
+[4.192s] [ext: omni.kit.window.preferences-1.8.0] startup
+[4.215s] [ext: omni.kit.viewport.utility-1.1.2] startup
+[4.216s] [ext: omni.kit.stage_template.core-1.1.22] startup
+[4.218s] [ext: omni.kit.widget.toolbar-2.0.1] startup
+[4.244s] [ext: omni.kit.manipulator.transform-107.0.0] startup
+[4.256s] [ext: omni.kit.widget.highlight_label-1.0.3] startup
+[4.258s] [ext: omni.kit.window.file-2.0.5] startup
+[4.268s] [ext: omni.kit.manipulator.tool.snap-1.5.13] startup
+[4.285s] [ext: omni.kit.window.property-1.12.1] startup
+[4.295s] [ext: omni.kit.window.content_browser-3.1.3] startup
+[4.319s] [ext: omni.kit.manipulator.selector-1.1.3] startup
+[4.325s] [ext: omni.kit.viewport.actions-107.0.2] startup
+[4.336s] [ext: omni.kit.property.usd-4.5.12] startup
+[4.375s] [ext: omni.kit.manipulator.selection-106.0.1] startup
+[4.381s] [ext: omni.kit.manipulator.viewport-107.0.1] startup
+[4.386s] [ext: omni.kit.viewport.manipulator.transform-107.0.4] startup
+[4.396s] [ext: omni.kit.primitive.mesh-1.0.17] startup
+[4.407s] [ext: omni.convexdecomposition-107.3.26] startup
+[4.425s] [ext: omni.kvdb-107.3.26] startup
+[4.439s] [ext: omni.kit.manipulator.prim.core-107.0.8] startup
+[4.459s] [ext: omni.fabric.commands-1.1.6] startup
+[4.473s] [ext: omni.physx.foundation-107.3.26] startup
+[4.498s] [ext: omni.localcache-107.3.26] startup
+[4.506s] [ext: omni.kit.widget.prompt-1.0.7] startup
+[4.509s] [ext: omni.kit.manipulator.prim.usd-107.0.3] startup
+[4.513s] [ext: omni.kit.manipulator.prim.fabric-107.0.4] startup
+[4.518s] [ext: omni.usdphysics-107.3.26] startup
+[4.524s] [ext: omni.kit.viewport.menubar.core-107.2.1] startup
+[4.572s] [ext: omni.kit.widget.layers-1.8.6] startup
+[4.611s] [ext: omni.kit.manipulator.prim-107.0.0] startup
+[4.611s] [ext: omni.physx.cooking-107.3.26] startup
+[4.622s] [ext: omni.kit.viewport.menubar.display-107.0.3] startup
+[4.627s] [ext: omni.debugdraw-0.1.4] startup
+[4.636s] [ext: omni.physx-107.3.26] startup
+[4.671s] [ext: omni.physics-107.3.26] startup
+[4.685s] [ext: omni.usdphysics.ui-107.3.26] startup
+[4.730s] [ext: omni.physx.commands-107.3.26] startup
+[4.740s] [ext: omni.physics.stageupdate-107.3.26] startup
+[4.753s] [ext: omni.usd.metrics.assembler-107.3.1] startup
+[4.776s] [ext: omni.physx.ui-107.3.26] startup
+[4.850s] [ext: omni.warp.core-1.8.2] startup
+[5.145s] [ext: omni.usd.metrics.assembler.physics-107.3.26] startup
+[5.152s] [ext: omni.inspect-1.0.2] startup
+[5.162s] [ext: omni.ui_query-1.1.8] startup
+[5.165s] [ext: omni.graph.core-2.184.5] startup
+[5.173s] [ext: omni.kit.ui_test-1.3.7] startup
+[5.178s] [ext: isaacsim.core.deprecation_manager-0.2.7] startup
+[5.180s] [ext: omni.kit.numpy.common-0.1.3] startup
+[5.184s] [ext: omni.physics.physx-107.3.26] startup
+[5.187s] [ext: isaacsim.core.version-2.0.6] startup
+[5.189s] [ext: omni.physics.tensors-107.3.26] startup
+[5.204s] [ext: omni.isaac.dynamic_control-2.0.7] startup
+[5.220s] [ext: isaacsim.storage.native-1.5.1] startup
+[5.225s] [ext: omni.kit.widget.stage_icons-1.0.8] startup
+[5.227s] [ext: omni.physx.tensors-107.3.26] startup
+[5.234s] [ext: isaacsim.core.utils-3.5.1] startup
+[5.244s] [ext: omni.kit.window.stage-2.6.1] startup
+[5.253s] [ext: omni.kit.menu.create-2.0.1] startup
+[5.257s] [ext: isaacsim.core.simulation_manager-1.4.4] startup
+[8.093s] [ext: omni.kit.scripting-107.3.2] startup
+[8.104s] [ext: omni.kit.stagerecorder.core-107.0.3] startup
+[8.111s] [ext: isaacsim.replicator.behavior-1.1.16] startup
+[8.112s] [ext: omni.graph.tools-1.79.2] startup
+[8.175s] [ext: omni.kit.widget.zoombar-1.0.6] startup
+[8.177s] [ext: omni.graph-1.141.2] startup
+[8.266s] [ext: omni.kit.browser.core-2.3.13] startup
+[8.280s] [ext: omni.graph.action_core-1.1.7] startup
+[8.291s] [ext: omni.kit.usd.collect-2.4.5] startup
+[8.300s] [ext: omni.kit.widget.text_editor-1.1.1] startup
+[8.305s] [ext: omni.kit.menu.stage-1.2.7] startup
+[8.308s] [ext: omni.kit.browser.folder.core-1.10.9] startup
+[8.322s] [ext: omni.graph.action_nodes-1.50.4] startup
+[8.331s] [ext: omni.kit.usdz_export-1.0.9] startup
+[8.345s] [ext: omni.kit.window.extensions-1.4.27] startup
+[8.366s] [ext: omni.graph.visualization.nodes-2.1.3] startup
+[8.399s] [ext: omni.graph.action-1.130.0] startup
+[8.405s] [ext: omni.kit.tool.collect-2.2.18] startup
+[8.413s] [ext: omni.kit.tool.asset_importer-4.3.2] startup
+[8.431s] [ext: isaacsim.gui.components-1.2.1] startup
+[8.448s] [ext: isaacsim.examples.browser-0.2.1] startup
+[8.469s] [ext: isaacsim.asset.importer.urdf-2.4.31] startup
+[8.642s] [ext: isaacsim.core.cloner-1.4.10] startup
+[8.652s] [ext: omni.kit.stagerecorder.ui-107.0.1] startup
+[8.667s] [ext: isaacsim.asset.browser-1.3.23] startup
+[8.781s] [ext: semantics.schema.editor-2.0.2] startup
+[8.795s] [ext: omni.kit.stagerecorder.bundle-105.0.2] startup
+[8.797s] [ext: omni.kit.window.status_bar-0.1.9] startup
+[8.804s] [ext: omni.kit.widget.graph-2.0.0] startup
+[8.821s] [ext: omni.kit.stage_templates-2.0.0] startup
+[8.830s] [ext: omni.graph.image.core-0.6.1] startup
+[8.833s] [ext: omni.kit.graph.delegate.default-1.2.3] startup
+[8.836s] [ext: isaacsim.core.experimental.utils-0.3.0] startup
+[8.842s] [ext: omni.graph.image.nodes-1.3.1] startup
+[8.847s] [ext: omni.kit.graph.editor.core-1.5.3] startup
+[8.855s] [ext: omni.kit.graph.usd.commands-1.3.1] startup
+[8.860s] [ext: omni.graph.nodes-1.170.10] startup
+[8.878s] [ext: omni.graph.ui_nodes-1.50.5] startup
+[8.885s] [ext: omni.kit.widget.material_preview-1.0.16] startup
+[8.893s] [ext: omni.syntheticdata-0.6.13] startup
+[8.948s] [ext: omni.videoencoding-0.1.2] startup
+[8.959s] [ext: omni.warp-1.8.2] startup
+[8.978s] [ext: omni.kit.window.material_graph-1.9.1] startup
+[9.035s] [ext: omni.graph.scriptnode-1.50.0] startup
+[9.044s] [ext: isaacsim.core.prims-0.6.1] startup
+[9.130s] [ext: isaacsim.test.docstring-1.1.0] startup
+[9.147s] [ext: omni.replicator.core-1.12.27] startup
+[9.371s] [ext: isaacsim.core.api-4.8.0] startup
+[9.423s] [ext: isaacsim.core.experimental.prims-0.8.1] startup
+[9.509s] [ext: isaacsim.core.nodes-3.4.3] startup
+[9.526s] [ext: isaacsim.robot.surface_gripper-3.3.1] startup
+[9.542s] [ext: isaacsim.util.debug_draw-3.1.0] startup
+[9.568s] [ext: omni.sensors.nv.common-3.0.0] startup
+[9.623s] [ext: isaacsim.robot.manipulators-3.3.6] startup
+[9.656s] [ext: isaacsim.sensors.physx-2.3.2] startup
+[9.686s] [ext: omni.sensors.nv.materials-2.0.0] startup
+[9.729s] [ext: omni.sensors.net-1.0.0] startup
+[9.761s] [ext: isaacsim.app.about-2.0.11] startup
+[9.778s] [ext: isaacsim.simulation_app-2.12.2] startup
+[9.780s] [ext: omni.sensors.nv.ids-2.0.0] startup
+[9.795s] [ext: omni.sensors.nv.lidar-3.0.0] startup
+[9.823s] [ext: omni.kit.property.audio-1.0.16] startup
+[9.828s] [ext: omni.kit.property.camera-1.0.10] startup
+[9.833s] [ext: omni.kit.property.geometry-2.0.4] startup
+[9.845s] [ext: omni.hydra.scene_api-0.1.2] startup
+[9.851s] [ext: omni.kit.property.light-1.0.12] startup
+[9.874s] [ext: omni.sensors.nv.wpm-3.0.0] startup
+[9.888s] [ext: omni.kit.selection-0.1.6] startup
+[9.896s] [ext: omni.kit.property.material-1.11.9] startup
+[9.966s] [ext: omni.kit.property.transform-1.5.13] startup
+[9.996s] [ext: omni.kit.property.render-1.2.1] startup
+[10.005s] [ext: omni.sensors.nv.radar-3.0.0] startup
+[10.030s] [ext: isaacsim.gui.menu-2.4.4] startup
+[10.127s] [ext: omni.kit.manipulator.camera-106.0.4] startup
+[10.152s] [ext: isaacsim.gui.property-1.1.3] startup
+[10.192s] [ext: omni.kit.property.bundle-1.4.1] startup
+[10.229s] [ext: isaacsim.sensors.rtx-15.8.4] startup
+[10.298s] [ext: isaacsim.sensors.physics-0.4.3] startup
+[10.354s] [ext: omni.kit.viewport.menubar.camera-107.0.6] startup
+[10.427s] [ext: omni.kit.viewport.menubar.lighting-107.3.1] startup
+[10.482s] [ext: omni.kit.viewport.menubar.settings-107.0.3] startup
+[10.553s] [ext: omni.kit.viewport.menubar.render-107.0.10] startup
+[10.596s] [ext: isaacsim.robot.policy.examples-4.1.11] startup
+[10.665s] [ext: isaacsim.asset.importer.mjcf-2.5.13] startup
+[10.693s] [ext: omni.kit.window.console-1.1.4] startup
+[10.713s] [ext: omni.rtx.window.settings-0.6.19] startup
+[10.730s] [ext: omni.ocio-0.1.1] startup
+[10.736s] [ext: omni.physx.demos-107.3.26] startup
+[10.827s] [ext: omni.kit.property.physx-107.3.26] startup
+[10.863s] [ext: omni.replicator.replicator_yaml-2.0.11] startup
+[10.902s] [ext: omni.asset_validator.core-1.1.6] startup
+[11.011s] [ext: omni.rtx.settings.core-0.6.5] startup
+[11.020s] [ext: omni.physx.vehicle-107.3.26] startup
+[11.060s] [ext: omni.usd.metrics.assembler.ui-107.3.1] startup
+[11.082s] [ext: omni.kit.window.script_editor-2.0.1] startup
+[11.093s] [ext: isaacsim.robot.wheeled_robots-4.0.24] startup
+[11.130s] [ext: omni.physx.asset_validator-107.3.26] startup
+[11.169s] [ext: omni.kit.window.toolbar-2.0.0] startup
+[11.184s] [ext: omni.physx.camera-107.3.26] startup
+[11.207s] [ext: omni.anim.curve.core-1.3.1] startup
+[11.242s] [ext: omni.physx.cct-107.3.26] startup
+[11.269s] [ext: omni.physx.graph-107.3.26] startup
+[11.305s] [ext: omni.physx.supportui-107.3.26] startup
+[11.346s] [ext: omni.physx.telemetry-107.3.26] startup
+[11.357s] [ext: isaaclab-0.54.2] startup
+[11.986s] [ext: isaaclab_contrib-0.0.2] startup
+[11.989s] [ext: isaacsim.core.throttling-2.2.2] startup
+[11.995s] [ext: omni.kit.ui.actions-1.0.5] startup
+[11.999s] [ext: semantics.schema.property-2.0.1] startup
+[12.003s] [ext: omni.physx.bundle-107.3.26] startup
+[12.004s] [ext: isaacsim.sensors.camera-1.3.6] startup
+[12.014s] [ext: isaaclab_assets-0.2.4] startup
+[12.490s] [ext: isaaclab_tasks-0.11.12] startup
+C:\Users\Simon\miniconda3\envs\env_isaaclab\Lib\site-packages\h5py\__init__.py:36: UserWarning: h5py is running against HDF5 1.14.6 when it was built against 1.14.2, this may cause problems
+  _warn(("h5py is running against HDF5 {0} when it was built against {1}, "
+[12.930s] [ext: omni.kit.menu.common-2.0.1] startup
+[12.934s] [ext: isaaclab_rl-0.4.7] startup
+[12.935s] [ext: isaaclab_mimic-1.0.16] startup
+[12.936s] [ext: isaaclab.python-2.3.2] startup
+[12.941s] Simulation App Starting
+[13.655s] app ready
+[19.525s] Simulation App Startup Complete
+[23.136s] [ext: omni.physx.fabric-107.3.26] startup
+[insertion] robot asset: C:\Users\Simon\Desktop\Alexander_Pett\temp\Contactrich_Insertion\Phase5_Robustheit_v1\source\insertion\insertion\tasks\direct\insertion\assets\Robot\ur5e_tool.usd
+Creating window for environment.
+ManagerLiveVisualizer cannot be created for manager: action_manager, Manager does not exist
+ManagerLiveVisualizer cannot be created for manager: observation_manager, Manager does not exist
+[insertion] rung-0 start pose: tool point +109.500 mm above the stage-2 opening plane (home pose is +165.000 mm); dls IK, <= 120 iterations, tolerance 0.050 mm, jacobian row block 6, fixed base True
+[insertion] rung-0 start lateral offset OFF (start_lateral_offset = 0.0): every episode starts ON the pocket axis, which CANCELS the lateral part of fixture_pos_noise_xy and reset_joint_noise (D-170).
+[insertion_sdf] sampled mesh fuegeteil.obj: 8577 vertices, 6594 faces, extents 0.0964 x 0.1435 x 0.0505 m | sampled 64000 of 64000 requested, seed 0, max_dist 1.5 m
+[insertion_sdf] sampled mesh fuegeteil.obj: 8577 vertices, 6594 faces, extents 0.0964 x 0.1435 x 0.0505 m | sampled 64000 of 64000 requested, seed 0, max_dist 1.5 m
+[insertion_sdf] QUERIED mesh aufnahme.obj: 903 vertices, 757 faces, extents 0.1500 x 0.1891 x 0.0610 m
+========================================================================
+INSERTION STARTUP REPORT -- REAL geometry and physics, PROXY scoring (UNVERIFIED)
+step 2 of (2, 60, 180, 258), t = 0.133 s after reset
+code marker: insertion-osc-2026-09-03a
+episode cap (D-113 (3)): 256 control steps = 17.066667 s at 15.0 Hz
+--- controller (inbox entry 'Audit 2026-09-03 (a)') ---
+control_mode:   osc -- 6-D pose delta, Isaac Lab OperationalSpaceController, target = current pose + delta re-anchored every physics step (Factory form)
+  osc cfg:      target pose_abs, impedance fixed, inertial decoupling ON (full), gravity compensation ON with gravity ON (test_operational_space.py:350-358), nullspace none
+  kp:           pos 100.0 N/m [placeholder], rot 30.0 Nm/rad [placeholder], damping ratio 1.0 (critical, 2*sqrt(kp))
+  step limits:  0.02 m, 0.097 rad per policy step [placeholder, Factory]
+  tip clamp:    +-0.08 m x/y [placeholder, D-180: disk reach + one action step + set air] and +-0.1435 m z [placeholder, D-180: highest legal start + one action step + set air] box around the pocket entrance; tilt cone 8.52 deg from THIS EPISODE'S POCKET AXIS (CAD, Geometrie_Fuegeteil_Aufnahme.tex:264); yaw free
+  controlled body: tool_link (index 7, jacobian row block 6), tip offset [0.0, 0.0, 0.15199999511241913] m
+  rates:        policy 15.0 Hz (decimation 8 [placeholder, Factory]), controller 120.0 Hz; episode 256 steps = 17.0667 s (step count kept, seconds follow -- re-derivation owed)
+  drives (PhysX read-back): joint | type (USD) | stiffness | damping | maxForce
+    shoulder_pan_joint   force                0.0000     0.0000     150.00
+    shoulder_lift_joint  force                0.0000     0.0000     150.00
+    elbow_joint          force                0.0000     0.0000     150.00
+    wrist_1_joint        force                0.0000     0.0000      28.00
+    wrist_2_joint        force                0.0000     0.0000      28.00
+    wrist_3_joint        force                0.0000     0.0000      28.00
+  Lambda (env 0, at the reset pose = start_tip_above_entrance +0.1095 m): translational eigenvalues [4.0138, 4.2719, 8.9681] kg, MAX 8.9681 kg; rotational eigenvalues [0.00238, 0.13291, 0.26542] kg m^2, MAX 0.26542
+  Jacobian condition number (env 0, tool_link): 7.671 (sigma max 1.8635 / min 0.242928)
+  gravity compensation torques (env 0): [0.0, 22.563, 18.271, 2.188, -0.003, 0.0] Nm vs maxForce [150.0, 150.0, 150.0, 28.0, 28.0, 28.0]
+  Decision (4) reading: kp <= F_search / (Lambda_max * step_limit) = 20 N / (8.9681 kg * 0.02 m) = 111.5 (unit check: kg*m in the denominator is a force per (N/m), READ, not decided)
+--- end controller ---
+fixture usd: C:\Users\Simon\Desktop\Alexander_Pett\temp\Contactrich_Insertion\Phase5_Robustheit_v1\source\insertion\insertion\tasks\direct\insertion\assets\Werkzeug\Aufnahme_real_v1_mm.usd
+robot usd:   C:\Users\Simon\Desktop\Alexander_Pett\temp\Contactrich_Insertion\Phase5_Robustheit_v1\source\insertion\insertion\tasks\direct\insertion\assets\Robot\ur5e_tool.usd
+fixture spawn translation: (0.5009938, -0.13345, 0.06250000000000001)  (asset origin = opening plane at pocket centre)
+fixture tilt (D-036 probe): +0.00 deg about env y (lateral axis; +tips the back-wall side down) through the pocket centre (inactive)
+fixture yaw (D-038 probe): -4.87 deg about env z through the pocket centre (ACTIVE -- one fixed angle in every env)
+fixture tilt noise (D-037): magnitude 0..0.00 deg, direction uniform over 360 deg, resampled per episode (inactive)
+pocket-frame measurement: ON -- gate/depth/alignment/phi and obs 12:15 in the pocket frame
+dr_mode: off
+fixture pose noise (D-034): xy +-0.000 m, yaw +-0.0000 rad (inactive -- fixture stays at the spawn pose)
+--- workcell (robot foot IS the env origin, Factory convention) ---
+floor z:        -0.9080   table 1 top: -0.0240   table 2 top: -0.1198
+plate drop:     95.8 mm (measured 95.8 mm, D-058 direct reading leads; the 884/787 pair would give 97.0 mm)
+block top:      +0.0775 = 197.3 mm above table 2; ABOVE the robot foot plane
+insertion plane:+0.0625 = block top - 15 mm stage 1; asset origin + entrance sit HERE (2026-08-19 convention)
+foot -> pocket: x +501.0 mm (depth), y -133.5 mm (lateral, - = robot's right), straight line 524.2 mm of 850 mm UR5e reach
+block model:    225.1 x 260.0 mm footprint (80.0 front + 130.0876 stage 1 + 15.0 rear wall), 5.0876 mm of block behind the cut-out, high wall 100 mm above the rim
+tool home yaw:  +180.0 deg about the tool axis (weld yaw +0.0 deg, D-078); the part's lugs face the pocket features at this angle
+block boxes:    8 (incl. the two +Y slot fillers beside the tab: 52.0 and 31.0 mm long, 10.0 mm deep)
+tables usd:     C:\Users\Simon\Desktop\Alexander_Pett\temp\Contactrich_Insertion\Phase5_Robustheit_v1\source\insertion\insertion\tasks\direct\insertion\assets\Arbeitszelle\arbeitszelle_tische_v2.usd
+workcell block: *** OFF -- the Aufnahme stands free; no rear wall, the pocket is enterable from any direction ***
+Y residual:     +15.0 mm (left vs right table-2 overhang; right leads)
+--- end workcell ---
+joint_names: ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint', 'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
+  joint limit  shoulder_pan_joint   [-6.283185, +6.283185]  reset writes +3.141293
+  joint limit  shoulder_lift_joint  [-6.283185, +6.283185]  reset writes -1.627801
+  joint limit  elbow_joint          [-3.141593, +3.141593]  reset writes -1.791996
+  joint limit  wrist_1_joint        [-6.283185, +6.283185]  reset writes -1.292592
+  joint limit  wrist_2_joint        [-6.283185, +6.283185]  reset writes +1.570796
+  joint limit  wrist_3_joint        [-6.283185, +6.283185]  reset writes +1.570497
+body_names:  ['base_link', 'shoulder_link', 'upper_arm_link', 'forearm_link', 'wrist_1_link', 'wrist_2_link', 'wrist_3_link', 'tool_link']
+ee_body:     wrist_3_link (index 6)
+force_body:  tool_link (index 7), wrench read RAW in the parent body frame, EMA alpha 0.25 on the NEW sample
+force tare:  ON -- world hold force [-0.0, -0.0, 8.0834] N (= -0.82400 kg * gravity (0.0, 0.0, -9.81)), rotated into the frame of 'wrist_3_link' (index 6) and subtracted BEFORE the EMA. Free air must now read ~0 N, not 8.08 N.
+torque tare: ON -- lever = authored tool COM minus the MEASURED reference point (origin of 'wrist_3_link' + (0.0, 0.0, -0.1032) m in its frame, RT-192a2), moment = lever x hold force, rotated into the same frame, subtracted BEFORE the EMA (D-188).
+obs mode force-28: torque read and logged, NOT in the policy observation; torque_obs_noise_std_nm 0.0 (0 = off, OPEN per D-188); the wrench EMA skips the reset step and advances once per step (inbox 2026-09-13).
+activate_contact_sensors: True (declared cfg field)
+contact friction (D-111, u = 0.14 written once, PROVISIONAL/F3): PhysX reads back robot [0.140, 0.140], fixture [0.140, 0.140] (static+dynamic pooled)
+friction per reset: OFF -- no friction reach (dr_mode=off). Every env keeps the one-shot D-111 value for the whole run and no reset writes a material.
+solver iterations (D-115 verify): /World/envs/env_0/Robot/root_joint: solverPositionIterationCount=16, solverVelocityIterationCount=1
+solver iterations (D-115 verify): /World/envs/env_0/Fixture: NO authored value on any prim below -- the PhysX SDK default applies and is NOT readable here
+peg_body:    tool_link (index 7), flange -> leading point 0.1520 m, part 0.0964 x 0.1435 x 0.0505 m, mass 0.82400 kg
+             GATE MATH IS STILL SQUARE: side 0.0300 m from the proxy peg; the part's 0.1435 m long axis is not modelled yet.
+pocket:      side 0.0320 m (PROXY SQUARE, see the proxy block below), depth 0.0360 m (blind), success at 33 mm
+             play (MEASURED, total, not per-axis half): X 0.5876 mm across the lugs, Y 1.6000 mm along the part
+             yaw window: OPEN -- the proxy's C4 window does not apply to a part that fits one way round, and D-106's bound is not recomputed against PLAY_X (D-121).
+asset check (peg):     PASS -- authored tool matches cfg (part 0.09641 x 0.14350 x 0.05051 m, span -0.0000..+0.1520 m, mass 0.82400 kg), from ur5e_tool.author.json
+asset check (fixture): PASS -- imported fixture matches the STEP constants (edges 61.000 / 150.000 / 189.100 mm, z -46.000 .. +15.000 mm), from Aufnahme_real_v1_mm.verify.json
+resting FD joint speed (env 0..1): [0.0] rad/s  (expect ~0.000 after reset)
+observation layout (built 28-dim of 28, mode force, D-107/D-114/D-188): 0:6 joint_pos | 6:12 joint_vel | 12:15 tip_rel | 15:19 ee_quat | 19:21 yaw_cos_sin | 21:25 pocket_quat | 25:28 force
+  12:15 frame: POCKET, D-036; 19:21 is (cos phi, sin phi), NOT cos 4 phi (D-107 (2))
+observation bias env0..0 (D-182, tip_rel 12:15, uniform +-0.005 m, drawn per EPISODE): [[-0.002437, 0.00077, -0.004567]]
+grasp belief error env0..0 (D-183, +-0.003 m on the part's short axis, drawn per EPISODE): [0.002524]
+rl_terms_enabled: True (validate_rl_config PASSED)
+curriculum: *** OFF -- FIXED RUNG 0, no advance, no retreat; the start scatter is whatever the cfg holds and never widens ***
+reward (D-109 + the 2026-09-01 revision): kernel_sum(sdf_dist) + engaged + success bonuses, SAPU-scaled; time penalty -0.003906/step (-1/T at T = 256); action-rate penalty -0.0034 * ||a_t - a_(t-1)||
+alignment shaping (RT-171, potential-based): 0.99 * Phi(s') - Phi(s), Phi = 0.0 * sech(11.1799/rad * theta) vs the POCKET axis (margin 15.34 deg, MEASURED, RT-158 mouth-mode median), Phi(s') = 0 on the success step, not SAPU-scaled; gamma READ from agents/rsl_rl_ppo_cfg.py -- a hydra override of agent.algorithm.gamma must set env.shaping_gamma too; *** OFF, w_tilt 0 -- the pre-RT-171 reward ***
+termination (D-113 + the 2026-09-01 revision): timeout, force abort at 30.0 N (payment -1.0, both PLACEHOLDERS, see the block above), AND success -- which ends the episode and pays its remaining return as a lump. Episode success = that termination event.
+seated goal pose (env 0, env-local): [0.500994, -0.13345, 0.1785], quat (wxyz) [0.0, 0.042486, 0.999097, 0.0] = pocket quat * SEATED_TOOL_QUAT_LOCAL (RT-102)
+*** PLACEHOLDER VALUES IN USE -- every number this run reports is provisional ***
+    force_abort_f_max_n = 30.0  [placeholder] no longer INVENTED -- that was 2026-08-28..2026-09-01 (user, no source). D-169 on 2026-09-06 set it off RT-157: across every SUCCESSFUL first episode of the two probed start heights that limit aborted none, while the search force of D-166 would abort about half of them. On 2026-09-15 the user LOWERED it for the restarted seed study, below the force p95 the RT-201 family measured, so the abort now also ends a share of episodes that would have succeeded (inbox entry 'Seed study restart'). NOT a measurement. Still only an upper bound on OUR OWN simulation, not a damage limit of the real part, and it describes ONE policy at TWO heights. In the simulation this limit is only the brake against ramming (D-114) and must sit ABOVE the force a clean insertion needs, or it forbids the solution. The suction-cup datasheet anchor is WITHDRAWN (rigid chain, no sim-to-real). D-167's condition for lowering did NOT hold: it asked for p95 far under the D-166 search force, and RT-157 read above it. Read force_norm_n p95 and force_abort_rate off every run. Home: DECISIONS.md, D-169.
+    engaged_depth_m = 0.010799999999999999  [placeholder] the fraction of the seat depth behind it is AD HOC (user, 2026-08-30) and was downgraded again on 2026-09-01. The rule 'measured capture depth of the tilted scripted insertion' (inbox entry Reward-Ueberarbeitung) was WITHDRAWN the same day: RT-129 showed that depth to be the controller's own tilt ramp. Proposed replacement, not decided: read the depth at which the lateral offset stays inside half the cross play off the TRAINED policy's trajectories (D-071: the tilt is learned). Only consumer: the engaged display bonus. Factory's own fraction was rejected: at this pocket it lands inside the success band. Home: docs/decisions_inbox.md, entry 'The tilted scripted insertion is SPENT ...' (2026-09-01).
+    abort_payment = -1.0  [placeholder] the FORM is Beltran-Hernandez via D-114 (a fixed negative on abort) and the MAGNITUDE was decided 2026-09-01 (grill; inbox entry Reward-Ueberarbeitung, the abort-payment point), which closes D-114's [open] and un-couples it from the F_max measurement: one kernel peak, i.e. the per-step maximum of the shaping term. That is a SCALE ANCHOR, our own choice, openly labelled, with an optional decade sensitivity row per the D-109 width template. It stays in this table because it is still a magnitude nobody measured; the dominant abort price is anyway the forfeited remaining return.
+    osc_kp_pos = 100.0  [placeholder] task-space position stiffness, N/m. NOT adopted: Decision (four) of the inbox entry 'Audit 2026-09-03 (a)' DERIVES it as kp <= F_search / (Lambda_max * step_limit), with F_search the literature search-band force and Lambda_max the task-space inertia the startup report prints at the reset pose. Until that is done the measurement runs two values (the OSC cfg default and five times it). The OSC cfg default and the reach example are contact-free and are NOT a source.
+    osc_kp_rot = 30.0  [placeholder] task-space rotation stiffness, Nm/rad. No source of ours; Factory's default_task_prop_gains rotation value (factory_env_cfg.py, CtrlCfg). Decision (four) of the same entry.
+    osc_pos_step_limit_m = 0.02  [placeholder] metres of tool travel one action step may command. Decision (four): policy rate x allowed tool speed, and the tool-speed source is MISSING. Factory's pos_action_threshold (factory_env_cfg.py, CtrlCfg) until then.
+    osc_rot_step_limit_rad = 0.097  [placeholder] radians of tool rotation one action step may command. Same gap as osc_pos_step_limit_m; Factory's rot_action_threshold.
+    osc_pos_clamp_m = 0.08  [placeholder] half-width of the box around the pocket entrance the leading tool point may not leave, along x and y. SET by D-180 from the disk reach (the lateral radius plus the tip's swing at maximum tilt, from autodr.bounds_max()) plus one action step plus set air; no longer Factory's pos_action_bounds. check_env_wiring pins it from both sides: at least that requirement, at most the set air above it.
+    osc_pos_clamp_z_m = 0.1435  [placeholder] half-width of the same box along z, SET by D-180 from the disk reach (the highest legal start at maximum tilt plus the lateral radius tipped up, from autodr.bounds_max()) plus one action step plus set air. check_env_wiring proves sufficiency in the WORLD frame the box is aligned to, and a second rule keeps it below the home tip standoff. Factory offers no rule to borrow: its pos_action_bounds does not contain the reset band of peg_insert, and its own clamp is not per-axis.
+    osc_decimation = 8  [placeholder] physics steps per policy step under OSC (policy rate = physics rate / this). No source of ours; Factory's decimation (factory_env_cfg.py, FactoryEnvCfg). D-024's rate is the controller rate now. The episode is kept as a STEP count (D-113) and its seconds follow; re-deriving the length is owed (audit, section six).
+    obs_noise_pocket_pos_std_m = 0.005  [placeholder] the HALF WIDTH of the per-episode uniform bias on the pocket-position channels, in metres (the name still says std; user 2026-09-15). TacSL's Appendix C Table V names a uniform socket observation noise and that is the source; reading it as THIS env's per-episode bias is our own step, because TacSL does not state when it is drawn. NAMED TENSION: the uniform's sigma lies above the one at which FORGE reports unstable training. Home: p1-thesis docs/decisions_inbox.md 2026-09-15, replacing D-182's value.
+    force_obs_noise_std_n = 3.5  [placeholder] the per-step Gaussian on the force channels, in newtons. The UR5e datasheet gives a force-sensing PRECISION for the tool flange; reading that figure as a standard deviation is an ASSUMPTION, because the datasheet does not define it as one. FORGE uses a smaller per-timestep sigma. Home: DECISIONS.md, D-182.
+    torque_obs_noise_std_nm = 0.0  [placeholder] the per-step Gaussian on the torque channels (obs_wrench_mode='wrench' only), in newton metres. OFF and OPEN (user decision, observation noise is a parking suspect); the UR5e datasheet's torque precision is the candidate when it is widened, read as a sigma by the same assumption as the force. Home: DECISIONS.md, the wrench-mode entry; Belege_Streuwerte.md, row B-four-c.
+    grasp_obs_offset_x_m = 0.003  [placeholder] the half width of the uniform grasp offset along the part's short axis, in metres, seen ONLY by the observation. Factory's held-asset position noise and FORGE's Table II carry the same magnitude for their peg; that the gripper on THIS part slips by as much is the user's estimate from a CAD side view, not a measurement. Home: DECISIONS.md, D-183.
+*** PROXY TASK VALUES IN USE -- the physics is the real part in the real pocket, but these SCORING numbers still describe the square peg ***
+    cfg.w_depth_progress = 100.0  [proxy] the square-peg proxy's reward_w_depth, paid per metre of NEW gated max depth (D-165). The proxy solved 1 mm clearance with it at 100; nothing on this task has sized it. Zero switches the term off and reproduces the pre-D-165 reward.
+    cfg.held_asset.side = 0.03  [proxy] the held body modelled as a SQUARE of this side. The real part is rectangular with lugs (PART_BODY_X / PART_BBOX_M). Read by the four-corner gate; moves with the SDF rework (D-109), not alone.
+    cfg.fixed_asset.side = 0.032  [proxy] the square pocket edge the gate tests against. The real opening is POCKET_OPENING_X x POCKET_OPENING_Y and is not square. Read by the four-corner gate; moves with the SDF rework (D-109).
+    cfg.gate_min_alignment = 0.99  [proxy] tool-axis alignment floor, calibrated on the square peg. The real bound is D-106's across-tilt limit, which D-121 reopened and the concept stream has not recomputed.
+    tasks.SIDE_CLEARANCE = 0.0010000000000000009  [proxy] half-clearance per axis of the square pair. The real task has TWO different total plays, PLAY_X and PLAY_Y, which the report now prints instead. Kept only because compare_runs.py reads the metrics key side_clearance_mm.
+    tasks.YAW_WINDOW_RAD = 0.06910872167872839  [proxy] the C4 free-yaw window of a square in a square. The real part fits ONE way round, so there is no equivalent; D-106's yaw bound was reopened by D-121 and is not recomputed. The report no longer prints it. Kept only because compare_runs.py reads the metrics key yaw_window_deg.
+    ... and demo_metrics.json keys ['peg_side_m', 'pocket_side_m', 'side_clearance_mm', 'yaw_window_deg'] carry them.
+-- env 0 pose check --
+  fixture prim (env-local): [0.5009937882423401, -0.1334500014781952, 0.0625000074505806]
+  entrance buffer:          [0.5009937882423401, -0.1334500014781952, 0.0625], yaw -0.0850 rad
+  |prim - buffer| = 7.45e-09 m  (expect ~0; MISMATCH = pose write broken)
+  fixture prim quat (wxyz): [0.999097, 0.0, 0.0, -0.042486]
+  commanded quat (buffer):  [0.999097, 0.0, 0.0, -0.042486]
+  measured tilt magnitude:  4.870 deg vs commanded 4.870 deg, tilt axis azimuth +0.0 deg (0 = +x, 90 = +y), max|quat err| 3.35e-07  (OK)
+  measured yaw about z:     -4.870 deg vs commanded -4.870 deg, |err| 0.0000 deg  (OK)
+  measured tilt about y (ZY): +0.000 deg vs commanded +0.000 deg
+-- env 0 --
+  env_origin:            [0.0, 0.0, 0.0]
+  joint_pos commanded:   [3.141284465789795, -1.674744725227356, -1.891383171081543, -1.1468592882156372, 1.5708180665969849, 1.5704883337020874]
+  joint_pos actual:      [3.141284465789795, -1.674744725227356, -1.891383171081543, -1.1468592882156372, 1.5708180665969849, 1.5704883337020874]
+  joint_vel (FD):        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  root env-local pos:    [0.0, 0.0, 0.0]  (expect (0.0, 0.0, 0.0))
+  EE world pos:          [0.5010822415351868, -0.13345234096050262, 0.32400014996528625]
+  EE env-local pos:      [0.5010822415351868, -0.13345234096050262, 0.32400014996528625]
+  EE world quat (wxyz):  [0.0002990603097714484, -9.540855927525627e-08, -0.9999999403953552, -1.0746682164608501e-05]
+  pocket entrance world: [0.5009937882423401, -0.1334500014781952, 0.0625]
+  |EE - entrance|:       0.261500 m
+  XY offset to entrance: 0.000088 m  (expect <= 0.005 before reset noise)
+  Z standoff (flange):   0.261500 m  (expect 0.2615 at the NOISELESS start pose; tool point 0.1095 + chain 0.1520, D-161 rung 0 -- NOT the home pose)
+                         with USD drives the droop is spent: RT-46 read 0.317026 m at t = 3.000 s, 0.000026 m off nominal. Reset noise would add +-0.0098 m, but it is 0.0 right now -- so judge this against the CENTRE
+  x-axis . (0,0,-1):    -0.000598
+  y-axis . (0,0,-1):    -0.000021
+  z-axis . (0,0,-1):    +1.000000  <-- expect >= 0.999 here
+  peg origin env-local:  [0.5010822415351868, -0.13345234096050262, 0.32400014996528625]
+  peg TIP env-local:     [0.5009913444519043, -0.13344907760620117, 0.17200018465518951]
+  peg TIP rel. entrance: [-3e-06, 1e-06, 0.1095]  (POCKET frame (D-036) -- this is observation channels 12:15)
+  flange -> peg origin:  0.000000 m  (expect 0.000000)
+  tip along tool axis:   +0.152000 m  (expect +0.1520)
+  peg yaw phi (folded):  +4.870 deg  (expect +-0.000 at home BEFORE reset noise; ~uniform in +-0.00 after)
+  (cos 4phi, sin 4phi):  (+0.9428, +0.3335)  (expect (+1, 0) at home before reset noise)
+  tip Chebyshev offset:  0.000003 m  (real limit is half the across-play, 0.000294 m; at the start pose under this tilt ~0.0093)
+  corner Chebyshev max:  0.016222 m  (gate needs < 0.0160); corners rel. entrance: [[-0.0162, 0.0137], [-0.0137, -0.0162], [0.0137, 0.0162], [0.0162, -0.0137]]
+  gate at this pose:     closed (corners OUT, depth -0.1095 vs <= 0.0370, alignment +1.0000 vs >= 0.99)
+  tip insertion depth:   -0.109500 m  (expect -0.1091 at the NOISELESS home pose, judged the same way as the flange standoff above, = -0.1095 x cos(tilt))
+  max joint deviation:   0.000000 rad (0.000 deg) on shoulder_pan_joint  (vs the WRITTEN target; expect ~0)
+  reset yaw noise:       -0.000009 rad (-0.000 deg) on wrist_3_joint  (D-038, sampled +-0.0000 rad -- NOT an error)
+  body positions (env-local) and plate test -- WORLD-FRAME, indicative only under tilt:
+    base_link        (+0.0000, +0.0000, +0.0000)   clearance = +0.1198
+    shoulder_link    (-0.0000, +0.0000, +0.1625)   clearance = +0.2823
+    upper_arm_link   (+0.0000, +0.0000, +0.1625)   clearance = +0.2823
+    forearm_link     (+0.0441, -0.0000, +0.5852)   clearance = +0.7050
+    wrist_1_link     (+0.4014, -0.1334, +0.4237)   clearance = +0.5435
+    wrist_2_link     (+0.5011, -0.1335, +0.4236)   clearance = +0.5434
+    wrist_3_link     (+0.5011, -0.1335, +0.3240)   clearance = +0.4438
+    tool_link        (+0.5011, -0.1335, +0.3240)   clearance = +0.4438
+========================================================================
+C:\Users\Simon\miniconda3\envs\env_isaaclab\Lib\site-packages\rsl_rl\utils\utils.py:244: UserWarning: The observation configuration dictionary 'obs_groups' must contain the 'policy' key. As an observation group with the name 'policy' was found, this is assumed to be the observation set. Consider adding the 'policy' key to the 'obs_groups' dictionary for clarity. This behavior will be removed in a future version.
+  warnings.warn(
+C:\Users\Simon\miniconda3\envs\env_isaaclab\Lib\site-packages\rsl_rl\utils\utils.py:290: UserWarning: The observation configuration dictionary 'obs_groups' must contain the 'critic' key. As the configuration for 'critic' is missing, the observations from the 'policy' set are used. Consider adding the 'critic' key to the 'obs_groups' dictionary for clarity. This behavior will be removed in a future version.
+  warnings.warn(
+--------------------------------------------------------------------------------
+Resolved observation sets: 
+--------------------------------------------------------------------------------
+ActorCritic.__init__ got unexpected arguments, which will be ignored: ['state_dependent_std']
+Actor MLP: MLP(
+  (0): Linear(in_features=28, out_features=128, bias=True)
+  (1): ELU(alpha=1.0)
+  (2): Linear(in_features=128, out_features=128, bias=True)
+  (3): ELU(alpha=1.0)
+  (4): Linear(in_features=128, out_features=6, bias=True)
+)
+Critic MLP: MLP(
+  (0): Linear(in_features=28, out_features=128, bias=True)
+  (1): ELU(alpha=1.0)
+  (2): Linear(in_features=128, out_features=128, bias=True)
+  (3): ELU(alpha=1.0)
+  (4): Linear(in_features=128, out_features=1, bias=True)
+)
+[insertion] episode record: C:\Users\Simon\Desktop\Alexander_Pett\view\RT-272\replay_h+110mm_yaw-04.9deg\episodes.csv (13 columns)
+[shorten] startup report repeat (step 60) cut to 3 of 155 lines -- the rest repeats the first report; the scatter lines do NOT and are kept
+step 60 of (2, 60, 180, 258), t = 4.000 s after reset
+observation bias env0..0 (D-182, tip_rel 12:15, uniform +-0.005 m, drawn per EPISODE): [[0.001322, 7e-05, 0.001126]]
+grasp belief error env0..0 (D-183, +-0.003 m on the part's short axis, drawn per EPISODE): [0.001614]
+[shorten] startup report repeat (step 180) cut to 3 of 155 lines -- the rest repeats the first report; the scatter lines do NOT and are kept
+step 180 of (2, 60, 180, 258), t = 12.000 s after reset
+observation bias env0..0 (D-182, tip_rel 12:15, uniform +-0.005 m, drawn per EPISODE): [[0.004349, -0.001476, -0.00368]]
+grasp belief error env0..0 (D-183, +-0.003 m on the part's short axis, drawn per EPISODE): [-0.00116]
+[shorten] startup report repeat (step 258) cut to 3 of 155 lines -- the rest repeats the first report; the scatter lines do NOT and are kept
+step 258 of (2, 60, 180, 258), t = 17.200 s after reset
+observation bias env0..0 (D-182, tip_rel 12:15, uniform +-0.005 m, drawn per EPISODE): [[0.000521, 0.001625, -0.001473]]
+grasp belief error env0..0 (D-183, +-0.003 m on the part's short axis, drawn per EPISODE): [-0.001204]
+[trace] wrote 256 steps x 1 envs to C:\Users\Simon\Desktop\Alexander_Pett\temp\Contactrich_Insertion\Phase5_Robustheit_v1\rt_logs\RT-272b_trace.json
+[98.188s] Simulation App Shutting Down
+[rt_log] exit code: 0
+[shorten] 496 of 1016 lines kept, 3 report repeats dropped (shorten_rt_log-2026-09-05); full log: C:\Users\Simon\Desktop\Alexander_Pett\temp\Contactrich_Insertion\Phase5_Robustheit_v1\rt_logs\RT-272b.txt

@@ -53,14 +53,14 @@
 > that resolution.**
 
 
-Last updated: 2026-09-12, dev laptop, branch `p5-robustheit` (worktree
-`Thesis Workflow Phase 5/p5-robustheit`, branched from `p5-reward` at `5b58d14`).
-Read the branch head with `git ls-remote origin p5-robustheit`, never from
-this file.
+Last updated: 2026-09-23, dev laptop, branch `p5-kraftsensor` (worktree
+`Thesis Workflow Phase 5/p5-kraftsensor`). Read the branch head with
+`git ls-remote origin p5-kraftsensor`, never from this file.
 
-**NOTHING IN THE PHASE-5 BUILD HAS EVER RUN UNDER ISAAC.** Every offline
-check is green and every runtime claim is UNVERIFIED. The next thing that
-reaches the training PC is `Laufplan_Phase5.md` step 3 — see § Open, NEXT.
+**THE EVALUATION IS DONE AND FROZEN** (RT-222..RT-225 on code `8299485d`,
+K1/K2/K3 met, `rt_logs/VERDICTS.md`). New work on this branch is the Fixed-DR
+arm (D-192): it must leave the three existing `dr_mode` paths (`off`,
+`autodr`, `table`) untouched. Start at § Open, NEXT, "START HERE".
 
 The older `p4-reward` / `p5-osc-rot-gain` lines that stood here are history;
 read a head with `git ls-remote origin <branch>`. The training PC clone
@@ -543,7 +543,11 @@ FRAME, two numbers, after the `yaw_cos_sin` pattern (`insertion_math.py:788`)
 
 ## RT ledger
 
-- **Next free RT number: RT-178.** **RT-177 is REGISTERED and runs
+- **Next free RT number: RT-222** (user 2026-09-22: continue from RT-220;
+  RT-220 = G6 repeat, RT-221 = nominal width, both expectation files
+  written; RT-210 is another session's solver stability probe (chapter
+  4.4), RT-211..219 not checked). The RT-177 line below is history.
+- *(stale)* **Next free RT number: RT-178.** **RT-177 is REGISTERED and runs
   tonight (2026-09-08):** the **first acceptance run of the project** under
   D-174 -- fixed budget, no hand stop, branch written down first.
   Expectation `rt_logs/RT-177_expectation.md`, log name `RT-177s42`. The
@@ -990,6 +994,208 @@ individual items below are as written:**
 **START HERE (2026-09-12, chat 3). Read this block, then act. Everything
 below it is history and detail; open it only when a line here points there.**
 
+* **2026-09-22, `p5-kraftsensor`: RT-209 (first practice run) RAN -- PASS (was UNKLAR, see 1-2).**
+  Verdict line `rt_logs/VERDICTS.md` (2026-09-22 11:56:42). Files:
+  `results/eval/technik/autodr_s1/` (git-untracked), log `rt_logs/RT-209/`.
+  `check_eval_conditions.py`: G1a, G2a/b, G3a-d PASS (G3c worst 7.9e-8);
+  `eval_collect.py` VERDICT OK. Manifest: G5 hashes equal, G8 (`dr_mode`
+  table, floor = start 0.02, seed 1) holds, `wall_time_s` 420.3, versions
+  isaacsim 5.1.0.0 / isaaclab 2.3.2.post1. L-14 for `_write_applied_csv`
+  now met (log: 1000 rows, 17 columns, policy step 1; G3c PASS).
+  OPEN, in order:
+  1. G1b FIXED (user "Weg A", 2026-09-22): the check wanted ONE
+     `[eval-table]` line, the env prints one per startup report
+     (`report_at_steps = (2, 60, 180, 258)`, `insertion_env_cfg.py:908`).
+     Rule now: at least one line and EVERY line the table hash. Marker
+     `check_eval_conditions-2026-09-22a`, `--self-test` 21/21 (new cases
+     `report-prints-four-times` -- red on the old rule -- and
+     `one-of-four-lines-carries-another-hash`); mutations `all`->`any` and
+     dropping the non-empty guard both turn it red. Re-run on RT-209: G1b
+     PASS, verdict INCOMPLETE only for G1c.
+  2. G1c DONE: training PC `Get-FileHash` = `DD424C93...58B7EDB` = table.
+     `check_eval_conditions.py` on RT-209: VERDICT PASS, 9/9, exit 0.
+     RT-209 verdict corrected to PASS in `VERDICTS.md` (same line).
+  3. G4: 959 of 999 repeats have the same outcome (40 differ). Cause NOT
+     examined (candidate named in plan § 6 "Rauschen": global noise stream).
+  4. CONFLICT: manifest torch `2.7.0+cu118`, CLAUDE.md:107 and DECISIONS.md:8499 say
+     `+cu128`. Not resolved.
+  5. `results/` is not in `.gitignore`; whether results go into git is open.
+  DONE 2026-09-22 (user: "form not important now", technique block ACCEPTED):
+  RT-220 (G6 repeat) G1a/G2/G3/G5 PASS, G6 = 0 of 1000 rows differ; G4
+  959/999 identical in both runs. RT-221 (nominal) G1a/G2/G3 PASS, 85 s,
+  all envs done after 50 steps. Both ran on `42b0b65a` (the training PC
+  pulled; `git diff 79189e32 42b0b65a -- source scripts/rsl_rl scripts/tools`
+  empty), so `eval_collect.py` REFUSES the technique block on two
+  code_commits -- accepted. No logs / Get-FileHash for RT-220/221 handed
+  over (G1b/G1c INCOMPLETE). Start penetration before the first action is
+  NOT recorded in any file -> thesis limit (user "Weg A"). Foreign folder
+  `results/eval/technik/eval_target_dd424c93_solver16` (RT-210 session)
+  breaks the collector -- not mine, not moved.
+  DONE 2026-09-22: `scripts/run_eval.ps1` built (one command = one block).
+  T-nominal = RT-222 PASS on `8299485d` (10/10, G1-G3 9/9 each, collector OK
+  for T-nominal alone; K2 met by Welch, bootstrap disagrees -- numbers in
+  `rt_logs/VERDICTS.md` RT-222, thesis row in `InBachelorErwähnen.md`).
+  Files: `results/eval/T-nominal/` (untracked), logs `rt_logs/RT-222/`.
+  Isaac's `hub.exe` holds rt_log's pipe after every run -> watcher in a
+  second window (`PROBLEMS.md` 2026-09-22); every block needs it.
+  DONE 2026-09-22: RT-223 T-auswahl PASS (10/10, 9/9 each, all manifest pins,
+  collector OK over T-nominal + T-auswahl, one code_commit). Selection rule
+  § 2 B applied -> **D-190: final policy AutoDR seed 1** (979/1000, tie with
+  s4 broken on force p95 24.2701 vs 24.6908 N). Results in git without logs
+  (user "Weg 1"): `results/eval/T-nominal/`, `results/eval/T-auswahl/`;
+  `.gitignore` keeps `results/**/RT-*.txt` out, `head.txt` and
+  `table_filehash.txt` stay in.
+  DONE 2026-09-22: RT-224 T-final PASS (10/10, 9/9 each, all manifest pins,
+  `checkpoint_sha256` equal to RT-222/223 in all ten, collector OK over
+  T-nominal + T-auswahl + T-final, 30000 rows, one code_commit). **K1 MET:**
+  diff +0.7078, Welch 95 % [+0.6627, +0.7529] wholly above 0; the bootstrap
+  [+0.6772, +0.7392] agrees this time. K2 unchanged from RT-222, number for
+  number. success_train AutoDR 0.982/0.964/0.978/0.982/0.945, No-DR
+  0.246/0.262/0.307/0.211/0.286. Numbers and the two side findings (No-DR
+  fails by TIMEOUT, 688-779 of 1000, not by force; autodr_s1 finished after
+  138 policy steps) are in `rt_logs/VERDICTS.md` RT-224. Results in git
+  without logs: `results/eval/T-final/`.
+  DONE 2026-09-23: RT-225 T-grenze PASS (1 run, 9/9, 0 pin mismatches,
+  collector OK over all FOUR blocks, 31050 rows, one code_commit).
+  **K3 MET**; tilt_hi only just (Newcombe upper bound +0.0019). K1 and K2
+  unchanged. So K1 AND K2 AND K3 hold: the § 1.4 sentence "Robustheitsziel
+  erreicht" may be written, in its exact wording. Numbers in
+  `rt_logs/VERDICTS.md` RT-225; thesis row (tilt_hi close, 150 rows per
+  block) in `InBachelorErwähnen.md` 2026-09-23. Results in git without
+  logs: `results/eval/T-grenze/`. **All evaluation runs are done.**
+  DONE 2026-09-23: D2 part 2, the figures (laptop, verified offline).
+  `scripts/eval_figures.py` (F1-F10) and
+  `scripts/eval_report.py` (ONE command on a temp copy of the four blocks,
+  `technik/` untouched; `--self-test` 7/7). Run on the real data: collector
+  VERDICT OK 31050 rows, K1/K2/K3 met, 20 files in `docs/figures/eval/`,
+  each looked at. Figure list overwritten in `eval_plan.md` § 8b;
+  sources/colours in `docs/eval_figures_plan.md`. Training curves in git as
+  `results/training/curves.csv` (0.85 MB, user "ja"). Two thesis rows
+  (`InBachelorErwähnen.md`: penetration >= t1 in 8.2 % of AutoDR
+  successes; F6b tail added to the timeout row).
+  DONE 2026-09-23, figure review part 1 (laptop, verified offline, each
+  changed figure looked at): decimal comma + real minus in every figure
+  (`b72ddb6c`), Arial as the stand-in for the thesis Helvetica, script stops
+  if Arial is missing (`f76f0456`), F9 stays purple, plan text corrected
+  (`2409b1ff`); `eval_figures.py --self-test` 30/30. Two thesis rows
+  2026-09-23 (K2 = no loss SHOWN, not no loss; F6 force compares different
+  test cases). A review PDF with per-figure verdicts exists only in the
+  session scratchpad, NOT in the repo; its facts are those rows.
+  DONE 2026-09-23, chat 2 (laptop): NEXT 1a K5 pre-registered in
+  `eval_plan.md` (`bd0e86e1`, user ok; D-192 corrected: TWO differences,
+  growth AND no boundary sampling). 1b `dr_mode=fixed_dr` = `autodr.FixedDR`
+  (`3c6dabcd`; `check_autodr` 170 + counter-proof, `check_env_wiring` 389 +
+  counter-proof, both PASSED). 1c `rt_logs/RT-228_expectation.md`
+  (`d74018df`, pushed; RT-226/227 are p6's). CORRECTED 2026-09-24: p6 took
+  RT-228 too; the Fixed-DR training is now `rt_logs/RT-231_expectation.md`.
+  1d SETTLED: the Fixed-DR blocks
+  play on `8299485d` (user "A", `06c0d15f`). NEXT 7 CLOSED (user "ja"): the
+  plan sentence stays as pre-registered, the thesis writes "kein
+  nachweisbarer nominaler Verlust" (`InBachelorErwähnen.md` 2026-09-23).
+  NEXT 2 all seven figure items done, one commit each
+  (`b1382138`..`fed1ce54`, marker `eval_figures-2026-09-23i`, self-test
+  30/30). F1 hides the ~+-1 pp intervals near 97 % on the 0-100 axis; user
+  "A": no zoom panel, the caption names the width
+  (`docs/eval_figures_plan.md` F1 row).
+  DONE 2026-09-23, chat 3 (laptop, verified offline, `b9c7f90e`..`31c7e5d8`):
+  the analysis knows Fixed-DR. `eval_collect.py` method `fixeddr` from
+  `_fixed_dr_`, blocks `T-nominal-F`/`T-final-F` (Fixed-DR only there);
+  `eval_stats.py` K5 + K5_nominal (Welch, bootstrap, reading
+  above_0/below_0/contains_0, no "met"), Fixed-DR bins in `bins_T_final`;
+  `eval_report.py` stages both `-F` blocks or refuses one; `run_eval.ps1`
+  refuses `*-F`. Figures (user "B": in F1-F10, not a new one): F1-F3,
+  F5-F7, F9, F10 draw Fixed-DR `#199e70` when both `-F` blocks exist; F4/F8
+  not (`docs/eval_figures_plan.md` § 2). On the real four blocks K1-K4 and
+  all ten PNGs are byte-equal to before. Three-arm renders only on FAKE
+  preview data (scratchpad) -- look again on real data. The RT-231 folder
+  name in the collector self-test is CONSTRUCTED; replace it with the real
+  one. Way for the Fixed-DR blocks (user "A"): single `rt_log.ps1` +
+  `play.py` commands like RT-225 on `8299485d`, one loop per block, NOT
+  `run_eval.ps1` -- written once the RT-231 folder names are known.
+  NOW: RT-231s1..s5 on the training PC (user starts it), then `/rt-check`
+  (`rt_logs/inbox.txt` held no Fixed-DR log on 2026-09-24). Then the
+  `rt-expectation` for T-nominal-F + T-final-F, then K5.
+  NEXT, in order:
+  1. FIXED-DR ARM, D-192 (user 2026-09-23: on THIS branch, runs alongside).
+     (a) BEFORE any training: write the comparison into `eval_plan.md` --
+     hypothesis, Welch interval AutoDR - Fixed-DR on T-final (and T-nominal),
+     reading rule, marked as added after the results. (b) Build the training
+     mode: start-floor phase exactly as AutoDR, then `FixedWidth.at_max` from
+     H_min on; `FixedWidth` has no floor (`autodr.py:1200`, class), so one
+     provider must combine both. The three existing modes keep their code
+     path; `check_autodr.py` and `check_env_wiring.py` green, one mutation per
+     new check. (c) `rt-expectation` skill, then 5 seeds x 1500 iterations,
+     command = RT-206's with only `dr_mode` changed. (d) Evaluation commit:
+     table mode needs no new code, so the Fixed-DR checkpoints may play on the
+     evaluated commit `8299485d` and keep `eval_collect.py` happy (item 4) --
+     UNVERIFIED; by code reading `play.py` on `8299485d` loads only the
+     weights and sets `dr_mode=table` itself. (e) DONE chat 3 (`#199e70`).
+  2. Figure review, remaining items -- user names the figure by number 1-10;
+     one change per commit; render, look, self-test: legend without markers
+     on the line-only figures 6, 7, 10; F7 draw all thin lines first, then
+     the two means; F6 right y-label "Anteil erfolgreich bis Schritt k in %";
+     F9 "n=" at 6.5 pt instead of 5.5; F8 y-axis in %; F1 interval visible
+     (smaller dot, thinner ring); F5 gap between the AutoDR and No-DR groups.
+     F7 caption fact: runs of the same seed are identical up to iteration
+     190-248, the first AutoDR boundary move is at 225-258 -- why they part
+     before it is NOT examined (`results/training/curves.csv`).
+  3. Extra runs live on their own branch `p6-TestAusserhalb` (worktree
+     `Thesis Workflow Phase 6/p6-TestAusserhalb`), D-191 there. Nothing of it
+     is on p5, and p5 must not pull it.
+  4. `eval_collect.py` compares `code_commit` over ALL blocks
+     (`eval_collect.py:202-205`); `technik` is on 42b0b65a/79189e32 and holds
+     the foreign solver16/32 folders -> refuses the full folder.
+     `eval_report.py` works around it with a copy. Decision open; the
+     Fixed-DR evaluation (item 1d) meets the same rule.
+  5. Item 5 above (results in git): `eval_plan.md` § 8b says the result
+     files go into git; each run folder is ~0.9 MB plus a ~0.1 MB log.
+     Decision open.
+  6. The eval self-tests are not in `selftest_checks.py` (system python has
+     no pandas; they need `.venv-analysis`). Wiring them in needs a
+     `--offline` sweep to verify -- user-gated.
+  7. User question, open: the pre-registered sentence in `eval_plan.md`
+     § 1.4 ("...ohne nominalen Verlust...") says more than K2 tests; whether
+     the thesis weakens it is the user's call (`InBachelorErwähnen.md`
+     2026-09-23).
+
+* **2026-09-21, `p5-kraftsensor`: THE EVALUATION IS BUILT ON THE LAPTOP,
+  NOTHING HAS RUN UNDER ISAAC.** Plan `eval_plan.md` (worktree root; the copy
+  in `Pläne/` is a stale foreign file, never commit it). Done: A tables, B1
+  cfg, B2 env plays row i + writes `applied.csv`, C `play.py --eval-table
+  --eval-width --eval-tag` + `eval_manifest.json`, D1
+  `check_eval_conditions.py`, D2 part 1 `eval_collect.py` + `eval_stats.py`
+  (run in `.venv-analysis`, D-189). K1/K2 = Welch over the seed rates,
+  bootstrap beside it, G7 dropped (inbox "Evaluation statistics follow the
+  literature"). Each step's state and checks: the inbox entries of 2026-09-21.
+  NEXT, in order:
+  1. Push was done at session end; read the head with
+     `git ls-remote origin p5-kraftsensor`. Then the `rt-expectation` skill (main chat)
+     writes `rt_logs/RT-209_expectation.md` for the FIRST practice run:
+     AutoDR seed 1 (`RT-206s1` `model_1499.pt`) on
+     `scripts/eval/eval_table_seed20.csv`, width target, `--seed` set.
+     Judge afterwards with `check_eval_conditions.py` (needs the log and
+     the training PC's `Get-FileHash`) and `eval_collect.py`.
+  2. Owed on the training PC by that run: the tensor chain of
+     `_write_applied_csv` (no torch on the laptop, L-14 not met), the
+     `isaacsim`/`isaaclab` version lookup, the run time per evaluation run.
+  3. After real data: D2 part 2 (`eval_figures.py`, `eval_report.py`; load
+     the `dataviz` skill first). Open there: no friction bin edges exist, so
+     F3 has 4 fields unless the user decides edges.
+  4. Step F: `scripts/CLAUDE.md` rows for `make_eval_table.py`,
+     `eval_manifest.py`, `check_eval_conditions.py`, `eval_collect.py`,
+     `eval_stats.py`; `selftest_checks.py` list.
+
+* **2026-09-20, `p5-kraftsensor` @ `f959b6c3`: BOTH SEED SERIES ARE DONE
+  AND DOCUMENTED.** AutoDR RT-206s1..s5 and No-DR RT-207s1..s5, 1500
+  iterations each, code `5a6cc8e`, all exit 0, all `check_episode_log`
+  COMPLETE. One home for every number:
+  `docs/Blockberichte/Bericht_Laufkatalog.tex` §§ RT-206s1..RT-207s5, the
+  No-DR vs AutoDR table (`sec:207vergleich`) and the engaged-hump diagnosis
+  (`sec:huegel`; full text in `docs/decisions_inbox.md`, last entry; two
+  rows in `InBachelorErwähnen.md`). New rules L-02 (second case) and L-15 in
+  `docs/reference/pruefregeln.md`. NEXT: the evaluation -- see the
+  2026-09-21 bullet above.
+
 * **2026-09-14, `p5-kraftsensor`: RT-201 REACHED ITS TARGET -- the floor
   unlocks AutoDR.** autodr + floor -0.030, seed 1: floor on H_min at it 55,
   all seven ceilings by it 623, `[stop-criterion] target reached` at it 850
@@ -1089,7 +1295,8 @@ below it is history and detail; open it only when a line here points there.**
     it deliberately or repair without evidence — user decision, not made.
   * NOTE on the run: RT-183 had NO committed expectation file. The three
     outcomes were written in chat before the run and the verdict line says
-    so. From now on the `rt-expectation` subagent writes the file first.
+    so. From now on the file is written first -- since 2026-09-22 by the
+    main chat with the `rt-expectation` skill, no subagent.
 * **DOES THE HOLE HARM ANYTHING? RT-184 says: not through the reward, and
   the reason is RESOLUTION (2026-09-12).** `--reward-curve`, grid of four
   heights (0, 5, 10, 15 mm) x six lateral offsets (0, 4, 7, 7.8847, 8.2,

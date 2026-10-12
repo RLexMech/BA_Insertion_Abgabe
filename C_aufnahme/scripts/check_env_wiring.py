@@ -48,6 +48,7 @@ import math
 import pathlib
 import re
 import sys
+import types
 
 REPO = pathlib.Path(__file__).resolve().parents[1]
 PKG = REPO / "source" / "insertion" / "insertion" / "tasks" / "direct" / "insertion"
@@ -67,6 +68,8 @@ RECOVERY_SRC = REPO / "scripts" / "tilt_recovery_probe.py"
 PPO_SRC = PKG / "agents" / "rsl_rl_ppo_cfg.py"
 COMPARE_SRC = REPO / "scripts" / "compare_runs.py"
 AUTODR_SRC = PKG / "autodr.py"
+PLAY_SRC = REPO / "scripts" / "rsl_rl" / "play.py"
+EVAL_MANIFEST_SRC = REPO / "scripts" / "tools" / "eval_manifest.py"
 
 # THE MEASURED HOME TIP STANDOFF, in metres. RT-143a/b (rt_logs/VERDICTS.md,
 # 2026-09-04, re-read from the log): the arm followed the tip-box clamp from
@@ -744,6 +747,35 @@ EPISODE_LOG_COLUMNS_AGREED = (
     "bounds_version", "dr_phase",
 )
 
+# applied.csv (eval_plan.md step B2, G3): the check's OWN literals, same
+# reason. The second tuple is WHERE each column comes from, in column order.
+APPLIED_LOG_COLUMNS_AGREED = (
+    "row_id", "lat_x_m", "lat_y_m", "start_height_m", "yaw_rad",
+    "pocket_qw", "pocket_qx", "pocket_qy", "pocket_qz",
+    "pocket_dx_m", "pocket_dy_m", "grasp_obs_x_m", "friction_cmd",
+    "friction_robot_min", "friction_robot_max",
+    "friction_fixture_min", "friction_fixture_max",
+)
+APPLIED_LOG_SOURCES_AGREED = (
+    "torch.arange(n, device=self.device, dtype=torch.float64)",
+    "self._start_lat_off[:, 0].to(torch.float64)",
+    "self._start_lat_off[:, 1].to(torch.float64)",
+    "self._start_height.to(torch.float64)",
+    "self._fixture_yaw.to(torch.float64)",
+    "self._fixture_quat[:, 0].to(torch.float64)",
+    "self._fixture_quat[:, 1].to(torch.float64)",
+    "self._fixture_quat[:, 2].to(torch.float64)",
+    "self._fixture_quat[:, 3].to(torch.float64)",
+    "_pocket_d[:, 0].to(torch.float64)",
+    "_pocket_d[:, 1].to(torch.float64)",
+    "self._grasp_obs_off[:, 0].to(torch.float64)",
+    "self._friction_applied.to(torch.float64)",
+    "_fric[0].min(dim=1).values",
+    "_fric[0].max(dim=1).values",
+    "_fric[1].min(dim=1).values",
+    "_fric[1].max(dim=1).values",
+)
+
 
 def build_checks(
     math_mut: tuple[tuple[str, str], ...] = (),
@@ -761,6 +793,7 @@ def build_checks(
     autodr_mut: tuple[tuple[str, str], ...] = (),
     obs_noise_mut: tuple[tuple[str, str], ...] = (),
     recovery_mut: tuple[tuple[str, str], ...] = (),
+    play_mut: tuple[tuple[str, str], ...] = (),
 ) -> list[tuple[str, bool, str]]:
     results: list[tuple[str, bool, str]] = []
 
@@ -1076,8 +1109,10 @@ def build_checks(
     # reporting method is the one kind of fourth name that may be added here;
     # anything that computes with the offset still fails this check by
     # existing.
+    # AND BY ONE MORE on 2026-09-21, same kind: ``_write_applied_csv`` copies
+    # the buffer into `applied.csv` (eval plan G3) and computes nothing.
     _GRASP_ALLOWED = ("__init__", "_get_observations", "_print_startup_report",
-                      "_reset_idx")
+                      "_reset_idx", "_write_applied_csv")
     _grasp_users = sorted(
         n.name for n in _walk(env_tree)
         if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
@@ -2671,6 +2706,242 @@ def build_checks(
     check("an unknown dr_mode is refused, never run as 'off'",
           _mode_tests == ["str(cfg.dr_mode) != 'off'"],
           "; ".join(_mode_tests))
+
+    # -- eval plan step B2: the table branch of the env ----------------------
+    # The row identity itself is EXECUTED in check_autodr (`table_rows`, the
+    # committed (1000, 16) table). What is pinned here is that the env CALLS
+    # it with its own table and its own reset ids, and everything around it.
+    _tbl_draw_ifs = [
+        n for n in _walk(_draw_fn) if isinstance(n, ast.If)
+        and _unparse(n.test) == "self._eval_table_unit is not None"
+    ]
+    _tbl_draw = [
+        ([_unparse(s) for s in n.body], [_unparse(s).split("(")[0] for s in n.orelse])
+        for n in _tbl_draw_ifs
+    ]
+    check("the reset draw copies row i for env i through autodr.table_rows, else torch.rand",
+          _tbl_draw == [(
+              ["self._reset_unit[idx] = autodr.table_rows(self._eval_table_unit, idx)"],
+              ["self._reset_unit[idx] = torch.rand"],
+          )],
+          str(_tbl_draw))
+    _tbl_mode_ifs = [
+        n for n in _walk(_env_init) if isinstance(n, ast.If)
+        and _unparse(n.test) == "str(cfg.dr_mode) == 'table'"
+    ]
+    # Per If, not pooled: a second `== 'table'` arm elsewhere must not hide
+    # or fake the one that loads the table.
+    _tbl_bodies = [[_unparse(s) for s in n.body][:2] for n in _tbl_mode_ifs]
+    check("table mode validates its own cfg before it reads the table",
+          _tbl_bodies.count([
+              "validate_table_mode(cfg)",
+              "self._eval_table = autodr.RowTable.from_csv(cfg.dr_table_path)",
+          ]) == 1,
+          str(_tbl_bodies))
+    _tbl_count_tests = [
+        _unparse(g.test) for g in _init_raises if "_eval_table" in _unparse(g.test)
+    ]
+    check("the table must have EXACTLY num_envs rows",
+          _tbl_count_tests == ["self._eval_table.n_rows != int(self.num_envs)"],
+          str(_tbl_count_tests))
+    _tbl_dims = [_unparse(a.value) for a in _named_assign(_env_init, "_table_dims")]
+    _tbl_nominal = [
+        _unparse(n.test) for n in _walk(_env_init) if isinstance(n, ast.If)
+        and any("_table_dims" in _unparse(s) for s in n.body)
+        and "dr_table_width" in _unparse(n.test)
+    ]
+    _tbl_provider = [
+        # The BODY only: the `elif` arm is the AutoDR provider.
+        _unparse(n.value) for m in _tbl_mode_ifs for s in m.body for n in _walk(s)
+        if isinstance(n, ast.Assign) and _unparse(n.targets[0]) == "self._dr"
+    ]
+    check("the table provider is FixedWidth.at_max, and 'nominal' keeps the start height alone",
+          len(_tbl_dims) == 2 and _tbl_dims[0].startswith("autodr.bind_centres(")
+          and _tbl_dims[1] == "tuple((d for d in _table_dims if d.name == 'start_height'))"
+          and _tbl_nominal == ["str(cfg.dr_table_width) == 'nominal'"]
+          and _tbl_provider == ["autodr.FixedWidth.at_max(_table_dims)"],
+          f"dims {_tbl_dims}, nominal {_tbl_nominal}, provider {_tbl_provider}")
+    _five_key_dicts = [
+        _unparse(a) for c in _walk(_env_init) if isinstance(c, ast.Call)
+        and _unparse(c.func).endswith("bind_centres")
+        for a in c.args if isinstance(a, ast.Dict) and len(a.keys) == 5
+    ]
+    # Three since D-192: AutoDR, table, Fixed-DR -- all the SAME text.
+    check("the table and Fixed-DR providers open around the SAME five centres as AutoDR",
+          len(_five_key_dicts) == 3 and len(set(_five_key_dicts)) == 1,
+          str(_five_key_dicts))
+    _shared_refusal = [
+        n for n in _walk(_env_init) if isinstance(n, ast.If)
+        and _unparse(n.test) == "str(cfg.dr_mode) in ('autodr', 'fixed_dr', 'table')"
+        and any(isinstance(sub, ast.Name) and sub.id == "_live" for sub in _walk(n))
+    ]
+    check("the static-field refusal covers 'autodr', 'fixed_dr' AND 'table'",
+          len(_shared_refusal) == 1, f"{len(_shared_refusal)} block(s)")
+    # D-192: the Fixed-DR arm. The provider class AND the floor, per If: a
+    # FixedDR without `_floor_spec` refuses at build, an AutoDR here would
+    # train the wrong arm under the right folder name.
+    _fd_provider = [
+        (_unparse(n.value.func),
+         [_unparse(k.value) for k in n.value.keywords if k.arg in ("floor", "stall_buffers")])
+        for m in _walk(_env_init) if isinstance(m, ast.If)
+        and _unparse(m.test) == "str(cfg.dr_mode) == 'fixed_dr'"
+        for s in m.body for n in _walk(s)
+        if isinstance(n, ast.Assign) and _unparse(n.targets[0]) == "self._dr"
+        and isinstance(n.value, ast.Call)
+    ]
+    check("the fixed_dr arm builds autodr.FixedDR on the start floor",
+          _fd_provider == [("autodr.FixedDR", ["_floor_spec", "int(cfg.autodr_stall_buffers)"])],
+          str(_fd_provider))
+    _phase_src = [
+        _unparse(a.value)
+        for a in _named_assign(_func(env_tree, "_append_episode_rows", "InsertionEnv"), "phase")
+    ]
+    check("the episode log reads the phase with a default, so FixedWidth cannot crash it",
+          _phase_src == ["str(getattr(self._dr, 'phase', 'fixed'))", "'none'"],
+          str(_phase_src))
+    _tbl_report = [
+        _unparse(n) for n in _walk(_func(env_tree, "_print_startup_report", "InsertionEnv"))
+        if isinstance(n, ast.JoinedStr) and "[eval-table]" in _unparse(n)
+    ]
+    check("the startup report prints the table's sha256 on the [eval-table] line (G1)",
+          len(_tbl_report) == 1 and "self._eval_table.sha256" in _tbl_report[0]
+          and "self._eval_table.n_rows" in _tbl_report[0],
+          str(_tbl_report)[:200])
+    _autodr_only = [
+        _unparse(n.test) for n in _walk(_func(env_tree, "_print_startup_report", "InsertionEnv"))
+        if isinstance(n, ast.If) and "buffer_m" in _unparse(n)
+        and not any(isinstance(s, ast.If) and "buffer_m" in _unparse(s) for s in n.body)
+    ]
+    check("the AutoDR-only report paragraph is guarded by the provider's type",
+          _autodr_only == ["isinstance(self._dr, autodr.AutoDR)"], str(_autodr_only))
+    # -- eval plan step B2, second half: applied.csv (G3) --------------------
+    _applied_fn = _func(env_tree, "_write_applied_csv", "InsertionEnv")
+    check("applied.csv carries exactly the agreed columns",
+          _module_const(env_tree, "APPLIED_LOG_COLUMNS") == APPLIED_LOG_COLUMNS_AGREED,
+          f"{_module_const(env_tree, 'APPLIED_LOG_COLUMNS')}")
+    _applied_stacks = [
+        tuple(_unparse(e) for e in n.args[0].elts)
+        for n in _walk(_applied_fn)
+        if isinstance(n, ast.Call) and _unparse(n.func) == "torch.stack"
+    ]
+    check("every applied.csv column reads its agreed source, row id = env id, in column order",
+          _applied_stacks == [APPLIED_LOG_SOURCES_AGREED], str(_applied_stacks)[:300])
+    _applied_fric = [_unparse(a.value) for a in _named_assign(_applied_fn, "_fric")]
+    check("the four friction read-backs come out of PhysX, robot first, fixture second",
+          len(_applied_fric) == 1
+          and "root_physx_view.get_material_properties()[..., 0:2]" in _applied_fric[0]
+          and _applied_fric[0].endswith("for _asset in (self.robot, self._fixture)]"),
+          str(_applied_fric)[:300])
+    _applied_triggers = [
+        (_unparse(n.test), [_unparse(s) for s in n.body])
+        for n in _walk(_func(env_tree, "_get_observations", "InsertionEnv"))
+        if isinstance(n, ast.If) and "_write_applied_csv" in _unparse(n)
+    ]
+    # The step test sits in the WRITER, first statement: a second `If` on
+    # common_step_counter inside _get_observations would break the wrench
+    # EMA's "exactly one" pin above.
+    _applied_wait = [
+        (_unparse(s.test), type(s.body[0]).__name__)
+        for s in _applied_fn.body[1:2] if isinstance(s, ast.If)
+    ]
+    check("applied.csv is written in table mode only, once, and only after a physics step",
+          _applied_triggers == [(
+              "self._eval_table is not None and (not self._applied_written)",
+              ["self._write_applied_csv()"],
+          )]
+          and _applied_wait == [("int(self.common_step_counter) < 1", "Return")],
+          f"{_applied_triggers} / {_applied_wait}")
+    _applied_flag = [
+        _unparse(n) for n in _walk(_applied_fn)
+        if isinstance(n, ast.Assign) and _unparse(n.targets[0]) == "self._applied_written"
+    ]
+    check("the applied.csv writer raises its own written flag",
+          _applied_flag == ["self._applied_written = True"], str(_applied_flag))
+    _applied_first_if = [
+        s for s in _applied_fn.body if isinstance(s, ast.If) and "log_dir" in _unparse(s.test)
+    ][:1]
+    check("applied.csv is refused without a run folder, not skipped",
+          [(_unparse(s.test), type(s.body[0]).__name__) for s in _applied_first_if]
+          == [("not log_dir", "Raise")],
+          str([_unparse(s.test) for s in _applied_first_if]))
+    # -- eval plan step C: play.py's evaluation run ---------------------------
+    # The folder name, the hashes and the field list are EXECUTED in
+    # `scripts/tools/eval_manifest.py --self-test`. Pinned here: that play.py
+    # hands the manifest every field, fixes the cfg, refuses what G8 names and
+    # stops on ALL envs.
+    play_tree = _parse(PLAY_SRC, play_mut)
+    _play_main = _func(play_tree, "main")
+    _em_tree = _parse(EVAL_MANIFEST_SRC, ())
+    _manifest_fields = _module_const(_em_tree, "MANIFEST_FIELDS") or ()
+    _git_keys = [
+        tuple(k.value for k in n.value.keys)
+        for n in _walk(_func(_em_tree, "git_commits"))
+        if isinstance(n, ast.Return) and isinstance(n.value, ast.Dict)
+    ]
+    _manifest_calls = [
+        n for n in _walk(_play_main) if isinstance(n, ast.Call)
+        and _unparse(n.func) == "_em.build_manifest"
+    ]
+    _manifest_kw = [
+        ([k.arg for k in n.keywords if k.arg is not None],
+         [_unparse(k.value) for k in n.keywords if k.arg is None])
+        for n in _manifest_calls
+    ]
+    check("play.py hands build_manifest EXACTLY the manifest's field list",
+          len(_manifest_kw) == 1 and len(_git_keys) == 1
+          and _manifest_kw[0][1] == ["_em.git_commits(_repo)"]
+          and sorted(_manifest_kw[0][0] + list(_git_keys[0])) == sorted(_manifest_fields)
+          and len(_manifest_fields) == 26,
+          f"{_manifest_kw} + {_git_keys} vs {len(_manifest_fields)} fields")
+    _play_assigns = {
+        _unparse(n.targets[0]): _unparse(n.value)
+        for n in _walk(_play_main) if isinstance(n, ast.Assign) and len(n.targets) == 1
+        and _unparse(n.targets[0]).startswith(("env_cfg.dr_", "_norm_before"))
+    }
+    check("the evaluation run fixes dr_mode, the table path and the width on the cfg",
+          {k: v for k, v in _play_assigns.items() if k.startswith("env_cfg.dr_")} == {
+              "env_cfg.dr_mode": "'table'",
+              "env_cfg.dr_table_path": "_table_path",
+              "env_cfg.dr_table_width": "args_cli.eval_width",
+          }, str(_play_assigns))
+    _play_num_envs = [
+        _unparse(n.value) for n in _walk(_play_main) if isinstance(n, ast.Assign)
+        and _unparse(n.targets[0]) == "env_cfg.scene.num_envs"
+    ]
+    check("the evaluation run takes num_envs from the table's row count",
+          _play_num_envs[1:] == ["_table_rows"], str(_play_num_envs))
+    _play_if_tests = [_unparse(n.test) for n in _walk(_play_main) if isinstance(n, ast.If)]
+    check("an evaluation without --seed is refused (G8)",
+          _play_if_tests.count("args_cli.seed is None") == 1, "")
+    check("an evaluation folder that already holds episodes.csv is refused",
+          _play_if_tests.count(
+              "os.path.exists(os.path.join(log_dir, replay_dirname, 'episodes.csv'))") == 1, "")
+    _play_stop = [
+        n for n in _walk(_play_main) if isinstance(n, ast.If)
+        and _unparse(n.test) == "bool(_eval_first_done.all())"
+        and any(isinstance(s, ast.Break) for s in n.body)
+    ]
+    check("the evaluation stops once ALL envs have finished their first episode",
+          len(_play_stop) == 1
+          and "_eval_first_done |= dones.to(torch.bool)" in _unparse(_play_main), "")
+    check("the normaliser is hashed before the run and again for the manifest (G5)",
+          _play_assigns.get("_norm_before")
+          == "_normalizer_sha256(runner) if _em is not None else None"
+          and any(k.arg == "normalizer_sha256_after"
+                  and _unparse(k.value) == "_normalizer_sha256(runner)"
+                  for n in _manifest_calls for k in n.keywords),
+          str(_play_assigns.get("_norm_before")))
+    # RT-222: past the manifest the Isaac shutdown never returned, so the
+    # evaluation ends the process itself, as the manifest block's LAST line.
+    _manifest_blocks = [
+        n for n in _walk(_play_main) if isinstance(n, ast.If)
+        and _unparse(n.test) == "_em is not None"
+        and "_em.write_manifest(" in _unparse(n)
+    ]
+    check("the evaluation ends the process right after the manifest",
+          len(_manifest_blocks) == 1
+          and _unparse(_manifest_blocks[0].body[-1]) == "os._exit(0)",
+          str([_unparse(b.body[-1]) for b in _manifest_blocks]))
     # The CENTRES the boundaries open around. Each is a separate source and a
     # wrong one moves the whole distribution without changing any width: the
     # bounds still read symmetric, the fill still counts, and every logged
@@ -2679,12 +2950,19 @@ def build_checks(
         n for n in _walk(_env_init) if isinstance(n, ast.Call)
         and _unparse(n.func).endswith("bind_centres")
     ]
-    _centres = {
-        k.value: _unparse(v)
+    # EVERY (name, source) pair of every call, not a dict: since D-192 three
+    # calls carry the five names, and a dict would let the last one hide a
+    # wrong centre in an earlier arm (2026-09-23).
+    _centre_pairs = sorted({
+        (k.value, _unparse(v))
         for c in _centre_calls for a in c.args if isinstance(a, ast.Dict)
         for k, v in zip(a.keys, a.values)
         if isinstance(k, ast.Constant)
-    }
+    })
+    _centres = (
+        dict(_centre_pairs) if len({k for k, _ in _centre_pairs}) == len(_centre_pairs)
+        else _centre_pairs
+    )
     # D-179's NAMED LOSS: `DimSpec.bind` now writes whatever centre arrives
     # into a one-sided quantity's `lo_max`, so autodr.py itself can no longer
     # refuse a wrong centre for `lat_r`, `tilt` or `start_height`. This text
@@ -3155,8 +3433,9 @@ def build_checks(
           str(_fric_pushes))
     # THE BUFFER IS CACHED. `get_material_properties()` is a read-back of the
     # whole view; calling it per reset would pay the write cost twice and
-    # make the measured cost a measurement of the wrong thing. Three in the
-    # env: the cache loop, and the two pooled read-backs of the report.
+    # make the measured cost a measurement of the wrong thing. Four in the
+    # env: the cache loop, the two pooled read-backs of the report, and since
+    # 2026-09-21 the ONE-TIME read-back of `_write_applied_csv` (eval plan G3).
     _fric_gets = [
         n for n in _walk(env_tree) if isinstance(n, ast.Call)
         and _unparse(n.func).endswith("get_material_properties")
@@ -3166,7 +3445,7 @@ def build_checks(
         and _unparse(n.func).endswith("get_material_properties")
     ]
     check("the reset never re-reads the material buffer from PhysX",
-          not _fric_gets_in_apply and len(_fric_gets) == 3,
+          not _fric_gets_in_apply and len(_fric_gets) == 4,
           f"{len(_fric_gets_in_apply)} in _apply_friction, {len(_fric_gets)} in the env")
     # THE COST TIMER. It must span the whole block -- host copy, row edit and
     # both pushes. A timer that starts after the loop reports a cost of zero
@@ -3574,8 +3853,12 @@ def build_checks(
                 and _unparse(c).startswith("self._live_bounds()")
                 for c in _walk(_m))
     )
+    # `_applied_log_meta` (2026-09-21) is the one caller that is NOT a
+    # consumer: it writes the band the consumers saw into `applied_meta.json`,
+    # where check_eval_conditions.py holds it against its own literals.
     check("every randomised quantity reads the band through the one seam",
-          _seam_users == ["_apply_friction", "_map_start_conditions", "_reset_idx"],
+          _seam_users == ["_applied_log_meta", "_apply_friction",
+                          "_map_start_conditions", "_reset_idx"],
           str(_seam_users))
 
     # (5) THE NO-PROVIDER ARM REPRODUCES THE OLD DISTRIBUTION. This is what
@@ -4257,6 +4540,75 @@ def build_checks(
     check("the ladder and AutoDR are refused together, and dr_mode is in the absent-field sweep",
           len(_ladder_guards) == 1 and _dr_in_sweep,
           f"guards {len(_ladder_guards)}, dr_mode in sweep {_dr_in_sweep}")
+
+    # -- eval plan step B1: `dr_mode='table'` refuses what must never start --
+    # `validate_table_mode` is PURE, so it is EXECUTED here, not pinned as
+    # text: the class, the width tuple and the function node run in one
+    # namespace against stub cfgs. A node that is missing or does not compile
+    # leaves `_vtm` None, and every behaviour check below then FAILS rather
+    # than disappearing.
+    _vtm_ns: dict = {}
+    try:
+        for _want in ("RlConfigIncomplete", "DR_TABLE_WIDTHS", "validate_table_mode"):
+            _node = next(
+                n for n in cfg_tree.body
+                if getattr(n, "name", None) == _want
+                or (isinstance(n, ast.AnnAssign) and _unparse(n.target) == _want)
+            )
+            exec(compile(ast.Module(body=[_node], type_ignores=[]), "<cfg>", "exec"), _vtm_ns)  # noqa: S102
+        _vtm = _vtm_ns["validate_table_mode"]
+    except Exception:  # noqa: BLE001 - an unbuildable guard IS the finding
+        _vtm = None
+
+    def _table_cfg(**over):
+        base = dict(dr_mode="table", dr_table_path="scripts/eval/eval_table_seed20.csv",
+                    dr_table_width="target", start_floor_m=0.02,
+                    start_tip_above_entrance=0.02)
+        base.update(over)
+        return types.SimpleNamespace(**base)
+
+    def _table_verdict(**over) -> str:
+        if _vtm is None:
+            return "no function"
+        try:
+            _vtm(_table_cfg(**over))
+        except Exception as exc:  # noqa: BLE001 - the NAME is what is tested
+            return type(exc).__name__
+        return "passes"
+
+    _tv_good = [_table_verdict(), _table_verdict(dr_table_width="nominal"),
+                _table_verdict(dr_mode="off", dr_table_path=None),
+                _table_verdict(dr_mode="autodr", dr_table_path=None, start_floor_m=-0.03)]
+    check("table mode: both widths pass, and 'off' / 'autodr' with a floor are left alone",
+          _tv_good == ["passes"] * 4, str(_tv_good))
+    _tv_path = [_table_verdict(dr_table_path=None), _table_verdict(dr_table_path="  ")]
+    check("table mode without a table path is refused",
+          _tv_path == ["RlConfigIncomplete"] * 2, str(_tv_path))
+    _tv_floor = [_table_verdict(start_floor_m=-0.03),
+                 _table_verdict(start_tip_above_entrance=None)]
+    check("table mode with a start floor, or without a start height, is refused",
+          _tv_floor == ["RlConfigIncomplete"] * 2, str(_tv_floor))
+    _tv_width = _table_verdict(dr_table_width="max")
+    check("table mode with an unknown width is refused",
+          _tv_width == "RlConfigIncomplete", _tv_width)
+    _tv_stray = _table_verdict(dr_mode="off")
+    check("a table path that no mode reads is refused",
+          _tv_stray == "RlConfigIncomplete", _tv_stray)
+    # The call is a plain statement of validate_rl_config's OWN body -- not
+    # under an `if`, where a guard could switch it off.
+    _vtm_calls = [
+        n for n in _validate_fn.body
+        if isinstance(n, ast.Expr) and _unparse(n.value) == "validate_table_mode(cfg)"
+    ]
+    check("validate_rl_config calls validate_table_mode unconditionally",
+          len(_vtm_calls) == 1, f"{len(_vtm_calls)} top-level call(s)")
+    _tbl_defaults = [
+        _unparse(_e) if _e is not None else "ABSENT"
+        for _e in (_class_attr_expr(cfg_tree, "InsertionEnvCfg", "dr_table_path"),
+                   _class_attr_expr(cfg_tree, "InsertionEnvCfg", "dr_table_width"))
+    ]
+    check("the cfg defaults are no table and the target width",
+          _tbl_defaults == ["None", "'target'"], str(_tbl_defaults))
 
     # -- B6 round 2: fifteen checks the round-1 pins did NOT buy -------------
     #
@@ -5246,8 +5598,10 @@ MUTATIONS: tuple[tuple[str, dict, tuple[str, ...]], ...] = (
         # under a run tag that says "floor".
         "autodr-provider-drops-the-floor",
         {"env_mut": ((
-            "                ),\n                floor=_floor_spec,\n                stall_buffers=int(cfg.autodr_stall_buffers),\n            )\n        elif str(cfg.dr_mode) != \"off\":",
-            "                ),\n                stall_buffers=int(cfg.autodr_stall_buffers),\n            )\n        elif str(cfg.dr_mode) != \"off\":",
+            # Anchored on the AutoDR arm: since D-192 the Fixed-DR arm sits
+            # between it and the refusal (2026-09-23).
+            "                ),\n                floor=_floor_spec,\n                stall_buffers=int(cfg.autodr_stall_buffers),\n            )\n        elif str(cfg.dr_mode) == \"fixed_dr\":",
+            "                ),\n                stall_buffers=int(cfg.autodr_stall_buffers),\n            )\n        elif str(cfg.dr_mode) == \"fixed_dr\":",
         ),)},
         ("both AutoDR providers take the floor, and the No-DR one carries only start_height",),
     ),
@@ -5272,8 +5626,8 @@ MUTATIONS: tuple[tuple[str, dict, tuple[str, ...]], ...] = (
         # env.autodr_stall_buffers=3 never writes a STALL note.
         "autodr-provider-drops-the-stall-bar",
         {"env_mut": ((
-            "                floor=_floor_spec,\n                stall_buffers=int(cfg.autodr_stall_buffers),\n            )\n        elif str(cfg.dr_mode) != \"off\":",
-            "                floor=_floor_spec,\n            )\n        elif str(cfg.dr_mode) != \"off\":",
+            "                floor=_floor_spec,\n                stall_buffers=int(cfg.autodr_stall_buffers),\n            )\n        elif str(cfg.dr_mode) == \"fixed_dr\":",
+            "                floor=_floor_spec,\n            )\n        elif str(cfg.dr_mode) == \"fixed_dr\":",
         ),)},
         ("both AutoDR providers take the cfg stall bar",),
     ),
@@ -6177,10 +6531,20 @@ MUTATIONS: tuple[tuple[str, dict, tuple[str, ...]], ...] = (
         # value stays in range -- the whole distribution just sits too low.
         "the-start-height-centre-is-the-lower-bound",
         {"env_mut": ((
+            # Anchored on the AutoDR arm itself since D-192: the Fixed-DR arm
+            # carries the same dict line (2026-09-23).
+            '            self._dr = autodr.AutoDR(\n                autodr.bind_centres(\n'
+            '                    {\n                        "lat_r": 0.0,\n'
+            '                        "yaw": 0.0,\n                        "tilt": 0.0,\n'
             '                        "start_height": float(cfg.start_tip_above_entrance),\n',
+            '            self._dr = autodr.AutoDR(\n                autodr.bind_centres(\n'
+            '                    {\n                        "lat_r": 0.0,\n'
+            '                        "yaw": 0.0,\n                        "tilt": 0.0,\n'
             '                        "start_height": float(cfg.start_tip_above_entrance_low),\n',
         ),)},
-        ("the AutoDR centres are bound to the five named sources",),
+        ("the AutoDR centres are bound to the five named sources",
+         # eval plan B2: the table provider's dict no longer equals it.
+         "the table and Fixed-DR providers open around the SAME five centres as AutoDR"),
     ),
     (
         # THE SPLIT, undone: the solver draws its own height again. Every
@@ -7976,6 +8340,338 @@ MUTATIONS: tuple[tuple[str, dict, tuple[str, ...]], ...] = (
             '        "w_tilt", "shaping_gamma", "kernel_a_tilt",\n',
         ),)},
         ("the ladder and AutoDR are refused together, and dr_mode is in the absent-field sweep",),
+    ),
+    # -- eval plan step B1: one mutation per refusal of `validate_table_mode`,
+    # one for its call, one for the defaults.
+    (
+        # An evaluation starts with a start floor: the band the table is
+        # mapped onto moves during the run.
+        "table-mode-floor-refusal-removed",
+        {"cfg_mut": ((
+            "    if high is None or float(cfg.start_floor_m) != float(high):\n",
+            "    if False:\n",
+        ),)},
+        ("table mode with a start floor, or without a start height, is refused",),
+    ),
+    (
+        "table-mode-missing-path-allowed",
+        {"cfg_mut": ((
+            "    if path is None or not str(path).strip():\n",
+            "    if False:\n",
+        ),)},
+        ("table mode without a table path is refused",),
+    ),
+    (
+        "table-mode-any-width-allowed",
+        {"cfg_mut": ((
+            "    if str(cfg.dr_table_width) not in DR_TABLE_WIDTHS:\n",
+            "    if False:\n",
+        ),)},
+        ("table mode with an unknown width is refused",),
+    ),
+    (
+        # A path under 'off': the run looks like an evaluation and draws its
+        # own resets.
+        "table-path-without-table-mode-allowed",
+        {"cfg_mut": ((
+            "        if path is not None:\n            raise RlConfigIncomplete(\n"
+            '                f"dr_table_path is',
+            "        if False:\n            raise RlConfigIncomplete(\n"
+            '                f"dr_table_path is',
+        ),)},
+        ("a table path that no mode reads is refused",),
+    ),
+    (
+        # The guard exists and nothing calls it.
+        "validate-table-mode-never-called",
+        {"cfg_mut": ((
+            "    validate_table_mode(cfg)\n    if not ladder_on:\n",
+            "    if not ladder_on:\n",
+        ),)},
+        ("validate_rl_config calls validate_table_mode unconditionally",),
+    ),
+    (
+        "table-width-default-nominal",
+        {"cfg_mut": ((
+            '    dr_table_width: str = "target"\n',
+            '    dr_table_width: str = "nominal"\n',
+        ),)},
+        ("the cfg defaults are no table and the target width",),
+    ),
+    # -- eval plan step B2: the table branch of the env.
+    (
+        # The plan's own mutation, on the env side: env i asks for row i+1.
+        "env-asks-for-the-next-row",
+        {"env_mut": ((
+            "autodr.table_rows(self._eval_table_unit, idx)",
+            "autodr.table_rows(self._eval_table_unit, (idx + 1) % self.num_envs)",
+        ),)},
+        ("the reset draw copies row i for env i through autodr.table_rows, else torch.rand",),
+    ),
+    (
+        # A longer table passes: its tail is never played and nothing says so.
+        "table-may-be-longer-than-the-env-count",
+        {"env_mut": ((
+            "            if self._eval_table.n_rows != int(self.num_envs):\n",
+            "            if self._eval_table.n_rows < int(self.num_envs):\n",
+        ),)},
+        ("the table must have EXACTLY num_envs rows",),
+    ),
+    (
+        "table-mode-skips-its-own-validation",
+        {"env_mut": ((
+            "            validate_table_mode(cfg)\n            self._eval_table = ",
+            "            self._eval_table = ",
+        ),)},
+        ("table mode validates its own cfg before it reads the table",),
+    ),
+    (
+        # Width 0: every policy is scored on the nominal case and the log
+        # still says 'table'.
+        "table-provider-at-centre",
+        {"env_mut": ((
+            "autodr.FixedWidth.at_max(_table_dims)",
+            "autodr.FixedWidth.at_centre(_table_dims)",
+        ),)},
+        ("the table provider is FixedWidth.at_max, and 'nominal' keeps the start height alone",),
+    ),
+    (
+        "nominal-width-keeps-all-five",
+        {"env_mut": ((
+            "                _table_dims = tuple(d for d in _table_dims if d.name == \"start_height\")\n",
+            "                _table_dims = tuple(d for d in _table_dims)\n",
+        ),)},
+        ("the table provider is FixedWidth.at_max, and 'nominal' keeps the start height alone",),
+    ),
+    (
+        "table-centre-differs-from-autodr",
+        {"env_mut": ((
+            "            _table_dims = autodr.bind_centres(\n                {\n"
+            "                    \"lat_r\": 0.0,\n",
+            "            _table_dims = autodr.bind_centres(\n                {\n"
+            "                    \"lat_r\": 0.001,\n",
+        ),)},
+        ("the table and Fixed-DR providers open around the SAME five centres as AutoDR",
+         # Since 2026-09-23 the centre pin reads every call, the table's too.
+         "the AutoDR centres are bound to the five named sources"),
+    ),
+    (
+        # A static yaw noise under 'table' is live again beside the provider.
+        "static-refusal-back-to-autodr-only",
+        {"env_mut": ((
+            '        if str(cfg.dr_mode) in ("autodr", "fixed_dr", "table"):\n',
+            '        if str(cfg.dr_mode) == "autodr":\n',
+        ),)},
+        ("the static-field refusal covers 'autodr', 'fixed_dr' AND 'table'",),
+    ),
+    (
+        # D-192: a static yaw noise under 'fixed_dr' is live again beside it.
+        "static-refusal-drops-fixed-dr",
+        {"env_mut": ((
+            '        if str(cfg.dr_mode) in ("autodr", "fixed_dr", "table"):\n',
+            '        if str(cfg.dr_mode) in ("autodr", "table"):\n',
+        ),)},
+        ("the static-field refusal covers 'autodr', 'fixed_dr' AND 'table'",),
+    ),
+    (
+        # D-192: the Fixed-DR arm silently trains as AutoDR.
+        "fixed-dr-arm-builds-autodr",
+        {"env_mut": ((
+            "            self._dr = autodr.FixedDR(\n",
+            "            self._dr = autodr.AutoDR(\n",
+        ),)},
+        ("the fixed_dr arm builds autodr.FixedDR on the start floor",
+         # A third autodr.AutoDR call breaks both two-provider counts.
+         "both AutoDR providers take the floor, and the No-DR one carries only start_height",
+         "both AutoDR providers take the cfg stall bar"),
+    ),
+    (
+        "fixed-dr-arm-drops-the-stall-bar",
+        {"env_mut": ((
+            "                floor=_floor_spec,\n                stall_buffers=int(cfg.autodr_stall_buffers),\n"
+            "            )\n        elif str(cfg.dr_mode) != \"off\":\n",
+            "                floor=_floor_spec,\n"
+            "            )\n        elif str(cfg.dr_mode) != \"off\":\n",
+        ),)},
+        ("the fixed_dr arm builds autodr.FixedDR on the start floor",),
+    ),
+    (
+        # D-192: the Fixed-DR arm without the floor phase.
+        "fixed-dr-arm-drops-the-floor",
+        {"env_mut": ((
+            "                floor=_floor_spec,\n                stall_buffers=int(cfg.autodr_stall_buffers),\n"
+            "            )\n        elif str(cfg.dr_mode) != \"off\":\n",
+            "                floor=None,\n                stall_buffers=int(cfg.autodr_stall_buffers),\n"
+            "            )\n        elif str(cfg.dr_mode) != \"off\":\n",
+        ),)},
+        ("the fixed_dr arm builds autodr.FixedDR on the start floor",),
+    ),
+    (
+        "fixed-dr-centre-differs-from-autodr",
+        {"env_mut": ((
+            "            self._dr = autodr.FixedDR(\n                autodr.bind_centres(\n"
+            "                    {\n                        \"lat_r\": 0.0,\n",
+            "            self._dr = autodr.FixedDR(\n                autodr.bind_centres(\n"
+            "                    {\n                        \"lat_r\": 0.001,\n",
+        ),)},
+        ("the table and Fixed-DR providers open around the SAME five centres as AutoDR",
+         "the AutoDR centres are bound to the five named sources"),
+    ),
+    (
+        "episode-log-reads-phase-without-default",
+        {"env_mut": ((
+            'phase = str(getattr(self._dr, "phase", "fixed"))',
+            "phase = str(self._dr.phase)",
+        ),)},
+        ("the episode log reads the phase with a default, so FixedWidth cannot crash it",),
+    ),
+    (
+        "eval-table-line-loses-the-hash",
+        {"env_mut": ((
+            'f"{self._eval_table.n_rows}  sha256 {self._eval_table.sha256}  "',
+            'f"{self._eval_table.n_rows}  "',
+        ),)},
+        ("the startup report prints the table's sha256 on the [eval-table] line (G1)",),
+    ),
+    (
+        "autodr-paragraph-printed-for-every-provider",
+        {"env_mut": ((
+            "            if isinstance(self._dr, autodr.AutoDR):\n",
+            "            if True:\n",
+        ),)},
+        ("the AutoDR-only report paragraph is guarded by the provider's type",),
+    ),
+    # -- eval plan step B2, second half: applied.csv (G3).
+    (
+        "applied-csv-swaps-two-columns",
+        {"env_mut": ((
+            '    "row_id", "lat_x_m", "lat_y_m", "start_height_m", "yaw_rad",\n',
+            '    "row_id", "lat_y_m", "lat_x_m", "start_height_m", "yaw_rad",\n',
+        ),)},
+        ("applied.csv carries exactly the agreed columns",),
+    ),
+    (
+        # The plan's row-identity mutation on the file side: row i carries id i+1.
+        "applied-csv-row-id-off-by-one",
+        {"env_mut": ((
+            "                torch.arange(n, device=self.device, dtype=torch.float64),\n",
+            "                torch.arange(n, device=self.device, dtype=torch.float64) + 1.0,\n",
+        ),)},
+        ("every applied.csv column reads its agreed source, row id = env id, in column order",),
+    ),
+    (
+        # The read-back column echoes the command: G3 can then never see a
+        # write that did not land.
+        "applied-csv-friction-echoes-the-command",
+        {"env_mut": ((
+            "                _fric[0].min(dim=1).values,\n",
+            "                self._friction_applied.to(torch.float64),\n",
+        ),)},
+        ("every applied.csv column reads its agreed source, row id = env id, in column order",),
+    ),
+    (
+        "applied-csv-reads-the-robot-twice",
+        {"env_mut": ((
+            "            for _asset in (self.robot, self._fixture)\n        ]\n        _pocket_d",
+            "            for _asset in (self.robot, self.robot)\n        ]\n        _pocket_d",
+        ),)},
+        ("the four friction read-backs come out of PhysX, robot first, fixture second",),
+    ),
+    (
+        # Written on the reset's own observation: the reset-step trap.
+        "applied-csv-written-before-any-physics-step",
+        {"env_mut": ((
+            "        if int(self.common_step_counter) < 1:\n",
+            "        if int(self.common_step_counter) < 0:\n",
+        ),)},
+        ("applied.csv is written in table mode only, once, and only after a physics step",),
+    ),
+    (
+        "applied-csv-rewritten-every-step",
+        {"env_mut": ((
+            "        self._applied_written = True\n",
+            "",
+        ),)},
+        ("the applied.csv writer raises its own written flag",),
+    ),
+    (
+        "applied-csv-skipped-without-a-run-folder",
+        {"env_mut": ((
+            "            raise RuntimeError(\n                \"dr_mode='table' without cfg.log_dir",
+            "            return\n            raise RuntimeError(\n                \"dr_mode='table' without cfg.log_dir",
+        ),)},
+        ("applied.csv is refused without a run folder, not skipped",),
+    ),
+    # -- eval plan step C: play.py's evaluation run.
+    (
+        # The plan's own mutation: one manifest field is dropped.
+        "manifest-loses-a-field",
+        {"play_mut": ((
+            "            tag=args_cli.eval_tag,\n",
+            "",
+        ),)},
+        ("play.py hands build_manifest EXACTLY the manifest's field list",),
+    ),
+    (
+        # The run says 'table' in its folder name and plays the default mode.
+        "eval-run-leaves-dr-mode-off",
+        {"play_mut": ((
+            '        env_cfg.dr_mode = "table"\n',
+            '        env_cfg.dr_mode = "off"\n',
+        ),)},
+        ("the evaluation run fixes dr_mode, the table path and the width on the cfg",),
+    ),
+    (
+        # RT-222: without the exit the run hangs in the Isaac shutdown.
+        "eval-run-waits-for-the-shutdown",
+        {"play_mut": ((
+            "        sys.stderr.flush()\n        os._exit(0)\n",
+            "        sys.stderr.flush()\n",
+        ),)},
+        ("the evaluation ends the process right after the manifest",),
+    ),
+    (
+        "eval-run-keeps-the-cli-env-count",
+        {"play_mut": ((
+            "        env_cfg.scene.num_envs = _table_rows\n",
+            "",
+        ),)},
+        ("the evaluation run takes num_envs from the table's row count",),
+    ),
+    (
+        # rsl_rl then runs its default seed and no line says so.
+        "eval-run-accepts-a-missing-seed",
+        {"play_mut": ((
+            "        if args_cli.seed is None:\n",
+            "        if False:\n",
+        ),)},
+        ("an evaluation without --seed is refused (G8)",),
+    ),
+    (
+        # A repeat appends to the first run's episodes.csv.
+        "eval-run-appends-to-an-old-folder",
+        {"play_mut": ((
+            '        if os.path.exists(os.path.join(log_dir, replay_dirname, "episodes.csv")):\n',
+            "        if False:\n",
+        ),)},
+        ("an evaluation folder that already holds episodes.csv is refused",),
+    ),
+    (
+        # The run ends with the FASTEST env; 999 rows have no first episode.
+        "eval-run-stops-on-the-first-env",
+        {"play_mut": ((
+            "                if bool(_eval_first_done.all()):\n",
+            "                if bool(_eval_first_done.any()):\n",
+        ),)},
+        ("the evaluation stops once ALL envs have finished their first episode",),
+    ),
+    (
+        "normaliser-hash-before-is-dropped",
+        {"play_mut": ((
+            "    _norm_before = _normalizer_sha256(runner) if _em is not None else None\n",
+            "    _norm_before = None\n",
+        ),)},
+        ("the normaliser is hashed before the run and again for the manifest (G5)",),
     ),
     # -- B6 round 2: the fifteen a rubric critic wrote, and ALL FIFTEEN of
     # which walked past round 1's pins. They are kept here verbatim so the

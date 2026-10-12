@@ -95,6 +95,32 @@ parser.add_argument(
     "--trace-obs or --video) play.py runs until it is killed, so a probe "
     "that only wants demo_metrics.json had to write a trace it never read.",
 )
+parser.add_argument(
+    "--eval-table",
+    type=str,
+    default=None,
+    metavar="CSV",
+    help="Evaluation run (eval_plan.md step C): play this pre-drawn table, env i "
+    "= row i, under env.dr_mode=table. Sets num_envs to the table's row count, "
+    "writes into <checkpoint folder>/eval_<width>_<sha8>[_<tag>], stops once "
+    "every env has finished its FIRST episode and writes eval_manifest.json. "
+    "Needs --seed and --checkpoint.",
+)
+parser.add_argument(
+    "--eval-width",
+    type=str,
+    default="target",
+    choices=("target", "nominal"),
+    help="Width the table is mapped onto (env.dr_table_width). Only with --eval-table.",
+)
+parser.add_argument(
+    "--eval-tag",
+    type=str,
+    default="",
+    help="Suffix of the evaluation folder, for a REPEAT of the same policy on "
+    "the same table (G6). An evaluation folder that already holds episodes.csv "
+    "is refused, never appended to.",
+)
 # append RSL-RL cli arguments
 cli_args.add_rsl_rl_args(parser)
 # append AppLauncher cli args
@@ -206,6 +232,51 @@ def _checkpoint_width_refusal(path: str, env_unwrapped) -> str | None:
     )
 
 
+def _eval_manifest_tool():
+    """``scripts/tools/eval_manifest.py``, loaded by path like the width guard:
+    the folder name, the hashes and the manifest's field list live there (pure,
+    self-tested)."""
+    import importlib.util
+    import pathlib
+
+    _path = pathlib.Path(__file__).resolve().parents[1] / "tools" / "eval_manifest.py"
+    _spec = importlib.util.spec_from_file_location("eval_manifest", _path)
+    _mod = importlib.util.module_from_spec(_spec)
+    _spec.loader.exec_module(_mod)
+    return _mod
+
+
+def _normalizer_sha256(runner) -> str | None:
+    """G5 of eval_plan.md: one hash over EVERY buffer of the actor's observation
+    normaliser (its whole ``state_dict``, keys sorted), so the check does not
+    depend on how rsl_rl names the mean and the variance -- those names are NOT
+    in the source listing of 2026-09-21. ``None`` when the policy has no
+    normaliser or it carries no state (normalisation off)."""
+    import hashlib
+
+    norm = getattr(getattr(runner.alg, "policy", None), "actor_obs_normalizer", None)
+    state = norm.state_dict() if hasattr(norm, "state_dict") else {}
+    if not state:
+        return None
+    h = hashlib.sha256()
+    for key in sorted(state):
+        h.update(key.encode("utf-8"))
+        h.update(state[key].detach().cpu().contiguous().numpy().tobytes())
+    return h.hexdigest()
+
+
+def _versions() -> dict:
+    """Package versions for the manifest. A package pip does not know is
+    recorded as ``UNKNOWN: <reason>``, never guessed."""
+    out = {"python": sys.version.split()[0], "torch": str(torch.__version__)}
+    for key, dist in (("rsl_rl", "rsl-rl-lib"), ("isaaclab", "isaaclab"), ("isaacsim", "isaacsim")):
+        try:
+            out[key] = metadata.version(dist)
+        except metadata.PackageNotFoundError as exc:
+            out[key] = f"UNKNOWN: {exc}"
+    return out
+
+
 @hydra_task_config(args_cli.task, args_cli.agent)
 def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agent_cfg: RslRlBaseRunnerCfg):
     """Play with RSL-RL agent."""
@@ -216,6 +287,42 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     # override configurations with non-hydra CLI arguments
     agent_cfg: RslRlBaseRunnerCfg = cli_args.update_rsl_rl_cfg(agent_cfg, args_cli)
     env_cfg.scene.num_envs = args_cli.num_envs if args_cli.num_envs is not None else env_cfg.scene.num_envs
+
+    # THE EVALUATION RUN (eval_plan.md step C). Everything the plan fixes is
+    # fixed HERE, before the env exists, and every wrong combination ends the
+    # run before Isaac builds a scene (G8).
+    _em = None
+    if args_cli.eval_table is not None:
+        _em = _eval_manifest_tool()
+        _eval_refusals = []
+        if args_cli.seed is None:
+            _eval_refusals.append("--seed is not set (the agent cfg would run its default, silently)")
+        if not args_cli.checkpoint:
+            _eval_refusals.append("--checkpoint is not set (the manifest hashes ONE named file)")
+        for _flag in ("fixture_offset", "fixture_tilt", "fixture_yaw", "max_steps", "trace_obs"):
+            if getattr(args_cli, _flag) is not None:
+                _eval_refusals.append(f"--{_flag.replace('_', '-')} does not combine with --eval-table")
+        if args_cli.video:
+            _eval_refusals.append("--video does not combine with --eval-table (it ends the loop itself)")
+        _table_path = os.path.abspath(args_cli.eval_table)
+        if not os.path.isfile(_table_path):
+            _eval_refusals.append(f"no table at {_table_path}")
+        if _eval_refusals:
+            for _line in _eval_refusals:
+                print(f"[play] REFUSED: {_line}")
+            raise SystemExit(2)
+        _table_sha = _em.sha256_file(_table_path)
+        _table_rows = _em.count_table_rows(_table_path)
+        if args_cli.num_envs is not None and int(args_cli.num_envs) != _table_rows:
+            print(f"[play] REFUSED: --num_envs {args_cli.num_envs} != {_table_rows} table rows")
+            raise SystemExit(2)
+        env_cfg.scene.num_envs = _table_rows
+        env_cfg.dr_mode = "table"
+        env_cfg.dr_table_path = _table_path
+        env_cfg.dr_table_width = args_cli.eval_width
+    elif args_cli.eval_tag or args_cli.eval_width != "target":
+        print("[play] REFUSED: --eval-width / --eval-tag without --eval-table")
+        raise SystemExit(2)
 
     # handle deprecated configurations
     agent_cfg = handle_deprecated_rsl_rl_cfg(agent_cfg, installed_version)
@@ -401,6 +508,16 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
         replay_dirname += f"_tilt{args_cli.fixture_tilt:+05.1f}deg"
     if args_cli.fixture_yaw is not None:
         replay_dirname += f"_yaw{args_cli.fixture_yaw:+05.1f}deg"
+    if _em is not None:
+        # The evaluation's OWN folder: width and table are its identity, the
+        # start height is a table column. NEVER a second run into it --
+        # episodes.csv is opened in append mode, so a repeat (G6) would put two
+        # runs under one header. A repeat names itself with --eval-tag.
+        replay_dirname = _em.eval_dirname(args_cli.eval_width, _table_sha, args_cli.eval_tag)
+        if os.path.exists(os.path.join(log_dir, replay_dirname, "episodes.csv")):
+            print(f"[play] REFUSED: {os.path.join(log_dir, replay_dirname)} already holds "
+                  "episodes.csv. Pass --eval-tag for a repeat, or move the old folder away.")
+            raise SystemExit(2)
     env_cfg.log_dir = os.path.join(log_dir, replay_dirname)
 
     # create isaac environment
@@ -460,6 +577,8 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
         print(f"[play] REFUSED: {_refusal}")
         raise SystemExit(2)
     runner.load(resume_path)
+    # G5: the normaliser as the checkpoint delivered it, before any step.
+    _norm_before = _normalizer_sha256(runner) if _em is not None else None
 
     # obtain the trained policy for inference
     policy = runner.get_inference_policy(device=env.unwrapped.device)
@@ -586,6 +705,12 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
                 "interpen_max_m": "SAPU max interpenetration, Warp mesh query; > 0 means touching, 0 does NOT prove free",
             }
         trace_steps = 0
+    # The evaluation's stop rule: which envs have finished their FIRST episode.
+    _eval_first_done = (
+        torch.zeros(env.num_envs, dtype=torch.bool, device=replay_env.device)
+        if _em is not None else None
+    )
+    _eval_t0 = time.time()
     # simulate environment
     while simulation_app.is_running():
         start_time = time.time()
@@ -638,6 +763,17 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
             if args_cli.max_steps is not None and steps_done >= args_cli.max_steps:
                 print(f"[play] stopping after {steps_done} steps (--max-steps)")
                 break
+            # THE EVALUATION ENDS ITSELF: once every env has finished its first
+            # episode. The env writes an episode's row inside the step that
+            # ends it (`_reset_idx` -> `_log_finished_episodes`), so every
+            # `episode == 0` row is on disk when this breaks. Envs that finish
+            # early keep replaying their row; those rows are G4's repeats.
+            if _eval_first_done is not None:
+                _eval_first_done |= dones.to(torch.bool)
+                if bool(_eval_first_done.all()):
+                    print(f"[play] evaluation complete: all {env.num_envs} envs finished "
+                          f"their first episode after {steps_done} steps")
+                    break
             # reset recurrent states for episodes that have terminated
             if version.parse(installed_version) >= version.parse("4.0.0"):
                 policy.reset(dones)
@@ -671,6 +807,57 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
         with open(trace_path, "w", encoding="utf-8") as fh:
             json.dump(trace, fh)
         print(f"[trace] wrote {trace_steps} steps x {trace['num_envs']} envs to {trace_path}")
+
+    if _em is not None:
+        # LAST, so a run that died has NO manifest: "manifest present and
+        # complete" is what eval_collect.py accepts a run on.
+        _cfg = replay_env.cfg
+        _repo = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+        _manifest = _em.build_manifest(
+            **_em.git_commits(_repo),
+            checkpoint_path=os.path.abspath(resume_path),
+            checkpoint_sha256=_em.sha256_file(resume_path),
+            table_path=_table_path,
+            table_sha256=_table_sha,
+            table_rows=_table_rows,
+            width=args_cli.eval_width,
+            tag=args_cli.eval_tag,
+            task=args_cli.task,
+            seed=int(agent_cfg.seed),
+            num_envs=int(env.num_envs),
+            episode_cap_steps=int(replay_env.max_episode_length),
+            step_dt_s=float(dt),
+            action_mode="runner.get_inference_policy (rsl_rl): eval mode, act_inference = actor output, no sampling",
+            control_mode=str(getattr(_cfg, "control_mode", "UNKNOWN")),
+            obs_wrench_mode=str(getattr(_cfg, "obs_wrench_mode", "UNKNOWN")),
+            noise={
+                _k: getattr(_cfg, _k, None)
+                for _k in ("obs_noise_pocket_pos_std_m", "force_obs_noise_std_n",
+                           "torque_obs_noise_std_nm", "grasp_obs_offset_x_m",
+                           "fixture_pos_noise_xy", "reset_joint_noise")
+            },
+            versions=_versions(),
+            normalizer_sha256_before=_norm_before,
+            normalizer_sha256_after=_normalizer_sha256(runner),
+            policy_steps_run=int(steps_done),
+            envs_finished_first_episode=int(_eval_first_done.sum().item()),
+            wall_time_s=float(time.time() - _eval_t0),
+            env_cfg=_cfg.to_dict(),
+        )
+        _manifest_path = _em.write_manifest(env_cfg.log_dir, _manifest)
+        print(f"[play] eval manifest: {_manifest_path}")
+        # THE EVALUATION ENDS THE PROCESS HERE (2026-09-22, RT-222): past the
+        # manifest the shutdown below never returned on the training PC
+        # (RT-209 and RT-222_autodr_s1 end on the manifest line with no rt_log
+        # exit code; both stopped by hand), so run_eval.ps1 waited forever.
+        # Every eval file is on disk by now -- episodes.csv flushed per row,
+        # applied.csv and both meta files closed, the manifest written LAST --
+        # so the Isaac teardown is skipped, the trade tools/isaac_exit.py
+        # makes on failure (D-081). WHICH call hangs, env.close() or
+        # simulation_app.close(), is NOT measured.
+        sys.stdout.flush()
+        sys.stderr.flush()
+        os._exit(0)
 
     # close the simulator
     env.close()

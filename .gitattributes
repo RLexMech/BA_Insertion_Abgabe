@@ -1,0 +1,2 @@
+# auswertung/: Daten und Skripte byte-genau wie in der Quelle (sha256 in auswertung/HERKUNFT.csv).
+auswertung/** -text

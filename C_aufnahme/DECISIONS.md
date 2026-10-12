@@ -8484,3 +8484,165 @@ to a real defect either way — see D-160 for the actual cause.
 - Numbering note: the highest number on `main` is D-151 and the highest on
   every branch is D-187; D-188 is free (checked 2026-09-13 over
   p5-robustheit, p5-reward, p5_robustheit_astra, p5-kraftsensor).
+
+## D-189: the evaluation analysis uses pandas, scipy and statsmodels in a separate laptop environment; the training stack is untouched
+
+- Date: 2026-09-21
+- Status: proposed (pending verification) -- nothing is installed yet; the
+  versions below are a `pip --dry-run` resolution, not an installed set
+- Stream: rl-code, branch `p5-kraftsensor`; `eval_plan.md` section 8b, step D2
+- Context: Step D2 of `eval_plan.md` computes Wilson intervals, Newcombe
+  differences, a two-level bootstrap and the thesis figures from the saved
+  evaluation files. The laptop has numpy 2.5.0rc1 and matplotlib 3.10.9 on
+  Python 3.14.4; pandas, scipy and statsmodels are missing. The project rule
+  requires a D-entry for every new dependency. The training PC runs the fixed
+  stack (Isaac Lab 2.3.2, Isaac Sim 5.1.0, rsl_rl 3.0.1, torch 2.7.0+cu128,
+  numpy<2) and must not change.
+- Options considered: (a) implement Wilson, Newcombe and percentile bootstrap
+  by hand with numpy only / (b) use the published library functions in a
+  separate virtual environment on the laptop only / (c) install the libraries
+  into the training environment.
+- Decision: (b). A virtual environment `.venv-analysis` on the laptop,
+  versions pinned in `requirements-analysis.txt`. The analysis scripts
+  (`eval_collect.py`, `eval_stats.py`, `eval_figures.py`, `eval_report.py`)
+  run only there and never on the training PC. The run-only sparse clone does
+  not carry them.
+- Rationale: The project rule is "published method or library default before
+  own construction". Wilson and Newcombe intervals exist as
+  `statsmodels.stats.proportion.proportion_confint(method="wilson")` and
+  `confint_proportions_2indep(method="newcomb")`; hand-written versions would
+  be own code with its own error surface. `scipy.stats.bootstrap` supplies the
+  reference the own two-level bootstrap is checked against in its special
+  case (policies only), `eval_plan.md` section 5 (4)
+  [2026-09-21, inline: the two-level bootstrap is dropped; scipy now supplies
+  the Welch interval (headline) and the percentile bootstrap (cross-check),
+  inbox entry "Evaluation statistics follow the literature"]. pandas carries the
+  grouping and binning. (c) is rejected: numpy<2 and the pinned torch on the
+  training PC must not move for a laptop-only analysis. The separate
+  environment keeps the laptop's system Python unchanged as well.
+- Known risk: the dry-run resolution pulls one transitive pre-release
+  (wrapt 2.4.2rc1). Whether it matters for the functions used is UNKNOWN;
+  the pinned file records it, and the `--self-test` of `eval_stats.py`
+  (known Wilson bounds, constructed bootstrap matrix) is the check.
+- Sources: `eval_plan.md` section 8b (library table); inbox entry
+  2026-09-21 "Evaluation step A built" (dry-run: pandas 3.0.6, scipy 1.18.1,
+  statsmodels 0.15.0, `pip install --dry-run --only-binary=:all:` on Python
+  3.14.4); user approval in chat 2026-09-21.
+- Numbering note: the highest number on `main` is D-151 and the highest on
+  every branch is D-188 (checked 2026-09-21 over all local and remote
+  branches); D-189 is free.
+
+## D-190: the final policy is AutoDR seed 1, selected by the pre-registered rule on the seed-30 table
+
+- Date: 2026-09-22
+- Status: decided and measured -- the selection run (RT-223) is verified on the
+  training machine; the policy itself is judged later on T-final
+- Stream: rl-code, branch `p5-kraftsensor`; `eval_plan.md` section 2 B
+- Context: `eval_plan.md` section 2 B fixes the selection rule BEFORE any
+  result: candidates are the ten frozen `model_1499.pt`, the selection runs on
+  its own table (seed 30, target width), the rule is the highest
+  `success_train`, ties are broken by the smaller force p95 over the
+  successes, then by the smaller seed number. The final table (seed 10) must
+  never see the selection, so the choice has to be recorded before T-final
+  runs. Block T-auswahl (RT-223) is complete: ten runs, play seed 100, code
+  `8299485d`, table `d26610dc`, each PASS on all nine G-points, collector
+  VERDICT OK over T-nominal + T-auswahl.
+- Options considered: the rule leaves no options -- the entry records which
+  candidate it selects. The only judgement call was the tie between two
+  policies at 979 of 1000.
+- Decision: the final policy for T-final and T-grenze is **AutoDR seed 1**,
+  checkpoint `logs/rsl_rl/ur5e_insertion/09-15_13-50-36__RT-206s1_autodr_offset5mm_currOFF_start+20mm_floor-30mm_seed1/model_1499.pt`.
+- Rationale: `success_train` on the seed-30 table: autodr s1 0.979, s4 0.979,
+  s2 0.969, s3 0.968, s5 0.953; No-DR s3 0.315, s2 0.292, s5 0.288, s1 0.236,
+  s4 0.196. s1 and s4 tie at 979 of 1000, so the second criterion decides:
+  the force p95 over the successful episodes (`force_max_filtered_n`, the
+  env's own nearest-rank rule) is 24.2701 N for s1 against 24.6908 N for s4.
+  The third criterion (seed number) is not reached. The numbers were
+  recomputed by hand from `episodes_all.csv` and agree with
+  `eval_stats.py`'s `final_policy` block.
+- Sources: `eval_plan.md` section 2 B and section 3.2; `rt_logs/VERDICTS.md`
+  RT-223; `results/eval/T-auswahl/` (in git, logs excluded);
+  `scripts/eval_stats.py` (`final_policy`, marker `eval_stats-2026-09-21a`).
+- Numbering note: highest number on `main` is D-151, highest over all remote
+  branches is D-189 (checked 2026-09-22); D-190 is free.
+
+## D-192: a Fixed-DR baseline is trained as a third arm on `p5-kraftsensor`: the same start-floor phase as AutoDR, then all five quantities at full target width from H_min on
+
+- Date: 2026-09-23
+- Status: proposed (pending verification) -- nothing is built; the comparison
+  criterion must be written down BEFORE the first Fixed-DR training run
+- Stream: rl-code, branch `p5-kraftsensor` (user 2026-09-23: "wir können hier
+  weitermachen" -- no new branch)
+- Context: The evaluation (RT-222..RT-225) compares AutoDR against No-DR only.
+  AutoDR differs from No-DR in two things at once: it trains WITH the
+  disturbances, and their width GROWS by the 0.80/0.10 rule. K1 therefore shows
+  that both together help, not which of the two does; `eval_plan.md` section 3.1
+  already forbids the sentence "automatic DR is better than fixed DR" because a
+  fixed-DR baseline is missing. The DR-method literature carries exactly this
+  arm: DORAEMON (Tiboni et al., ICLR 2024) compares No-DR, Fixed-DR, LSDR, AutoDR
+  and DORAEMON by the success rate on the maximum distribution (Tab. 1: Fixed-DR
+  0.02 %, AutoDR 30.45 % sim2sim on PandaPush -- the literature check warns that
+  the PDF text layer drifts this table's row labels; re-check on the original
+  before quoting); Mehta et al. 2019 compare a
+  baseline, uniform DR and ADR. The code already holds the provider for a fixed
+  full width, `autodr.FixedWidth.at_max` (`autodr.py:1224`), used today only by
+  the evaluation (`dr_mode='table'`, `insertion_env.py:554`). Training has three
+  modes, `off`, `autodr`, `table` (`insertion_env.py:555-575`); a fixed-width
+  TRAINING mode does not exist.
+- Options considered:
+  (1) Branch: a new branch `p6-fixed-dr` in its own worktree (keeps
+  `p5-kraftsensor` the evaluated state, HANDOFF-RL.md NEXT 1b) / continue on
+  `p5-kraftsensor`.
+  (2) Start: no start floor (less code, but then Fixed-DR differs from AutoDR in
+  two things) / the same start-floor phase as AutoDR and No-DR.
+  (3) Within the floor option: all five quantities fully open from iteration 0 /
+  open only once the floor stands on H_min. Fully open from iteration 0 is not
+  possible: while the floor is below H_min the start lies inside the pocket, and
+  a live lateral offset or tilt there is the RT-120 wall contact -- the cfg
+  refuses exactly this under `dr_mode='off'` and AutoDR holds every other
+  quantity on its centre in phase "floor" (`insertion_env_cfg.py:469-477`).
+- Decision: a third training arm **Fixed-DR** on `p5-kraftsensor`.
+  (a) Start-floor phase identical to AutoDR: floor from f0 = -0.030 m to
+  H_min = 0.020 m in 5 rungs by the same buffer rule, the five DR quantities held
+  on their centres meanwhile.
+  (b) From the moment the floor stands on H_min: `lat_r` 0..0.030 m, `yaw`
+  +-0.0873 rad, `tilt` 0..0.1745 rad, start height 0.020..0.120 m, friction
+  0.08..0.20 -- the `autodr.DR_DIMS` maxima, i.e. the target range of
+  `eval_plan.md` section 1.2 -- all at once, fixed until the end of the run.
+  (c) Seeds 1-5, 1500 iterations, everything else as RT-206/RT-207; the run
+  command differs from RT-206 only in `dr_mode`.
+  (d) Evaluated on T-nominal and T-final (tables seed 10) like the other ten.
+  (e) The arm is added AFTER the AutoDR/No-DR results are known. The comparison
+  (hypothesis, interval, reading rule) is written into `eval_plan.md` before the
+  first Fixed-DR training run, and the thesis names the arm as added afterwards.
+- Rationale: The floor phase is part of both existing arms (user 2026-09-14,
+  `insertion_env_cfg.py:458-461`), so keeping it makes "grow" versus "fixed" the
+  ONE difference between AutoDR and Fixed-DR. **CORRECTED 2026-09-23: TWO
+  differences, not one** -- AutoDR also nails half of its phase-dr episodes to a
+  boundary (`autodr.P_BOUNDARY` 0.5), Fixed-DR draws uniformly like the
+  literature's Fixed-DR (user "passt"); named in `eval_plan.md` section 3.1.
+  Opening at H_min is the only point
+  at which full width is physically clean (option 3). Reusing `FixedWidth.at_max`
+  keeps the sampled distribution identical to the one the evaluation tables are
+  mapped onto. Continuing on `p5-kraftsensor` is safe for the existing results
+  only if the three existing modes keep their code path; the evaluation runs
+  record `code_commit`, and `eval_collect.py:202-205` refuses blocks on
+  different commits -- how the Fixed-DR evaluation runs meet that rule is open
+  (HANDOFF-RL.md NEXT 2).
+- Open, to settle before the first run: the mode name and the provider that
+  combines the floor phase with a fixed full width (`FixedWidth` has no floor);
+  the pre-registered criterion; the commit
+  [SETTLED 2026-09-23: mode `dr_mode=fixed_dr`, label "Fixed-DR" (user);
+  criterion = K5 in `eval_plan.md` sections 1.4 and 5; evaluation commit =
+  `8299485d`, the training PC checks it out for the Fixed-DR blocks (user
+  "A", `eval_plan.md` section 3.2)] the Fixed-DR evaluation runs on; a
+  third validated figure colour.
+- Sources: Tiboni et al. 2024, DORAEMON, ICLR, arXiv:2311.01885, Tab. 1 (read in
+  `docs/reference/literature_check_dr_streubreiten_methodik_2026-09-10.md`
+  section 4.1.5); Mehta et al. 2019, arXiv:1904.04762, Fig. 2
+  (`docs/eval_figures_plan.md` section 1); `eval_plan.md` sections 1.2, 3.1;
+  `autodr.py:1200-1232`; `insertion_env.py:534-575`;
+  `insertion_env_cfg.py:450-486`.
+- Numbering note: highest number on `main` is D-151; highest over all local and
+  remote branches is D-191 (`p6-TestAusserhalb`, checked 2026-09-23); D-192 is
+  free.

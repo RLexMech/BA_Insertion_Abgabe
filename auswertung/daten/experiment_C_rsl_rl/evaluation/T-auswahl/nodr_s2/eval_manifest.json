@@ -1,0 +1,505 @@
+{
+  "schema": "eval-manifest-v1",
+  "plan_commit": "391c7ae47d1d6e42a2ce1ccda40f53458aaefdb3",
+  "code_commit": "8299485d0a60dd0cca01a7d84946f441a96c1100",
+  "code_dirty": false,
+  "checkpoint_path": "C:\\Users\\Simon\\Desktop\\Alexander_Pett\\temp\\Contactrich_Insertion\\Phase5_Robustheit_v1\\logs\\rsl_rl\\ur5e_insertion\\09-17_16-03-29__RT-207s2_offset5mm_currOFF_start+20mm_floor-30mm_seed2\\model_1499.pt",
+  "checkpoint_sha256": "6a471014f70d96d16f7a6afc7db843eef262a11d87f510d3f1f6fed2b75c4c3b",
+  "table_path": "C:\\Users\\Simon\\Desktop\\Alexander_Pett\\temp\\Contactrich_Insertion\\Phase5_Robustheit_v1\\scripts\\eval\\eval_table_seed30.csv",
+  "table_sha256": "d26610dc6838b4b2e2b453e267468a898dde7f20bb2af8291047ad9cf50a0ece",
+  "table_rows": 1000,
+  "width": "target",
+  "tag": "",
+  "task": "Ur5e-Insertion-Direct-v0",
+  "seed": 100,
+  "num_envs": 1000,
+  "episode_cap_steps": 256,
+  "step_dt_s": 0.06666666666666667,
+  "action_mode": "runner.get_inference_policy (rsl_rl): eval mode, act_inference = actor output, no sampling",
+  "control_mode": "osc",
+  "obs_wrench_mode": "force",
+  "noise": {
+    "obs_noise_pocket_pos_std_m": 0.005,
+    "force_obs_noise_std_n": 3.5,
+    "torque_obs_noise_std_nm": 0.0,
+    "grasp_obs_offset_x_m": 0.003,
+    "fixture_pos_noise_xy": 0.005,
+    "reset_joint_noise": 0.0
+  },
+  "versions": {
+    "python": "3.11.15",
+    "torch": "2.7.0+cu118",
+    "rsl_rl": "3.0.1",
+    "isaaclab": "2.3.2.post1",
+    "isaacsim": "5.1.0.0"
+  },
+  "normalizer_sha256_before": "f412b3bd7d87e2e865c3206b9b28379979929a6c736eb8af7e65d8f204c37fcd",
+  "normalizer_sha256_after": "f412b3bd7d87e2e865c3206b9b28379979929a6c736eb8af7e65d8f204c37fcd",
+  "policy_steps_run": 255,
+  "envs_finished_first_episode": 1000,
+  "wall_time_s": 593.3112182617188,
+  "env_cfg": {
+    "viewer": {
+      "eye": [
+        7.5,
+        7.5,
+        7.5
+      ],
+      "lookat": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "cam_prim_path": "/OmniverseKit_Persp",
+      "resolution": [
+        1280,
+        720
+      ],
+      "origin_type": "world",
+      "env_index": 0,
+      "asset_name": null,
+      "body_name": null
+    },
+    "sim": {
+      "physics_prim_path": "/physicsScene",
+      "device": "cuda:0",
+      "dt": 0.008333333333333333,
+      "render_interval": 8,
+      "gravity": [
+        0.0,
+        0.0,
+        -9.81
+      ],
+      "enable_scene_query_support": false,
+      "use_fabric": true,
+      "physx": {
+        "solver_type": 1,
+        "solve_articulation_contact_last": false,
+        "min_position_iteration_count": 1,
+        "max_position_iteration_count": 255,
+        "min_velocity_iteration_count": 0,
+        "max_velocity_iteration_count": 255,
+        "enable_ccd": false,
+        "enable_stabilization": false,
+        "enable_external_forces_every_iteration": false,
+        "enable_enhanced_determinism": false,
+        "bounce_threshold_velocity": 0.5,
+        "friction_offset_threshold": 0.04,
+        "friction_correlation_distance": 0.025,
+        "gpu_max_rigid_contact_count": 8388608,
+        "gpu_max_rigid_patch_count": 163840,
+        "gpu_found_lost_pairs_capacity": 2097152,
+        "gpu_found_lost_aggregate_pairs_capacity": 33554432,
+        "gpu_total_aggregate_pairs_capacity": 2097152,
+        "gpu_collision_stack_size": 67108864,
+        "gpu_heap_capacity": 67108864,
+        "gpu_temp_buffer_capacity": 16777216,
+        "gpu_max_num_partitions": 8,
+        "gpu_max_soft_body_contacts": 1048576,
+        "gpu_max_particle_contacts": 1048576
+      },
+      "physics_material": {
+        "func": "isaaclab.sim.spawners.materials.physics_materials:spawn_rigid_body_material",
+        "static_friction": 0.5,
+        "dynamic_friction": 0.5,
+        "restitution": 0.0,
+        "friction_combine_mode": "average",
+        "restitution_combine_mode": "average",
+        "compliant_contact_stiffness": 0.0,
+        "compliant_contact_damping": 0.0
+      },
+      "render": {
+        "enable_translucency": null,
+        "enable_reflections": null,
+        "enable_global_illumination": null,
+        "antialiasing_mode": null,
+        "enable_dlssg": null,
+        "enable_dl_denoiser": null,
+        "dlss_mode": null,
+        "enable_direct_lighting": null,
+        "samples_per_pixel": null,
+        "enable_shadows": null,
+        "enable_ambient_occlusion": null,
+        "dome_light_upper_lower_strategy": null,
+        "carb_settings": null,
+        "rendering_mode": null
+      },
+      "create_stage_in_memory": false,
+      "logging_level": "WARNING",
+      "save_logs_to_file": true,
+      "log_dir": null
+    },
+    "ui_window_class_type": "isaaclab.envs.ui.base_env_window:BaseEnvWindow",
+    "seed": 100,
+    "decimation": 8,
+    "is_finite_horizon": false,
+    "episode_length_s": 17.066666666666666,
+    "scene": {
+      "num_envs": 1000,
+      "env_spacing": 3.0,
+      "lazy_sensor_update": true,
+      "replicate_physics": true,
+      "filter_collisions": true,
+      "clone_in_fabric": false
+    },
+    "events": null,
+    "observation_space": 28,
+    "num_observations": null,
+    "state_space": 0,
+    "num_states": null,
+    "observation_noise_model": {
+      "class_type": "insertion.tasks.direct.insertion.obs_noise:InsertionObsNoise",
+      "noise_cfg": null,
+      "func": null,
+      "pocket_pos_std_m": 0.005,
+      "force_std_n": 3.5,
+      "torque_std_nm": 0.0,
+      "obs_mode": "force"
+    },
+    "action_space": 6,
+    "num_actions": null,
+    "action_noise_model": null,
+    "rerender_on_reset": false,
+    "num_rerenders_on_reset": 0,
+    "wait_for_textures": true,
+    "xr": null,
+    "log_dir": "C:\\Users\\Simon\\Desktop\\Alexander_Pett\\temp\\Contactrich_Insertion\\Phase5_Robustheit_v1\\logs\\rsl_rl\\ur5e_insertion\\09-17_16-03-29__RT-207s2_offset5mm_currOFF_start+20mm_floor-30mm_seed2\\eval_target_d26610dc",
+    "control_mode": "osc",
+    "obs_wrench_mode": "force",
+    "osc_kp_pos": 100.0,
+    "osc_kp_rot": 30.0,
+    "osc_damping_ratio": 1.0,
+    "osc_pos_step_limit_m": 0.02,
+    "osc_rot_step_limit_rad": 0.097,
+    "osc_pos_clamp_m": 0.08,
+    "osc_pos_clamp_z_m": 0.1435,
+    "osc_tilt_clamp_rad": 0.14870205226991687,
+    "osc_decimation": 8,
+    "start_tip_above_entrance": 0.02,
+    "start_tip_above_entrance_low": 0.02,
+    "start_floor_m": 0.02,
+    "start_floor_steps": 5,
+    "autodr_stall_buffers": 0,
+    "start_lateral_offset": 0.0,
+    "start_pose_solve_steps": 120,
+    "start_pose_solve_tol_m": 5e-05,
+    "start_pose_ik_lambda": 0.05,
+    "robot_cfg": {
+      "class_type": "isaaclab.assets.articulation.articulation:Articulation",
+      "prim_path": "/World/envs/env_.*/Robot",
+      "spawn": {
+        "func": "isaaclab.sim.spawners.from_files.from_files:spawn_from_usd",
+        "visible": true,
+        "semantic_tags": null,
+        "copy_from_source": true,
+        "mass_props": null,
+        "deformable_props": null,
+        "rigid_props": {
+          "rigid_body_enabled": null,
+          "kinematic_enabled": null,
+          "disable_gravity": false,
+          "linear_damping": null,
+          "angular_damping": null,
+          "max_linear_velocity": null,
+          "max_angular_velocity": null,
+          "max_depenetration_velocity": null,
+          "max_contact_impulse": null,
+          "enable_gyroscopic_forces": null,
+          "retain_accelerations": null,
+          "solver_position_iteration_count": null,
+          "solver_velocity_iteration_count": null,
+          "sleep_threshold": null,
+          "stabilization_threshold": null
+        },
+        "collision_props": null,
+        "activate_contact_sensors": true,
+        "scale": null,
+        "articulation_props": {
+          "articulation_enabled": null,
+          "enabled_self_collisions": false,
+          "solver_position_iteration_count": 16,
+          "solver_velocity_iteration_count": 1,
+          "sleep_threshold": null,
+          "stabilization_threshold": null,
+          "fix_root_link": true
+        },
+        "fixed_tendons_props": null,
+        "spatial_tendons_props": null,
+        "joint_drive_props": null,
+        "visual_material_path": "material",
+        "visual_material": null,
+        "usd_path": "C:\\Users\\Simon\\Desktop\\Alexander_Pett\\temp\\Contactrich_Insertion\\Phase5_Robustheit_v1\\source\\insertion\\insertion\\tasks\\direct\\insertion\\assets\\Robot\\ur5e_tool.usd",
+        "variants": null
+      },
+      "init_state": {
+        "pos": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rot": [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "lin_vel": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "ang_vel": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "joint_pos": {
+          "shoulder_pan_joint": 3.141293,
+          "shoulder_lift_joint": -1.627801,
+          "elbow_joint": -1.791996,
+          "wrist_1_joint": -1.292592,
+          "wrist_2_joint": 1.570796,
+          "wrist_3_joint": 1.570497
+        },
+        "joint_vel": {
+          ".*": 0.0
+        }
+      },
+      "collision_group": 0,
+      "debug_vis": false,
+      "articulation_root_prim_path": null,
+      "soft_joint_pos_limit_factor": 1.0,
+      "actuators": {
+        "shoulder": {
+          "class_type": "isaaclab.actuators.actuator_pd:ImplicitActuator",
+          "joint_names_expr": [
+            "shoulder_.*"
+          ],
+          "effort_limit": null,
+          "velocity_limit": null,
+          "effort_limit_sim": null,
+          "velocity_limit_sim": null,
+          "stiffness": 0.0,
+          "damping": 0.0,
+          "armature": null,
+          "friction": null,
+          "dynamic_friction": null,
+          "viscous_friction": null
+        },
+        "elbow": {
+          "class_type": "isaaclab.actuators.actuator_pd:ImplicitActuator",
+          "joint_names_expr": [
+            "elbow_joint"
+          ],
+          "effort_limit": null,
+          "velocity_limit": null,
+          "effort_limit_sim": null,
+          "velocity_limit_sim": null,
+          "stiffness": 0.0,
+          "damping": 0.0,
+          "armature": null,
+          "friction": null,
+          "dynamic_friction": null,
+          "viscous_friction": null
+        },
+        "wrist": {
+          "class_type": "isaaclab.actuators.actuator_pd:ImplicitActuator",
+          "joint_names_expr": [
+            "wrist_.*"
+          ],
+          "effort_limit": null,
+          "velocity_limit": null,
+          "effort_limit_sim": null,
+          "velocity_limit_sim": null,
+          "stiffness": 0.0,
+          "damping": 0.0,
+          "armature": null,
+          "friction": null,
+          "dynamic_friction": null,
+          "viscous_friction": null
+        }
+      },
+      "actuator_value_resolution_debug_print": false
+    },
+    "spawn_workcell_block": false,
+    "fixture_cfg": {
+      "class_type": "isaaclab.assets.rigid_object.rigid_object:RigidObject",
+      "prim_path": "/World/envs/env_.*/Fixture",
+      "spawn": {
+        "func": "isaaclab.sim.spawners.from_files.from_files:spawn_from_usd",
+        "visible": true,
+        "semantic_tags": null,
+        "copy_from_source": true,
+        "mass_props": null,
+        "deformable_props": null,
+        "rigid_props": null,
+        "collision_props": {
+          "collision_enabled": true,
+          "contact_offset": null,
+          "rest_offset": null,
+          "torsional_patch_radius": null,
+          "min_torsional_patch_radius": null
+        },
+        "activate_contact_sensors": false,
+        "scale": null,
+        "articulation_props": null,
+        "fixed_tendons_props": null,
+        "spatial_tendons_props": null,
+        "joint_drive_props": null,
+        "visual_material_path": "material",
+        "visual_material": null,
+        "usd_path": "C:\\Users\\Simon\\Desktop\\Alexander_Pett\\temp\\Contactrich_Insertion\\Phase5_Robustheit_v1\\source\\insertion\\insertion\\tasks\\direct\\insertion\\assets\\Werkzeug\\Aufnahme_real_v1_mm.usd",
+        "variants": null
+      },
+      "init_state": {
+        "pos": [
+          0.5009938,
+          -0.13345,
+          0.06250000000000001
+        ],
+        "rot": [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "lin_vel": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "ang_vel": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "collision_group": 0,
+      "debug_vis": false
+    },
+    "dr_mode": "table",
+    "dr_table_path": "C:\\Users\\Simon\\Desktop\\Alexander_Pett\\temp\\Contactrich_Insertion\\Phase5_Robustheit_v1\\scripts\\eval\\eval_table_seed30.csv",
+    "dr_table_width": "target",
+    "fixed_asset": {
+      "usd_path": "",
+      "side": 0.032,
+      "depth": 0.036,
+      "base_height": 0.755,
+      "success_depth": 0.032999999999999995,
+      "friction": 0.75
+    },
+    "held_asset": {
+      "usd_path": "",
+      "side": 0.03,
+      "length": 0.05,
+      "mass": 0.046801297449206525,
+      "inertia_axial": 7.020194617380978e-06,
+      "inertia_transverse_com": 1.3260367610608517e-05,
+      "friction": null
+    },
+    "tool_mass_kg": 0.824,
+    "force_abort_f_max_n": 30.0,
+    "abort_payment": -1.0,
+    "engaged_depth_m": 0.010799999999999999,
+    "curriculum_enabled": false,
+    "rung_step_sizes": null,
+    "force_sensor_body_name": "tool_link",
+    "force_gravity_tare": true,
+    "obs_noise_pocket_pos_std_m": 0.005,
+    "force_obs_noise_std_n": 3.5,
+    "torque_obs_noise_std_nm": 0.0,
+    "torque_ref_offset_parent_m": [
+      0.0,
+      0.0,
+      -0.1032
+    ],
+    "grasp_obs_offset_x_m": 0.003,
+    "ft_smoothing_factor": 0.25,
+    "kernel_a_coarse": 17.280889360466375,
+    "kernel_b_coarse": 2.0,
+    "kernel_a_mid": 997.7409487087936,
+    "kernel_b_mid": 2.0,
+    "kernel_a_fine": 5093.980337178935,
+    "kernel_b_fine": 0.0,
+    "kernel_a_tilt": 11.179858945578738,
+    "w_engaged": 1.0,
+    "w_success": 1.0,
+    "w_depth_progress": 100.0,
+    "w_tilt": 0.0,
+    "shaping_gamma": 0.99,
+    "episode_steps": 256,
+    "time_penalty_per_step": -0.00390625,
+    "action_rate_scale": 0.0034,
+    "interpen_thresh": 0.0002938000000000038,
+    "depth_min": 0.032999999999999995,
+    "depth_max": 0.036,
+    "sdf_num_sample_points": 64000,
+    "sdf_max_dist": 1.5,
+    "sdf_seed": 0,
+    "rl_terms_enabled": true,
+    "action_scale": 0.02,
+    "reset_joint_noise": 0.0,
+    "reset_yaw_noise": 0.0,
+    "yaw_joint_name": "wrist_3_joint",
+    "gate_min_alignment": 0.99,
+    "metrics_window_iterations": 20,
+    "metrics_success_threshold": 0.9,
+    "ee_body_name": "wrist_3_link",
+    "workcell_tables_pos": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "workcell_block_pos": [
+      0.5009938,
+      -0.13345,
+      0.06250000000000001
+    ],
+    "floor_z": -0.908,
+    "fixture_pos_noise_xy": 0.005,
+    "fixture_yaw_noise_rad": 0.0,
+    "fixture_tilt_rad": 0.0,
+    "fixture_yaw_rad": 0.0,
+    "fixture_tilt_noise_rad": 0.0,
+    "fixture_pos": [
+      0.5009938,
+      -0.13345,
+      0.06250000000000001
+    ],
+    "plate_top_z": -0.11979999999999999,
+    "plate_bottom_z": -0.13979999999999998,
+    "plate_half_extents": [
+      0.375,
+      0.7525
+    ],
+    "opening_entrance_pos": [
+      0.5009938,
+      -0.13345,
+      0.06250000000000001
+    ],
+    "robot_base_pos": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "home_standoff_z": 0.15,
+    "peg_body_name": "tool_link",
+    "peg_tip_offset": [
+      0.0,
+      0.0,
+      0.152
+    ],
+    "peg_length": 0.152,
+    "part_bbox_m": [
+      0.096409,
+      0.1435,
+      0.050514
+    ],
+    "report_at_steps": [
+      2,
+      60,
+      180,
+      258
+    ]
+  }
+}

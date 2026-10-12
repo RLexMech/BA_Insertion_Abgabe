@@ -1,0 +1,755 @@
+==============================================================
+[rt_log] 2026-10-01 21:41:09  cwd: C:\Users\Simon\Desktop\Alexander_Pett\temp\Contactrich_Insertion\Phase5_RlGames_v1
+[rt_log] cmd: python -u scripts/rl_games/play.py --task Ur5e-Insertion-Direct-v0 --headless --seed 100 --checkpoint C:\Users\Simon\Desktop\Alexander_Pett\temp\Contactrich_Insertion\Phase5_RlGames_v1\logs\rl_games\ur5e_insertion\09-28_23-40-25__RT-243s1_fixed_dr_offset50mm_currOFF_start+20mm_floor-30mm_seed1\nn\last_ur5e_insertion_ep_100_rew_49.403553.pth --eval-table scripts/eval/eval_table_seed10_c18.csv --eval-width target --eval-tag pn2 env.obs_wrench_mode=force_prevact env.pocket_obs_yaw_rad=0.0223402 env.obs_noise_pocket_pos_std_m=0.01
+[rt_log] git: c1a635e
+==============================================================
+[INFO][AppLauncher]: Using device: cuda:0
+[INFO][AppLauncher]: Loading experience file: C:\Users\Simon\miniconda3\envs\env_isaaclab\Lib\site-packages\isaaclab\apps\isaaclab.python.headless.kit
+Loading user config located at: 'c:/users/simon/miniconda3/envs/env_isaaclab/lib/site-packages/isaacsim/kit/data/Kit/Isaac-Sim/5.1/user.config.json'
+[Info] [carb] Logging to file: c:/users/simon/miniconda3/envs/env_isaaclab/lib/site-packages/isaacsim/kit/logs/Kit/Isaac-Sim/5.1/kit_20261001_214109.log
+2026-10-01T19:41:10Z [500ms] [Warning] [omni.usd_config.extension] Enable omni.materialx.libs extension to use MaterialX
+2026-10-01T19:41:11Z [1,299ms] [Warning] [carb] Acquiring non optional plugin interface which is not listed as dependency: [omni::physx::IPhysxBenchmarks v1.0] (plugin: <default plugin>), by client: omni.physics.physx.plugin. Add it to CARB_PLUGIN_IMPL_DEPS() macro of a client.
+2026-10-01T19:41:11Z [1,317ms] [Warning] [omni.isaac.dynamic_control] omni.isaac.dynamic_control is deprecated as of Isaac Sim 4.5. No action is needed from end-users.
+
+|---------------------------------------------------------------------------------------------|
+| Driver Version: 591.86        | Graphics API: D3D12
+|=============================================================================================|
+| GPU | Name                             | Active | LDA | GPU Memory | Vendor-ID | LUID       |
+|     |                                  |        |     |            | Device-ID | UUID       |
+|     |                                  |        |     |            | Bus-ID    |            |
+|---------------------------------------------------------------------------------------------|
+| 0   | NVIDIA GeForce RTX 3080          | Yes: 0 |     | 10053   MB | 10de      | 40b40000.. |
+|     |                                  |        |     |            | 2216      | 0          |
+|     |                                  |        |     |            | 2d        |            |
+|=============================================================================================|
+| OS: Windows 11 Education, Version: 10.0 (25H2), Build: 26200, Kernel: 10.0.26100.9457
+| Processor: AMD Ryzen 9 5900X 12-Core Processor            
+| Cores: 12 | Logical Cores: 24
+|---------------------------------------------------------------------------------------------|
+| Total Memory (MB): 32688 | Free Memory: 13081
+| Total Page/Swap (MB): 38576 | Free Page/Swap: 12235
+|---------------------------------------------------------------------------------------------|
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+[rl_games] insertion package imported from: C:\Users\Simon\Desktop\Alexander_Pett\temp\Contactrich_Insertion\Phase5_RlGames_v1\source\insertion\insertion
+[INFO]: Parsing configuration from: insertion.tasks.direct.insertion.insertion_env_cfg:InsertionEnvCfg
+[INFO]: Parsing configuration from: C:\Users\Simon\Desktop\Alexander_Pett\temp\Contactrich_Insertion\Phase5_RlGames_v1\source\insertion\insertion\tasks\direct\insertion\agents\rl_games_ppo_cfg.yaml
+[INFO] Loading experiment from directory: C:\Users\Simon\Desktop\Alexander_Pett\temp\Contactrich_Insertion\Phase5_RlGames_v1\logs\rl_games\ur5e_insertion
+[rl_games-play] replay record folder: C:\Users\Simon\Desktop\Alexander_Pett\temp\Contactrich_Insertion\Phase5_RlGames_v1\logs\rl_games\ur5e_insertion\09-28_23-40-25__RT-243s1_fixed_dr_offset50mm_currOFF_start+20mm_floor-30mm_seed1\eval_target_d4b97259_pn2
+
+[36m===================================================================================================================[0m
+[36m[1m[INFO][IsaacLab]: Logging to file: C:\Users\Simon\AppData\Local\Temp\isaaclab\logs\isaaclab_2026-10-01_21-41-20.log[0m
+[36m===================================================================================================================[0m
+
+[33m21:41:20 [simulation_context.py] WARNING: The `enable_external_forces_every_iteration` parameter in the PhysxCfg is set to False. If you are experiencing noisy velocities, consider enabling this flag. You may need to slightly increase the number of velocity iterations (setting it to 1 or 2 rather than 0), together with this flag, to improve the accuracy of velocity updates.[0m
+[INFO]: Base environment:
+	Environment device    : cuda:0
+	Environment seed      : 100
+	Physics step-size     : 0.008333333333333333
+	Rendering step-size   : 0.06666666666666667
+	Environment step-size : 0.06666666666666667
+[insertion] robot asset: C:\Users\Simon\Desktop\Alexander_Pett\temp\Contactrich_Insertion\Phase5_RlGames_v1\source\insertion\insertion\tasks\direct\insertion\assets\Robot\ur5e_tool.usd
+[INFO]: Time taken for scene creation : 1.670251 seconds
+[INFO]: Scene manager:  <class InteractiveScene>
+	Number of environments: 1000
+	Environment spacing   : 3.0
+	Source prim name      : /World/envs/env_0
+	Global prim paths     : []
+	Replicate physics     : True
+[INFO]: Starting the simulation. This may take a few seconds. Please wait...
+2026-10-01T19:41:22Z [12,767ms] [Warning] [omni.physx.plugin] PhysicsUSD: CreateJoint - found a joint with disjointed body transforms, the simulation will most likely snap objects together: /World/envs/env_0/Robot/joints/robot_gripper_joint
+[INFO]: Time taken for simulation start : 1.198298 seconds
+[INFO]: Completed setting up the environment...
+[insertion] rung-0 start pose: tool point +20.000 mm above the stage-2 opening plane (home pose is +415.000 mm); dls IK, <= 120 iterations, tolerance 0.050 mm, jacobian row block 6, fixed base True
+[insertion] rung-0 start lateral offset OFF (start_lateral_offset = 0.0): every episode starts ON the pocket axis, which CANCELS the lateral part of fixture_pos_noise_xy and reset_joint_noise (D-170).
+[insertion_sdf] sampled mesh fuegeteil.obj: 8577 vertices, 6594 faces, extents 0.0964 x 0.1435 x 0.0505 m | sampled 64000 of 64000 requested, seed 0, max_dist 1.5 m
+[insertion_sdf] sampled mesh fuegeteil.obj: 8577 vertices, 6594 faces, extents 0.0964 x 0.1435 x 0.0505 m | sampled 64000 of 64000 requested, seed 0, max_dist 1.5 m
+[insertion_sdf] QUERIED mesh aufnahme.obj: 903 vertices, 757 faces, extents 0.1500 x 0.1891 x 0.0610 m
+[INFO]: Loading model checkpoint from: C:\Users\Simon\Desktop\Alexander_Pett\temp\Contactrich_Insertion\Phase5_RlGames_v1\logs\rl_games\ur5e_insertion\09-28_23-40-25__RT-243s1_fixed_dr_offset50mm_currOFF_start+20mm_floor-30mm_seed1\nn\last_ur5e_insertion_ep_100_rew_49.403553.pth
+self.seed = 100
+[BasePlayer] Creating regular env:  rlgpu
+{'observation_space': Box(-inf, inf, (34,), float32), 'action_space': Box(-1.0, 1.0, (6,), float32), 'agents': 1, 'value_size': 1}
+build mlp: 1024
+RunningMeanStd:  (1,)
+RunningMeanStd:  (34,)
+=> loading checkpoint 'C:\Users\Simon\Desktop\Alexander_Pett\temp\Contactrich_Insertion\Phase5_RlGames_v1\logs\rl_games\ur5e_insertion\09-28_23-40-25__RT-243s1_fixed_dr_offset50mm_currOFF_start+20mm_floor-30mm_seed1\nn\last_ur5e_insertion_ep_100_rew_49.403553.pth'
+[rl_games-play] deterministic action: True, rnn: True
+========================================================================
+INSERTION STARTUP REPORT -- REAL geometry and physics, PROXY scoring (UNVERIFIED)
+step 2 of (2, 60, 180, 258), t = 0.133 s after reset
+code marker: insertion-osc-2026-09-03a
+episode cap (D-113 (3)): 256 control steps = 17.066667 s at 15.0 Hz
+--- controller (inbox entry 'Audit 2026-09-03 (a)') ---
+control_mode:   osc -- 6-D pose delta, Isaac Lab OperationalSpaceController, target = current pose + delta re-anchored every physics step (Factory form)
+  osc cfg:      target pose_abs, impedance fixed, inertial decoupling ON (full), gravity compensation ON with gravity ON (test_operational_space.py:350-358), nullspace none
+  kp:           pos 100.0 N/m [placeholder], rot 30.0 Nm/rad [placeholder], damping ratio 1.0 (critical, 2*sqrt(kp))
+  step limits:  0.02 m, 0.097 rad (5.56 deg) per policy step [placeholder, Factory thresholds, D-197]
+  action EMA:   0.2 on the new clamped draw, applied = EMA state [placeholder, Factory ema_factor, D-197]; obs prev_action = EMA state; action-rate term measured on the RAW draw, weight 0.0 (Factory 0.0)
+  tip clamp:    +-0.1 m x/y [placeholder, D-180 rule at D-197's step: disk reach + one action step + set air] and +-0.2915 m z [placeholder, D-180 rule at D-197's step: highest legal start + one action step + set air] box around the pocket entrance; tilt cone 8.52 deg from THIS EPISODE'S POCKET AXIS (CAD, Geometrie_Fuegeteil_Aufnahme.tex:264)
+  yaw band:     +-12.30 deg about THIS EPISODE'S SEATED orientation (pocket * SEATED_TOOL_QUAT_LOCAL) [placeholder, own, D-196 rule at D-197's step: worst start yaw + belief error + one rotation step]
+  reset yaw vs seat: max |yaw| 11.069 deg over 1000 envs (env 0 +3.238); expect about 0 at DR width 0 -- the home tool IS the seated orientation (RT-102, D-196 seam 0)
+  controlled body: tool_link (index 7, jacobian row block 6), tip offset [0.0, 0.0, 0.15199999511241913] m
+  rates:        policy 15.0 Hz (decimation 8 [placeholder, Factory]), controller 120.0 Hz; episode 256 steps = 17.0667 s (step count kept, seconds follow -- re-derivation owed)
+  drives (PhysX read-back): joint | type (USD) | stiffness | damping | maxForce
+    shoulder_pan_joint   force                0.0000     0.0000     150.00
+    shoulder_lift_joint  force                0.0000     0.0000     150.00
+    elbow_joint          force                0.0000     0.0000     150.00
+    wrist_1_joint        force                0.0000     0.0000      28.00
+    wrist_2_joint        force                0.0000     0.0000      28.00
+    wrist_3_joint        force                0.0000     0.0000      28.00
+  Lambda (env 0, at the reset pose = start_tip_above_entrance +0.0200 m): translational eigenvalues [4.0988, 4.3098, 8.8528] kg, MAX 8.8528 kg; rotational eigenvalues [0.00238, 0.13793, 0.24718] kg m^2, MAX 0.24718
+  Jacobian condition number (env 0, tool_link): 7.805 (sigma max 1.8736 / min 0.240040)
+  gravity compensation torques (env 0): [0.0, 26.725, 17.728, 2.181, -0.003, 0.0] Nm vs maxForce [150.0, 150.0, 150.0, 28.0, 28.0, 28.0]
+  Decision (4) reading: kp <= F_search / (Lambda_max * step_limit) = 20 N / (8.8528 kg * 0.02 m) = 113.0 (unit check: kg*m in the denominator is a force per (N/m), READ, not decided)
+--- end controller ---
+fixture usd: C:\Users\Simon\Desktop\Alexander_Pett\temp\Contactrich_Insertion\Phase5_RlGames_v1\source\insertion\insertion\tasks\direct\insertion\assets\Werkzeug\Aufnahme_real_v1_mm.usd
+robot usd:   C:\Users\Simon\Desktop\Alexander_Pett\temp\Contactrich_Insertion\Phase5_RlGames_v1\source\insertion\insertion\tasks\direct\insertion\assets\Robot\ur5e_tool.usd
+fixture spawn translation: (0.5009938, -0.13345, 0.06250000000000001)  (asset origin = opening plane at pocket centre)
+fixture tilt (D-036 probe): +0.00 deg about env y (lateral axis; +tips the back-wall side down) through the pocket centre (inactive)
+fixture yaw (D-038 probe): +0.00 deg about env z through the pocket centre (inactive)
+fixture tilt noise (D-037): magnitude 0..0.00 deg, direction uniform over 360 deg, resampled per episode (inactive)
+pocket-frame measurement: ON -- gate/depth/alignment/phi and obs 12:15 in the pocket frame
+dr_mode: table
+  provider: FixedWidth, 7 boundaries, bounds_version 0
+  quantity            now [lo, hi]                 max [lo, hi]
+    lat_r             [+0.000000, +0.030000]   [+0.000000, +0.030000]
+    yaw               [-0.087266, +0.087266]   [-0.087266, +0.087266]
+    tilt              [+0.000000, +0.174533]   [+0.000000, +0.174533]
+    start_height      [+0.020000, +0.270000]   [+0.020000, +0.270000]
+    friction          [+0.080000, +0.200000]   [+0.080000, +0.200000]
+  [provenance] buffer m / p_boundary: Akkaya et al. 2019, Appendix C.3 Table 15 (arXiv:1910.07113 p. 44), read from the PDF 2026-09-09: queue length m 240, boundary sampling probability 0.5
+  [provenance] delta steps (10): [TESTWERT] Phase-5 plan section 1: Delta = maximum/10 from a fill-rate estimate, NOT Akkaya's absolute 0.02; confirm after the smoke run
+  [provenance] lat_r [m] 0.0 .. 0.03 ([TESTWERT]): [TESTWERT] Phase-5 ceiling, decided not derived -- D-178 (5)
+  [provenance] yaw [rad] -0.08726646259971647 .. 0.08726646259971647 ([TESTWERT]): [TESTWERT] Phase-5 ceiling, decided not derived -- D-178 (5)
+  [provenance] tilt [rad] 0.0 .. 0.17453292519943295 ([TESTWERT]): [TESTWERT] Phase-5 ceiling, decided not derived -- D-178 (5)
+  [provenance] start_height [m] 0.02 .. 0.27 ([TESTWERT]): [TESTWERT] hi = ceiling, decided not derived -- D-202 (was 0.120, D-179 (1)); lo = the centre H_min, not yet measured -- D-179 (4)
+  [provenance] friction [1] 0.08 .. 0.2 (sourced): DuPont PA66/POM table span, assumed PA6/POM pairing, no PA6 value -- D-181 (2)
+  [eval-table] C:\Users\Simon\Desktop\Alexander_Pett\temp\Contactrich_Insertion\Phase5_RlGames_v1\scripts\eval\eval_table_seed10_c18.csv  rows 1000  sha256 d4b972597b357844d895fc43b03e776537cee45bc7b5fa1910ddfd19f8954f6d  width target. Env i plays row i in every episode; no boundary sampling (p_boundary 0.00), nothing moves. Values outside [0, 1] allowed (OOD table): False.
+  NOT VERIFIED IN A SIMULATOR: this build has never run. Read the [autodr] lines and dr/ curves of THIS run before believing it.
+fixture pose noise (D-034, D-204): xy +-0.050 m, z +-0.050 m, yaw +-0.0000 rad (ACTIVE -- kinematic fixture teleported per reset)
+--- workcell (robot foot IS the env origin, Factory convention) ---
+floor z:        -0.9080   table 1 top: -0.0240   table 2 top: -0.1198
+plate drop:     95.8 mm (measured 95.8 mm, D-058 direct reading leads; the 884/787 pair would give 97.0 mm)
+block top:      +0.0775 = 197.3 mm above table 2; ABOVE the robot foot plane
+insertion plane:+0.0625 = block top - 15 mm stage 1; asset origin + entrance sit HERE (2026-08-19 convention)
+foot -> pocket: x +501.0 mm (depth), y -133.5 mm (lateral, - = robot's right), straight line 524.2 mm of 850 mm UR5e reach
+block model:    225.1 x 260.0 mm footprint (80.0 front + 130.0876 stage 1 + 15.0 rear wall), 5.0876 mm of block behind the cut-out, high wall 100 mm above the rim
+tool home yaw:  +180.0 deg about the tool axis (weld yaw +0.0 deg, D-078); the part's lugs face the pocket features at this angle
+block boxes:    8 (incl. the two +Y slot fillers beside the tab: 52.0 and 31.0 mm long, 10.0 mm deep)
+tables usd:     C:\Users\Simon\Desktop\Alexander_Pett\temp\Contactrich_Insertion\Phase5_RlGames_v1\source\insertion\insertion\tasks\direct\insertion\assets\Arbeitszelle\arbeitszelle_tische_v2.usd
+workcell block: *** OFF -- the Aufnahme stands free; no rear wall, the pocket is enterable from any direction ***
+Y residual:     +15.0 mm (left vs right table-2 overhang; right leads)
+--- end workcell ---
+joint_names: ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint', 'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
+  joint limit  shoulder_pan_joint   [-6.283185, +6.283185]  reset writes +3.141293
+  joint limit  shoulder_lift_joint  [-6.283185, +6.283185]  reset writes -1.656050
+  joint limit  elbow_joint          [-3.141593, +3.141593]  reset writes -1.111936
+  joint limit  wrist_1_joint        [-6.283185, +6.283185]  reset writes -1.944403
+  joint limit  wrist_2_joint        [-6.283185, +6.283185]  reset writes +1.570796
+  joint limit  wrist_3_joint        [-6.283185, +6.283185]  reset writes +1.570497
+body_names:  ['base_link', 'shoulder_link', 'upper_arm_link', 'forearm_link', 'wrist_1_link', 'wrist_2_link', 'wrist_3_link', 'tool_link']
+ee_body:     wrist_3_link (index 6)
+force_body:  tool_link (index 7), wrench read RAW in the parent body frame, EMA alpha 0.25 on the NEW sample
+force tare:  ON -- world hold force [-0.0, -0.0, 8.0834] N (= -0.82400 kg * gravity (0.0, 0.0, -9.81)), rotated into the frame of 'wrist_3_link' (index 6) and subtracted BEFORE the EMA. Free air must now read ~0 N, not 8.08 N.
+torque tare: ON -- lever = authored tool COM minus the MEASURED reference point (origin of 'wrist_3_link' + (0.0, 0.0, -0.1032) m in its frame, RT-192a2), moment = lever x hold force, rotated into the same frame, subtracted BEFORE the EMA (D-188).
+obs mode force_prevact-34: torque read and logged, NOT in the policy observation; torque_obs_noise_std_nm 0.0 (0 = off, OPEN per D-188); the wrench EMA skips the reset step and advances once per step (inbox 2026-09-13).
+activate_contact_sensors: True (declared cfg field)
+contact friction (D-111, centre 0.14, per-reset band, PROVISIONAL/F3): PhysX reads back robot [0.080, 0.200], fixture [0.080, 0.200] (static+dynamic pooled)
+friction after first reset env0..3: PhysX robot [0.16268, 0.14214, 0.12074, 0.11252] vs commanded [0.16268, 0.14214, 0.12074, 0.11252]; band now [0.08000, 0.20000] -- at width 0 all four are the centre and that is CORRECT, four DIFFERENT values are owed only once the band has opened
+  fixture side, same envs: [0.16268, 0.14214, 0.12074, 0.11252] -- must match the robot list env for env
+friction write cost mean/max ms: 13.557 / 13.557 over 1 sample(s) in a 1000-call window (whole block: host copy + row edit + both PhysX calls, fenced against the reset). Read it against the iteration time in THIS log.
+solver iterations (D-115 verify): /World/envs/env_0/Robot/root_joint: solverPositionIterationCount=16, solverVelocityIterationCount=1
+solver iterations (D-115 verify): /World/envs/env_0/Fixture: NO authored value on any prim below -- the PhysX SDK default applies and is NOT readable here
+peg_body:    tool_link (index 7), flange -> leading point 0.1520 m, part 0.0964 x 0.1435 x 0.0505 m, mass 0.82400 kg
+             GATE MATH IS STILL SQUARE: side 0.0300 m from the proxy peg; the part's 0.1435 m long axis is not modelled yet.
+pocket:      side 0.0320 m (PROXY SQUARE, see the proxy block below), depth 0.0360 m (blind), success at 33 mm
+             play (MEASURED, total, not per-axis half): X 0.5876 mm across the lugs, Y 1.6000 mm along the part
+             yaw window: OPEN -- the proxy's C4 window does not apply to a part that fits one way round, and D-106's bound is not recomputed against PLAY_X (D-121).
+asset check (peg):     PASS -- authored tool matches cfg (part 0.09641 x 0.14350 x 0.05051 m, span -0.0000..+0.1520 m, mass 0.82400 kg), from ur5e_tool.author.json
+asset check (fixture): PASS -- imported fixture matches the STEP constants (edges 61.000 / 150.000 / 189.100 mm, z -46.000 .. +15.000 mm), from Aufnahme_real_v1_mm.verify.json
+resting FD joint speed (env 0..1): [0.037910688668489456, 0.03591600060462952] rad/s  (expect ~0.000 after reset)
+observation layout (built 34-dim of 34, mode force_prevact, D-107/D-114/D-188): 0:6 joint_pos | 6:12 joint_vel | 12:15 tip_rel | 15:19 ee_quat | 19:21 yaw_cos_sin | 21:25 pocket_quat | 25:28 force | 28:34 prev_action
+  12:15 frame: POCKET, D-036; 19:21 is (cos phi, sin phi), NOT cos 4 phi (D-107 (2))
+observation bias env0..3 (D-182, tip_rel 12:15, uniform +-0.01 m, drawn per EPISODE): [[-0.004874, 0.00154, -0.009134], [-0.009128, -0.003948, -0.00126], [0.00983, -0.005814, 0.002134], [-0.005428, -0.005231, -0.006935]]
+grasp belief error env0..3 (D-183, +-0.003 m on the part's short axis, drawn per EPISODE): [0.002601, 0.000602, 0.001603, 0.000295]
+pocket-yaw belief error env0..3 (D-194, +-0.0223402 rad about the pocket axis, drawn per EPISODE): [-0.015862, -0.010635, 0.021765, -0.013722]
+rl_terms_enabled: True (validate_rl_config PASSED)
+curriculum: *** OFF -- FIXED RUNG 0, no advance, no retreat; the start scatter is whatever the cfg holds and never widens ***
+reward (D-109 + the 2026-09-01 revision): kernel_sum(sdf_dist) + engaged + success bonuses, SAPU-scaled; time penalty -0.003906/step (-1/T at T = 256); action-rate penalty -0.0 * ||a_t - a_(t-1)||
+alignment shaping (RT-171, potential-based): 0.99 * Phi(s') - Phi(s), Phi = 0.0 * sech(11.1799/rad * theta) vs the POCKET axis (margin 15.34 deg, MEASURED, RT-158 mouth-mode median), Phi(s') = 0 on the success step, not SAPU-scaled; gamma READ from agents/rsl_rl_ppo_cfg.py -- a hydra override of agent.algorithm.gamma must set env.shaping_gamma too; *** OFF, w_tilt 0 -- the pre-RT-171 reward ***
+termination (D-113 + the 2026-09-01 revision): timeout, force abort at 30.0 N (payment -1.0, both PLACEHOLDERS, see the block above), AND success -- which ends the episode and pays its remaining return as a lump. Episode success = that termination event.
+seated goal pose (env 0, env-local): [0.534754, -0.137906, 0.203019], quat (wxyz) [0.001419, -0.028656, 0.999504, -0.012949] = pocket quat * SEATED_TOOL_QUAT_LOCAL (RT-102)
+*** PLACEHOLDER VALUES IN USE -- every number this run reports is provisional ***
+    force_abort_f_max_n = 30.0  [placeholder] no longer INVENTED -- that was 2026-08-28..2026-09-01 (user, no source). D-169 on 2026-09-06 set it off RT-157: across every SUCCESSFUL first episode of the two probed start heights that limit aborted none, while the search force of D-166 would abort about half of them. On 2026-09-15 the user LOWERED it for the restarted seed study, below the force p95 the RT-201 family measured, so the abort now also ends a share of episodes that would have succeeded (inbox entry 'Seed study restart'). NOT a measurement. Still only an upper bound on OUR OWN simulation, not a damage limit of the real part, and it describes ONE policy at TWO heights. In the simulation this limit is only the brake against ramming (D-114) and must sit ABOVE the force a clean insertion needs, or it forbids the solution. The suction-cup datasheet anchor is WITHDRAWN (rigid chain, no sim-to-real). D-167's condition for lowering did NOT hold: it asked for p95 far under the D-166 search force, and RT-157 read above it. Read force_norm_n p95 and force_abort_rate off every run. Home: DECISIONS.md, D-169.
+    engaged_depth_m = 0.010799999999999999  [placeholder] the fraction of the seat depth behind it is AD HOC (user, 2026-08-30) and was downgraded again on 2026-09-01. The rule 'measured capture depth of the tilted scripted insertion' (inbox entry Reward-Ueberarbeitung) was WITHDRAWN the same day: RT-129 showed that depth to be the controller's own tilt ramp. Proposed replacement, not decided: read the depth at which the lateral offset stays inside half the cross play off the TRAINED policy's trajectories (D-071: the tilt is learned). Only consumer: the engaged display bonus. Factory's own fraction was rejected: at this pocket it lands inside the success band. Home: docs/decisions_inbox.md, entry 'The tilted scripted insertion is SPENT ...' (2026-09-01).
+    abort_payment = -1.0  [placeholder] the FORM is Beltran-Hernandez via D-114 (a fixed negative on abort) and the MAGNITUDE was decided 2026-09-01 (grill; inbox entry Reward-Ueberarbeitung, the abort-payment point), which closes D-114's [open] and un-couples it from the F_max measurement: one kernel peak, i.e. the per-step maximum of the shaping term. That is a SCALE ANCHOR, our own choice, openly labelled, with an optional decade sensitivity row per the D-109 width template. It stays in this table because it is still a magnitude nobody measured; the dominant abort price is anyway the forfeited remaining return.
+    osc_kp_pos = 100.0  [placeholder] task-space position stiffness, N/m. NOT adopted: Decision (four) of the inbox entry 'Audit 2026-09-03 (a)' DERIVES it as kp <= F_search / (Lambda_max * step_limit), with F_search the literature search-band force and Lambda_max the task-space inertia the startup report prints at the reset pose. Until that is done the measurement runs two values (the OSC cfg default and five times it). The OSC cfg default and the reach example are contact-free and are NOT a source.
+    osc_kp_rot = 30.0  [placeholder] task-space rotation stiffness, Nm/rad. No source of ours; Factory's default_task_prop_gains rotation value (factory_env_cfg.py, CtrlCfg). Decision (four) of the same entry.
+    osc_pos_step_limit_m = 0.02  [placeholder] metres of tool travel one action step may command. Decision (four): policy rate x allowed tool speed, and the tool-speed source is MISSING. Factory's pos_action_threshold (factory_env_cfg.py, CtrlCfg), back since D-197 together with Factory's action EMA; D-196 (B)'s own smaller value is superseded.
+    osc_rot_step_limit_rad = 0.097  [placeholder] radians of tool rotation one action step may command. Same gap as osc_pos_step_limit_m. Factory's rot_action_threshold, back since D-197.
+    action_ema_factor = 0.2  [placeholder] weight of the NEW clamped action in the action EMA; the applied action is the EMA state. Factory's ema_factor (factory_env_cfg.py, CtrlCfg), taken with its thresholds by D-197. No source of ours.
+    osc_pos_clamp_m = 0.1  [placeholder] half-width of the box around the pocket entrance the leading tool point may not leave, along x and y. SET by D-180's rule, re-derived at D-197's step and D-204's ceiling, from the disk reach (the lateral radius plus the tip's swing at maximum tilt, from autodr.bounds_max()) plus one action step plus set air; no longer Factory's pos_action_bounds. check_env_wiring pins it from both sides: at least that requirement, at most the set air above it.
+    osc_pos_clamp_z_m = 0.2915  [placeholder] half-width of the same box along z, SET by D-180's rule, re-derived at D-197's step and D-204's ceiling, from the disk reach (the highest legal start at maximum tilt plus the lateral radius tipped up, from autodr.bounds_max()) plus one action step plus set air. check_env_wiring proves sufficiency in the WORLD frame the box is aligned to, and a second rule keeps it below the home tip standoff. Factory offers no rule to borrow: its pos_action_bounds does not contain the reset band of peg_insert, and its own clamp is not per-axis.
+    osc_yaw_clamp_rad = 0.21467549799530256  [placeholder] half-width of the band the tool yaw may not leave, about this episode's SEATED orientation. OWN extension, D-196 (A): no source bounds a yaw about a pocket axis. SET by a rule (worst start yaw plus the D-194 belief error plus one rotation step); check_env_wiring pins it from both sides.
+    osc_decimation = 8  [placeholder] physics steps per policy step under OSC (policy rate = physics rate / this). No source of ours; Factory's decimation (factory_env_cfg.py, FactoryEnvCfg). D-024's rate is the controller rate now. The episode is kept as a STEP count (D-113) and its seconds follow; re-deriving the length is owed (audit, section six).
+    obs_noise_pocket_pos_std_m = 0.01  [placeholder] the HALF WIDTH of the per-episode uniform bias on the pocket-position channels, in metres (the name still says std; user 2026-09-15). TacSL's Appendix C Table V names a uniform socket observation noise and that is the source; reading it as THIS env's per-episode bias is our own step, because TacSL does not state when it is drawn. NAMED TENSION: the uniform's sigma lies above the one at which FORGE reports unstable training. Home: p1-thesis docs/decisions_inbox.md 2026-09-15, replacing D-182's value.
+    force_obs_noise_std_n = 3.5  [placeholder] the per-step Gaussian on the force channels, in newtons. The UR5e datasheet gives a force-sensing PRECISION for the tool flange; reading that figure as a standard deviation is an ASSUMPTION, because the datasheet does not define it as one. FORGE uses a smaller per-timestep sigma. Home: DECISIONS.md, D-182.
+    torque_obs_noise_std_nm = 0.0  [placeholder] the per-step Gaussian on the torque channels (obs_wrench_mode='wrench' only), in newton metres. OFF and OPEN (user decision, observation noise is a parking suspect); the UR5e datasheet's torque precision is the candidate when it is widened, read as a sigma by the same assumption as the force. Home: DECISIONS.md, the wrench-mode entry; Belege_Streuwerte.md, row B-four-c.
+    grasp_obs_offset_x_m = 0.003  [placeholder] the half width of the uniform grasp offset along the part's short axis, in metres, seen ONLY by the observation. Factory's held-asset position noise and FORGE's Table II carry the same magnitude for their peg; that the gripper on THIS part slips by as much is the user's estimate from a CAD side view, not a measurement. Home: DECISIONS.md, D-183.
+    pocket_obs_yaw_rad = 0.0223402  [placeholder] the half width of the uniform pocket-yaw belief error about the pocket's own axis, in radians, seen ONLY by the observation. OFF by default. The width is derived by us from a published MEAN camera error (Litvak et al.), not measured on this cell. Home: DECISIONS.md, D-194; Belege_Streuwerte.md, row B-six.
+*** PROXY TASK VALUES IN USE -- the physics is the real part in the real pocket, but these SCORING numbers still describe the square peg ***
+    cfg.w_depth_progress = 100.0  [proxy] the square-peg proxy's reward_w_depth, paid per metre of NEW gated max depth (D-165). The proxy solved 1 mm clearance with it at 100; nothing on this task has sized it. Zero switches the term off and reproduces the pre-D-165 reward.
+    cfg.held_asset.side = 0.03  [proxy] the held body modelled as a SQUARE of this side. The real part is rectangular with lugs (PART_BODY_X / PART_BBOX_M). Read by the four-corner gate; moves with the SDF rework (D-109), not alone.
+    cfg.fixed_asset.side = 0.032  [proxy] the square pocket edge the gate tests against. The real opening is POCKET_OPENING_X x POCKET_OPENING_Y and is not square. Read by the four-corner gate; moves with the SDF rework (D-109).
+    cfg.gate_min_alignment = 0.99  [proxy] tool-axis alignment floor, calibrated on the square peg. The real bound is D-106's across-tilt limit, which D-121 reopened and the concept stream has not recomputed.
+    tasks.SIDE_CLEARANCE = 0.0010000000000000009  [proxy] half-clearance per axis of the square pair. The real task has TWO different total plays, PLAY_X and PLAY_Y, which the report now prints instead. Kept only because compare_runs.py reads the metrics key side_clearance_mm.
+    tasks.YAW_WINDOW_RAD = 0.06910872167872839  [proxy] the C4 free-yaw window of a square in a square. The real part fits ONE way round, so there is no equivalent; D-106's yaw bound was reopened by D-121 and is not recomputed. The report no longer prints it. Kept only because compare_runs.py reads the metrics key yaw_window_deg.
+    ... and demo_metrics.json keys ['peg_side_m', 'pocket_side_m', 'side_clearance_mm', 'yaw_window_deg'] carry them.
+-- env 0 pose check --
+  fixture prim (env-local): [0.5351676940917969, -0.140899658203125, 0.08705803006887436]
+  entrance buffer:          [0.5351685285568237, -0.14089910686016083, 0.08705802261829376], yaw +0.0573 rad
+  |prim - buffer| = 1.00e-06 m  (expect ~0; MISMATCH = pose write broken)
+  fixture prim quat (wxyz): [0.999505, -0.012949, -0.001419, 0.028656]
+  commanded quat (buffer):  [0.999504, -0.012949, -0.001419, 0.028656]
+  measured tilt magnitude:  3.607 deg vs commanded 3.608 deg, tilt axis azimuth -173.7 deg (0 = +x, 90 = +y), max|quat err| 5.96e-08  (OK)
+-- env 0 --
+  env_origin:            [48.0, -45.0, 0.0]
+  joint_pos commanded:   [3.1831912994384766, -1.7883111238479614, -1.844814419746399, -1.0840635299682617, 1.5711098909378052, 1.6122914552688599]
+  joint_pos actual:      [3.182931900024414, -1.7900506258010864, -1.8446351289749146, -1.082444190979004, 1.5709935426712036, 1.6114999055862427]
+  joint_vel (FD):        [-0.0038909909781068563, -0.02609252743422985, 0.0026893613394349813, 0.02429008297622204, -0.0017452238826081157, -0.011873244307935238]
+  root env-local pos:    [0.0, 0.0, 0.0]  (expect (0.0, 0.0, 0.0))
+  EE world pos:          [48.54219436645508, -45.110965728759766, 0.2916050851345062]
+  EE env-local pos:      [0.5421943664550781, -0.11096572875976562, 0.2916050851345062]
+  EE world quat (wxyz):  [-0.0023721896577626467, -0.000317557918606326, 0.999997079372406, 1.1742063179553952e-06]
+  pocket entrance world: [48.5351676940918, -45.140899658203125, 0.08705802261829376]
+  |EE - entrance|:       0.206845 m
+  XY offset to entrance: 0.030748 m  (expect <= 0.005 before reset noise)
+  Z standoff (flange):   0.204547 m  (expect 0.1720 at the NOISELESS start pose; tool point 0.0200 + chain 0.1520, D-161 rung 0 -- NOT the home pose)
+                         with USD drives the droop is spent: RT-46 read 0.317026 m at t = 3.000 s, 0.000026 m off nominal. Reset noise would add +-0.0098 m, but it is 0.0 right now -- so judge this against the CENTRE
+  x-axis . (0,0,-1):    -0.004744
+  y-axis . (0,0,-1):    -0.000004
+  z-axis . (0,0,-1):    +0.999989  <-- expect >= 0.999 here
+  peg origin env-local:  [0.5421905517578125, -0.11096572875976562, 0.2916051149368286]
+  peg TIP env-local:     [0.5414695739746094, -0.11096572875976562, 0.1396067887544632]
+  peg TIP rel. entrance: [0.008116, 0.028149, 0.053281]  (POCKET frame (D-036) -- this is observation channels 12:15)
+  flange -> peg origin:  0.000004 m  (expect 0.000000)
+  tip along tool axis:   +0.152000 m  (expect +0.1520)
+  peg yaw phi (folded):  -3.238 deg  (expect +-0.000 at home BEFORE reset noise; ~uniform in +-0.00 after)
+  (cos 4phi, sin 4phi):  (+0.9746, -0.2242)  (expect (+1, 0) at home before reset noise)
+  tip Chebyshev offset:  0.028149 m  (real limit is half the across-play, 0.000294 m; at the start pose under this tilt ~0.0013)
+  corner Chebyshev max:  0.043967 m  (gate needs < 0.0160); corners rel. entrance: [[-0.006, 0.044], [-0.0077, 0.014], [0.0239, 0.0423], [0.0222, 0.0123]]
+  gate at this pose:     closed (corners OUT, depth -0.0533 vs <= 0.0370, alignment +0.9996 vs >= 0.99)
+  tip insertion depth:   -0.053281 m  (expect -0.0200 at the NOISELESS home pose, judged the same way as the flange standoff above, = -0.0200 x cos(tilt))
+  max joint deviation:   0.001740 rad (0.100 deg) on shoulder_lift_joint  (vs the WRITTEN target; expect ~0)
+  reset yaw noise:       +0.041794 rad (+2.395 deg) on wrist_3_joint  (D-038, sampled +-0.0000 rad -- NOT an error)
+  body positions (env-local) and plate test -- WORLD-FRAME, indicative only under tilt:
+    base_link        (+0.0000, +0.0000, +0.0000)   clearance = +0.1198
+    shoulder_link    (+0.0000, +0.0000, +0.1625)   clearance = +0.2823
+    upper_arm_link   (+0.0000, +0.0000, +0.1625)   clearance = +0.2823
+    forearm_link     (+0.0924, +0.0038, +0.5773)   clearance = +0.6971
+    wrist_1_link     (+0.4431, -0.1151, +0.3917)   clearance = +0.5115
+    wrist_2_link     (+0.5427, -0.1110, +0.3912)   clearance = +0.5110
+    wrist_3_link     (+0.5422, -0.1110, +0.2916)   clearance = +0.4114
+    tool_link        (+0.5422, -0.1110, +0.2916)   clearance = +0.4114
+-- env 1 pose check --
+  fixture prim (env-local): [0.4832420349121094, -0.15520477294921875, 0.027441496029496193]
+  entrance buffer:          [0.4832412600517273, -0.15520665049552917, 0.027441490441560745], yaw -0.0478 rad
+  |prim - buffer| = 2.03e-06 m  (expect ~0; MISMATCH = pose write broken)
+  fixture prim quat (wxyz): [0.996944, -0.024103, 0.070378, -0.023833]
+  commanded quat (buffer):  [0.996944, -0.024103, 0.070378, -0.023833]
+  measured tilt magnitude:  8.960 deg vs commanded 8.960 deg, tilt axis azimuth +108.9 deg (0 = +x, 90 = +y), max|quat err| 5.96e-08  (OK)
+-- env 1 --
+  env_origin:            [48.0, -42.0, 0.0]
+  joint_pos commanded:   [3.1098520755767822, -1.6779731512069702, -1.5841753482818604, -1.4530397653579712, 1.5709329843521118, 1.5391349792480469]
+  joint_pos actual:      [3.1097795963287354, -1.6793502569198608, -1.5844519138336182, -1.45126211643219, 1.5710169076919556, 1.5383682250976562]
+  joint_vel (FD):        [-0.0010871886042878032, -0.020656583830714226, -0.0041484828107059, 0.0266647320240736, 0.0012588499812409282, -0.0115013113245368]
+  root env-local pos:    [0.0, 0.0, 0.0]  (expect (0.0, 0.0, 0.0))
+  EE world pos:          [48.53023910522461, -42.15021896362305, 0.43732064962387085]
+  EE env-local pos:      [0.5302391052246094, -0.15021896362304688, 0.43732064962387085]
+  EE world quat (wxyz):  [0.0013332731323316693, 0.00030762646929360926, -0.9999989867210388, -0.0001529889996163547]
+  pocket entrance world: [48.48324203491211, -42.15520477294922, 0.027441490441560745]
+  |EE - entrance|:       0.412595 m
+  XY offset to entrance: 0.047261 m  (expect <= 0.005 before reset noise)
+  Z standoff (flange):   0.409879 m  (expect 0.1720 at the NOISELESS start pose; tool point 0.0200 + chain 0.1520, D-161 rung 0 -- NOT the home pose)
+                         with USD drives the droop is spent: RT-46 read 0.317026 m at t = 3.000 s, 0.000026 m off nominal. Reset noise would add +-0.0098 m, but it is 0.0 right now -- so judge this against the CENTRE
+  x-axis . (0,0,-1):    -0.002666
+  y-axis . (0,0,-1):    -0.000307
+  z-axis . (0,0,-1):    +0.999996  <-- expect >= 0.999 here
+  peg origin env-local:  [0.5302391052246094, -0.15021896362304688, 0.43732067942619324]
+  peg TIP env-local:     [0.5298347473144531, -0.15017318725585938, 0.28532126545906067]
+  peg TIP rel. entrance: [0.009932, -0.00618, 0.261842]  (POCKET frame (D-036) -- this is observation channels 12:15)
+  flange -> peg origin:  0.000000 m  (expect 0.000000)
+  tip along tool axis:   +0.152000 m  (expect +0.1520)
+  peg yaw phi (folded):  +2.597 deg  (expect +-0.000 at home BEFORE reset noise; ~uniform in +-0.00 after)
+  (cos 4phi, sin 4phi):  (+0.9836, +0.1803)  (expect (+1, 0) at home before reset noise)
+  tip Chebyshev offset:  0.009932 m  (real limit is half the across-play, 0.000294 m; at the start pose under this tilt ~0.0031)
+  corner Chebyshev max:  0.025545 m  (gate needs < 0.0160); corners rel. entrance: [[-0.0057, 0.0081], [-0.0041, -0.0218], [0.024, 0.0095], [0.0255, -0.0205]]
+  gate at this pose:     closed (corners OUT, depth -0.2618 vs <= 0.0370, alignment +0.9893 vs >= 0.99)
+  tip insertion depth:   -0.261842 m  (expect -0.0198 at the NOISELESS home pose, judged the same way as the flange standoff above, = -0.0200 x cos(tilt))
+  max joint deviation:   0.001778 rad (0.102 deg) on wrist_1_joint  (vs the WRITTEN target; expect ~0)
+  reset yaw noise:       -0.031362 rad (-1.797 deg) on wrist_3_joint  (D-038, sampled +-0.0000 rad -- NOT an error)
+  body positions (env-local) and plate test -- WORLD-FRAME, indicative only under tilt:
+    base_link        (+0.0000, +0.0000, +0.0000)   clearance = +0.1198
+    shoulder_link    (+0.0000, +0.0000, +0.1625)   clearance = +0.2823
+    upper_arm_link   (+0.0000, +0.0000, +0.1625)   clearance = +0.2823
+    forearm_link     (+0.0460, -0.0015, +0.5850)   clearance = +0.7048
+    wrist_1_link     (+0.4309, -0.1471, +0.5372)   clearance = +0.6570
+    wrist_2_link     (+0.5305, -0.1502, +0.5369)   clearance = +0.6567
+    wrist_3_link     (+0.5302, -0.1502, +0.4373)   clearance = +0.5571
+    tool_link        (+0.5302, -0.1502, +0.4373)   clearance = +0.5571
+========================================================================
+[insertion] applied conditions: C:\Users\Simon\Desktop\Alexander_Pett\temp\Contactrich_Insertion\Phase5_RlGames_v1\logs\rl_games\ur5e_insertion\09-28_23-40-25__RT-243s1_fixed_dr_offset50mm_currOFF_start+20mm_floor-30mm_seed1\eval_target_d4b97259_pn2\applied.csv (1000 rows, 19 columns, written at policy step 1)
+========================================================================
+INSERTION STARTUP REPORT -- REAL geometry and physics, PROXY scoring (UNVERIFIED)
+step 60 of (2, 60, 180, 258), t = 4.000 s after reset
+code marker: insertion-osc-2026-09-03a
+episode cap (D-113 (3)): 256 control steps = 17.066667 s at 15.0 Hz
+--- controller (inbox entry 'Audit 2026-09-03 (a)') ---
+control_mode:   osc -- 6-D pose delta, Isaac Lab OperationalSpaceController, target = current pose + delta re-anchored every physics step (Factory form)
+  osc cfg:      target pose_abs, impedance fixed, inertial decoupling ON (full), gravity compensation ON with gravity ON (test_operational_space.py:350-358), nullspace none
+  kp:           pos 100.0 N/m [placeholder], rot 30.0 Nm/rad [placeholder], damping ratio 1.0 (critical, 2*sqrt(kp))
+  step limits:  0.02 m, 0.097 rad (5.56 deg) per policy step [placeholder, Factory thresholds, D-197]
+  action EMA:   0.2 on the new clamped draw, applied = EMA state [placeholder, Factory ema_factor, D-197]; obs prev_action = EMA state; action-rate term measured on the RAW draw, weight 0.0 (Factory 0.0)
+  tip clamp:    +-0.1 m x/y [placeholder, D-180 rule at D-197's step: disk reach + one action step + set air] and +-0.2915 m z [placeholder, D-180 rule at D-197's step: highest legal start + one action step + set air] box around the pocket entrance; tilt cone 8.52 deg from THIS EPISODE'S POCKET AXIS (CAD, Geometrie_Fuegeteil_Aufnahme.tex:264)
+  yaw band:     +-12.30 deg about THIS EPISODE'S SEATED orientation (pocket * SEATED_TOOL_QUAT_LOCAL) [placeholder, own, D-196 rule at D-197's step: worst start yaw + belief error + one rotation step]
+  reset yaw vs seat: max |yaw| 29.588 deg over 1000 envs (env 0 -0.264); expect about 0 at DR width 0 -- the home tool IS the seated orientation (RT-102, D-196 seam 0)
+  controlled body: tool_link (index 7, jacobian row block 6), tip offset [0.0, 0.0, 0.15199999511241913] m
+  rates:        policy 15.0 Hz (decimation 8 [placeholder, Factory]), controller 120.0 Hz; episode 256 steps = 17.0667 s (step count kept, seconds follow -- re-derivation owed)
+  drives (PhysX read-back): joint | type (USD) | stiffness | damping | maxForce
+    shoulder_pan_joint   force                0.0000     0.0000     150.00
+    shoulder_lift_joint  force                0.0000     0.0000     150.00
+    elbow_joint          force                0.0000     0.0000     150.00
+    wrist_1_joint        force                0.0000     0.0000      28.00
+    wrist_2_joint        force                0.0000     0.0000      28.00
+    wrist_3_joint        force                0.0000     0.0000      28.00
+  Lambda (env 0, at the reset pose = start_tip_above_entrance +0.0200 m): translational eigenvalues [4.192, 4.8046, 8.8201] kg, MAX 8.8201 kg; rotational eigenvalues [0.00238, 0.15581, 0.16941] kg m^2, MAX 0.16941
+  Jacobian condition number (env 0, tool_link): 7.984 (sigma max 1.9177 / min 0.240204)
+  gravity compensation torques (env 0): [0.0, 36.414, 14.71, 2.559, -0.063, -0.0] Nm vs maxForce [150.0, 150.0, 150.0, 28.0, 28.0, 28.0]
+  Decision (4) reading: kp <= F_search / (Lambda_max * step_limit) = 20 N / (8.8201 kg * 0.02 m) = 113.4 (unit check: kg*m in the denominator is a force per (N/m), READ, not decided)
+--- end controller ---
+fixture usd: C:\Users\Simon\Desktop\Alexander_Pett\temp\Contactrich_Insertion\Phase5_RlGames_v1\source\insertion\insertion\tasks\direct\insertion\assets\Werkzeug\Aufnahme_real_v1_mm.usd
+robot usd:   C:\Users\Simon\Desktop\Alexander_Pett\temp\Contactrich_Insertion\Phase5_RlGames_v1\source\insertion\insertion\tasks\direct\insertion\assets\Robot\ur5e_tool.usd
+fixture spawn translation: (0.5009938, -0.13345, 0.06250000000000001)  (asset origin = opening plane at pocket centre)
+fixture tilt (D-036 probe): +0.00 deg about env y (lateral axis; +tips the back-wall side down) through the pocket centre (inactive)
+fixture yaw (D-038 probe): +0.00 deg about env z through the pocket centre (inactive)
+fixture tilt noise (D-037): magnitude 0..0.00 deg, direction uniform over 360 deg, resampled per episode (inactive)
+pocket-frame measurement: ON -- gate/depth/alignment/phi and obs 12:15 in the pocket frame
+dr_mode: table
+  provider: FixedWidth, 7 boundaries, bounds_version 0
+  quantity            now [lo, hi]                 max [lo, hi]
+    lat_r             [+0.000000, +0.030000]   [+0.000000, +0.030000]
+    yaw               [-0.087266, +0.087266]   [-0.087266, +0.087266]
+    tilt              [+0.000000, +0.174533]   [+0.000000, +0.174533]
+    start_height      [+0.020000, +0.270000]   [+0.020000, +0.270000]
+    friction          [+0.080000, +0.200000]   [+0.080000, +0.200000]
+  [provenance] buffer m / p_boundary: Akkaya et al. 2019, Appendix C.3 Table 15 (arXiv:1910.07113 p. 44), read from the PDF 2026-09-09: queue length m 240, boundary sampling probability 0.5
+  [provenance] delta steps (10): [TESTWERT] Phase-5 plan section 1: Delta = maximum/10 from a fill-rate estimate, NOT Akkaya's absolute 0.02; confirm after the smoke run
+  [provenance] lat_r [m] 0.0 .. 0.03 ([TESTWERT]): [TESTWERT] Phase-5 ceiling, decided not derived -- D-178 (5)
+  [provenance] yaw [rad] -0.08726646259971647 .. 0.08726646259971647 ([TESTWERT]): [TESTWERT] Phase-5 ceiling, decided not derived -- D-178 (5)
+  [provenance] tilt [rad] 0.0 .. 0.17453292519943295 ([TESTWERT]): [TESTWERT] Phase-5 ceiling, decided not derived -- D-178 (5)
+  [provenance] start_height [m] 0.02 .. 0.27 ([TESTWERT]): [TESTWERT] hi = ceiling, decided not derived -- D-202 (was 0.120, D-179 (1)); lo = the centre H_min, not yet measured -- D-179 (4)
+  [provenance] friction [1] 0.08 .. 0.2 (sourced): DuPont PA66/POM table span, assumed PA6/POM pairing, no PA6 value -- D-181 (2)
+  [eval-table] C:\Users\Simon\Desktop\Alexander_Pett\temp\Contactrich_Insertion\Phase5_RlGames_v1\scripts\eval\eval_table_seed10_c18.csv  rows 1000  sha256 d4b972597b357844d895fc43b03e776537cee45bc7b5fa1910ddfd19f8954f6d  width target. Env i plays row i in every episode; no boundary sampling (p_boundary 0.00), nothing moves. Values outside [0, 1] allowed (OOD table): False.
+  NOT VERIFIED IN A SIMULATOR: this build has never run. Read the [autodr] lines and dr/ curves of THIS run before believing it.
+fixture pose noise (D-034, D-204): xy +-0.050 m, z +-0.050 m, yaw +-0.0000 rad (ACTIVE -- kinematic fixture teleported per reset)
+--- workcell (robot foot IS the env origin, Factory convention) ---
+floor z:        -0.9080   table 1 top: -0.0240   table 2 top: -0.1198
+plate drop:     95.8 mm (measured 95.8 mm, D-058 direct reading leads; the 884/787 pair would give 97.0 mm)
+block top:      +0.0775 = 197.3 mm above table 2; ABOVE the robot foot plane
+insertion plane:+0.0625 = block top - 15 mm stage 1; asset origin + entrance sit HERE (2026-08-19 convention)
+foot -> pocket: x +501.0 mm (depth), y -133.5 mm (lateral, - = robot's right), straight line 524.2 mm of 850 mm UR5e reach
+block model:    225.1 x 260.0 mm footprint (80.0 front + 130.0876 stage 1 + 15.0 rear wall), 5.0876 mm of block behind the cut-out, high wall 100 mm above the rim
+tool home yaw:  +180.0 deg about the tool axis (weld yaw +0.0 deg, D-078); the part's lugs face the pocket features at this angle
+block boxes:    8 (incl. the two +Y slot fillers beside the tab: 52.0 and 31.0 mm long, 10.0 mm deep)
+tables usd:     C:\Users\Simon\Desktop\Alexander_Pett\temp\Contactrich_Insertion\Phase5_RlGames_v1\source\insertion\insertion\tasks\direct\insertion\assets\Arbeitszelle\arbeitszelle_tische_v2.usd
+workcell block: *** OFF -- the Aufnahme stands free; no rear wall, the pocket is enterable from any direction ***
+Y residual:     +15.0 mm (left vs right table-2 overhang; right leads)
+--- end workcell ---
+joint_names: ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint', 'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
+  joint limit  shoulder_pan_joint   [-6.283185, +6.283185]  reset writes +3.141293
+  joint limit  shoulder_lift_joint  [-6.283185, +6.283185]  reset writes -1.656050
+  joint limit  elbow_joint          [-3.141593, +3.141593]  reset writes -1.111936
+  joint limit  wrist_1_joint        [-6.283185, +6.283185]  reset writes -1.944403
+  joint limit  wrist_2_joint        [-6.283185, +6.283185]  reset writes +1.570796
+  joint limit  wrist_3_joint        [-6.283185, +6.283185]  reset writes +1.570497
+body_names:  ['base_link', 'shoulder_link', 'upper_arm_link', 'forearm_link', 'wrist_1_link', 'wrist_2_link', 'wrist_3_link', 'tool_link']
+ee_body:     wrist_3_link (index 6)
+force_body:  tool_link (index 7), wrench read RAW in the parent body frame, EMA alpha 0.25 on the NEW sample
+force tare:  ON -- world hold force [-0.0, -0.0, 8.0834] N (= -0.82400 kg * gravity (0.0, 0.0, -9.81)), rotated into the frame of 'wrist_3_link' (index 6) and subtracted BEFORE the EMA. Free air must now read ~0 N, not 8.08 N.
+torque tare: ON -- lever = authored tool COM minus the MEASURED reference point (origin of 'wrist_3_link' + (0.0, 0.0, -0.1032) m in its frame, RT-192a2), moment = lever x hold force, rotated into the same frame, subtracted BEFORE the EMA (D-188).
+obs mode force_prevact-34: torque read and logged, NOT in the policy observation; torque_obs_noise_std_nm 0.0 (0 = off, OPEN per D-188); the wrench EMA skips the reset step and advances once per step (inbox 2026-09-13).
+activate_contact_sensors: True (declared cfg field)
+contact friction (D-111, centre 0.14, per-reset band, PROVISIONAL/F3): PhysX reads back robot [0.080, 0.200], fixture [0.080, 0.200] (static+dynamic pooled)
+friction after first reset env0..3: PhysX robot [0.16268, 0.14214, 0.12074, 0.11252] vs commanded [0.16268, 0.14214, 0.12074, 0.11252]; band now [0.08000, 0.20000] -- at width 0 all four are the centre and that is CORRECT, four DIFFERENT values are owed only once the band has opened
+  fixture side, same envs: [0.16268, 0.14214, 0.12074, 0.11252] -- must match the robot list env for env
+friction write cost mean/max ms: 13.557 / 13.557 over 1 sample(s) in a 1000-call window (whole block: host copy + row edit + both PhysX calls, fenced against the reset). Read it against the iteration time in THIS log.
+solver iterations (D-115 verify): /World/envs/env_0/Robot/root_joint: solverPositionIterationCount=16, solverVelocityIterationCount=1
+solver iterations (D-115 verify): /World/envs/env_0/Fixture: NO authored value on any prim below -- the PhysX SDK default applies and is NOT readable here
+peg_body:    tool_link (index 7), flange -> leading point 0.1520 m, part 0.0964 x 0.1435 x 0.0505 m, mass 0.82400 kg
+             GATE MATH IS STILL SQUARE: side 0.0300 m from the proxy peg; the part's 0.1435 m long axis is not modelled yet.
+pocket:      side 0.0320 m (PROXY SQUARE, see the proxy block below), depth 0.0360 m (blind), success at 33 mm
+             play (MEASURED, total, not per-axis half): X 0.5876 mm across the lugs, Y 1.6000 mm along the part
+             yaw window: OPEN -- the proxy's C4 window does not apply to a part that fits one way round, and D-106's bound is not recomputed against PLAY_X (D-121).
+asset check (peg):     PASS -- authored tool matches cfg (part 0.09641 x 0.14350 x 0.05051 m, span -0.0000..+0.1520 m, mass 0.82400 kg), from ur5e_tool.author.json
+asset check (fixture): PASS -- imported fixture matches the STEP constants (edges 61.000 / 150.000 / 189.100 mm, z -46.000 .. +15.000 mm), from Aufnahme_real_v1_mm.verify.json
+resting FD joint speed (env 0..1): [0.3969298005104065, 0.457228422164917] rad/s  (expect ~0.000 after reset)
+observation layout (built 34-dim of 34, mode force_prevact, D-107/D-114/D-188): 0:6 joint_pos | 6:12 joint_vel | 12:15 tip_rel | 15:19 ee_quat | 19:21 yaw_cos_sin | 21:25 pocket_quat | 25:28 force | 28:34 prev_action
+  12:15 frame: POCKET, D-036; 19:21 is (cos phi, sin phi), NOT cos 4 phi (D-107 (2))
+observation bias env0..3 (D-182, tip_rel 12:15, uniform +-0.01 m, drawn per EPISODE): [[-0.004874, 0.00154, -0.009134], [-0.009128, -0.003948, -0.00126], [0.00983, -0.005814, 0.002134], [-0.005428, -0.005231, -0.006935]]
+grasp belief error env0..3 (D-183, +-0.003 m on the part's short axis, drawn per EPISODE): [0.002601, 0.000602, 0.001603, 0.000295]
+pocket-yaw belief error env0..3 (D-194, +-0.0223402 rad about the pocket axis, drawn per EPISODE): [-0.015862, -0.010635, 0.021765, -0.013722]
+rl_terms_enabled: True (validate_rl_config PASSED)
+curriculum: *** OFF -- FIXED RUNG 0, no advance, no retreat; the start scatter is whatever the cfg holds and never widens ***
+reward (D-109 + the 2026-09-01 revision): kernel_sum(sdf_dist) + engaged + success bonuses, SAPU-scaled; time penalty -0.003906/step (-1/T at T = 256); action-rate penalty -0.0 * ||a_t - a_(t-1)||
+alignment shaping (RT-171, potential-based): 0.99 * Phi(s') - Phi(s), Phi = 0.0 * sech(11.1799/rad * theta) vs the POCKET axis (margin 15.34 deg, MEASURED, RT-158 mouth-mode median), Phi(s') = 0 on the success step, not SAPU-scaled; gamma READ from agents/rsl_rl_ppo_cfg.py -- a hydra override of agent.algorithm.gamma must set env.shaping_gamma too; *** OFF, w_tilt 0 -- the pre-RT-171 reward ***
+termination (D-113 + the 2026-09-01 revision): timeout, force abort at 30.0 N (payment -1.0, both PLACEHOLDERS, see the block above), AND success -- which ends the episode and pays its remaining return as a lump. Episode success = that termination event.
+seated goal pose (env 0, env-local): [0.534754, -0.137906, 0.203019], quat (wxyz) [0.001419, -0.028656, 0.999504, -0.012949] = pocket quat * SEATED_TOOL_QUAT_LOCAL (RT-102)
+*** PLACEHOLDER VALUES IN USE -- every number this run reports is provisional ***
+    force_abort_f_max_n = 30.0  [placeholder] no longer INVENTED -- that was 2026-08-28..2026-09-01 (user, no source). D-169 on 2026-09-06 set it off RT-157: across every SUCCESSFUL first episode of the two probed start heights that limit aborted none, while the search force of D-166 would abort about half of them. On 2026-09-15 the user LOWERED it for the restarted seed study, below the force p95 the RT-201 family measured, so the abort now also ends a share of episodes that would have succeeded (inbox entry 'Seed study restart'). NOT a measurement. Still only an upper bound on OUR OWN simulation, not a damage limit of the real part, and it describes ONE policy at TWO heights. In the simulation this limit is only the brake against ramming (D-114) and must sit ABOVE the force a clean insertion needs, or it forbids the solution. The suction-cup datasheet anchor is WITHDRAWN (rigid chain, no sim-to-real). D-167's condition for lowering did NOT hold: it asked for p95 far under the D-166 search force, and RT-157 read above it. Read force_norm_n p95 and force_abort_rate off every run. Home: DECISIONS.md, D-169.
+    engaged_depth_m = 0.010799999999999999  [placeholder] the fraction of the seat depth behind it is AD HOC (user, 2026-08-30) and was downgraded again on 2026-09-01. The rule 'measured capture depth of the tilted scripted insertion' (inbox entry Reward-Ueberarbeitung) was WITHDRAWN the same day: RT-129 showed that depth to be the controller's own tilt ramp. Proposed replacement, not decided: read the depth at which the lateral offset stays inside half the cross play off the TRAINED policy's trajectories (D-071: the tilt is learned). Only consumer: the engaged display bonus. Factory's own fraction was rejected: at this pocket it lands inside the success band. Home: docs/decisions_inbox.md, entry 'The tilted scripted insertion is SPENT ...' (2026-09-01).
+    abort_payment = -1.0  [placeholder] the FORM is Beltran-Hernandez via D-114 (a fixed negative on abort) and the MAGNITUDE was decided 2026-09-01 (grill; inbox entry Reward-Ueberarbeitung, the abort-payment point), which closes D-114's [open] and un-couples it from the F_max measurement: one kernel peak, i.e. the per-step maximum of the shaping term. That is a SCALE ANCHOR, our own choice, openly labelled, with an optional decade sensitivity row per the D-109 width template. It stays in this table because it is still a magnitude nobody measured; the dominant abort price is anyway the forfeited remaining return.
+    osc_kp_pos = 100.0  [placeholder] task-space position stiffness, N/m. NOT adopted: Decision (four) of the inbox entry 'Audit 2026-09-03 (a)' DERIVES it as kp <= F_search / (Lambda_max * step_limit), with F_search the literature search-band force and Lambda_max the task-space inertia the startup report prints at the reset pose. Until that is done the measurement runs two values (the OSC cfg default and five times it). The OSC cfg default and the reach example are contact-free and are NOT a source.
+    osc_kp_rot = 30.0  [placeholder] task-space rotation stiffness, Nm/rad. No source of ours; Factory's default_task_prop_gains rotation value (factory_env_cfg.py, CtrlCfg). Decision (four) of the same entry.
+    osc_pos_step_limit_m = 0.02  [placeholder] metres of tool travel one action step may command. Decision (four): policy rate x allowed tool speed, and the tool-speed source is MISSING. Factory's pos_action_threshold (factory_env_cfg.py, CtrlCfg), back since D-197 together with Factory's action EMA; D-196 (B)'s own smaller value is superseded.
+    osc_rot_step_limit_rad = 0.097  [placeholder] radians of tool rotation one action step may command. Same gap as osc_pos_step_limit_m. Factory's rot_action_threshold, back since D-197.
+    action_ema_factor = 0.2  [placeholder] weight of the NEW clamped action in the action EMA; the applied action is the EMA state. Factory's ema_factor (factory_env_cfg.py, CtrlCfg), taken with its thresholds by D-197. No source of ours.
+    osc_pos_clamp_m = 0.1  [placeholder] half-width of the box around the pocket entrance the leading tool point may not leave, along x and y. SET by D-180's rule, re-derived at D-197's step and D-204's ceiling, from the disk reach (the lateral radius plus the tip's swing at maximum tilt, from autodr.bounds_max()) plus one action step plus set air; no longer Factory's pos_action_bounds. check_env_wiring pins it from both sides: at least that requirement, at most the set air above it.
+    osc_pos_clamp_z_m = 0.2915  [placeholder] half-width of the same box along z, SET by D-180's rule, re-derived at D-197's step and D-204's ceiling, from the disk reach (the highest legal start at maximum tilt plus the lateral radius tipped up, from autodr.bounds_max()) plus one action step plus set air. check_env_wiring proves sufficiency in the WORLD frame the box is aligned to, and a second rule keeps it below the home tip standoff. Factory offers no rule to borrow: its pos_action_bounds does not contain the reset band of peg_insert, and its own clamp is not per-axis.
+    osc_yaw_clamp_rad = 0.21467549799530256  [placeholder] half-width of the band the tool yaw may not leave, about this episode's SEATED orientation. OWN extension, D-196 (A): no source bounds a yaw about a pocket axis. SET by a rule (worst start yaw plus the D-194 belief error plus one rotation step); check_env_wiring pins it from both sides.
+    osc_decimation = 8  [placeholder] physics steps per policy step under OSC (policy rate = physics rate / this). No source of ours; Factory's decimation (factory_env_cfg.py, FactoryEnvCfg). D-024's rate is the controller rate now. The episode is kept as a STEP count (D-113) and its seconds follow; re-deriving the length is owed (audit, section six).
+    obs_noise_pocket_pos_std_m = 0.01  [placeholder] the HALF WIDTH of the per-episode uniform bias on the pocket-position channels, in metres (the name still says std; user 2026-09-15). TacSL's Appendix C Table V names a uniform socket observation noise and that is the source; reading it as THIS env's per-episode bias is our own step, because TacSL does not state when it is drawn. NAMED TENSION: the uniform's sigma lies above the one at which FORGE reports unstable training. Home: p1-thesis docs/decisions_inbox.md 2026-09-15, replacing D-182's value.
+    force_obs_noise_std_n = 3.5  [placeholder] the per-step Gaussian on the force channels, in newtons. The UR5e datasheet gives a force-sensing PRECISION for the tool flange; reading that figure as a standard deviation is an ASSUMPTION, because the datasheet does not define it as one. FORGE uses a smaller per-timestep sigma. Home: DECISIONS.md, D-182.
+    torque_obs_noise_std_nm = 0.0  [placeholder] the per-step Gaussian on the torque channels (obs_wrench_mode='wrench' only), in newton metres. OFF and OPEN (user decision, observation noise is a parking suspect); the UR5e datasheet's torque precision is the candidate when it is widened, read as a sigma by the same assumption as the force. Home: DECISIONS.md, the wrench-mode entry; Belege_Streuwerte.md, row B-four-c.
+    grasp_obs_offset_x_m = 0.003  [placeholder] the half width of the uniform grasp offset along the part's short axis, in metres, seen ONLY by the observation. Factory's held-asset position noise and FORGE's Table II carry the same magnitude for their peg; that the gripper on THIS part slips by as much is the user's estimate from a CAD side view, not a measurement. Home: DECISIONS.md, D-183.
+    pocket_obs_yaw_rad = 0.0223402  [placeholder] the half width of the uniform pocket-yaw belief error about the pocket's own axis, in radians, seen ONLY by the observation. OFF by default. The width is derived by us from a published MEAN camera error (Litvak et al.), not measured on this cell. Home: DECISIONS.md, D-194; Belege_Streuwerte.md, row B-six.
+*** PROXY TASK VALUES IN USE -- the physics is the real part in the real pocket, but these SCORING numbers still describe the square peg ***
+    cfg.w_depth_progress = 100.0  [proxy] the square-peg proxy's reward_w_depth, paid per metre of NEW gated max depth (D-165). The proxy solved 1 mm clearance with it at 100; nothing on this task has sized it. Zero switches the term off and reproduces the pre-D-165 reward.
+    cfg.held_asset.side = 0.03  [proxy] the held body modelled as a SQUARE of this side. The real part is rectangular with lugs (PART_BODY_X / PART_BBOX_M). Read by the four-corner gate; moves with the SDF rework (D-109), not alone.
+    cfg.fixed_asset.side = 0.032  [proxy] the square pocket edge the gate tests against. The real opening is POCKET_OPENING_X x POCKET_OPENING_Y and is not square. Read by the four-corner gate; moves with the SDF rework (D-109).
+    cfg.gate_min_alignment = 0.99  [proxy] tool-axis alignment floor, calibrated on the square peg. The real bound is D-106's across-tilt limit, which D-121 reopened and the concept stream has not recomputed.
+    tasks.SIDE_CLEARANCE = 0.0010000000000000009  [proxy] half-clearance per axis of the square pair. The real task has TWO different total plays, PLAY_X and PLAY_Y, which the report now prints instead. Kept only because compare_runs.py reads the metrics key side_clearance_mm.
+    tasks.YAW_WINDOW_RAD = 0.06910872167872839  [proxy] the C4 free-yaw window of a square in a square. The real part fits ONE way round, so there is no equivalent; D-106's yaw bound was reopened by D-121 and is not recomputed. The report no longer prints it. Kept only because compare_runs.py reads the metrics key yaw_window_deg.
+    ... and demo_metrics.json keys ['peg_side_m', 'pocket_side_m', 'side_clearance_mm', 'yaw_window_deg'] carry them.
+-- env 0 pose check --
+  fixture prim (env-local): [0.5351676940917969, -0.140899658203125, 0.08705803006887436]
+  entrance buffer:          [0.5351685285568237, -0.14089910686016083, 0.08705802261829376], yaw +0.0573 rad
+  |prim - buffer| = 1.00e-06 m  (expect ~0; MISMATCH = pose write broken)
+  fixture prim quat (wxyz): [0.999505, -0.012949, -0.001419, 0.028656]
+  commanded quat (buffer):  [0.999504, -0.012949, -0.001419, 0.028656]
+  measured tilt magnitude:  3.607 deg vs commanded 3.608 deg, tilt axis azimuth -173.7 deg (0 = +x, 90 = +y), max|quat err| 5.96e-08  (OK)
+-- env 0 --
+  env_origin:            [48.0, -45.0, 0.0]
+  joint_pos commanded:   [3.1831912994384766, -1.7883111238479614, -1.844814419746399, -1.0840635299682617, 1.5711098909378052, 1.6122914552688599]
+  joint_pos actual:      [3.164821147918701, -2.1231651306152344, -1.829854965209961, -0.5115845799446106, 1.5359392166137695, 1.5269227027893066]
+  joint_vel (FD):        [-0.0028538701590150595, -0.12003778666257858, -0.11419414728879929, 0.35466131567955017, 0.06526707857847214, 0.007163285743445158]
+  root env-local pos:    [0.0, 0.0, 0.0]  (expect (0.0, 0.0, 0.0))
+  EE world pos:          [48.61709213256836, -45.122474670410156, 0.1677969992160797]
+  EE env-local pos:      [0.6170921325683594, -0.12247467041015625, 0.1677969992160797]
+  EE world quat (wxyz):  [0.12337149679660797, -0.031130097806453705, 0.9916982650756836, -0.01856856234371662]
+  pocket entrance world: [48.5351676940918, -45.140899658203125, 0.08705802261829376]
+  |EE - entrance|:       0.116490 m
+  XY offset to entrance: 0.083971 m  (expect <= 0.005 before reset noise)
+  Z standoff (flange):   0.080739 m  (expect 0.1720 at the NOISELESS start pose; tool point 0.0200 + chain 0.1520, D-161 rung 0 -- NOT the home pose)
+                         with USD drives the droop is spent: RT-46 read 0.317026 m at t = 3.000 s, 0.000026 m off nominal. Reset noise would add +-0.0098 m, but it is 0.0 right now -- so judge this against the CENTRE
+  x-axis . (0,0,-1):    +0.243539
+  y-axis . (0,0,-1):    +0.044510
+  z-axis . (0,0,-1):    +0.968869  <-- expect >= 0.999 here
+  peg origin env-local:  [0.6170883178710938, -0.12247467041015625, 0.1677969992160797]
+  peg TIP env-local:     [0.6544570922851562, -0.12690353393554688, 0.020528867840766907]
+  peg TIP rel. entrance: [0.119755, 0.008867, -0.066572]  (POCKET frame (D-036) -- this is observation channels 12:15)
+  flange -> peg origin:  0.000004 m  (expect 0.000000)
+  tip along tool axis:   +0.151999 m  (expect +0.1520)
+  peg yaw phi (folded):  +0.264 deg  (expect +-0.000 at home BEFORE reset noise; ~uniform in +-0.00 after)
+  (cos 4phi, sin 4phi):  (+0.9998, +0.0185)  (expect (+1, 0) at home before reset noise)
+  tip Chebyshev offset:  0.119755 m  (real limit is half the across-play, 0.000294 m; at the start pose under this tilt ~0.0013)
+  corner Chebyshev max:  0.134310 m  (gate needs < 0.0160); corners rel. entrance: [[0.1052, 0.0238], [0.1052, -0.0062], [0.1343, 0.0239], [0.1343, -0.0061]]
+  gate at this pose:     closed (corners OUT, depth +0.0666 vs <= 0.0370, alignment +0.9702 vs >= 0.99)
+  tip insertion depth:   +0.066572 m  (expect -0.0200 at the NOISELESS home pose, judged the same way as the flange standoff above, = -0.0200 x cos(tilt))
+  max joint deviation:   0.572479 rad (32.801 deg) on wrist_1_joint  (vs the WRITTEN target; expect ~0)
+  reset yaw noise:       +0.041794 rad (+2.395 deg) on wrist_3_joint  (D-038, sampled +-0.0000 rad -- NOT an error)
+  body positions (env-local) and plate test -- WORLD-FRAME, indicative only under tilt:
+    base_link        (+0.0000, +0.0000, +0.0000)   clearance = +0.1198
+    shoulder_link    (+0.0000, +0.0000, +0.1625)   clearance = +0.2823
+    upper_arm_link   (+0.0000, +0.0000, +0.1625)   clearance = +0.2823
+    forearm_link     (+0.2229, +0.0052, +0.5243)   clearance = +0.6441
+    wrist_1_link     (+0.4960, -0.1218, +0.2398)   clearance = +0.3596
+    wrist_2_link     (+0.5926, -0.1196, +0.2643)   clearance = +0.3841
+    wrist_3_link     (+0.6171, -0.1225, +0.1678)   clearance = +0.2876
+    tool_link        (+0.6171, -0.1225, +0.1678)   clearance = +0.2876
+-- env 1 pose check --
+  fixture prim (env-local): [0.4832420349121094, -0.15520477294921875, 0.027441496029496193]
+  entrance buffer:          [0.4832412600517273, -0.15520665049552917, 0.027441490441560745], yaw -0.0478 rad
+  |prim - buffer| = 2.03e-06 m  (expect ~0; MISMATCH = pose write broken)
+  fixture prim quat (wxyz): [0.996944, -0.024103, 0.070378, -0.023833]
+  commanded quat (buffer):  [0.996944, -0.024103, 0.070378, -0.023833]
+  measured tilt magnitude:  8.960 deg vs commanded 8.960 deg, tilt axis azimuth +108.9 deg (0 = +x, 90 = +y), max|quat err| 5.96e-08  (OK)
+-- env 1 --
+  env_origin:            [48.0, -42.0, 0.0]
+  joint_pos commanded:   [3.1098520755767822, -1.6779731512069702, -1.5841753482818604, -1.4530397653579712, 1.5709329843521118, 1.5391349792480469]
+  joint_pos actual:      [3.094268560409546, -2.1641526222229004, -1.883468508720398, -0.5738393664360046, 1.587259292602539, 1.5788373947143555]
+  joint_vel (FD):        [0.046945806592702866, -0.11923312395811081, -0.15928028523921967, 0.40130671858787537, -0.07121621817350388, 0.033887024968862534]
+  root env-local pos:    [0.0, 0.0, 0.0]  (expect (0.0, 0.0, 0.0))
+  EE world pos:          [48.58102035522461, -42.159324645996094, 0.11604722589254379]
+  EE env-local pos:      [0.5810203552246094, -0.15932464599609375, 0.11604722589254379]
+  EE world quat (wxyz):  [-0.04560006409883499, -0.027275539934635162, -0.9985604286193848, -0.007328739855438471]
+  pocket entrance world: [48.48324203491211, -42.15520477294922, 0.027441490441560745]
+  |EE - entrance|:       0.132017 m
+  XY offset to entrance: 0.097865 m  (expect <= 0.005 before reset noise)
+  Z standoff (flange):   0.088606 m  (expect 0.1720 at the NOISELESS start pose; tool point 0.0200 + chain 0.1520, D-161 rung 0 -- NOT the home pose)
+                         with USD drives the droop is spent: RT-46 read 0.317026 m at t = 3.000 s, 0.000026 m off nominal. Reset noise would add +-0.0098 m, but it is 0.0 right now -- so judge this against the CENTRE
+  x-axis . (0,0,-1):    +0.090669
+  y-axis . (0,0,-1):    -0.017124
+  z-axis . (0,0,-1):    +0.995734  <-- expect >= 0.999 here
+  peg origin env-local:  [0.5810203552246094, -0.15932464599609375, 0.11604723334312439]
+  peg TIP env-local:     [0.5949249267578125, -0.15747833251953125, -0.035304248332977295]
+  peg TIP rel. entrance: [0.119299, 0.005888, -0.046352]  (POCKET frame (D-036) -- this is observation channels 12:15)
+  flange -> peg origin:  0.000000 m  (expect 0.000000)
+  tip along tool axis:   +0.152000 m  (expect +0.1520)
+  peg yaw phi (folded):  -0.930 deg  (expect +-0.000 at home BEFORE reset noise; ~uniform in +-0.00 after)
+  (cos 4phi, sin 4phi):  (+0.9979, -0.0649)  (expect (+1, 0) at home before reset noise)
+  tip Chebyshev offset:  0.119299 m  (real limit is half the across-play, 0.000294 m; at the start pose under this tilt ~0.0031)
+  corner Chebyshev max:  0.133902 m  (gate needs < 0.0160); corners rel. entrance: [[0.1047, 0.0211], [0.1047, -0.0088], [0.1339, 0.0206], [0.1339, -0.0093]]
+  gate at this pose:     closed (corners OUT, depth +0.0464 vs <= 0.0370, alignment +0.9712 vs >= 0.99)
+  tip insertion depth:   +0.046352 m  (expect -0.0198 at the NOISELESS home pose, judged the same way as the flange standoff above, = -0.0200 x cos(tilt))
+  max joint deviation:   0.879200 rad (50.374 deg) on wrist_1_joint  (vs the WRITTEN target; expect ~0)
+  reset yaw noise:       -0.031362 rad (-1.797 deg) on wrist_3_joint  (D-038, sampled +-0.0000 rad -- NOT an error)
+  body positions (env-local) and plate test -- WORLD-FRAME, indicative only under tilt:
+    base_link        (+0.0000, +0.0000, +0.0000)   clearance = +0.1198
+    shoulder_link    (+0.0000, +0.0000, +0.1625)   clearance = +0.2823
+    upper_arm_link   (+0.0000, +0.0000, +0.1625)   clearance = +0.2823
+    forearm_link     (+0.2374, -0.0112, +0.5149)   clearance = +0.6347
+    wrist_1_link     (+0.4727, -0.1558, +0.2062)   clearance = +0.3260
+    wrist_2_link     (+0.5719, -0.1605, +0.2152)   clearance = +0.3350
+    wrist_3_link     (+0.5810, -0.1593, +0.1160)   clearance = +0.2358
+    tool_link        (+0.5810, -0.1593, +0.1160)   clearance = +0.2358
+========================================================================
+[insertion] episode record: C:\Users\Simon\Desktop\Alexander_Pett\temp\Contactrich_Insertion\Phase5_RlGames_v1\logs\rl_games\ur5e_insertion\09-28_23-40-25__RT-243s1_fixed_dr_offset50mm_currOFF_start+20mm_floor-30mm_seed1\eval_target_d4b97259_pn2\episodes.csv (13 columns)
+========================================================================
+INSERTION STARTUP REPORT -- REAL geometry and physics, PROXY scoring (UNVERIFIED)
+step 180 of (2, 60, 180, 258), t = 12.000 s after reset
+code marker: insertion-osc-2026-09-03a
+episode cap (D-113 (3)): 256 control steps = 17.066667 s at 15.0 Hz
+--- controller (inbox entry 'Audit 2026-09-03 (a)') ---
+control_mode:   osc -- 6-D pose delta, Isaac Lab OperationalSpaceController, target = current pose + delta re-anchored every physics step (Factory form)
+  osc cfg:      target pose_abs, impedance fixed, inertial decoupling ON (full), gravity compensation ON with gravity ON (test_operational_space.py:350-358), nullspace none
+  kp:           pos 100.0 N/m [placeholder], rot 30.0 Nm/rad [placeholder], damping ratio 1.0 (critical, 2*sqrt(kp))
+  step limits:  0.02 m, 0.097 rad (5.56 deg) per policy step [placeholder, Factory thresholds, D-197]
+  action EMA:   0.2 on the new clamped draw, applied = EMA state [placeholder, Factory ema_factor, D-197]; obs prev_action = EMA state; action-rate term measured on the RAW draw, weight 0.0 (Factory 0.0)
+  tip clamp:    +-0.1 m x/y [placeholder, D-180 rule at D-197's step: disk reach + one action step + set air] and +-0.2915 m z [placeholder, D-180 rule at D-197's step: highest legal start + one action step + set air] box around the pocket entrance; tilt cone 8.52 deg from THIS EPISODE'S POCKET AXIS (CAD, Geometrie_Fuegeteil_Aufnahme.tex:264)
+  yaw band:     +-12.30 deg about THIS EPISODE'S SEATED orientation (pocket * SEATED_TOOL_QUAT_LOCAL) [placeholder, own, D-196 rule at D-197's step: worst start yaw + belief error + one rotation step]
+  reset yaw vs seat: max |yaw| 16.520 deg over 1000 envs (env 0 +8.388); expect about 0 at DR width 0 -- the home tool IS the seated orientation (RT-102, D-196 seam 0)
+  controlled body: tool_link (index 7, jacobian row block 6), tip offset [0.0, 0.0, 0.15199999511241913] m
+  rates:        policy 15.0 Hz (decimation 8 [placeholder, Factory]), controller 120.0 Hz; episode 256 steps = 17.0667 s (step count kept, seconds follow -- re-derivation owed)
+  drives (PhysX read-back): joint | type (USD) | stiffness | damping | maxForce
+    shoulder_pan_joint   force                0.0000     0.0000     150.00
+    shoulder_lift_joint  force                0.0000     0.0000     150.00
+    elbow_joint          force                0.0000     0.0000     150.00
+    wrist_1_joint        force                0.0000     0.0000      28.00
+    wrist_2_joint        force                0.0000     0.0000      28.00
+    wrist_3_joint        force                0.0000     0.0000      28.00
+  Lambda (env 0, at the reset pose = start_tip_above_entrance +0.0200 m): translational eigenvalues [4.1785, 4.7257, 9.0199] kg, MAX 9.0199 kg; rotational eigenvalues [0.00238, 0.15842, 0.20115] kg m^2, MAX 0.20115
+  Jacobian condition number (env 0, tool_link): 7.743 (sigma max 1.8872 / min 0.243723)
+  gravity compensation torques (env 0): [0.0, 33.35, 13.92, 1.993, -0.036, 0.001] Nm vs maxForce [150.0, 150.0, 150.0, 28.0, 28.0, 28.0]
+  Decision (4) reading: kp <= F_search / (Lambda_max * step_limit) = 20 N / (9.0199 kg * 0.02 m) = 110.9 (unit check: kg*m in the denominator is a force per (N/m), READ, not decided)
+--- end controller ---
+fixture usd: C:\Users\Simon\Desktop\Alexander_Pett\temp\Contactrich_Insertion\Phase5_RlGames_v1\source\insertion\insertion\tasks\direct\insertion\assets\Werkzeug\Aufnahme_real_v1_mm.usd
+robot usd:   C:\Users\Simon\Desktop\Alexander_Pett\temp\Contactrich_Insertion\Phase5_RlGames_v1\source\insertion\insertion\tasks\direct\insertion\assets\Robot\ur5e_tool.usd
+fixture spawn translation: (0.5009938, -0.13345, 0.06250000000000001)  (asset origin = opening plane at pocket centre)
+fixture tilt (D-036 probe): +0.00 deg about env y (lateral axis; +tips the back-wall side down) through the pocket centre (inactive)
+fixture yaw (D-038 probe): +0.00 deg about env z through the pocket centre (inactive)
+fixture tilt noise (D-037): magnitude 0..0.00 deg, direction uniform over 360 deg, resampled per episode (inactive)
+pocket-frame measurement: ON -- gate/depth/alignment/phi and obs 12:15 in the pocket frame
+dr_mode: table
+  provider: FixedWidth, 7 boundaries, bounds_version 0
+  quantity            now [lo, hi]                 max [lo, hi]
+    lat_r             [+0.000000, +0.030000]   [+0.000000, +0.030000]
+    yaw               [-0.087266, +0.087266]   [-0.087266, +0.087266]
+    tilt              [+0.000000, +0.174533]   [+0.000000, +0.174533]
+    start_height      [+0.020000, +0.270000]   [+0.020000, +0.270000]
+    friction          [+0.080000, +0.200000]   [+0.080000, +0.200000]
+  [provenance] buffer m / p_boundary: Akkaya et al. 2019, Appendix C.3 Table 15 (arXiv:1910.07113 p. 44), read from the PDF 2026-09-09: queue length m 240, boundary sampling probability 0.5
+  [provenance] delta steps (10): [TESTWERT] Phase-5 plan section 1: Delta = maximum/10 from a fill-rate estimate, NOT Akkaya's absolute 0.02; confirm after the smoke run
+  [provenance] lat_r [m] 0.0 .. 0.03 ([TESTWERT]): [TESTWERT] Phase-5 ceiling, decided not derived -- D-178 (5)
+  [provenance] yaw [rad] -0.08726646259971647 .. 0.08726646259971647 ([TESTWERT]): [TESTWERT] Phase-5 ceiling, decided not derived -- D-178 (5)
+  [provenance] tilt [rad] 0.0 .. 0.17453292519943295 ([TESTWERT]): [TESTWERT] Phase-5 ceiling, decided not derived -- D-178 (5)
+  [provenance] start_height [m] 0.02 .. 0.27 ([TESTWERT]): [TESTWERT] hi = ceiling, decided not derived -- D-202 (was 0.120, D-179 (1)); lo = the centre H_min, not yet measured -- D-179 (4)
+  [provenance] friction [1] 0.08 .. 0.2 (sourced): DuPont PA66/POM table span, assumed PA6/POM pairing, no PA6 value -- D-181 (2)
+  [eval-table] C:\Users\Simon\Desktop\Alexander_Pett\temp\Contactrich_Insertion\Phase5_RlGames_v1\scripts\eval\eval_table_seed10_c18.csv  rows 1000  sha256 d4b972597b357844d895fc43b03e776537cee45bc7b5fa1910ddfd19f8954f6d  width target. Env i plays row i in every episode; no boundary sampling (p_boundary 0.00), nothing moves. Values outside [0, 1] allowed (OOD table): False.
+  NOT VERIFIED IN A SIMULATOR: this build has never run. Read the [autodr] lines and dr/ curves of THIS run before believing it.
+fixture pose noise (D-034, D-204): xy +-0.050 m, z +-0.050 m, yaw +-0.0000 rad (ACTIVE -- kinematic fixture teleported per reset)
+--- workcell (robot foot IS the env origin, Factory convention) ---
+floor z:        -0.9080   table 1 top: -0.0240   table 2 top: -0.1198
+plate drop:     95.8 mm (measured 95.8 mm, D-058 direct reading leads; the 884/787 pair would give 97.0 mm)
+block top:      +0.0775 = 197.3 mm above table 2; ABOVE the robot foot plane
+insertion plane:+0.0625 = block top - 15 mm stage 1; asset origin + entrance sit HERE (2026-08-19 convention)
+foot -> pocket: x +501.0 mm (depth), y -133.5 mm (lateral, - = robot's right), straight line 524.2 mm of 850 mm UR5e reach
+block model:    225.1 x 260.0 mm footprint (80.0 front + 130.0876 stage 1 + 15.0 rear wall), 5.0876 mm of block behind the cut-out, high wall 100 mm above the rim
+tool home yaw:  +180.0 deg about the tool axis (weld yaw +0.0 deg, D-078); the part's lugs face the pocket features at this angle
+block boxes:    8 (incl. the two +Y slot fillers beside the tab: 52.0 and 31.0 mm long, 10.0 mm deep)
+tables usd:     C:\Users\Simon\Desktop\Alexander_Pett\temp\Contactrich_Insertion\Phase5_RlGames_v1\source\insertion\insertion\tasks\direct\insertion\assets\Arbeitszelle\arbeitszelle_tische_v2.usd
+workcell block: *** OFF -- the Aufnahme stands free; no rear wall, the pocket is enterable from any direction ***
+Y residual:     +15.0 mm (left vs right table-2 overhang; right leads)
+--- end workcell ---
+joint_names: ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint', 'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
+  joint limit  shoulder_pan_joint   [-6.283185, +6.283185]  reset writes +3.141293
+  joint limit  shoulder_lift_joint  [-6.283185, +6.283185]  reset writes -1.656050
+  joint limit  elbow_joint          [-3.141593, +3.141593]  reset writes -1.111936
+  joint limit  wrist_1_joint        [-6.283185, +6.283185]  reset writes -1.944403
+  joint limit  wrist_2_joint        [-6.283185, +6.283185]  reset writes +1.570796
+  joint limit  wrist_3_joint        [-6.283185, +6.283185]  reset writes +1.570497
+body_names:  ['base_link', 'shoulder_link', 'upper_arm_link', 'forearm_link', 'wrist_1_link', 'wrist_2_link', 'wrist_3_link', 'tool_link']
+ee_body:     wrist_3_link (index 6)
+force_body:  tool_link (index 7), wrench read RAW in the parent body frame, EMA alpha 0.25 on the NEW sample
+force tare:  ON -- world hold force [-0.0, -0.0, 8.0834] N (= -0.82400 kg * gravity (0.0, 0.0, -9.81)), rotated into the frame of 'wrist_3_link' (index 6) and subtracted BEFORE the EMA. Free air must now read ~0 N, not 8.08 N.
+torque tare: ON -- lever = authored tool COM minus the MEASURED reference point (origin of 'wrist_3_link' + (0.0, 0.0, -0.1032) m in its frame, RT-192a2), moment = lever x hold force, rotated into the same frame, subtracted BEFORE the EMA (D-188).
+obs mode force_prevact-34: torque read and logged, NOT in the policy observation; torque_obs_noise_std_nm 0.0 (0 = off, OPEN per D-188); the wrench EMA skips the reset step and advances once per step (inbox 2026-09-13).
+activate_contact_sensors: True (declared cfg field)
+contact friction (D-111, centre 0.14, per-reset band, PROVISIONAL/F3): PhysX reads back robot [0.080, 0.200], fixture [0.080, 0.200] (static+dynamic pooled)
+friction after first reset env0..3: PhysX robot [0.16268, 0.14214, 0.12074, 0.11252] vs commanded [0.16268, 0.14214, 0.12074, 0.11252]; band now [0.08000, 0.20000] -- at width 0 all four are the centre and that is CORRECT, four DIFFERENT values are owed only once the band has opened
+  fixture side, same envs: [0.16268, 0.14214, 0.12074, 0.11252] -- must match the robot list env for env
+friction write cost mean/max ms: 6.890 / 13.557 over 2 sample(s) in a 1000-call window (whole block: host copy + row edit + both PhysX calls, fenced against the reset). Read it against the iteration time in THIS log.
+solver iterations (D-115 verify): /World/envs/env_0/Robot/root_joint: solverPositionIterationCount=16, solverVelocityIterationCount=1
+solver iterations (D-115 verify): /World/envs/env_0/Fixture: NO authored value on any prim below -- the PhysX SDK default applies and is NOT readable here
+peg_body:    tool_link (index 7), flange -> leading point 0.1520 m, part 0.0964 x 0.1435 x 0.0505 m, mass 0.82400 kg
+             GATE MATH IS STILL SQUARE: side 0.0300 m from the proxy peg; the part's 0.1435 m long axis is not modelled yet.
+pocket:      side 0.0320 m (PROXY SQUARE, see the proxy block below), depth 0.0360 m (blind), success at 33 mm
+             play (MEASURED, total, not per-axis half): X 0.5876 mm across the lugs, Y 1.6000 mm along the part
+             yaw window: OPEN -- the proxy's C4 window does not apply to a part that fits one way round, and D-106's bound is not recomputed against PLAY_X (D-121).
+asset check (peg):     PASS -- authored tool matches cfg (part 0.09641 x 0.14350 x 0.05051 m, span -0.0000..+0.1520 m, mass 0.82400 kg), from ur5e_tool.author.json
+asset check (fixture): PASS -- imported fixture matches the STEP constants (edges 61.000 / 150.000 / 189.100 mm, z -46.000 .. +15.000 mm), from Aufnahme_real_v1_mm.verify.json
+resting FD joint speed (env 0..1): [0.08858450502157211, 0.12297093123197556] rad/s  (expect ~0.000 after reset)
+observation layout (built 34-dim of 34, mode force_prevact, D-107/D-114/D-188): 0:6 joint_pos | 6:12 joint_vel | 12:15 tip_rel | 15:19 ee_quat | 19:21 yaw_cos_sin | 21:25 pocket_quat | 25:28 force | 28:34 prev_action
+  12:15 frame: POCKET, D-036; 19:21 is (cos phi, sin phi), NOT cos 4 phi (D-107 (2))
+observation bias env0..3 (D-182, tip_rel 12:15, uniform +-0.01 m, drawn per EPISODE): [[-0.004874, 0.00154, -0.009134], [-0.009128, -0.003948, -0.00126], [0.00983, -0.005814, 0.002134], [-0.005428, -0.005231, -0.006935]]
+grasp belief error env0..3 (D-183, +-0.003 m on the part's short axis, drawn per EPISODE): [0.002601, 0.000602, 0.001603, 0.000295]
+pocket-yaw belief error env0..3 (D-194, +-0.0223402 rad about the pocket axis, drawn per EPISODE): [-0.015862, -0.010635, 0.021765, -0.013722]
+rl_terms_enabled: True (validate_rl_config PASSED)
+curriculum: *** OFF -- FIXED RUNG 0, no advance, no retreat; the start scatter is whatever the cfg holds and never widens ***
+reward (D-109 + the 2026-09-01 revision): kernel_sum(sdf_dist) + engaged + success bonuses, SAPU-scaled; time penalty -0.003906/step (-1/T at T = 256); action-rate penalty -0.0 * ||a_t - a_(t-1)||
+alignment shaping (RT-171, potential-based): 0.99 * Phi(s') - Phi(s), Phi = 0.0 * sech(11.1799/rad * theta) vs the POCKET axis (margin 15.34 deg, MEASURED, RT-158 mouth-mode median), Phi(s') = 0 on the success step, not SAPU-scaled; gamma READ from agents/rsl_rl_ppo_cfg.py -- a hydra override of agent.algorithm.gamma must set env.shaping_gamma too; *** OFF, w_tilt 0 -- the pre-RT-171 reward ***
+termination (D-113 + the 2026-09-01 revision): timeout, force abort at 30.0 N (payment -1.0, both PLACEHOLDERS, see the block above), AND success -- which ends the episode and pays its remaining return as a lump. Episode success = that termination event.
+seated goal pose (env 0, env-local): [0.534754, -0.137906, 0.203019], quat (wxyz) [0.001419, -0.028656, 0.999504, -0.012949] = pocket quat * SEATED_TOOL_QUAT_LOCAL (RT-102)
+*** PLACEHOLDER VALUES IN USE -- every number this run reports is provisional ***
+    force_abort_f_max_n = 30.0  [placeholder] no longer INVENTED -- that was 2026-08-28..2026-09-01 (user, no source). D-169 on 2026-09-06 set it off RT-157: across every SUCCESSFUL first episode of the two probed start heights that limit aborted none, while the search force of D-166 would abort about half of them. On 2026-09-15 the user LOWERED it for the restarted seed study, below the force p95 the RT-201 family measured, so the abort now also ends a share of episodes that would have succeeded (inbox entry 'Seed study restart'). NOT a measurement. Still only an upper bound on OUR OWN simulation, not a damage limit of the real part, and it describes ONE policy at TWO heights. In the simulation this limit is only the brake against ramming (D-114) and must sit ABOVE the force a clean insertion needs, or it forbids the solution. The suction-cup datasheet anchor is WITHDRAWN (rigid chain, no sim-to-real). D-167's condition for lowering did NOT hold: it asked for p95 far under the D-166 search force, and RT-157 read above it. Read force_norm_n p95 and force_abort_rate off every run. Home: DECISIONS.md, D-169.
+    engaged_depth_m = 0.010799999999999999  [placeholder] the fraction of the seat depth behind it is AD HOC (user, 2026-08-30) and was downgraded again on 2026-09-01. The rule 'measured capture depth of the tilted scripted insertion' (inbox entry Reward-Ueberarbeitung) was WITHDRAWN the same day: RT-129 showed that depth to be the controller's own tilt ramp. Proposed replacement, not decided: read the depth at which the lateral offset stays inside half the cross play off the TRAINED policy's trajectories (D-071: the tilt is learned). Only consumer: the engaged display bonus. Factory's own fraction was rejected: at this pocket it lands inside the success band. Home: docs/decisions_inbox.md, entry 'The tilted scripted insertion is SPENT ...' (2026-09-01).
+    abort_payment = -1.0  [placeholder] the FORM is Beltran-Hernandez via D-114 (a fixed negative on abort) and the MAGNITUDE was decided 2026-09-01 (grill; inbox entry Reward-Ueberarbeitung, the abort-payment point), which closes D-114's [open] and un-couples it from the F_max measurement: one kernel peak, i.e. the per-step maximum of the shaping term. That is a SCALE ANCHOR, our own choice, openly labelled, with an optional decade sensitivity row per the D-109 width template. It stays in this table because it is still a magnitude nobody measured; the dominant abort price is anyway the forfeited remaining return.
+    osc_kp_pos = 100.0  [placeholder] task-space position stiffness, N/m. NOT adopted: Decision (four) of the inbox entry 'Audit 2026-09-03 (a)' DERIVES it as kp <= F_search / (Lambda_max * step_limit), with F_search the literature search-band force and Lambda_max the task-space inertia the startup report prints at the reset pose. Until that is done the measurement runs two values (the OSC cfg default and five times it). The OSC cfg default and the reach example are contact-free and are NOT a source.
+    osc_kp_rot = 30.0  [placeholder] task-space rotation stiffness, Nm/rad. No source of ours; Factory's default_task_prop_gains rotation value (factory_env_cfg.py, CtrlCfg). Decision (four) of the same entry.
+    osc_pos_step_limit_m = 0.02  [placeholder] metres of tool travel one action step may command. Decision (four): policy rate x allowed tool speed, and the tool-speed source is MISSING. Factory's pos_action_threshold (factory_env_cfg.py, CtrlCfg), back since D-197 together with Factory's action EMA; D-196 (B)'s own smaller value is superseded.
+    osc_rot_step_limit_rad = 0.097  [placeholder] radians of tool rotation one action step may command. Same gap as osc_pos_step_limit_m. Factory's rot_action_threshold, back since D-197.
+    action_ema_factor = 0.2  [placeholder] weight of the NEW clamped action in the action EMA; the applied action is the EMA state. Factory's ema_factor (factory_env_cfg.py, CtrlCfg), taken with its thresholds by D-197. No source of ours.
+    osc_pos_clamp_m = 0.1  [placeholder] half-width of the box around the pocket entrance the leading tool point may not leave, along x and y. SET by D-180's rule, re-derived at D-197's step and D-204's ceiling, from the disk reach (the lateral radius plus the tip's swing at maximum tilt, from autodr.bounds_max()) plus one action step plus set air; no longer Factory's pos_action_bounds. check_env_wiring pins it from both sides: at least that requirement, at most the set air above it.
+    osc_pos_clamp_z_m = 0.2915  [placeholder] half-width of the same box along z, SET by D-180's rule, re-derived at D-197's step and D-204's ceiling, from the disk reach (the highest legal start at maximum tilt plus the lateral radius tipped up, from autodr.bounds_max()) plus one action step plus set air. check_env_wiring proves sufficiency in the WORLD frame the box is aligned to, and a second rule keeps it below the home tip standoff. Factory offers no rule to borrow: its pos_action_bounds does not contain the reset band of peg_insert, and its own clamp is not per-axis.
+    osc_yaw_clamp_rad = 0.21467549799530256  [placeholder] half-width of the band the tool yaw may not leave, about this episode's SEATED orientation. OWN extension, D-196 (A): no source bounds a yaw about a pocket axis. SET by a rule (worst start yaw plus the D-194 belief error plus one rotation step); check_env_wiring pins it from both sides.
+    osc_decimation = 8  [placeholder] physics steps per policy step under OSC (policy rate = physics rate / this). No source of ours; Factory's decimation (factory_env_cfg.py, FactoryEnvCfg). D-024's rate is the controller rate now. The episode is kept as a STEP count (D-113) and its seconds follow; re-deriving the length is owed (audit, section six).
+    obs_noise_pocket_pos_std_m = 0.01  [placeholder] the HALF WIDTH of the per-episode uniform bias on the pocket-position channels, in metres (the name still says std; user 2026-09-15). TacSL's Appendix C Table V names a uniform socket observation noise and that is the source; reading it as THIS env's per-episode bias is our own step, because TacSL does not state when it is drawn. NAMED TENSION: the uniform's sigma lies above the one at which FORGE reports unstable training. Home: p1-thesis docs/decisions_inbox.md 2026-09-15, replacing D-182's value.
+    force_obs_noise_std_n = 3.5  [placeholder] the per-step Gaussian on the force channels, in newtons. The UR5e datasheet gives a force-sensing PRECISION for the tool flange; reading that figure as a standard deviation is an ASSUMPTION, because the datasheet does not define it as one. FORGE uses a smaller per-timestep sigma. Home: DECISIONS.md, D-182.
+    torque_obs_noise_std_nm = 0.0  [placeholder] the per-step Gaussian on the torque channels (obs_wrench_mode='wrench' only), in newton metres. OFF and OPEN (user decision, observation noise is a parking suspect); the UR5e datasheet's torque precision is the candidate when it is widened, read as a sigma by the same assumption as the force. Home: DECISIONS.md, the wrench-mode entry; Belege_Streuwerte.md, row B-four-c.
+    grasp_obs_offset_x_m = 0.003  [placeholder] the half width of the uniform grasp offset along the part's short axis, in metres, seen ONLY by the observation. Factory's held-asset position noise and FORGE's Table II carry the same magnitude for their peg; that the gripper on THIS part slips by as much is the user's estimate from a CAD side view, not a measurement. Home: DECISIONS.md, D-183.
+    pocket_obs_yaw_rad = 0.0223402  [placeholder] the half width of the uniform pocket-yaw belief error about the pocket's own axis, in radians, seen ONLY by the observation. OFF by default. The width is derived by us from a published MEAN camera error (Litvak et al.), not measured on this cell. Home: DECISIONS.md, D-194; Belege_Streuwerte.md, row B-six.
+*** PROXY TASK VALUES IN USE -- the physics is the real part in the real pocket, but these SCORING numbers still describe the square peg ***
+    cfg.w_depth_progress = 100.0  [proxy] the square-peg proxy's reward_w_depth, paid per metre of NEW gated max depth (D-165). The proxy solved 1 mm clearance with it at 100; nothing on this task has sized it. Zero switches the term off and reproduces the pre-D-165 reward.
+    cfg.held_asset.side = 0.03  [proxy] the held body modelled as a SQUARE of this side. The real part is rectangular with lugs (PART_BODY_X / PART_BBOX_M). Read by the four-corner gate; moves with the SDF rework (D-109), not alone.
+    cfg.fixed_asset.side = 0.032  [proxy] the square pocket edge the gate tests against. The real opening is POCKET_OPENING_X x POCKET_OPENING_Y and is not square. Read by the four-corner gate; moves with the SDF rework (D-109).
+    cfg.gate_min_alignment = 0.99  [proxy] tool-axis alignment floor, calibrated on the square peg. The real bound is D-106's across-tilt limit, which D-121 reopened and the concept stream has not recomputed.
+    tasks.SIDE_CLEARANCE = 0.0010000000000000009  [proxy] half-clearance per axis of the square pair. The real task has TWO different total plays, PLAY_X and PLAY_Y, which the report now prints instead. Kept only because compare_runs.py reads the metrics key side_clearance_mm.
+    tasks.YAW_WINDOW_RAD = 0.06910872167872839  [proxy] the C4 free-yaw window of a square in a square. The real part fits ONE way round, so there is no equivalent; D-106's yaw bound was reopened by D-121 and is not recomputed. The report no longer prints it. Kept only because compare_runs.py reads the metrics key yaw_window_deg.
+    ... and demo_metrics.json keys ['peg_side_m', 'pocket_side_m', 'side_clearance_mm', 'yaw_window_deg'] carry them.
+-- env 0 pose check --
+  fixture prim (env-local): [0.5351676940917969, -0.140899658203125, 0.08705803006887436]
+  entrance buffer:          [0.5351685285568237, -0.14089910686016083, 0.08705802261829376], yaw +0.0573 rad
+  |prim - buffer| = 1.00e-06 m  (expect ~0; MISMATCH = pose write broken)
+  fixture prim quat (wxyz): [0.999505, -0.012949, -0.001419, 0.028656]
+  commanded quat (buffer):  [0.999504, -0.012949, -0.001419, 0.028656]
+  measured tilt magnitude:  3.607 deg vs commanded 3.608 deg, tilt axis azimuth -173.7 deg (0 = +x, 90 = +y), max|quat err| 5.96e-08  (OK)
+-- env 0 --
+  env_origin:            [48.0, -45.0, 0.0]
+  joint_pos commanded:   [3.1831912994384766, -1.7883111238479614, -1.844814419746399, -1.0840635299682617, 1.5711098909378052, 1.6122914552688599]
+  joint_pos actual:      [3.12105393409729, -2.059776544570923, -1.910631537437439, -0.8455836176872253, 1.5526024103164673, 1.6416385173797607]
+  joint_vel (FD):        [-0.0015306471614167094, -0.015828607603907585, 0.03738641366362572, -0.07861196249723434, 0.003939270507544279, -0.001106858137063682]
+  root env-local pos:    [0.0, 0.0, 0.0]  (expect (0.0, 0.0, 0.0))
+  EE world pos:          [48.55064010620117, -45.14645004272461, 0.13923203945159912]
+  EE env-local pos:      [0.5506401062011719, -0.14645004272460938, 0.13923203945159912]
+  EE world quat (wxyz):  [0.05153089016675949, -0.04514089971780777, -0.9975965619087219, 0.010384093038737774]
+  pocket entrance world: [48.5351676940918, -45.140899658203125, 0.08705802261829376]
+  |EE - entrance|:       0.054702 m
+  XY offset to entrance: 0.016438 m  (expect <= 0.005 before reset noise)
+  Z standoff (flange):   0.052174 m  (expect 0.1720 at the NOISELESS start pose; tool point 0.0200 + chain 0.1520, D-161 rung 0 -- NOT the home pose)
+                         with USD drives the droop is spent: RT-46 read 0.317026 m at t = 3.000 s, 0.000026 m off nominal. Reset noise would add +-0.0098 m, but it is 0.0 right now -- so judge this against the CENTRE
+  x-axis . (0,0,-1):    -0.101877
+  y-axis . (0,0,-1):    +0.025371
+  z-axis . (0,0,-1):    +0.994473  <-- expect >= 0.999 here
+  peg origin env-local:  [0.5506401062011719, -0.14645004272460938, 0.13923203945159912]
+  peg TIP env-local:     [0.5348701477050781, -0.14889144897460938, -0.011927962303161621]
+  peg TIP rel. entrance: [-0.000963, -0.005389, -0.099158]  (POCKET frame (D-036) -- this is observation channels 12:15)
+  flange -> peg origin:  0.000000 m  (expect 0.000000)
+  tip along tool axis:   +0.152000 m  (expect +0.1520)
+  peg yaw phi (folded):  -8.388 deg  (expect +-0.000 at home BEFORE reset noise; ~uniform in +-0.00 after)
+  (cos 4phi, sin 4phi):  (+0.8334, -0.5527)  (expect (+1, 0) at home before reset noise)
+  tip Chebyshev offset:  0.005389 m  (real limit is half the across-play, 0.000294 m; at the start pose under this tilt ~0.0013)
+  corner Chebyshev max:  0.022404 m  (gate needs < 0.0160); corners rel. entrance: [[-0.0135, 0.0116], [-0.0179, -0.0181], [0.016, 0.0073], [0.0116, -0.0224]]
+  gate at this pose:     closed (corners OUT, depth +0.0992 vs <= 0.0370, alignment +0.9942 vs >= 0.99)
+  tip insertion depth:   +0.099158 m  (expect -0.0200 at the NOISELESS home pose, judged the same way as the flange standoff above, = -0.0200 x cos(tilt))
+  max joint deviation:   0.271465 rad (15.554 deg) on shoulder_lift_joint  (vs the WRITTEN target; expect ~0)
+  reset yaw noise:       +0.041794 rad (+2.395 deg) on wrist_3_joint  (D-038, sampled +-0.0000 rad -- NOT an error)
+  body positions (env-local) and plate test -- WORLD-FRAME, indicative only under tilt:
+    base_link        (+0.0000, +0.0000, +0.0000)   clearance = +0.1198
+    shoulder_link    (+0.0000, +0.0000, +0.1625)   clearance = +0.2823
+    upper_arm_link   (+0.0000, +0.0000, +0.1625)   clearance = +0.2823
+    forearm_link     (+0.1996, -0.0041, +0.5377)   clearance = +0.6575
+    wrist_1_link     (+0.4618, -0.1428, +0.2486)   clearance = +0.3684
+    wrist_2_link     (+0.5610, -0.1449, +0.2383)   clearance = +0.3581
+    wrist_3_link     (+0.5506, -0.1465, +0.1392)   clearance = +0.2590
+    tool_link        (+0.5506, -0.1465, +0.1392)   clearance = +0.2590
+-- env 1 pose check --
+  fixture prim (env-local): [0.4832420349121094, -0.15520477294921875, 0.027441496029496193]
+  entrance buffer:          [0.4832412600517273, -0.15520665049552917, 0.027441490441560745], yaw -0.0478 rad
+  |prim - buffer| = 2.03e-06 m  (expect ~0; MISMATCH = pose write broken)
+  fixture prim quat (wxyz): [0.996944, -0.024103, 0.070378, -0.023833]
+  commanded quat (buffer):  [0.996944, -0.024103, 0.070378, -0.023833]
+  measured tilt magnitude:  8.960 deg vs commanded 8.960 deg, tilt axis azimuth +108.9 deg (0 = +x, 90 = +y), max|quat err| 5.96e-08  (OK)
+-- env 1 --
+  env_origin:            [48.0, -42.0, 0.0]
+  joint_pos commanded:   [3.1098520755767822, -1.6779731512069702, -1.5841753482818604, -1.4530397653579712, 1.5709329843521118, 1.5391349792480469]
+  joint_pos actual:      [3.127440929412842, -2.1411826610565186, -1.9789122343063354, -0.8274556398391724, 1.533037543296814, 1.668022632598877]
+  joint_vel (FD):        [0.002800225978717208, 0.021321771666407585, -0.05119621381163597, 0.10951458662748337, -0.006700157653540373, -4.291534060030244e-05]
+  root env-local pos:    [0.0, 0.0, 0.0]  (expect (0.0, 0.0, 0.0))
+  EE world pos:          [48.520206451416016, -42.144439697265625, 0.0748060792684555]
+  EE env-local pos:      [0.5202064514160156, -0.144439697265625, 0.0748060792684555]
+  EE world quat (wxyz):  [0.11640913039445877, -0.0530548132956028, -0.9915023446083069, 0.02360222302377224]
+  pocket entrance world: [48.48324203491211, -42.15520477294922, 0.027441490441560745]
+  |EE - entrance|:       0.061038 m
+  XY offset to entrance: 0.038500 m  (expect <= 0.005 before reset noise)
+  Z standoff (flange):   0.047365 m  (expect 0.1720 at the NOISELESS start pose; tool point 0.0200 + chain 0.1520, D-161 rung 0 -- NOT the home pose)
+                         with USD drives the droop is spent: RT-46 read 0.317026 m at t = 3.000 s, 0.000026 m off nominal. Reset noise would add +-0.0098 m, but it is 0.0 right now -- so judge this against the CENTRE
+  x-axis . (0,0,-1):    -0.228335
+  y-axis . (0,0,-1):    +0.059155
+  z-axis . (0,0,-1):    +0.971783  <-- expect >= 0.999 here
+  peg origin env-local:  [0.5202064514160156, -0.144439697265625, 0.0748060792684555]
+  peg TIP env-local:     [0.4847373962402344, -0.14967727661132812, -0.072905033826828]
+  peg TIP rel. entrance: [0.015164, 0.010742, -0.098777]  (POCKET frame (D-036) -- this is observation channels 12:15)
+  flange -> peg origin:  0.000000 m  (expect 0.000000)
+  tip along tool axis:   +0.152000 m  (expect +0.1520)
+  peg yaw phi (folded):  -3.226 deg  (expect +-0.000 at home BEFORE reset noise; ~uniform in +-0.00 after)
+  (cos 4phi, sin 4phi):  (+0.9747, -0.2233)  (expect (+1, 0) at home before reset noise)
+  tip Chebyshev offset:  0.015164 m  (real limit is half the across-play, 0.000294 m; at the start pose under this tilt ~0.0031)
+  corner Chebyshev max:  0.030918 m  (gate needs < 0.0160); corners rel. entrance: [[0.0011, 0.0266], [-0.0006, -0.0034], [0.0309, 0.0249], [0.0292, -0.0051]]
+  gate at this pose:     closed (corners OUT, depth +0.0988 vs <= 0.0370, alignment +0.9956 vs >= 0.99)
+  tip insertion depth:   +0.098777 m  (expect -0.0198 at the NOISELESS home pose, judged the same way as the flange standoff above, = -0.0200 x cos(tilt))
+  max joint deviation:   0.625584 rad (35.843 deg) on wrist_1_joint  (vs the WRITTEN target; expect ~0)
+  reset yaw noise:       -0.031362 rad (-1.797 deg) on wrist_3_joint  (D-038, sampled +-0.0000 rad -- NOT an error)
+  body positions (env-local) and plate test -- WORLD-FRAME, indicative only under tilt:
+    base_link        (+0.0000, +0.0000, +0.0000)   clearance = +0.1198
+    shoulder_link    (+0.0000, +0.0000, +0.1625)   clearance = +0.2823
+    upper_arm_link   (+0.0000, +0.0000, +0.1625)   clearance = +0.2823
+    forearm_link     (+0.2295, -0.0032, +0.5202)   clearance = +0.6400
+    wrist_1_link     (+0.4465, -0.1396, +0.1948)   clearance = +0.3146
+    wrist_2_link     (+0.5434, -0.1410, +0.1716)   clearance = +0.2914
+    wrist_3_link     (+0.5202, -0.1444, +0.0748)   clearance = +0.1946
+    tool_link        (+0.5202, -0.1444, +0.0748)   clearance = +0.1946
+========================================================================
+[rl_games-play] evaluation complete: all 1000 envs finished their first episode after 255 steps
+[rl_games-play] done: 255 steps x 1000 envs, 1 episodes ended, success keys {'success_rate': 0.0, 'success_rate_cumulative': 0.0, 'success_depth_invariant_violations': 0.0, 'Episode_Reward/success': 0.0, 'Episode_Reward/success_lump': 0.0, 'dr/train_success_regular_fresh': -1.0, 'dr/success_rate_boundary': 0.0}
+[rl_games-play] eval manifest: C:\Users\Simon\Desktop\Alexander_Pett\temp\Contactrich_Insertion\Phase5_RlGames_v1\logs\rl_games\ur5e_insertion\09-28_23-40-25__RT-243s1_fixed_dr_offset50mm_currOFF_start+20mm_floor-30mm_seed1\eval_target_d4b97259_pn2\eval_manifest.json
+[rt_log] exit code: 0

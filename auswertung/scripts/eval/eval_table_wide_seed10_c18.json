@@ -1,0 +1,59 @@
+{
+  "kind": "wide",
+  "seed": 10,
+  "from": {
+    "file": "eval_table_seed10_c18.csv",
+    "sha256": "d4b972597b357844d895fc43b03e776537cee45bc7b5fa1910ddfd19f8954f6d"
+  },
+  "factor": 1.5,
+  "factor_cap": {
+    "start_height_hi": 1.0
+  },
+  "centres": {
+    "lat_r": 0.0,
+    "yaw": 0.0,
+    "tilt": 0.0,
+    "start_height": 0.02,
+    "friction": 0.14
+  },
+  "source": "D-227; x1.5 from IndustReal (Tang et al. 2023) Table X, edges as T-ood (make_eval_table.py ood_step); capped quantities stay in the band",
+  "columns": [
+    {
+      "key": "lat_r",
+      "column": 0,
+      "unit_lo": 0.0,
+      "unit_hi": 2.25,
+      "physical_lo": 0.0,
+      "physical_hi": 0.045
+    },
+    {
+      "key": "yaw",
+      "column": 2,
+      "unit_lo": -0.25,
+      "unit_hi": 1.25,
+      "physical_lo": -0.1308996938995747,
+      "physical_hi": 0.13089969389957473
+    },
+    {
+      "key": "tilt",
+      "column": 3,
+      "unit_lo": 0.0,
+      "unit_hi": 1.5,
+      "physical_lo": 0.0,
+      "physical_hi": 0.2617993877991494
+    },
+    {
+      "key": "friction",
+      "column": 6,
+      "unit_lo": -0.25000000000000006,
+      "unit_hi": 1.25,
+      "physical_lo": 0.04999999999999999,
+      "physical_hi": 0.23000000000000004
+    }
+  ],
+  "file": "eval_table_wide_seed10_c18.csv",
+  "n_rows": 1000,
+  "n_columns": 18,
+  "sha256": "67239a88320e6257b498e469a6ef6a3f34d4c00b04fa8252673c12727abfbfe9",
+  "numpy": "2.5.0rc1"
+}
