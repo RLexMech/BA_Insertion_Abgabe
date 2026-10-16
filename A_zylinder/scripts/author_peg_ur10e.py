@@ -1,41 +1,7 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-"""Author the peg as a welded link into a copy of the shipped UR10e USD (D-019).
-
-D-005 models the peg as a rigid body fixed to the flange, with no gripper.
-D-019 settles *how*: a welded link inside the robot USD, not a separately
-spawned body joined at scene-build time. That path was tried and fails with
-"no bodies defined at body0/body1 ... Failed to create articulation", and the
-Robot Assembler strips the ArticulationRoot API (D-018 addendum). A link inside
-the asset makes the peg's mass and inertia part of the articulation and gives a
-contact sensor a stable target -- the condition under which the welded variant
-was chosen.
-
-Two deviations from the increment plan, both for measurable reasons:
-
-1. The peg is a **tessellated mesh**, not a ``UsdGeom.Cylinder`` gprim. PhysX
-   has no native cylinder collision shape; Isaac Sim covers cylinders through a
-   custom-geometry path whose setting this script cannot verify. A mesh removes
-   that dependency, and ``MeshCollisionAPI`` unambiguously applies to it. The
-   faceting error is computed and reported rather than assumed -- see
-   ``faceting_error_m`` in the JSON report.
-2. Collision approximation is **convexHull**, not the ``none`` used for the
-   fixture. That is not a preference: the fixture is a static collider, so PhysX
-   accepts its exact triangle mesh, while the peg is part of a dynamic
-   articulation, and PhysX permits only convex shapes for dynamic bodies. The
-   peg is convex, so the hull loses nothing but the faceting above.
-
-The input is the shipped asset and is never written to. Output is a new file,
-backup/candidate/verify/replace as in ``add_fixture_collision.py``.
-
-UNVERIFIED -- authored on the dev PC (no Isaac installation). On the training
-machine, where the output should also be produced so the USD never crosses
-machines:
-
-    conda activate env_isaaclab
-    python scripts\\author_peg_ur10e.py
-"""
+"""Create a UR10e USD copy with a rigidly attached cylindrical peg."""
 
 from __future__ import annotations
 
@@ -47,9 +13,6 @@ import shutil
 
 from isaaclab.app import AppLauncher
 
-# Bumped whenever this file changes. The two-machine workflow copies scripts by
-# hand, and a stale copy has already cost two "it does not work" detours; the
-# first line of output makes the copy's identity visible before anything else.
 SCRIPT_MARKER = "author_peg_ur10e-2026-07-26a"
 
 parser = argparse.ArgumentParser(description="Weld the peg into a copy of the UR10e USD (D-019).")
@@ -67,7 +30,6 @@ print(f"[author_peg] marker: {SCRIPT_MARKER}; sections: describe, author, verify
 app_launcher = AppLauncher(args_cli)
 simulation_app = app_launcher.app
 
-# pxr and the isaaclab/proxytask modules are importable only after the app is up.
 from pxr import Gf, Usd, UsdGeom, UsdPhysics, Vt  # noqa: E402
 
 from isaaclab_assets.robots.universal_robots import UR10e_CFG  # noqa: E402
@@ -79,10 +41,6 @@ from proxytask.tasks.direct.proxytask.proxytask_tasks_cfg import (  # noqa: E402
     PEG_LENGTH,
     PEG_MASS,
     PEG_RADIUS,
-    # The clearance is read from the constants, not written out. It was a
-    # literal "1.000 mm" until 2026-07-27, which kept printing the stage-1
-    # value after the peg had moved -- the same stale-constant failure that
-    # let a superseded peg be re-authored on 2026-07-26.
     RADIAL_CLEARANCE,
     default_peg_robot_usd_path,
 )
@@ -98,15 +56,7 @@ def rigid_body_prims(stage: Usd.Stage) -> list[Usd.Prim]:
 
 
 def joint_prims(stage: Usd.Stage) -> list[Usd.Prim]:
-    """Every physics joint prim.
-
-    ``IsA(UsdPhysics.Joint)`` alone would rest on an abstract base schema
-    matching its concrete subclasses. If it silently matched nothing, the
-    before and after counts would both be zero and the ``one_new_joint`` check
-    would reject a correctly authored asset. The schema-instance test is the
-    idiomatic one; the type-name test is the fallback that makes the count
-    independent of that behaviour.
-    """
+    """Every physics joint prim."""
     return [
         p
         for p in stage.Traverse()
@@ -141,13 +91,7 @@ def describe(stage: Usd.Stage) -> dict:
 
 
 def cylinder_mesh_points(radius: float, length: float, segments: int) -> tuple[list, list, list]:
-    """Return (points, faceVertexCounts, faceVertexIndices) for a closed cylinder.
-
-    The axis is +z and the mesh spans z in [0, length], so the peg starts at the
-    flange and its tip is at z = length. Vertices sit exactly on the nominal
-    radius, so the convex hull is inscribed: the effective radius at a facet
-    midpoint is radius * cos(pi / segments), which the caller reports.
-    """
+    """Return (points, faceVertexCounts, faceVertexIndices) for a closed cylinder."""
     points = []
     for z in (0.0, length):
         for i in range(segments):
@@ -162,10 +106,8 @@ def cylinder_mesh_points(radius: float, length: float, segments: int) -> tuple[l
     indices: list[int] = []
     for i in range(segments):
         j = (i + 1) % segments
-        # Side quad, wound outward.
         counts.append(4)
         indices.extend([i, j, segments + j, segments + i])
-        # Bottom cap (normal -z) and top cap (normal +z).
         counts.append(3)
         indices.extend([bottom_centre, j, i])
         counts.append(3)
@@ -177,10 +119,6 @@ def author_peg(stage: Usd.Stage, flange: Usd.Prim, parent: Usd.Prim, segments: i
     """Author peg_link + geometry + mass + collision + the weld joint."""
     peg_path = parent.GetPath().AppendChild(PEG_LINK_NAME)
 
-    # peg_link must reproduce the flange's world transform. Copying the flange's
-    # *local* transform would only be correct if the two shared a parent, which
-    # is not guaranteed, so the local transform is derived from the two world
-    # transforms instead.
     cache = UsdGeom.XformCache(Usd.TimeCode.Default())
     flange_world = cache.GetLocalToWorldTransform(flange)
     parent_world = cache.GetLocalToWorldTransform(parent)
@@ -190,7 +128,6 @@ def author_peg(stage: Usd.Stage, flange: Usd.Prim, parent: Usd.Prim, segments: i
     peg_xform.AddTransformOp().Set(peg_local)
     peg_prim = peg_xform.GetPrim()
 
-    # Geometry. A mesh rather than a Cylinder gprim; see the module docstring.
     points, counts, indices = cylinder_mesh_points(PEG_RADIUS, PEG_LENGTH, segments)
     mesh = UsdGeom.Mesh.Define(stage, peg_path.AppendChild(PEG_GEOM_NAME))
     mesh.CreatePointsAttr().Set(Vt.Vec3fArray(points))
@@ -202,9 +139,6 @@ def author_peg(stage: Usd.Stage, flange: Usd.Prim, parent: Usd.Prim, segments: i
     mesh.CreateSubdivisionSchemeAttr().Set(UsdGeom.Tokens.none)
     mesh.CreateDisplayColorAttr().Set(Vt.Vec3fArray([Gf.Vec3f(1.0, 0.45, 0.0)]))
 
-    # Physics on the link. The inertia is about the centre of mass, which is
-    # what MassAPI:diagonalInertia means; PEG_I_TRANS_FLANGE is 3.4x larger and
-    # would silently make the peg harder to tilt.
     UsdPhysics.RigidBodyAPI.Apply(peg_prim)
     mass_api = UsdPhysics.MassAPI.Apply(peg_prim)
     mass_api.CreateMassAttr().Set(float(PEG_MASS))
@@ -214,14 +148,10 @@ def author_peg(stage: Usd.Stage, flange: Usd.Prim, parent: Usd.Prim, segments: i
     )
     mass_api.CreatePrincipalAxesAttr().Set(Gf.Quatf(1.0, 0.0, 0.0, 0.0))
 
-    # Collision on the geometry. convexHull is required, not chosen: PhysX
-    # accepts only convex shapes for dynamic bodies.
     UsdPhysics.CollisionAPI.Apply(mesh.GetPrim())
     mesh_collision = UsdPhysics.MeshCollisionAPI.Apply(mesh.GetPrim())
     mesh_collision.CreateApproximationAttr().Set(approximation)
 
-    # The weld. Both local frames are identity because peg_link was placed at
-    # the flange's world transform above.
     joint_path = parent.GetPath().AppendChild(PEG_JOINT_NAME)
     joint = UsdPhysics.FixedJoint.Define(stage, joint_path)
     joint.CreateBody0Rel().SetTargets([flange.GetPath()])
@@ -248,20 +178,10 @@ def verify(stage: Usd.Stage, before: dict, approximation: str) -> tuple[dict, di
 
     measured = {}
     if geom and geom.IsValid():
-        # The world bound is a diagnostic, NOT the size check. peg_link carries
-        # the flange's rest transform, which rotates the peg's local +z onto a
-        # different world axis, so a world-space box compared against local
-        # nominal dimensions rejects a correct asset -- it reads
-        # (0.028, 0.050, 0.028) instead of (0.028, 0.028, 0.050). That the
-        # measurement is an exact permutation is itself informative: it proves
-        # the rest orientation is a clean 90 degree step rather than a skew,
-        # which would inflate the box in more than one axis.
         cache = UsdGeom.BBoxCache(Usd.TimeCode.Default(), [UsdGeom.Tokens.default_, UsdGeom.Tokens.render])
         rng = cache.ComputeWorldBound(geom).ComputeAlignedRange()
         measured["world_bbox_size_m"] = [float(rng.GetMax()[i] - rng.GetMin()[i]) for i in range(3)]
 
-        # The real check: the authored points, in their own space, with no
-        # transform semantics involved.
         points = UsdGeom.Mesh(geom).GetPointsAttr().Get()
         if points:
             lo = [min(float(p[i]) for p in points) for i in range(3)]
@@ -293,11 +213,7 @@ def verify(stage: Usd.Stage, before: dict, approximation: str) -> tuple[dict, di
     nominal = (2.0 * PEG_RADIUS, 2.0 * PEG_RADIUS, PEG_LENGTH)
 
     def close(got: float | None, want: float) -> bool:
-        """Relative comparison. USD ``physics:mass`` and ``physics:diagonalInertia``
-        are float attributes, so every value written comes back rounded to
-        float32. An absolute tolerance here is a trap: 0.03202 round-trips with
-        an error of 1.12e-09, which an earlier 1e-09 tolerance rejected -- the
-        check would have failed on a correctly authored asset."""
+        """Compare relatively to account for float32 rounding of USD mass and inertia."""
         return got is not None and math.isclose(got, want, rel_tol=1e-6, abs_tol=1e-15)
 
     checks = {
@@ -311,9 +227,6 @@ def verify(stage: Usd.Stage, before: dict, approximation: str) -> tuple[dict, di
         "geometry_has_collision": bool(geom and geom.HasAPI(UsdPhysics.CollisionAPI)),
         "approximation_set": measured.get("approximation") == approximation,
         "geometry_size_correct": all(abs(size[i] - nominal[i]) < 1e-4 for i in range(3)),
-        # Asset-level wrong-side test: the peg must start at the flange plane
-        # and run to +PEG_LENGTH. Authored backwards it would span [-0.050, 0],
-        # which every size check above would still call correct.
         "geometry_spans_flange_to_tip": abs(z_range[0]) < 1e-5 and abs(z_range[1] - PEG_LENGTH) < 1e-5,
         "weld_joint_exists": bool(joint_prim and joint_prim.IsValid()),
         "weld_targets_flange_and_peg": (
@@ -330,17 +243,10 @@ def main() -> None:
     src = args_cli.src or UR10e_CFG.spawn.usd_path
     print(f"[author_peg] source: {src}")
 
-    # The env resolver's own default, so a successful run is immediately visible
-    # to the env without setting any environment variable. Asked for by name
-    # rather than derived from the resolver's failure message, which only works
-    # until someone rewords it.
     out_path = pathlib.Path(args_cli.out).resolve() if args_cli.out else pathlib.Path(default_peg_robot_usd_path())
     out_path.parent.mkdir(parents=True, exist_ok=True)
     print(f"[author_peg] output: {out_path}")
 
-    # Steiner self-test on the numbers actually being written. If the task
-    # specification's two inertia figures ever drift apart, this catches it
-    # before a run, not after.
     steiner = PEG_I_TRANS_COM + PEG_MASS * (PEG_LENGTH / 2.0) ** 2
     print(f"[author_peg] inertia check: I_com {PEG_I_TRANS_COM:.4e} + m*(L/2)^2 = {steiner:.4e} "
           f"vs documented flange value {PEG_I_TRANS_FLANGE:.4e} "
@@ -357,9 +263,6 @@ def main() -> None:
     if flange is None:
         raise RuntimeError(f"No prim named '{FLANGE_BODY}' in {src}; body list: {before['rigid_bodies']}")
 
-    # A rigid body may not be nested inside another rigid body, so peg_link goes
-    # under the default prim. Checked rather than assumed: if the default prim
-    # ever carries RigidBodyAPI, the authored asset would be silently invalid.
     parent = src_stage.GetDefaultPrim()
     if parent is None:
         raise RuntimeError("Source stage has no default prim; cannot place peg_link.")
@@ -382,8 +285,6 @@ def main() -> None:
     else:
         backup = None
 
-    # Flatten first: the shipped asset references other layers (possibly on
-    # Nucleus), and the result has to stand alone on the training machine.
     candidate = out_path.with_name(out_path.stem + ".candidate" + out_path.suffix)
     src_stage.Flatten().Export(str(candidate))
     print(f"[author_peg] flattened candidate exported: {candidate}")

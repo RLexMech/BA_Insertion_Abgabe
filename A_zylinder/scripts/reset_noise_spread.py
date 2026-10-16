@@ -38,12 +38,8 @@ import numpy as np
 HERE = pathlib.Path(__file__).resolve().parent
 HOME_POSE_TOOL = HERE / "tools" / "compute_home_pose.py"
 
-# Home pose, branch 3, from source/.../ur10e_cfg.py. Repeated here rather than
-# imported because that module pulls in isaaclab, which the dev PC lacks.
 HOME_Q = np.array([2.003843, -1.911842, -2.265118, 2.606164, -1.570796, 0.433047])
 PEG_LENGTH = 0.050
-# Env-local bore entrance and robot base (D-022/D-023), to express the tip in
-# the same frame the startup report and the reward use.
 BORE_ENTRANCE = np.array([0.0, -0.225, 0.755])
 ROBOT_BASE = np.array([0.0, 0.190, 0.755])
 
@@ -86,14 +82,6 @@ def main() -> int:
 
     nominal_tip, nominal_axis = tip_positions(HOME_Q.reshape(1, 6), fk, dh)
     nominal_tip, nominal_axis = nominal_tip[0], nominal_axis[0]
-    # The DH base frame is rotated by pi about z against the USD base_link
-    # frame -- the caveat D-025 recorded and HANDOFF still lists as open. It
-    # is confirmed here: without the rotation the tip lands at y = +0.415
-    # relative to the base, mirrored through the base, and the offset to the
-    # bore comes out 830 mm instead of 0. Applying it reproduces the
-    # training-machine report exactly (0.000 mm lateral, 100 mm above the
-    # plate). Lengths are unaffected, so every spread below is valid either
-    # way; only this reference line depends on it.
     tip_env = ROBOT_BASE + np.array([-nominal_tip[0], -nominal_tip[1], nominal_tip[2]])
     print(f"home pose tip, base frame : {np.round(nominal_tip, 6).tolist()} m")
     print(f"home pose tip, env-local  : {np.round(tip_env, 6).tolist()} m")
@@ -115,7 +103,6 @@ def main() -> int:
         tips, axes = tip_positions(q, fk, dh)
         lateral = np.linalg.norm(tips[:, :2] - nominal_tip[:2], axis=1) * 1000.0
         vertical = np.abs(tips[:, 2] - nominal_tip[2]) * 1000.0
-        # Angle between the perturbed tool axis and the nominal one.
         cos = np.clip(axes @ nominal_axis, -1.0, 1.0)
         tilt = np.degrees(np.arccos(cos))
         print(f"{noise:>11.3f} {np.degrees(noise):>7.2f} {lateral.mean():>9.2f} "

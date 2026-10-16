@@ -1,33 +1,7 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-"""Probe the robot and fixture assets before the first environment increment.
-
-UNVERIFIED — authored on the dev PC (no Isaac installation); run on the
-training machine:
-
-    cd C:\\Isaaclab
-    conda activate env_isaaclab
-    .\\isaaclab.bat -p <proxytask>\\scripts\\probe_assets.py --usd <path\\to\\Tisch.usd>
-
-Answers three questions that the environment code depends on and that cannot be
-decided from the dev PC:
-
-  1. Which UR articulation configs does ``isaaclab_assets`` actually ship, and
-     which USD does each point at? DECISIONS D-018/D-020 assume a shipped
-     ``UR10e_CFG``; this reports whether that is true. UR10 and UR10e differ in
-     link lengths, so the answer selects the DH table used by
-     ``scripts/tools/compute_home_pose.py``.
-  2. For each candidate robot USD: default prim, joint prims with their body
-     relations, rigid-body links, and where ``PhysicsArticulationRootAPI`` sits.
-     CAVEAT: the joint order printed here is stage-traversal order. The binding
-     order is whatever ``Articulation.joint_names`` reports at runtime; that is
-     what the environment startup report prints, and that is the authority.
-  3. For the fixture stage (--usd): its ``defaultPrim``. ``UsdFileCfg`` spawns by
-     adding a reference, which resolves to nothing when no default prim is set.
-
-Read-only: opens stages, writes nothing, modifies nothing.
-"""
+"""Inspect robot and fixture assets and the installed Isaac Lab interfaces."""
 
 from __future__ import annotations
 
@@ -65,7 +39,6 @@ args_cli.headless = True
 app_launcher = AppLauncher(args_cli)
 simulation_app = app_launcher.app
 
-# Both isaaclab_assets and pxr are importable only after the app is up.
 from pxr import Tf, Usd, UsdPhysics  # noqa: E402
 
 from isaaclab.utils.assets import ISAAC_NUCLEUS_DIR, ISAACLAB_NUCLEUS_DIR  # noqa: E402
@@ -79,10 +52,7 @@ def rule(title: str) -> None:
 
 
 def report_shipped_cfgs() -> list[str]:
-    """List UR-related ArticulationCfg objects shipped by isaaclab_assets.
-
-    Returns the usd_path of every config found, for use as probe candidates.
-    """
+    """List UR-related ArticulationCfg objects shipped by isaaclab_assets."""
     rule("1. Shipped configs in isaaclab_assets.robots.universal_robots")
 
     print(f"ISAAC_NUCLEUS_DIR    = {ISAAC_NUCLEUS_DIR}")
@@ -124,8 +94,6 @@ def probe_robot_stage(usd_path: str) -> None:
     print(f"USD: {usd_path}")
     print("-" * 78)
 
-    # A missing layer raises rather than returning None, and a probe must never
-    # abort the run just because one speculative candidate does not exist.
     try:
         stage = Usd.Stage.Open(usd_path)
     except Tf.ErrorException as exc:
@@ -152,12 +120,6 @@ def probe_robot_stage(usd_path: str) -> None:
             joint = UsdPhysics.Joint(prim)
             body0 = joint.GetBody0Rel().GetTargets()
             body1 = joint.GetBody1Rel().GetTargets()
-            # localPos0/localRot0 is the joint frame relative to body0. For a
-            # marker-only fixed joint such as ur10e's ee_joint (body1 empty)
-            # this is the flange offset from wrist_3_link -- the number needed
-            # to compare the IK target (DH frame 6, i.e. the flange) against
-            # the only pose the environment can actually read, which is the
-            # rigid body wrist_3_link.
             local_pos = joint.GetLocalPos0Attr().Get()
             local_rot = joint.GetLocalRot0Attr().Get()
             joints.append(
@@ -216,13 +178,7 @@ def probe_fixture_stage(usd_path: str) -> None:
 
 
 def report_api_surface() -> None:
-    """Dump the real field names and signatures the environment code is written against.
-
-    The dev PC has no Isaac installation, so every cfg field and method signature
-    used in the environment would otherwise be written from memory and validated
-    by crashing on the training machine, one guess per round trip. One
-    introspection pass replaces that.
-    """
+    """Dump the real field names and signatures the environment code is written against."""
     rule("4. API surface (field names and signatures used by the environment)")
 
     import dataclasses
@@ -317,9 +273,6 @@ def report_api_surface() -> None:
 
 
 def main() -> None:
-    # Staleness detector. This script is copied to the training machine by hand, and a
-    # stale copy has twice looked like a script that silently skips a section. If the
-    # banner below is absent from a run, the copy over there predates that section.
     print("[probe_assets] sections available: 1 shipped cfgs, 2 robot USDs, 3 fixture stage, 4 API surface")
     if args_cli.only_api:
         print("[probe_assets] --only-api: skipping sections 1-3")
@@ -335,7 +288,6 @@ def main() -> None:
         print(f"shipped-config probe failed: {type(exc).__name__}: {exc}")
         candidates = []
 
-    # Candidates the plan expects to exist; duplicates are dropped below.
     candidates += [
         f"{ISAAC_NUCLEUS_DIR}/Robots/UniversalRobots/ur10e/ur10e.usd",
         f"{ISAAC_NUCLEUS_DIR}/Robots/UniversalRobots/ur10e/ur10e_instanceable.usd",

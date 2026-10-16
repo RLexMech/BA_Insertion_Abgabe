@@ -1,41 +1,7 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-"""Measure whether the welded peg can occupy the bore -- the peg increment's headline question.
-
-The fixture carries an exact triangle-mesh collider (``add_fixture_collision.py``,
-approximation ``none``), so the convex-hull worry deferred in D-020 addendum 2
-should be settled. "Should be" is not a measurement, and nothing has ever put a
-solid object into that hole. This script does.
-
-Method: a penetration probe, not a servoed insertion. At each waypoint the arm
-is written kinematically to an IK solution and held for a few steps, then one
-**free** step runs in which nothing is written. If the peg overlaps plate
-material, PhysX depenetration shows up in that free step as joint motion and a
-peg velocity spike; if the peg sits in clear space, the free step barely moves.
-Kinematic writes are used deliberately: the shipped PD gains droop by about
-13 mm at steady state (D-026), which is larger than the 1.0 mm radial clearance,
-so a servoed descent would measure the gains rather than the geometry.
-
-Three properties make the verdict defensible:
-
-* **Self-calibrating.** The descent starts at the home pose, 100 mm above the
-  plate, where contact is geometrically impossible. Those waypoints supply the
-  free-step baseline, so the in-bore readings are judged against this robot's
-  own gravity and solver noise rather than an invented threshold.
-* **Negative control.** A second pass offsets the peg axis so its edge misses
-  the bore. That pass *must* react. If it does not, the collider is inert and a
-  clean centred pass would have meant nothing -- reported as COLLISION_ABSENT.
-* **No new scene code.** The real ``ProxytaskEnv`` is instantiated and driven
-  from outside. Nothing in the env is modified, and the geometry under test is
-  the one training will use.
-
-UNVERIFIED -- authored on the dev PC (no Isaac installation). On the training
-machine, after author_peg_ur10e.py has produced the asset:
-
-    conda activate env_isaaclab
-    python scripts\\verify_peg_passability.py
-"""
+"""Check whether the attached peg can enter the bore without collision."""
 
 from __future__ import annotations
 
@@ -74,31 +40,18 @@ from proxytask.tasks.direct.proxytask.proxytask_env import ProxytaskEnv  # noqa:
 from proxytask.tasks.direct.proxytask.proxytask_env_cfg import ProxytaskEnvCfg  # noqa: E402
 from proxytask.tasks.direct.proxytask import proxytask_tasks_cfg as geom  # noqa: E402
 
-# The IK is a standalone numpy module with no Isaac dependency, loaded by path
-# because scripts/tools is not a package.
 _IK_PATH = pathlib.Path(__file__).resolve().parent / "tools" / "compute_home_pose.py"
 _spec = importlib.util.spec_from_file_location("chp", _IK_PATH)
 chp = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(chp)
 
 DH = chp.DH_TABLES["ur10e"]
-# Established by matching measured body positions, not assumed (see
-# scripts/tools/screen_home_pose_branches.py): p_env = BASE + Rz(pi) . p_DH.
 RZ_PI = np.diag([-1.0, -1.0, 1.0])
-# Orientation held constant for the whole descent, at exactly the value that
-# produced the verified tool-down home pose. Because only z changes, the open
-# question of how DH frame 6 maps onto the USD wrist_3_link axes never has to be
-# answered here: the descent is a pure translation of a pose already measured.
 R_ENV_TOOL_DOWN = np.diag([1.0, -1.0, -1.0])
 
 
 def ik_for_depth(depth: float, offset_xy: tuple[float, float], q_prev: np.ndarray) -> np.ndarray | None:
-    """Joint angles putting the peg tip at ``depth`` below the plate top.
-
-    ``depth`` is positive into the bore. The branch is chosen by continuity with
-    ``q_prev`` rather than by index: branch ordering depends on the target, so
-    an index that is right at the home pose need not stay right 100 mm lower.
-    """
+    """Joint angles putting the peg tip at ``depth`` below the plate top."""
     flange_z = geom.PLATE_TOP_Z - depth + geom.PEG_LENGTH
     p_env_rel = np.array(
         [
@@ -114,7 +67,6 @@ def ik_for_depth(depth: float, offset_xy: tuple[float, float], q_prev: np.ndarra
     best, best_dist = None, float("inf")
     for raw in chp.inverse_kinematics(target, DH):
         q = chp.wrap_to_pi(np.asarray(raw))
-        # Verify the branch really reaches the commanded pose before trusting it.
         if float(np.linalg.norm(chp.forward_kinematics(q, DH)[:3, 3] - target[:3, 3])) > 1e-9:
             continue
         dist = float(np.max(np.abs(chp.wrap_to_pi(q - q_prev))))
@@ -128,7 +80,6 @@ def ik_for_depth(depth: float, offset_xy: tuple[float, float], q_prev: np.ndarra
 def main() -> None:
     cfg = ProxytaskEnvCfg()
     cfg.scene.num_envs = 1
-    # The startup report would fire mid-descent and interleave with the metrics.
     cfg.report_at_steps = (2,)
     env = ProxytaskEnv(cfg)
     robot = env.robot
@@ -154,9 +105,6 @@ def main() -> None:
         print(f"[passability] {result['error']}")
         return finish(result, env)
 
-    # Joint ordering: the IK works in DH order, the articulation in its own.
-    # Getting this wrong produces a plausible-looking but entirely wrong motion,
-    # so the mapping is built by name and reported.
     try:
         dh_to_art = [robot.joint_names.index(n) for n in chp.JOINT_NAMES_DH_ORDER]
     except ValueError as exc:
@@ -171,8 +119,6 @@ def main() -> None:
 
     env.reset()
 
-    # Start at the home pose, whose depth is negative by peg length minus
-    # standoff: the tip hangs 100 mm above the plate.
     depth_start = geom.PEG_LENGTH - geom.HOME_STANDOFF_Z
     depths = [
         depth_start + i * args_cli.step
@@ -181,10 +127,6 @@ def main() -> None:
     print(f"[passability] {len(depths)} waypoints from {depths[0]:+.4f} m to {depths[-1]:+.4f} m "
           f"in {args_cli.step*1000:.1f} mm steps")
 
-    # The negative control stops just past the entrance. It only has to show
-    # that the collider reacts; driving a deliberately misaligned peg 27 mm into
-    # solid plate would ask PhysX to resolve a penetration it was never meant to
-    # see, and the resulting depenetration impulses say nothing about the bore.
     offset_depths = [d for d in depths if d <= 0.006]
     for label, offset, sweep in (
         ("centred", (0.0, 0.0), depths),
@@ -212,32 +154,20 @@ def run_pass(env, robot, device, peg_idx, dh_to_art, depths, offset) -> dict:
             continue
         q_prev = q_dh
 
-        # Joint count from a buffer that is certain to exist, rather than from
-        # robot.num_joints, which probe_assets.py never covered.
         q_art = torch.zeros_like(robot.data.default_joint_pos[:1])
         for i, art_i in enumerate(dh_to_art):
             q_art[0, art_i] = float(q_dh[i])
         zero_vel = torch.zeros_like(q_art)
 
-        # Hold: rewrite the state every step so the actuators settle onto the
-        # commanded configuration without being allowed to drift.
         for _ in range(args_cli.hold_steps):
             step_sim(env, robot, q_art, zero_vel)
-        # Free: nothing is written. Any motion now comes from physics, and at
-        # these depths the only physical cause available is depenetration.
         step_sim(env, robot, None, None)
 
-        # Wrapped to +-pi: two joints run near 165 deg at the deepest waypoints,
-        # and an unwrapped difference across the +-pi seam would read as a 2 pi
-        # spike, i.e. a spurious BLOCKED verdict.
         delta = robot.data.joint_pos[0] - q_art[0]
         deviation = float(torch.max(torch.abs(torch.atan2(torch.sin(delta), torch.cos(delta)))).item())
         if math.isnan(deviation) or math.isinf(deviation):
-            # A solver blow-up is itself a reaction, but NaN propagates silently
-            # through max() comparisons and would corrupt the verdict rather
-            # than trip it. Mapped to a value that reads as "reacted violently".
             print(f"[passability] non-finite deviation at depth {depth:+.4f} m; recorded as a hard reaction")
-            deviation = 1e3  # finite on purpose: json.dumps writes inf as the non-standard Infinity
+            deviation = 1e3
         peg_vel = peg_speed(robot, peg_idx)
         tip = peg_tip_env_local(env, robot, peg_idx)
         waypoints.append(
@@ -255,12 +185,7 @@ def run_pass(env, robot, device, peg_idx, dh_to_art, depths, offset) -> dict:
 
 
 def step_sim(env, robot, q, qd) -> None:
-    """One physics step, optionally writing the joint state first.
-
-    Every Isaac Lab call here is guarded. A missing method on this version must
-    degrade to a warning: on the training machine an exception costs a whole
-    copy-and-run round trip and reveals less than a printed name would.
-    """
+    """One physics step, optionally writing the joint state first."""
     if q is not None:
         _guard("write_joint_state_to_sim", lambda: robot.write_joint_state_to_sim(q, qd, None, None))
         _guard("set_joint_position_target", lambda: robot.set_joint_position_target(q))
@@ -282,14 +207,7 @@ def _guard(name: str, call) -> None:
 
 
 def peg_speed(robot, peg_idx) -> float | None:
-    """Peg linear speed, or None if this Isaac Lab version does not expose it.
-
-    ``body_lin_vel_w`` was never covered by probe_assets.py -- D-020 addendum 2
-    confirmed only ``body_pos_w`` and ``body_quat_w``. It is a diagnostic here,
-    not part of the verdict, so an absent attribute must not end the run: losing
-    a 256-waypoint measurement over a secondary number would cost a full
-    copy-and-run round trip.
-    """
+    """Peg linear speed, or None if this Isaac Lab version does not expose it."""
     try:
         return float(torch.linalg.norm(robot.data.body_lin_vel_w[0, peg_idx]).item())
     except (AttributeError, IndexError, TypeError):
@@ -303,30 +221,15 @@ def peg_tip_env_local(env, robot, peg_idx) -> list[float]:
     pos = robot.data.body_pos_w[0, peg_idx] - env.scene.env_origins[0]
     q = robot.data.body_quat_w[0, peg_idx]
     w, x, y, z = (float(v) for v in q)
-    # Third column of the rotation matrix: the body z-axis in world coordinates.
     axis_z = np.array([2 * (x * z + w * y), 2 * (y * z - w * x), 1 - 2 * (x * x + y * y)])
     return [float(pos[i]) + geom.PEG_LENGTH * axis_z[i] for i in range(3)]
 
 
-# How far above its own contact-free maximum a pass must rise before the excess
-# counts as contact. The first run on the training machine showed why this must
-# not be a number picked in advance: with a flat 5x, the negative control
-# reached 4.78x and was declared inert, although the centred pass sat at 1.05x.
-# The separation in the data is a factor of 4.5; any cut between roughly 1.1 and
-# 4.7 yields the same verdict, so the script now reports that stable interval
-# and the reader can see the answer does not hinge on this constant.
 REACTION_FACTOR = 2.0
 
 
 def judge(result: dict) -> dict:
-    """Turn the two passes into a verdict by paired comparison.
-
-    Each pass is calibrated against **its own** contact-free waypoints, and the
-    two are then compared at matched depths. That pairing is what makes the
-    result an argument rather than a threshold: the centred and offset runs
-    differ by 4 mm of lateral position and nothing else, so identical gravity
-    and nearly identical arm configurations cancel, and what remains is contact.
-    """
+    """Turn the two passes into a verdict by paired comparison."""
     centred = result["centred"]["waypoints"]
     offset = result["offset"]["waypoints"]
     if not centred or not offset:
@@ -336,10 +239,6 @@ def judge(result: dict) -> dict:
         return w["free_step_joint_deviation_rad"]
 
     def contact_free_max(waypoints) -> float | None:
-        # At least 5 mm clear of the plate, where contact is geometrically
-        # impossible: pure gravity and solver noise. Taken per pass, because a
-        # laterally shifted arm has a slightly different gravity torque and must
-        # not be judged against the other pass's noise.
         vals = [react(w) for w in waypoints if w["commanded_depth_m"] < -0.005]
         return max(vals) if vals else None
 
@@ -356,10 +255,6 @@ def judge(result: dict) -> dict:
     centred_ratio = centred_max / centred_base if centred_base > 0 else float("inf")
     offset_ratio = offset_max / offset_base if offset_base > 0 else float("inf")
 
-    # Where the control first leaves its own quiet range. Physically this should
-    # be the plate top surface, i.e. within about a millimetre of depth 0; a
-    # reaction that only starts much deeper would mean something other than the
-    # plate is being hit.
     first_reaction = next(
         (
             w["commanded_depth_m"]
@@ -369,11 +264,6 @@ def judge(result: dict) -> dict:
         None,
     )
 
-    # Contiguous, not the maximum over all clean waypoints. Because each
-    # waypoint is teleported to independently, a single quiet reading deeper
-    # than an obstruction would otherwise report the bore as reached. The peg
-    # can only be said to have gone in as far as the last depth it reached
-    # without anything before it reacting.
     deepest_clean = float("-inf")
     for w in sorted(centred, key=lambda x: x["commanded_depth_m"]):
         if react(w) > threshold:
@@ -391,8 +281,6 @@ def judge(result: dict) -> dict:
         "verdict_stable_for_factors_between": [centred_ratio, offset_ratio],
         "offset_first_reaction_depth_m": first_reaction,
         "threshold_rad": threshold,
-        # None rather than -inf: json.dumps would emit the non-standard literal
-        # -Infinity, which a strict reader on the other machine rejects.
         "deepest_clean_depth_m": None if deepest_clean == float("-inf") else deepest_clean,
         "reached_success_depth": deepest_clean >= result["success_depth_m"] - 1e-9,
     }

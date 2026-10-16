@@ -1,33 +1,7 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-"""Convert a millimetre-authored CAD import into a metre stage (D-016 invariant 1).
-
-Symptom this fixes: the Isaac Sim CAD import leaves the stage at
-``metersPerUnit = 0.001`` with geometry authored in millimetre numbers. The
-physical size is then correct only if a reader honours ``metersPerUnit`` --
-Isaac Lab does not, so the asset spawns 1000x too large.
-
-The fix is two coupled edits, never one alone:
-  1. ``metersPerUnit`` -> 1.0 on the stage, and
-  2. a uniform scale of the OLD ``metersPerUnit`` (0.001) on the default prim,
-     placed FIRST in ``xformOpOrder`` so it scales any existing translation too.
-Setting only (1) would resize the table to 500 m.
-
-UNVERIFIED -- authored on the dev PC (no Isaac installation). Copy to the
-training machine before running (CLAUDE.md two-repo sync workflow):
-
-    cd C:\\Isaaclab
-    conda activate env_isaaclab
-    .\\isaaclab.bat -p <repo>\\scripts\\fix_stage_units.py --usd <path>\\Tisch.usd
-
-Safety model, because each run on the training machine costs a manual round
-trip: the input file is never edited in place. The script writes a backup, then
-exports a flattened candidate, then re-opens that candidate in a fresh stage and
-checks it against the asset contract (docs/asset_contract_tisch.md). The
-original is replaced only if that check passes. Every intermediate number is
-printed, so a failed run still explains itself instead of needing a second trip.
-"""
+"""Convert a millimetre-authored CAD import into a metre-scale USD stage."""
 
 from __future__ import annotations
 
@@ -69,7 +43,6 @@ args_cli.headless = True
 app_launcher = AppLauncher(args_cli)
 simulation_app = app_launcher.app
 
-# pxr is importable only after the app is up.
 from pxr import Gf, Usd, UsdGeom  # noqa: E402
 
 
@@ -88,8 +61,6 @@ def measure(stage: Usd.Stage) -> dict:
         "bbox_empty": False,
         "bbox_min_stage_units": lo,
         "bbox_max_stage_units": hi,
-        # The physical size is the stage-unit number times metersPerUnit. Reporting
-        # only stage units is what made an earlier run look correct when it was not.
         "bbox_min_m": [v * mpu for v in lo],
         "bbox_max_m": [v * mpu for v in hi],
         "extents_m": [(hi[i] - lo[i]) * mpu for i in range(3)],
@@ -136,8 +107,6 @@ def apply_unit_scale(prim: Usd.Prim, factor: float) -> None:
 
     scale_op = xf.AddScaleOp(opSuffix="unitsResolve")
     scale_op.Set(Gf.Vec3f(factor, factor, factor))
-    # Outermost: first entry in xformOpOrder is applied last to the point, i.e. it
-    # wraps everything below it, so any translate authored in millimetres is scaled too.
     xf.SetXformOpOrder([scale_op] + list(existing), xf.GetResetXformStack())
     print(f"[fix_stage_units] added {scale_op.GetOpName()} = {factor}, placed first in xformOpOrder")
 
@@ -164,7 +133,6 @@ def main() -> None:
     usd_path = pathlib.Path(args_cli.usd).resolve()
     if not usd_path.is_file():
         raise FileNotFoundError(f"No such USD file: {usd_path}")
-    # resolve() reports the on-disk casing on Windows; a mismatch matters on Linux.
     print(f"[fix_stage_units] resolved input: {usd_path}")
 
     stage = Usd.Stage.Open(str(usd_path))
@@ -216,8 +184,6 @@ def main() -> None:
     UsdGeom.SetStageMetersPerUnit(stage, 1.0)
     print(f"[fix_stage_units] xformOps after: {describe_xform_ops(target)}")
 
-    # Flatten so the result cannot depend on a sibling payload file, the failure
-    # mode that produced an invisible fixture on 2026-07-26.
     candidate = usd_path.with_name(usd_path.stem + ".fixed" + usd_path.suffix)
     stage.Flatten().Export(str(candidate))
     print(f"[fix_stage_units] candidate exported: {candidate}")

@@ -1,16 +1,7 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-"""List every prim in a USD stage with its type and world-space translation.
-
-Use this to check whether a coordinate system / Xform authored in the source
-CAD tool (e.g. a bore-entrance frame for D-017) actually survived the STEP to
-USD import, and where it ended up.
-
-    cd C:\\Isaaclab
-    conda activate env_isaaclab
-    .\\isaaclab.bat -p <repo>\\scripts\\list_usd_prims.py --usd <path\\to\\Tisch.usd>
-"""
+"""List USD prim types and world-space translations."""
 
 from __future__ import annotations
 

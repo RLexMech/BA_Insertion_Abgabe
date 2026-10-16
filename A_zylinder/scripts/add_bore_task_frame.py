@@ -1,27 +1,7 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-"""Author the D-017 task frame (bore entrance, +z into the bore) into Tisch.usd.
-
-The Creo STEP export does not carry auxiliary coordinate systems through to
-USD (confirmed empirically, PROBLEMS.md / D-017 caveat), so the frame is
-authored directly on the imported mesh instead of round-tripping through CAD.
-
-Measured offset from the table's raw CAD origin (the root Xform at (0,0,0),
-which sits at the tabletop plate's underside) to the bore entrance:
-  X =  0.000 m (bore centered along table length)
-  Y = -0.225 m
-  Z = +0.055 m (plate thickness — bore entrance is the plate's top face)
-Orientation: 180 deg about local X, so local +z points into the bore
-(world -Z) and local X stays aligned with world X.
-
-    cd C:\\Isaaclab
-    conda activate env_isaaclab
-    .\\isaaclab.bat -p <repo>\\scripts\\add_bore_task_frame.py --usd <path\\to\\Tisch.usd> --parent-path /World/tisch5
-
-Saves the stage in place. Run list_usd_prims.py afterward to confirm the new
-prim's world position and orientation.
-"""
+"""Add the bore entrance frame to Tisch.usd; local +z points into the bore."""
 
 from __future__ import annotations
 

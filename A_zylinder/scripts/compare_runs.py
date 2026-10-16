@@ -30,10 +30,7 @@ import re
 
 
 def read_config_yaml(run_dir: pathlib.Path) -> dict:
-    """Configuration a run was trained under, from the params/env.yaml that
-    train.py dumps. This is how runs predating the per-run metrics file can
-    still be told apart -- without it they are indistinguishable timestamps.
-    """
+    """Read the training configuration from params/env.yaml."""
     path = run_dir / "params" / "env.yaml"
     if not path.is_file():
         return {}
@@ -65,20 +62,7 @@ def read_config_yaml(run_dir: pathlib.Path) -> dict:
 
 
 def read_tensorboard_success(run_dir: pathlib.Path) -> dict:
-    """Last logged success rate from the run's TensorBoard events.
-
-    Recovers runs written before the per-run metrics file existed, whose
-    numbers went to one shared path and overwrote each other. Needs the
-    tensorboard package (present where training runs, absent on a bare dev
-    PC); returns {} rather than failing if it is missing.
-
-    Tag names confirmed on the training machine (2026-07-27): a pre-fix run
-    exposes ``Episode/success_rate`` and ``Episode/mean_final_depth_mm``,
-    which are the first and second candidates below. Runs written after the
-    metrics fix publish ``Episode/success_rate`` as the trailing window plus
-    ``Episode/success_rate_cumulative`` and ``Episode/mean_max_depth_mm``;
-    those carry a metrics file, so this path is not reached for them.
-    """
+    """Last logged success rate from the run's TensorBoard events."""
     try:
         from tensorboard.backend.event_processing import event_accumulator
     except ModuleNotFoundError:
@@ -146,21 +130,15 @@ def main() -> int:
         m: dict = {}
         if metrics_file.is_file():
             try:
-                # utf-8-sig: tolerate a byte-order mark, which some Windows
-                # editors add and json.loads otherwise chokes on.
                 m = json.loads(metrics_file.read_text(encoding="utf-8-sig"))
             except (OSError, ValueError) as exc:
                 missing.append((run_dir.name, f"unreadable: {exc}"))
                 continue
         else:
-            # Runs from before the per-run metrics file: recover what can be
-            # recovered rather than dropping real training time.
             m = read_tensorboard_success(run_dir)
             if not m:
                 missing.append((run_dir.name, len(checkpoints)))
                 continue
-        # The config dump fills in whatever the metrics file does not carry,
-        # which for recovered runs is everything.
         for key, value in read_config_yaml(run_dir).items():
             m.setdefault(key, value)
         rows.append(
@@ -189,10 +167,6 @@ def main() -> int:
                 print(f"  {name}  ({info} checkpoints)" if isinstance(info, int) else f"  {name}  ({info})")
         return 1
 
-    # Rate first, then sample efficiency. Once several configurations all
-    # finish at 100 % the rate stops separating them, and the episode count
-    # at which each first held the threshold is what does. Runs that never
-    # reached it sort last within their rate.
     def sort_key(r):
         reached = r["to_threshold"] if isinstance(r["to_threshold"], int) else float("inf")
         return (-round(r["recent"], 4), reached)
@@ -231,10 +205,6 @@ def main() -> int:
     print(f"  recent success rate : {best['recent']:.1%} over {best['window']} episodes")
     if best["checkpoint"] is not None:
         print(f"  latest checkpoint   : {best['checkpoint']}")
-        # play.py passes --checkpoint through retrieve_file_path, i.e. it is a
-        # PATH, not a filename inside --load_run (which is how train.py reads
-        # it). Printing the bare filename here produced a command that looked
-        # right and failed.
         print("\nWatch it run (windowed, real time):")
         print(
             f"  C:\\Isaaclab\\isaaclab.bat -p .\\scripts\\rsl_rl\\play.py "
@@ -256,7 +226,6 @@ def main() -> int:
         for name, info in missing:
             print(f"  {name}  ({info} checkpoints)" if isinstance(info, int) else f"  {name}  ({info})")
 
-    # Same-configuration groups are the only fair head-to-head comparisons.
     groups: dict = {}
     for r in rows:
         groups.setdefault((r["clearance_mm"], r["noise_rad"]), []).append(r)
