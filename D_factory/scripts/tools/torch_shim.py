@@ -1,53 +1,7 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-r"""torch, or a numpy stand-in for the elementary tensor algebra (offline).
-
-WHY THIS EXISTS
----------------
-The dev laptop has numpy but NO PyTorch (measured 2026-08-27:
-``import torch`` -> ModuleNotFoundError, Python 3.14.4, numpy 2.5.0rc1).
-The reward, observation and termination math is nevertheless pure tensor
-arithmetic, so it CAN be exercised here -- against a stand-in that implements
-exactly the operations the math uses and nothing else.
-
-That stand-in was written once, inline, in ``scripts/check_demo_reward_math.py``
-(2026-07-26). A second offline check needs the same object, so it gets one
-home instead of a second copy -- the house rule that ``self_contained`` broke
-three times in ``usd_predicates.py``'s history.
-
-WHAT IT IS NOT
---------------
-Not a torch emulator. Every method here exists because some checked function
-calls it. Anything else raises AttributeError, loudly, at the call site --
-which is the correct outcome: it means the math under test grew an operation
-the offline path has never verified.
-
-DTYPE
------
-The stand-in builds every tensor as float64; real torch defaults to float32.
-A pose literal like ``z = 0.730`` is then stored as 0.7300000190734863, and a
-boundary-inclusive threshold check fails by 1.9e-8 m for a reason that has
-nothing to do with the math. ``load()`` therefore sets real torch's default
-dtype to float64 as well, so both paths test the same algebra rather than the
-same rounding. No threshold is relaxed by this. Measured on the training
-machine 2026-08-05.
-
-USAGE
------
-``scripts/tools/`` is not a package. Load by path, as
-``check_demo_reward_math.py`` already does for this very module::
-
-    import importlib.util, pathlib
-    _p = pathlib.Path(__file__).resolve().parent / "tools" / "torch_shim.py"
-    _s = importlib.util.spec_from_file_location("torch_shim", _p)
-    torch_shim = importlib.util.module_from_spec(_s); _s.loader.exec_module(torch_shim)
-    torch, is_real = torch_shim.load()
-
-Self-test::
-
-    python scripts/tools/torch_shim.py --self-test
-"""
+"""torch, or a numpy stand-in for the elementary tensor algebra (offline)."""
 
 from __future__ import annotations
 
@@ -60,20 +14,7 @@ SHIM_MARKER = "torch-shim-2026-09-09a"
 
 
 class _ND(np.ndarray):
-    """ndarray with the tensor METHODS torch code actually writes.
-
-    Six so far: ``.transpose(a, b)``, which swaps two axes as torch's does
-    rather than demanding all of them, ``.abs()``, which numpy spells only as
-    a free function, ``.clone()``, which numpy spells ``.copy()``, the pair
-    ``.long()`` / ``.clamp()`` that ``autodr.boundary_assignment`` writes to
-    turn a uniform draw into a boundary index, and ``.sum(dim=...)``, which
-    numpy spells ``axis``.
-
-    The house rule this serves (2026-08-31): the module under test keeps the
-    idiomatic torch form -- ``x.abs()`` -- and the stand-in grows the method.
-    Never the other way round; the training PC runs real torch, and shaping the
-    task's math around the laptop's harness would leave it reading wrong there.
-    """
+    """ndarray with the tensor METHODS torch code actually writes."""
 
     def transpose(self, *axes):  # type: ignore[override]
         if len(axes) == 2 and self.ndim > 2:
@@ -84,21 +25,11 @@ class _ND(np.ndarray):
         return np.abs(self).view(_ND)
 
     def clone(self):
-        """torch's ``.clone()``; numpy spells the same thing ``.copy()``.
-
-        A real copy, not a view: callers write ``x.clone()`` exactly where
-        they must not alias the caller's buffer, so returning ``self`` would
-        pass every shape check and corrupt the input.
-        """
+        """torch's ``.clone()``; numpy spells the same thing ``.copy()``."""
         return np.copy(self).view(_ND)
 
     def long(self):
-        """torch's ``.long()``: cast to int64.
-
-        Both truncate TOWARDS ZERO rather than rounding, so a non-negative
-        ``(u * n).long()`` is a floor and the two paths agree. numpy spells
-        the same thing ``.astype(np.int64)``.
-        """
+        """torch's ``.long()``: cast to int64."""
         return np.asarray(self).astype(np.int64).view(_ND)
 
     def clamp(self, min=None, max=None):  # noqa: A002 - mirrors torch's kwarg names
@@ -106,19 +37,7 @@ class _ND(np.ndarray):
         return np.clip(self, min, max).view(_ND)
 
     def sum(self, dim=None, keepdim=False, axis=None, **kwargs):  # type: ignore[override]
-        """torch's ``.sum(dim=...)``; numpy spells the same axis ``axis``.
-
-        Added for ``insertion_math.clamp_tilt_to_cone``, which since Phase 5
-        step B7 takes a dot product as ``(tool * down).sum(dim=-1)`` -- the
-        idiomatic torch form. numpy's own ``.sum`` would have swallowed
-        ``dim`` as an unexpected keyword and raised, which is at least loud;
-        writing ``axis=-1`` in the task's math to please the laptop is the
-        thing the house rule above forbids.
-
-        ``axis`` and the remaining keywords are forwarded untouched, because
-        numpy calls this method itself with ``dtype=`` and ``out=`` and a
-        signature that only knew ``dim`` raised on its own machinery.
-        """
+        """torch's ``.sum(dim=...)``; numpy spells the same axis ``axis``."""
         if dim is not None:
             kwargs["axis"] = dim
         elif axis is not None:
@@ -129,15 +48,7 @@ class _ND(np.ndarray):
 
 
 def _nd(x):
-    """Every constructed tensor is an ``_ND``, or the override above never runs.
-
-    Found the hard way on 2026-08-28: ``stack`` and ``cat`` returned ``_ND``
-    but ``tensor``/``zeros``/``eye`` returned bare ndarrays, so
-    ``torch.tensor(...).transpose(1, 2)`` reached numpy's transpose -- which
-    demands ALL axes -- and raised "axes don't match array" instead of
-    swapping two. Loud rather than silent, but only because numpy refused;
-    a 2-D input would have transposed the wrong thing quietly.
-    """
+    """Every constructed tensor is an ``_ND``, or the override above never runs."""
     return np.asarray(x).view(_ND)
 
 
@@ -160,7 +71,6 @@ class _TorchShim:
     linalg = _Linalg()
     jit = _Jit()
 
-    # --- construction ------------------------------------------------------
     @staticmethod
     def stack(seq, dim=0):
         return np.stack(seq, axis=dim).view(_ND)
@@ -210,7 +120,6 @@ class _TorchShim:
     def ones_like(x):
         return _nd(np.ones_like(x))
 
-    # --- elementwise -------------------------------------------------------
     exp = staticmethod(np.exp)
     tanh = staticmethod(np.tanh)
     cos = staticmethod(np.cos)
@@ -232,7 +141,6 @@ class _TorchShim:
     def clamp(x, min=None, max=None):  # noqa: A002 - mirrors torch's kwarg names
         return np.clip(x, min, max)
 
-    # --- reductions --------------------------------------------------------
     @staticmethod
     def sum(x, dim=None):
         return np.sum(x, axis=dim)
@@ -253,7 +161,6 @@ class _TorchShim:
     def any(x, dim=None):
         return np.any(x, axis=dim)
 
-    # --- misc --------------------------------------------------------------
     @staticmethod
     def manual_seed(s):
         np.random.seed(s)
@@ -279,15 +186,7 @@ JIT_DECORATOR = "@torch.jit.script"
 
 
 def _jit_decorator_lines(src: str) -> set[int]:
-    """1-based line numbers of every decorator that resolves to jit's script.
-
-    The AST is the arbiter, not the text: it sees through ``@ torch.jit.script``
-    (space after the at-sign), an aliased ``@jit.script``, and PEP-614
-    parentheses, and it never looks inside a string. Matched: an attribute
-    chain ending in ``script`` that contains ``jit``, a bare ``@script``, and
-    the same behind a call. A stranger decorator that happens to match raises
-    a loud refusal downstream, never a silent strip -- the house preference.
-    """
+    """1-based line numbers of every decorator that resolves to jit's script."""
     lines: set[int] = set()
     for node in ast.walk(ast.parse(src)):
         for dec in getattr(node, "decorator_list", []):
@@ -304,65 +203,13 @@ def _jit_decorator_lines(src: str) -> set[int]:
 
 
 def strip_jit_script(src: str) -> str:
-    """Remove every ``@torch.jit.script`` decorator line from module source.
-
-    WHY THIS EXISTS (measured 2026-08-31, RT-108-gate).
-    A check that execs a mutated module string is BLIND under real torch:
-    ``torch.jit.script`` compiles the function by re-reading its source from
-    the FILE ON DISK (``inspect.getsource`` via ``linecache``, keyed on the
-    filename the string was compiled with). The mutation lives only in the
-    string, so the compiled function is the ORIGINAL one and every mutation
-    is a silent no-op. On the training PC that turned the whole D-080
-    counter-proof green-blind: all 38 mutations reported "flipped NOTHING".
-    Same commit with ``PYTORCH_JIT=0`` -> COUNTER-PROOF PASSED.
-
-    Stripping the decorator is not a change of algebra. ``torch.jit.script``
-    is a COMPILATION step: the Python body it wraps is what the eager path
-    runs anyway, and it is exactly what the numpy stand-in has always
-    executed (its own ``script`` is the identity). So both paths now run the
-    same source, and the mutation reaches the function on both.
-
-    THE LINE COUNT IS PRESERVED, and that is not cosmetic (measured
-    2026-08-31, RT-108-gate3). The caller compiles the stripped string under
-    the REAL file name, so every ``co_firstlineno`` in the result is looked
-    up against the file ON DISK. Deleting the lines shifted
-    ``scripted_policy.py`` from 767 lines to 757; ``advance_phase`` moved
-    from disk line 255 to string line 249, its code object reported
-    ``co_firstlineno`` 235, and ``inspect.getsource`` -- the very machinery
-    ``torch.jit.script`` uses -- returned a COMMENT BANNER instead of the
-    function. Under real torch that produced
-    ``advance_phase() expected at most 2 argument(s) but received 10.
-    Declaration: advance_phase(Tensor part_quat, Tensor pocket_quat)``,
-    which is the signature of ``axis_tilt_angle``. So the decorator line is
-    BLANKED, never removed.
-
-    A TRAILING COMMENT STILL COUNTS AS THE DECORATOR. Exact-line equality
-    was the original spelling and it let
-    ``@torch.jit.script  # ...`` through -- exactly the form
-    ``check_scripted_insert``'s RT-66 mutation writes. ``@torch.jit.script_method``
-    is NOT this decorator and stays; a prose line that merely quotes the name
-    starts with ``#`` and stays too.
-
-    Raises if it strips nothing -- a decorator spelled some other way would
-    otherwise bring the blindness back without a sound. And the AST GUARD
-    (2026-08-31d) refuses every PARTIAL strip too: the text rule missed valid
-    re-spellings (``@ torch.jit.script``, an aliased ``@jit.script``, PEP-614
-    parentheses) whenever one stood next to a bare decorator -- that function
-    recompiles from disk under real torch and its mutations are no-ops again
-    -- and it blanked a docstring line that merely starts with the decorator
-    text. The lines the text rule blanks must therefore EQUAL the lines the
-    AST calls jit-script decorators; any difference is a loud refusal, and the
-    fix is spelling the decorator bare or rewording the string, never a
-    silent half-strip.
-    """
+    """Remove every ``@torch.jit.script`` decorator line from module source."""
     out, blanked = [], set()
     for i, line in enumerate(src.splitlines(keepends=True), start=1):
         bare = line.strip()
         rest = bare[len(JIT_DECORATOR):]
         if bare.startswith(JIT_DECORATOR) and (not rest or rest[0].isspace() or rest[0] == '#'):
             blanked.add(i)
-            # Keep the line, drop its text: the line ending survives, so every
-            # line below stays at the number the file on disk gives it.
             out.append(line[len(line.rstrip()):])
             continue
         out.append(line)
@@ -387,12 +234,7 @@ def strip_jit_script(src: str) -> str:
 
 
 def load(announce: bool = True):
-    """Return ``(torch_or_stand_in, is_real)``.
-
-    Real torch is preferred whenever it imports; the stand-in is the fallback,
-    never a choice. On the real path the default dtype is set to float64, see
-    the module docstring.
-    """
+    """Return ``(torch_or_stand_in, is_real)``."""
     try:
         import torch  # noqa: PLC0415 - the whole point is the optional import
     except ModuleNotFoundError:
@@ -405,10 +247,6 @@ def load(announce: bool = True):
     return torch, True
 
 
-# ===========================================================================
-#  Self-test: the stand-in must agree with hand-computed values, and load()
-#  must prefer real torch when it exists.
-# ===========================================================================
 def _self_test() -> int:
     failures: list[str] = []
 
@@ -430,7 +268,6 @@ def _self_test() -> int:
     check("cat keeps the block order", float(c[0, 2]) == 0.0 and float(c[0, 3]) == 1.0)
     check("stack of two (3,) -> (2,3)", t.stack([t.zeros(3), t.ones(3)]).shape == (2, 3))
 
-    # --- cross and clone, added 2026-09-06 for tilt_recovery_probe.py -------
     _x = t.tensor([[1.0, 0.0, 0.0]])
     _y = t.tensor([[0.0, 1.0, 0.0]])
     check("cross(x, y) is +z", [float(v) for v in t.cross(_x, _y, dim=-1)[0]] == [0.0, 0.0, 1.0])
@@ -443,15 +280,10 @@ def _self_test() -> int:
     _orig = t.tensor([[1.0, 2.0]])
     _copy = _orig.clone()
     _copy[0, 0] = 99.0
-    # MUTATION: returning `self` from clone() passes every shape check and
-    # silently aliases. Writing through the copy must NOT reach the original.
     check("clone does not alias the original", float(_orig[0, 0]) == 1.0, str(float(_orig[0, 0])))
     check("clone carries the values across", float(_copy[0, 1]) == 2.0)
     check("clone returns an _ND", isinstance(_copy, _ND))
 
-    # .long() and .clamp() exist for autodr.boundary_assignment. Exercised
-    # HERE too, not only through check_autodr.py: this self-test is what the
-    # house rule points at, and two of the five methods were untested in it.
     _u = t.tensor([0.0, 0.4, 0.999999, 1.0])
     _idx = (_u * 11).long()
     check("long() truncates towards zero, so a non-negative product floors",
@@ -493,8 +325,6 @@ def _self_test() -> int:
     nd = t.stack([t.eye(3), t.eye(3)])
     check("_ND.transpose(1,2) swaps the two trailing axes", nd.transpose(1, 2).shape == (2, 3, 3))
 
-    # .abs() as a METHOD: numpy has only the free function, torch code writes
-    # the method, and the module under test is not bent to fit the stand-in.
     a = t.tensor([[-3.0, 4.0], [0.0, -0.5]])
     check("_ND.abs() is the elementwise magnitude",
           [list(r) for r in a.abs()] == [[3.0, 4.0], [0.0, 0.5]],
@@ -503,15 +333,11 @@ def _self_test() -> int:
     check(".abs() returns a tensor, not a bare ndarray", isinstance(a.abs(), _ND),
           type(a.abs()).__name__)
 
-    # (2,3,3) is square in the swapped axes, so it cannot tell a real swap from
-    # a no-op. This one can.
     oblong = t.tensor([[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]])
     check("transpose(1,2) really swaps, not just returns",
           oblong.transpose(1, 2).shape == (1, 3, 2), str(oblong.transpose(1, 2).shape))
     check("transpose(1,2) moves the elements with the axes",
           float(oblong.transpose(1, 2)[0, 2, 0]) == 3.0)
-    # Every constructor must carry the override, not only stack/cat -- the
-    # 2026-08-28 gap was tensor()/eye() returning bare ndarrays.
     for name, made in (("tensor", oblong), ("eye", t.eye(3)), ("zeros", t.zeros(1, 2, 3)),
                        ("ones", t.ones(1, 2, 3)), ("zeros_like", t.zeros_like(oblong)),
                        ("ones_like", t.ones_like(oblong)), ("full_like", t.full_like(oblong, 1.0)),
@@ -522,15 +348,12 @@ def _self_test() -> int:
     check("atan2(1,0) is pi/2",
           abs(float(t.atan2(t.tensor([1.0]), t.tensor([0.0]))[0]) - np.pi / 2) < 1e-15)
 
-    # An operation NOT in the stand-in must fail loudly, not silently: it means
-    # the math under test grew an op the offline path never verified.
     try:
         t.svd  # noqa: B018 - the point is the AttributeError
         check("an unimplemented op raises AttributeError", False, "svd resolved")
     except AttributeError:
         check("an unimplemented op raises AttributeError", True)
 
-    # strip_jit_script: the RT-108-gate blindness, pinned.
     NL = chr(10)
     HASH = chr(35)
     jit_src = NL.join([
@@ -552,10 +375,6 @@ def _self_test() -> int:
     check("strip_jit_script REFUSES source with no decorator to strip",
           stripped_nothing)
 
-    # RT-108-gate3: the strip must not move a single line. The caller compiles
-    # under the real file name, so a shifted line number sends
-    # ``inspect.getsource`` -- and with it ``torch.jit.script`` -- to a
-    # different function. Blanking keeps the count; deleting did not.
     check("strip_jit_script keeps the line count",
           len(stripped.splitlines()) == len(jit_src.splitlines()),
           f"{len(jit_src.splitlines())} -> {len(stripped.splitlines())}")
@@ -564,12 +383,6 @@ def _self_test() -> int:
           == [i for i, l in enumerate(jit_src.splitlines()) if l.startswith("def ")],
           repr(stripped))
 
-    # RT-108-gate3, the other half: exact-line equality let the decorator
-    # through whenever anything followed it on the line -- which is the form
-    # check_scripted_insert's RT-66 mutation writes.
-    # A BARE decorator sits above the commented one on purpose: without it the
-    # refusal above fires first and this check never gets to run, so a strip
-    # that went back to exact-line equality would break the wrong way.
     trailing = NL.join([
         "@torch.jit.script", "def f(x):", "    return x", "",
         "@torch.jit.script  %s put back by the mutation" % HASH,
@@ -590,13 +403,6 @@ def _self_test() -> int:
     check("strip_jit_script keeps @torch.jit.script_method",
           "@torch.jit.script_method" in kept, repr(kept))
 
-    # THE AST GUARD (2026-08-31d). The text rule alone had two SILENT holes,
-    # both measured on 2026-08-31: a valid re-spelling of the decorator
-    # (`@ torch.jit.script`, an alias, PEP-614 parentheses) survived whenever
-    # it stood NEXT to a bare one -- that function recompiles from disk under
-    # real torch and its mutations are no-ops again; and a docstring line that
-    # merely STARTS with the decorator text was blanked, altering the string.
-    # The guard closes both by refusing, loudly. Partial strips never pass.
     def refuses(bad_src: str) -> bool:
         try:
             strip_jit_script(bad_src)
@@ -621,7 +427,6 @@ def _self_test() -> int:
               "@torch.jit.script", "def f(x):", "    return x", "",
           ])))
 
-    # The control that keeps the stand-in a fallback rather than a choice.
     obj, is_real = load(announce=False)
     try:
         import torch as _real  # noqa: PLC0415

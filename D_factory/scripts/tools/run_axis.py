@@ -80,8 +80,7 @@ def _int_value(path, key: str, no: int, rest: str) -> int:
 
 
 def read_factor(agent_yaml, env_yaml) -> tuple[int, int]:
-    """``(num_steps_per_env, num_envs)`` of one run, read from its two
-    ``params`` files. Refuses (``SystemExit``) on a missing or doubled key."""
+    """``(num_steps_per_env, num_envs)`` of one run, read from its two ``params`` files."""
     steps = [(no, m.group("rest")) for no, line in enumerate(_lines(agent_yaml), 1)
              if (m := _KEY.match(line)) and not m.group("indent") and m.group("key") == "num_steps_per_env"]
     if len(steps) != 1:
@@ -91,7 +90,7 @@ def read_factor(agent_yaml, env_yaml) -> tuple[int, int]:
 
 def _key_paths(path, key: str) -> list[tuple[int, list[str], str]]:
     """Every ``key:`` line of a yaml file as (line number, parent keys, value)."""
-    hits, stack = [], []   # stack: (indent, key) of the open blocks
+    hits, stack = [], []
     for no, line in enumerate(_lines(path), 1):
         m = _KEY.match(line)
         if m is None:
@@ -106,8 +105,7 @@ def _key_paths(path, key: str) -> list[tuple[int, list[str], str]]:
 
 
 def read_factor_rl_games(agent_yaml, env_yaml) -> tuple[int, int]:
-    """``(horizon_length, num_envs)`` of one rl_games run. Refuses unless
-    exactly one ``horizon_length:`` exists and it sits under params -> config."""
+    """``(horizon_length, num_envs)`` of one rl_games run."""
     hits = _key_paths(agent_yaml, "horizon_length")
     if len(hits) != 1 or hits[0][1] != ["params", "config"]:
         where = ", ".join(f"line {h[0]} under {'.'.join(h[1]) or 'top level'}" for h in hits) or "none"
@@ -117,8 +115,7 @@ def read_factor_rl_games(agent_yaml, env_yaml) -> tuple[int, int]:
 
 
 def read_run_factor(agent_yaml, env_yaml) -> tuple[str, tuple[int, int]]:
-    """``("rsl_rl" | "rl_games", factor)``: the library from which key the
-    ``agent.yaml`` carries; both or neither is refused."""
+    """``(\"rsl_rl\" | \"rl_games\", factor)``: the library from which key the ``agent.yaml`` carries; both or neither is refused."""
     rsl = any((m := _KEY.match(line)) and not m.group("indent") and m.group("key") == "num_steps_per_env"
               for line in _lines(agent_yaml))
     rlg = bool(_key_paths(agent_yaml, "horizon_length"))
@@ -130,9 +127,7 @@ def read_run_factor(agent_yaml, env_yaml) -> tuple[str, tuple[int, int]]:
 
 
 def read_policy_dt(env_yaml) -> float:
-    """Policy step in s: ``sim.dt`` x ``decimation``. Exactly one ``dt:`` in
-    the file, directly under top-level ``sim:``; exactly one ``decimation:``,
-    at top level."""
+    """Policy step in s: ``sim.dt`` x ``decimation``."""
     dts, decs = _key_paths(env_yaml, "dt"), _key_paths(env_yaml, "decimation")
     if len(dts) != 1 or dts[0][1] != ["sim"] or len(decs) != 1 or decs[0][1] != []:
         raise SystemExit(f"{env_yaml}: expected exactly one 'dt:' directly under 'sim:' and one top-level "
@@ -150,8 +145,7 @@ _RL_GAMES_AT_EPOCH_END = ("losses/cval_loss", "info/cval_lr")
 
 
 def rl_games_x(tag: str, step: int, frames_per_epoch: int) -> int | None:
-    """Total env steps behind one rl_games scalar, by its tag family (module
-    docstring); None for a ``*/time`` tag. An unknown family is refused."""
+    """Total env steps behind one rl_games scalar, by its tag family (module docstring); None for a ``*/time`` tag."""
     if tag.endswith("/time"):
         return None
     if tag.startswith("Episode/") or tag.endswith("/iter"):
@@ -165,8 +159,7 @@ def rl_games_x(tag: str, step: int, frames_per_epoch: int) -> int | None:
 
 
 def check_rl_games_epochs(pairs, frames_per_epoch: int) -> None:
-    """``pairs`` = (step, ``info/epochs`` value) of a CSV. Every row must sit
-    at (epoch - 1) * F; else the factor from the yaml is not the run's."""
+    """``pairs`` = (step, ``info/epochs`` value) of a CSV."""
     pairs = list(pairs)
     bad = [(s, e) for s, e in pairs if s != (int(e) - 1) * frames_per_epoch]
     if not pairs or bad:
@@ -175,7 +168,6 @@ def check_rl_games_epochs(pairs, frames_per_epoch: int) -> None:
 
 
 def _scene_num_envs(env_yaml) -> int:
-    # hits: (line number, top-level block, directly under that block, value)
     hits = []
     block, child = None, None
     for no, line in enumerate(_lines(env_yaml), 1):
@@ -203,9 +195,7 @@ def env_steps(it: int, num_steps_per_env: int, num_envs: int) -> int:
 
 
 def wall_time_line(steps: list[int], walls: list[float]) -> str:
-    """The one line of text wall time gets (D-195): last minus first
-    ``wall_time`` of the ITERATION rows the caller passes (never the
-    ``*/time``-only rows, whose step is a clock, not an iteration)."""
+    """The one line of text wall time gets (D-195): last minus first ``wall_time`` of the ITERATION rows the caller passes (never the ``*/time``-only rows, whose step is a clock, not an iteration)."""
     if not steps:
         return "wall time: no iteration rows"
     return (f"wall time {(walls[-1] - walls[0]) / 3600:.2f} h over {len(steps)} iterations "
@@ -240,8 +230,7 @@ _REAL_RLG_CSV = _REPO / "rt_logs" / "RT-240c" / "RT-240c_scalars.csv"
 
 
 def _real_rl_games_csv(ns: dict) -> bool | None:
-    """Every tag of the real RT-240c CSV gets an x (or None for */time), and
-    its info/epochs rows fit F = 128 * 256. None when the file is absent."""
+    """Every tag of the real RT-240c CSV gets an x (or None for */time), and its info/epochs rows fit F = 128 * 256."""
     import csv
 
     if not _REAL_RLG_CSV.is_file():
@@ -258,8 +247,7 @@ def _real_rl_games_csv(ns: dict) -> bool | None:
 
 
 def _run_checks(ns: dict, tmp: pathlib.Path) -> dict:
-    """``{check: True | False | None}``; None = the git-ignored real files
-    are not on this machine (reported as SKIPPED, never as PASS)."""
+    """``{check: True | False | None}``; None = the git-ignored real files are not on this machine (reported as SKIPPED, never as PASS)."""
     rf, es = ns["read_factor"], ns["env_steps"]
     agent = tmp / "agent.yaml"
     agent.write_text("seed: 1\nnum_steps_per_env: 128\nmax_iterations: 400\n", encoding="utf-8")

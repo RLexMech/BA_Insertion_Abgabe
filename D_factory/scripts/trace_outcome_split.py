@@ -58,8 +58,8 @@ import sys
 
 SCRIPT_MARKER = "trace_outcome_split-2026-09-13b"
 
-DEFAULT_TIMEOUT_STEP = 255  # see trace_first_episode.py
-WINDOW = 20  # steps before the end of the episode
+DEFAULT_TIMEOUT_STEP = 255
+WINDOW = 20
 
 
 def _q(xs, p):
@@ -72,13 +72,7 @@ def _q(xs, p):
 
 
 def quat_angle_deg(a, b) -> float:
-    """Angle [deg] of the rotation taking wxyz quaternion ``a`` to ``b``.
-
-    ``q`` and ``-q`` are the same rotation, so the dot product is taken in
-    absolute value; without that a sign flip of the stored quaternion would
-    read as a 180 degree turn. Clamped before ``acos`` because a dot product
-    of 1.0000000002 is a float artefact, not a domain error.
-    """
+    """Angle [deg] of the rotation taking wxyz quaternion ``a`` to ``b``."""
     d = abs(sum(x * y for x, y in zip(a, b)))
     d = min(1.0, max(-1.0, d))
     return math.degrees(2.0 * math.acos(d))
@@ -118,7 +112,6 @@ def per_env(trace: dict, timeout_step: int = DEFAULT_TIMEOUT_STEP,
             rec_tilt = {
                 "rot_total_end_deg": rot[-1],
                 "rot_total_max_deg": max(rot),
-                # what the yaw channel cannot account for; never negative
                 "rot_beyond_yaw_end_deg": max(0.0, rot[-1] - abs(yaw_err_end)),
             }
         out.append({
@@ -151,12 +144,7 @@ def _norm(v):
 
 
 def truth_per_env(trace: dict, truth_from: int = 20) -> list:
-    """One record per env over steps ``truth_from`` .. end of its FIRST episode.
-
-    Returns ``[]`` for a trace without the truth block. An env whose first
-    episode ends before ``truth_from`` gets ``{"env": e, "window": 0}``; an env
-    with no done in the trace uses the whole trace as its episode.
-    """
+    """One record per env over steps ``truth_from`` .."""
     tr = trace.get("truth")
     if not tr:
         return []
@@ -191,9 +179,6 @@ def truth_per_env(trace: dict, truth_from: int = 20) -> list:
             "pen_max_mm": max(pen),
             "pen_pos_frac": sum(1 for v in pen if v > 0.0) / len(pen),
         }
-        # THE TORQUE (D-188, traces written from 2026-09-13 on): tared raw
-        # and EMA, same window, N m. An older trace has no such keys and gets
-        # no such fields -- the report prints without them rather than failing.
         if "torque_tared_raw_nm" in tr:
             tq = [tr["torque_tared_raw_nm"][i][e] for i in idx]
             tq_m = _vmean(tq)
@@ -237,8 +222,6 @@ def truth_report(recs: list, truth_from: int) -> list:
 FIELDS = ["steps", "z_end_mm", "z_min_mm", "lat_end_mm", "lat_max_mm",
           "yaw_err_end_deg", "yaw_err_max_deg", "force_end_n", "force_max_n",
           "w_force_mean_n", "w_z_travel_mm", "w_lat_travel_mm"]
-# Only present in traces written from 2026-09-06 on; an older trace prints
-# the same report without these rows rather than failing on a missing key.
 TILT_FIELDS = ["rot_total_end_deg", "rot_total_max_deg", "rot_beyond_yaw_end_deg"]
 
 
@@ -283,29 +266,19 @@ def _quat_axis_angle(axis, deg):
 
 
 def _synth(with_quat: bool = True):
-    """2 envs, 288 steps: env 0 succeeds at 60 pushing in; env 1 parks on the rim.
-
-    Orientation, when ``with_quat``: env 0 stays exactly at its reset pose;
-    env 1 turns 25 deg about x while its yaw channel reads a 10 deg error.
-    Those two are deliberately INCONSISTENT as physics: the point is to test
-    the arithmetic in isolation, with both the total rotation (25) and the
-    part the yaw channel cannot account for (25 - 10 = 15) known exactly and
-    not recomputed by the code under test.
-    """
+    """2 envs, 288 steps: env 0 succeeds at 60 pushing in; env 1 parks on the rim."""
     T, E = 288, 2
     tip, yaw, frc, done = [], [], [], []
     quat = [] if with_quat else None
     for i in range(T):
         rt, ry, rf, rd = [], [], [], []
         rq = []
-        # env 0: z 40 -> -20 by step 60, then done
         z0 = 40.0 - i * 1.0 if i <= 60 else -20.0
         rt.append([0.0, 0.0, z0 / 1000.0])
         ry.append([-1.0, 0.0])
         rf.append([0.0, 0.0, 5.0])
         rd.append(i + 1 == 60)
-        rq.append([1.0, 0.0, 0.0, 0.0])  # env 0 never leaves its reset pose
-        # env 1: z stalls at 2 mm from step 30 on, 10 N standing, 8 mm off axis
+        rq.append([1.0, 0.0, 0.0, 0.0])
         z1 = 40.0 - i * 1.2 if i < 30 else 4.0
         rt.append([8.0 / 1000.0, 0.0, z1 / 1000.0])
         ry.append([math.cos(math.radians(170.0)), math.sin(math.radians(170.0))])
@@ -317,9 +290,6 @@ def _synth(with_quat: bool = True):
             quat.append(rq)
     out = {"tip_rel_m": tip, "yaw_cos_sin": yaw, "force_n": frc, "done": done,
            "num_envs": E, "step_dt_s": 1.0 / 15.0}
-    # Truth: env 1 has raw force 9 N in z BEFORE step 20 and 2 N from step 20
-    # on, EMA 1.5 N, the OSC target 1 mm below the body, a still true tip and
-    # 0.01 mm interpenetration on every even step. Env 0 is all zeros.
     tr = {k: [] for k in ("force_tared_raw_n", "force_ema_n", "tip_true_m", "body_pose_w",
                           "osc_delta", "osc_target_pose_w", "interpen_max_m")}
     for i in range(T):
@@ -330,9 +300,6 @@ def _synth(with_quat: bool = True):
         tr["osc_delta"].append([[0.0] * 6, [0.0] * 6])
         tr["osc_target_pose_w"].append([[0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0], [0.5, 0.0, 0.299, 1.0, 0.0, 0.0, 0.0]])
         tr["interpen_max_m"].append([0.0, 1e-5 if i % 2 == 0 else 0.0])
-    # D-188: env 1 carries a 0.9 N m torque about y before step 20 and 0.3 N m
-    # from step 20 on (so a window that starts at 0 would read a different
-    # mean); env 0 is zero. wrench_valid is False on row 0 only.
     tr["torque_tared_raw_nm"] = [[[0.0, 0.0, 0.0], [0.0, 0.9 if i < 20 else 0.3, 0.0]]
                                  for i in range(T)]
     tr["torque_ema_nm"] = [[[0.0, 0.0, 0.0], [0.0, 0.25, 0.0]] for _ in range(T)]
@@ -365,12 +332,8 @@ def _self_test() -> int:
     txt = "\n".join(report(recs))
     checks.append(("parked counted for timeout", "parked_in_contact  1 of 1" in txt))
     checks.append(("below entrance counted", "reached_below_entrance  1 of 1" in txt))
-    # MUTATION (D-080): reading the LAST step instead of the deepest would make
-    # the success look shallow. The two must differ.
     checks.append(("z_min differs from z_end", s[0]["z_min_mm"] <= s[0]["z_end_mm"]))
-    # percentile helper on a known list
     checks.append(("median of 1..5 is 3", _q([1, 2, 3, 4, 5], 0.5) == 3))
-    # -- tilt, from ee_quat -------------------------------------------------
     checks.append(("success stayed at its reset pose",
                    abs(s[0]["rot_total_end_deg"]) < 1e-9))
     checks.append(("timeout turned 25 deg in total",
@@ -381,30 +344,22 @@ def _self_test() -> int:
                    s[0]["rot_beyond_yaw_end_deg"] >= 0.0))
     checks.append(("tilted counted for the timeout", "tilted  1 of 1" in txt))
     checks.append(("tilted not counted for the success", "tilted  0 of 1" in txt))
-    # q and -q are the same rotation: a sign flip must read 0, not 180 deg
     checks.append(("quaternion sign flip is not a rotation",
                    abs(quat_angle_deg([1.0, 0, 0, 0], [-1.0, 0, 0, 0])) < 1e-6))
-    # MUTATION (D-080): dropping the abs() in quat_angle_deg would turn that
-    # sign flip into 360 deg and break the check above.
-    # -- an OLD trace without ee_quat must still work, and say so ------------
     old = per_env(_synth(with_quat=False))
     checks.append(("old trace loses no other field", "lat_end_mm" in old[0]))
     checks.append(("old trace carries no tilt field",
                    "rot_total_end_deg" not in old[0]))
     checks.append(("old trace says tilt is not measurable",
                    "tilt  NOT MEASURABLE" in "\n".join(report(old))))
-    # -- truth block ---------------------------------------------------------
     tru = truth_per_env(_synth(), 20)
     t1 = tru[1]
     checks.append(("truth: env 0 ends at step index 59, window 40 steps", tru[0]["window"] == 40))
     checks.append(("truth: env 1 window 235 steps (20..254)", t1["window"] == 235))
-    # MUTATION (D-080): starting the window at 0 instead of truth_from pulls the
-    # 9 N approach steps into the mean and breaks this check.
     checks.append(("truth: raw force mean 2 N, approach excluded",
                    abs(t1["raw_mean_norm_n"] - 2.0) < 1e-9))
     checks.append(("truth: EMA mean 1.5 N kept apart from raw",
                    abs(t1["ema_mean_norm_n"] - 1.5) < 1e-9))
-    # MUTATION (D-080): body - target instead of target - body flips the sign.
     checks.append(("truth: target 1 mm BELOW the body reads err z -1 mm",
                    abs(t1["err_mean_mm"][2] + 1.0) < 1e-6))
     checks.append(("truth: still tip has zero travel", max(t1["tip_travel_mm"]) < 1e-9))
@@ -414,7 +369,6 @@ def _self_test() -> int:
     checks.append(("truth: old trace says NOT IN THIS TRACE",
                    "NOT IN THIS TRACE" in "\n".join(truth_report(truth_per_env(_synth(False) | {"truth": None}, 20), 20))))
     checks.append(("truth: report prints env 1", "env 1 n=235" in "\n".join(truth_report(tru, 20))))
-    # -- torque (D-188) ---------------------------------------------------------
     checks.append(("truth: raw torque mean 0.3 Nm about y, approach excluded",
                    abs(t1["torque_raw_mean_nm"][1] - 0.3) < 1e-12
                    and abs(t1["torque_raw_mean_norm_nm"] - 0.3) < 1e-12))
@@ -424,7 +378,6 @@ def _self_test() -> int:
                    abs(t1["wrench_valid_frac"] - 1.0) < 1e-12))
     checks.append(("truth: report prints raw tau",
                    "raw tau mean (+0.000, +0.300, +0.000) Nm" in "\n".join(truth_report(tru, 20))))
-    # MUTATION (D-080): a window from step 0 reads the 0.9 N m approach too.
     checks.append(("truth: a window from step 0 changes the torque mean (the window binds)",
                    truth_per_env(_synth(), 0)[1]["torque_raw_mean_nm"][1] > 0.3))
     _old = _synth()

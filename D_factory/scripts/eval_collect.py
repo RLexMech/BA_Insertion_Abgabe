@@ -48,31 +48,18 @@ SCRIPT_MARKER = "eval_collect-2026-09-26a"
 REPO = pathlib.Path(__file__).resolve().parents[1]
 TABLE_DIR = REPO / "scripts" / "eval"
 
-# eval_plan.md section 3.2: block -> (table file, width). `technik` runs both
-# widths on the practice table, so its width is read from the manifest.
-# The 18-column tables (D-204 (4) appended fixture_noise_z); the 17-column
-# `_c17` ones (D-194) and the 16-column ones stay the identities of the
-# evaluations drawn on them -- the 16-column one is the old MLP
-# evaluation's, read on its own commit 823c1be4.
 BLOCKS = {
     "T-nominal": ("eval_table_seed10_c18.csv", "nominal"),
     "T-auswahl": ("eval_table_seed30_c18.csv", "target"),
     "T-final": ("eval_table_seed10_c18.csv", "target"),
     "T-grenze": ("eval_table_boundary_seed10_c18.csv", "target"),
-    # D-206 (3) (D-055/D-191, from p6-TestAusserhalb 019ae3d8): the boundary
-    # table with its nailed cells moved outwards (make_eval_table.py --kind
-    # ood). The five AutoDR seeds only; scripts/rl_games/run_eval.ps1 reads
-    # this line. Target width: the table itself leaves the band.
     "T-ood": ("eval_table_ood_seed10_c18.csv", "target"),
     "technik": ("eval_table_seed20_c18.csv", None),
-    # Fixed-DR arm (D-192, added afterwards): same table and width as the block
-    # it is compared with; only Fixed-DR plays here, and only here.
     "T-nominal-F": ("eval_table_seed10_c18.csv", "nominal"),
     "T-final-F": ("eval_table_seed10_c18.csv", "target"),
 }
 METHODS = ("autodr", "nodr", "fixeddr")
 FIXED_BLOCKS = ("T-nominal-F", "T-final-F")
-# train.py tags the run folder with the dr_mode (train.py:339-340); 'off' has none.
 _MODE_TAG = {"_autodr_": "autodr", "_fixed_dr_": "fixeddr"}
 _FOLDER = re.compile(r"^(autodr|nodr|fixeddr)_s(\d+)(?:_([A-Za-z0-9-]+))?$")
 _CKPT_SEED = re.compile(r"_seed(\d+)$")
@@ -108,8 +95,7 @@ def identity_from_checkpoint(path: str) -> tuple[str, int] | None:
 
 
 def tilt_deg(qx: float, qy: float) -> float:
-    """Polar angle of the pocket z axis -- the env's own tilt reading
-    (`_log_finished_episodes`, acos of r22), not the quaternion's total angle."""
+    """Polar angle of the pocket z axis -- the env's own tilt reading (`_log_finished_episodes`, acos of r22), not the quaternion's total angle."""
     r22 = 1.0 - 2.0 * (qx * qx + qy * qy)
     return math.degrees(math.acos(max(-1.0, min(1.0, r22))))
 
@@ -155,7 +141,7 @@ def collect_run(block: str, folder: str, run: dict, table: dict) -> tuple[list, 
         rid = int(r["env_id"])
         a = applied.get(str(rid))
         if a is None:
-            continue   # G3a has already failed this run
+            continue
         f_filt = float(r["force_max_filtered_n"])
         ok = r["outcome"] == "success"
         rows.append({
@@ -164,11 +150,7 @@ def collect_run(block: str, folder: str, run: dict, table: dict) -> tuple[list, 
             "boundary_key": keys[rid // per_block] if per_block else "",
             "outcome": r["outcome"],
             "success_train": int(ok),
-            # eval_plan.md section 4: success AND below the abort limit. The
-            # env aborts at `>=` (insertion_math.py:1223), so strict is `<`.
             "success_strict": int(ok and f_filt < limit),
-            # Read from the force, not from `outcome`: a success in the abort
-            # step is written `success` (InBachelorErwähnen 2026-09-16).
             "force_abort": int(f_filt >= limit),
             "steps": int(r["steps"]),
             "force_max_filtered_n": f_filt,
@@ -181,7 +163,6 @@ def collect_run(block: str, folder: str, run: dict, table: dict) -> tuple[list, 
             "start_height_m": float(a["start_height_m"]),
             "friction": float(a["friction_cmd"]),
         })
-    # Outcomes of the repeat episodes (G4): episode 1 of an env vs its episode 0.
     first = {r["env_id"]: r["outcome"] for r in run["ep_rows"] if r.get("episode") == "0"}
     second = {r["env_id"]: r["outcome"] for r in run["ep_rows"] if r.get("episode") == "1"}
     same = sum(1 for k, v in second.items() if first.get(k) == v)
@@ -194,8 +175,7 @@ def collect_run(block: str, folder: str, run: dict, table: dict) -> tuple[list, 
 
 
 def g6_report(rows: list) -> list:
-    """G6: the same policy on the same table twice (technik, two tags) -- share of
-    rows whose outcome differs. Reported, no pass line (eval_plan.md section 6)."""
+    """G6: the same policy on the same table twice (technik, two tags) -- share of rows whose outcome differs."""
     by = {}
     for r in rows:
         if r["block"] != "technik":
@@ -241,10 +221,6 @@ def collect(runs: dict, tables: dict) -> tuple[list, list, dict]:
     return rows, problems, report
 
 
-# ---------------------------------------------------------------------------
-# Loading
-# ---------------------------------------------------------------------------
-
 def load_tables() -> dict:
     out = {}
     for block, (fname, _) in BLOCKS.items():
@@ -281,10 +257,6 @@ def write_outputs(results: pathlib.Path, rows: list, report: dict) -> None:
     with open(results / "collect_report.json", "w", encoding="utf-8", newline="\n") as fh:
         json.dump(report, fh, indent=2, sort_keys=True)
 
-
-# ---------------------------------------------------------------------------
-# Self-test (D-080): a built results tree, broken one way per case
-# ---------------------------------------------------------------------------
 
 SHA_A = "a1" * 32
 SHA_B = "b2" * 32
@@ -368,12 +340,9 @@ CASES = (
     ("unreadable-folder-name",
      lambda runs, tables: runs.__setitem__(("T-final", "ppo_1"), runs.pop(("T-final", "nodr_s1"))),
      "folder name"),
-    # D-192: a Fixed-DR checkpoint must not pass as No-DR (before 2026-09-23
-    # every folder without "_autodr_" was read as nodr).
     ("folder-says-nodr-checkpoint-says-fixed-dr",
      lambda runs, tables: runs.__setitem__(("T-final-F", "nodr_s1"), runs.pop(("T-final-F", "fixeddr_s1"))),
      "checkpoint path says"),
-    # eval_plan.md section 3.2: Fixed-DR plays only in T-nominal-F / T-final-F.
     ("fixed-dr-run-in-T-final",
      lambda runs, tables: runs.__setitem__(("T-final", "fixeddr_s1"), runs.pop(("T-final-F", "fixeddr_s1"))),
      "takes only"),
@@ -385,10 +354,7 @@ CASES = (
 
 
 def _tables_the_env_refuses() -> list:
-    """BLOCKS tables that THIS code's env cannot play: ``autodr.RowTable.from_csv``,
-    the reader ``play.py --eval-table`` goes through, refuses them (a 16-column
-    table since D-194, `autodr.py` ``from_csv``). T-ood is read as ``play.py
-    --eval-ood`` reads it, with ``allow_outside``."""
+    """BLOCKS tables that THIS code's env cannot play: ``autodr.RowTable.from_csv``, the reader ``play.py --eval-table`` goes through, refuses them (a 16-column table since D-194, `autodr.py` ``from_csv``)."""
     autodr = _load_module("check_autodr", REPO / "scripts" / "check_autodr.py").load_autodr()
     out = []
     for block, (fname, _) in BLOCKS.items():
@@ -419,15 +385,12 @@ def self_test() -> int:
         ("force_abort reads the force, >= limit (30.0 counts)", [r["force_abort"] for r in fin] == [0, 1, 0, 1]),
         ("identity from the checkpoint path", identity_from_checkpoint(
             runs[("T-final", "nodr_s1")]["manifest"]["checkpoint_path"]) == ("nodr", 1)),
-        # The two REAL run folder names, copied from rt_logs/RT-206s1 and RT-207s1.
         ("identity of the real RT-206s1 folder", identity_from_checkpoint(
             r"logs\rsl_rl\ur5e_insertion\09-15_13-50-36__RT-206s1_autodr_offset5mm_currOFF"
             r"_start+20mm_floor-30mm_seed1\model_1499.pt") == ("autodr", 1)),
         ("identity of the real RT-207s1 folder", identity_from_checkpoint(
             r"logs\rsl_rl\ur5e_insertion\09-17_09-58-45__RT-207s1_offset5mm_currOFF"
             r"_start+20mm_floor-30mm_seed1\model_1499.pt") == ("nodr", 1)),
-        # CONSTRUCTED, not copied: RT-206s1's name with train.py's dr_mode tag
-        # (train.py:339-340) swapped. Replace with the real RT-231s1 folder.
         ("identity of a Fixed-DR folder (RT-231 name, constructed)", identity_from_checkpoint(
             r"logs\rsl_rl\ur5e_insertion\09-24_10-00-00__RT-231s1_fixed_dr_offset5mm_currOFF"
             r"_start+20mm_floor-30mm_seed1\model_1499.pt") == ("fixeddr", 1)),

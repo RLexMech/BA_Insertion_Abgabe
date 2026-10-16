@@ -1,10 +1,10 @@
 # Copyright (c) 2022-2026, The Isaac Lab Project Developers (https://github.com/isaac-sim/IsaacLab/blob/main/CONTRIBUTORS.md).
 # All rights reserved.
-#
+
 # SPDX-License-Identifier: BSD-3-Clause
 
 params:
-  seed: 0
+  seed: 1
   algo:
     name: a2c_continuous
 
@@ -60,7 +60,7 @@ params:
     normalize_input: True
     normalize_value: True
     value_bootstrap: True
-    num_actors: 128
+    num_actors: 256
     reward_shaper:
       scale_value: 1.0
     normalize_advantage: True
@@ -71,16 +71,16 @@ params:
     schedule_type: standard
     kl_threshold: 0.008
     score_to_win: 20000
-    max_epochs: 100  # D-201 (Factory: 200; D-200 had D-195 BUDGET 400). Value table: D-200 build plan, section "Values".
+    max_epochs: 100
     save_best_after: 10
-    save_frequency: 25  # D-201 (Factory: 100)
+    save_frequency: 25
     print_stats: True
     grad_norm: 1.0
-    entropy_coef: 0.0  # 0.0001  # 0.0
+    entropy_coef: 0.0
     truncate_grads: True
     e_clip: 0.2
     horizon_length: 128
-    minibatch_size: 1024  # D-200: 256 envs x 128 / 1024 = 32 mini-batches, Factory's count at its 128 envs (Factory: 512). Scale with num_envs (envs x 4).
+    minibatch_size: 1024
     mini_epochs: 4
     critic_coef: 2
     clip_value: True
@@ -88,7 +88,7 @@ params:
     bounds_loss_coef: 0.0001
 
     central_value_config:
-      minibatch_size: 1024  # D-200: same as the actor's
+      minibatch_size: 1024
       mini_epochs: 4
       learning_rate: 1e-4
       lr_schedule: adaptive

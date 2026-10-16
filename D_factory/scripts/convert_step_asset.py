@@ -1,33 +1,7 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-"""Pilot STEP -> USD conversion for ONE asset (route (b), pipeline research
-2026-08-21: docs/reference/literature_check_step_usd_pipeline_2026-08-21.md).
-
-Two stages:
-
-1. STEP -> STL via headless FreeCAD (``freecadcmd``). FreeCAD works in mm, so
-   the STL coordinates are numerically mm. STL itself carries no unit. Skipped
-   when ``--stl`` provides a ready mesh.
-2. STL -> USD via Isaac Lab's ``MeshConverter`` with ``scale=(0.001,)*3``
-   (mm -> m), ``make_instanceable=False`` (the default True broke collision
-   authoring in the proxy-era import chain), Z-up and ``metersPerUnit=1.0``
-   authored by the converter itself. Optional SDF collision
-   (``SDFMeshPropertiesCfg``) authored by the converter, no separate step.
-
-After conversion the output stage is re-opened and checked; results go to
-stdout as PASS/FAIL lines and to a ``<out>.convert.json`` sidecar. This is a
-PILOT tool: it measures and reports; the per-asset contracts live in the
-author_* scripts that build on it.
-
-UNVERIFIED until run: the dev laptop has no Isaac and no FreeCAD. Whether
-FreeCAD is installed on the training machine is UNKNOWN -- stage 1 checks and
-says what is missing. On the training machine:
-
-    conda activate env_isaaclab
-    python scripts/convert_step_asset.py --step CAD/Aufnahme_real_v1.stp \\
-        --nominal-mm 150.0 189.1 61.0 --collision sdf
-"""
+"""Pilot STEP -> USD conversion for ONE asset (route (b), pipeline research 2026-08-21: docs/reference/literature_check_step_usd_pipeline_2026-08-21.md)."""
 
 from __future__ import annotations
 
@@ -39,14 +13,8 @@ import subprocess
 import sys
 import tempfile
 
-# Bumped whenever this file changes; first line of output identifies the copy
-# in the two-machine workflow.
 SCRIPT_MARKER = "convert_step_asset-2026-08-21a"
 
-# The FreeCAD tessellation macro. Written to a temp file and executed by
-# freecadcmd. Kept as a template string so stage 1 needs no FreeCAD on the
-# machine that WRITES this script. Pattern (Part.Shape().read + MeshPart)
-# is hint-level per the research doc -- first real run verifies it.
 FREECAD_MACRO = """\
 import Mesh
 import MeshPart
@@ -160,7 +128,6 @@ def main() -> None:
     if out_path.exists() and not args_cli.force:
         sys.exit(f"[convert_step_asset] FAIL: {out_path} exists; use --force.")
 
-    # Isaac only from here on: stage 1 fails fast without booting the app.
     app_launcher = AppLauncher(args_cli)
     simulation_app = app_launcher.app  # noqa: F841
 
@@ -168,7 +135,6 @@ def main() -> None:
     from isaaclab.sim.converters import MeshConverter, MeshConverterCfg  # noqa: E402
     from isaaclab.sim import schemas_cfg  # noqa: E402
 
-    # --- stage 2: MeshConverter -------------------------------------------
     collision_props = None
     mesh_collision_props = None
     if args_cli.collision == "sdf":
@@ -181,9 +147,8 @@ def main() -> None:
         usd_dir=str(out_path.parent),
         usd_file_name=out_path.name,
         force_usd_conversion=True,
-        make_instanceable=False,     # default True; broke collision authoring
-                                     # in the proxy import chain
-        scale=(0.001, 0.001, 0.001),  # STL values are mm, stage is metres
+        make_instanceable=False,
+        scale=(0.001, 0.001, 0.001),
         collision_props=collision_props,
         mesh_collision_props=mesh_collision_props,
     )
@@ -192,7 +157,6 @@ def main() -> None:
     converter = MeshConverter(converter_cfg)
     usd_path = pathlib.Path(converter.usd_path)
 
-    # --- checks on the re-opened output -----------------------------------
     stage = Usd.Stage.Open(str(usd_path))
     checks: dict[str, bool] = {}
     report: dict = {"marker": SCRIPT_MARKER, "input": str(in_path),
@@ -231,7 +195,7 @@ def main() -> None:
     report["bbox_max_m"] = [bound.GetMax()[i] for i in range(3)]
     report["bbox_size_m"] = size
     report["bbox_z_range_m"] = [bound.GetMin()[2], bound.GetMax()[2]]
-    checks["not_mm_scaled"] = max(size) < 10.0  # a 1000x asset is >= 61 m here
+    checks["not_mm_scaled"] = max(size) < 10.0
 
     if args_cli.nominal_mm:
         nominal_m = sorted(v / 1000.0 for v in args_cli.nominal_mm)
@@ -260,7 +224,6 @@ def main() -> None:
     report["mesh_prim_count"] = sum(1 for p in stage.Traverse()
                                     if p.IsA(UsdGeom.Mesh))
 
-    # --- verdict -----------------------------------------------------------
     for name, ok in checks.items():
         print(f"[convert_step_asset] {'PASS' if ok else 'FAIL'}: {name}")
     print(f"[convert_step_asset] bbox (m): "

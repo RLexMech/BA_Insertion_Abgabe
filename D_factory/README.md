@@ -1,66 +1,88 @@
-# UR5e Contact-Rich Insertion
+# Experiment D – Endkonfiguration der Fügeaufgabe
 
-Bachelor thesis project. Goal: contact-rich insertion with a Universal Robots UR5e.
+Dieser Ordner enthält die Abgabefassung von Experiment D aus der Bachelorarbeit.
+Grundlage ist `c1a635e969f72efd5b9062d2c8994befd29ff100` aus
+`Ur5e_ContactRich_Insertion` (Tag `stufe-D-factory`). Die Kommentare wurden
+gekürzt, die gemeinsamen Studienwerte als Standard gesetzt und die Tests daran
+angepasst. Die Abgabefassung ist deshalb keine unveränderte Kopie des Tags.
 
-## Branch `p5-kraftsensor` — what was reached (2026-09-23)
+## Hauptstudie
 
-Numbers from `rt_logs/VERDICTS.md` and `results/eval/summary.json`.
+| Bedingung | Läufe | Einstellung |
+|---|---|---|
+| Auto-DR | RT-242s1–s5 | `env.dr_mode=autodr` |
+| Fixed-DR | RT-243s1–s5 | `env.dr_mode=fixed_dr` |
+| No-DR | RT-244s1–s5 | `env.dr_mode=off` |
 
-- **Ten policies trained on the same budget:** AutoDR RT-206s1..s5 and
-  No-DR RT-207s1..s5, 1500 iterations each, force observation
-  (`obs_wrench_mode=force`, 28 channels).
-- **Evaluation built and run, all four blocks PASS** on one code commit
-  (`8299485d`): T-nominal RT-222, T-auswahl RT-223, T-final RT-224,
-  T-grenze RT-225; G1–G3 checked per run, collector over all blocks OK.
-- **K1 met:** on T-final AutoDR 0.970 vs No-DR 0.262, difference +70.8
-  percentage points, Welch 95 % [+66.3, +75.3]. No-DR fails by timeout,
-  not by force.
-- **K2 and K3 met, both only just:** nominal difference −1.7 points (Welch
-  upper bound +0.04 points; the bootstrap disagrees); boundary block
-  `tilt_hi` upper bound +0.19 points. Final policy AutoDR seed 1 (D-190),
-  98.2 % on T-final.
-- **Figures F1–F10 and a one-command report** (`scripts/eval_report.py`,
-  `docs/figures/eval/`); limits for the thesis text in
-  `InBachelorErwähnen.md`.
+Jede Bedingung wird mit Seeds 1–5 jeweils neu trainiert. Das Budget beträgt
+**100 Epochen bei 256 parallelen Umgebungen**. No-DR behält die Anpassung der
+Starthöhe, die Streuung der Aufnahmeposition und das Beobachtungsrauschen bei.
 
-**Next branch: `p6-TestAusserhalb`** (worktree `Thesis Workflow Phase 6/p6-TestAusserhalb`):
-the out-of-distribution test at ×1.5 of the target range (D-055), a film strip
-and a force trace — plan `docs/eval_extra_runs_plan.md`. It needs new code, so
-it lives on its own branch; `p5-kraftsensor` keeps the evaluated state.
+## Einstellungen im Code
 
-## Status v2 (2026-09-06) — SUPERSEDED, history only (e.g. the force abort is 30 N today, `episodes_meta.json`)
+| Größe | Endstand D |
+|---|---|
+| Roboter / Regler | UR5e, OSC, 120 Hz Physik und 15 Hz Aktionen |
+| Aktion | 6 Lageänderungen, EMA 0,2, Grenzen 0,02 m und 0,097 rad je Achse und Schritt |
+| Beobachtung | `force_prevact`: 34 Werte, einschließlich Kraft und voriger geglätteter Aktion |
+| Lernverfahren | PPO mit `rl_games` |
+| Netz | LSTM 2×1024 mit Layer-Normalisierung, MLP 512/128/64; separater Critic mit wahrem Zustand |
+| Budget / Standard-Seed | 100 Epochen, 256 Umgebungen, Seed 1 |
+| Startanpassung | `start_floor_m=-0.030`, `autodr_stall_buffers=3` |
+| Standardbedingung | `dr_mode=off`; Auto-DR und Fixed-DR ausdrücklich wählen |
+| Aufnahmeposition | ±50 mm in x, y und z |
+| Obergrenze der Starthöhe | 270 mm |
+| Beobachtungsfehler | Aufnahme ±5 mm je Achse, Griff ±3 mm, Gier ±1,28° (`0.0223402` rad), Kraft σ=3,5 N |
+| Aktionsänderungsstrafe | Aus (`action_rate_scale=0.0`) |
+| Kraftabbruch / Episodenlimit | 30 N / 256 Schritte, etwa 17,07 s |
 
-Every number below names the run that produced it. Nothing here is claimed
-without a training-PC run; see `rt_logs/VERDICTS.md`.
+Die übrigen PPO-, Geometrie-, Reward- und Erfolgsparameter stehen unverändert in
+`source/insertion/insertion/tasks/direct/insertion/`. Die aktive
+Trainingskonfiguration ist `agents/rl_games_ppo_cfg.yaml`.
 
-- **Scene and assets stand.** Real part and fixture from CAD, workcell
-  geometry checked (`scripts/check_workcell_geometry.py`).
-- **Controller is OSC**, not joint PD (D-108 fell 2026-09-03). A scripted
-  descent seats the part at 36.0 mm depth under 16.7 N (RT-150).
-- **The success predicate fires under OSC** — verified by teleport into the
-  seated pose (RT-155).
-- **A PPO policy inserts the part.** RT-156, 1024 envs, start height drawn
-  from −30…+30 mm; top bin (+20…+30 mm) 98.1 %.
-- **Generalisation is measured, not assumed.** RT-157 replayed that policy
-  from four fixed start heights: 100 / 71.5 / 76.8 / 93.0 % at
-  +30/+40/+50/+60 mm. Not monotonic. Where a trace exists, the
-  censoring-free rate (first episode per env) is lower: 58.2 % at +40 mm,
-  92.8 % at +60 mm. No trace was taken at +30 and +50 mm.
-- **The failures are two fixed poses**, identical at every height, both
-  parked in contact: one hanging on the pocket rim, one jammed in the mouth.
-  The three force channels do NOT encode which way the part is caught.
-- **Force abort is 50 N** since D-169 — the first value in this field taken
-  off a measurement instead of a guess.
+## Training
 
-Open: why +40 mm is worse than +60 mm. Next measurement adds `ee_quat` to the
-replay trace to settle whether the rim pose is tilted.
+Voraussetzungen: eingerichtete Isaac-Lab-/rl_games-Umgebung, die Szenen-USDs auf
+dem Trainingsrechner und die Installation dieser Task-Version mit
+`pip install -e source/insertion`. Die folgenden Befehle werden aus `D_factory`
+ausgeführt. Die drei Beispiele verwenden Seed 1; für die Studie jeweils mit
+Seeds 1–5 ausführen.
 
-## Structure
+```powershell
+python scripts/rl_games/train.py --task Ur5e-Insertion-Direct-v0 --headless --seed 1 env.dr_mode=autodr
+python scripts/rl_games/train.py --task Ur5e-Insertion-Direct-v0 --headless --seed 1 env.dr_mode=fixed_dr
+python scripts/rl_games/train.py --task Ur5e-Insertion-Direct-v0 --headless --seed 1 env.dr_mode=off
+```
 
-- `source/insertion/` — the Isaac Lab task (env, cfg, math, scripted policy).
-- `scripts/` — entry points and offline checks; index in `scripts/CLAUDE.md`.
-- `DECISIONS.md`, `PROBLEMS.md`, `rt_logs/VERDICTS.md` — the record.
-- `docs/` — reports, per-run pages, figures, literature checks.
+Die gemeinsamen Endeinstellungen brauchen keine zusätzlichen Startargumente.
+`scripts/rsl_rl/` enthält frühere Entwicklungswege; die Hauptstudie D verwendet
+`scripts/rl_games/`.
 
-USDs and OBJs are in no git tree. The training PC runs a sparse clone;
-`HANDOFF-RL.md` owns its path and checkout set.
+## Auswertung und Zusatzversuche
+
+Die historischen Auswertungs-Manifeste nennen `c1a635e9`. Die zugehörigen Daten
+liegen im Abgabe-Repo unter `auswertung/daten/endstudie_rl_games/`.
+`scripts/rl_games/run_eval.ps1` startet die vorgesehenen Testblöcke mit den
+zugehörigen Checkpoints und Tabellen. Es setzt `env.start_floor_m=0.020`
+ausdrücklich, damit die Auswertung keine Trainings-Startanpassung verwendet.
+Bei direkten Aufrufen von `scripts/rl_games/play.py --eval-table` oder
+`--dr-table` denselben Override angeben. Wird `start_tip_above_entrance`
+geändert, müssen beide Werte gleich sein.
+
+Die Fortsetzung RT-253 bis 250 Epochen und die MLP-Ablation RT-260 sind
+Zusatzversuche; sie ändern nicht die Standards der 100-Epochen-Hauptstudie.
+Laufnotizen in `rt_logs/` dokumentieren auch solche Zusatzversuche.
+Trainierte Modelle und Szenen-USDs sind nicht Bestandteil dieses Repos.
+
+## Prüfungen
+
+```powershell
+python scripts/check_mutation_anchors.py
+python scripts/check_mutation_anchors.py --self-test
+python scripts/selftest_checks.py --offline
+```
+
+Die Offline-Tests prüfen unter anderem Mathematik, Quelltext-Verknüpfungen und
+gezielt eingebaute Fehler. Sie ersetzen keinen Lauf in Isaac Sim.
+Messskripte setzen ihre rauschfreien Bedingungen ausdrücklich, unabhängig von
+den Trainingsstandards.

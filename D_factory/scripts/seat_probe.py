@@ -1,53 +1,7 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-r"""The PHYSICS identity test for the insertion contact. It does not descend.
-
-WHY THIS FILE EXISTS
---------------------
-`CLAUDE.md` § Code names a strict order and says never to break it:
-
-    1. Identitätstests für Physik, Observations und Reward-Terme.
-    2. Scripted solvability.
-    3. PPO-Tuning.
-
-Steps 1 for OBSERVATIONS and REWARD exist and are green (`check_env_wiring`,
-`check_insertion_math`, `check_demo_reward_math`). For the PHYSICS of the
-insertion contact there was none. `scripts/CLAUDE.md` indexed 34 scripts and not
-one put the part in the pocket and asked the simulation whether the seat is
-free -- so every run from RT-68 to RT-76 measured a CONTROLLER against a contact
-nobody had verified. This is that missing test.
-
-WHAT IT DOES, AND WHY IT IS NOT scripted_insert AGAIN
------------------------------------------------------
-`scripted_insert.py` DESCENDS: 0.5 mm per control step through the env's action
-interface, so what it measures is the whole chain -- controller, integrator,
-drives, contact. A jam anywhere in that chain looks the same from outside.
-
-This script TELEPORTS. It solves the arm kinematically to a commanded depth,
-writes the joint state straight into the sim (the env's OWN reset mechanism,
-`insertion_env.py:1038`), and only then lets the physics settle and speak. The
-descent is removed from the question, so what is left is the contact alone.
-
-Run as a LADDER of commanded depths. Both outcomes answer the question:
-
-  * force stays low up to the success depth -> the geometry ACCEPTS the seat.
-    The jam is in the descent path, and the controller work resumes knowing the
-    target is reachable.
-  * force explodes at the same depth the descent stalls at -> the COLLIDER
-    forbids the seat. No controller and no policy can ever succeed, the D-108
-    gate cannot be passed as the asset stands, and the work moves to the asset
-    (the 9 boundary edges of RT-61, the SDF sign, the voxel pitch against the
-    0.2938 mm per-side play).
-
-IT SETS NO THRESHOLD. What counts as "low force" at a seated pose is a decision
-nobody has taken; this run reports the distribution the decision needs.
-
-THE RESET-STEP TRAP (`CLAUDE.md` § Error Handling) is why SETTLE exists at all:
-sensor and link data in the same step as a reset are stale, so nothing is read
-until the arm has been left alone for `--settle-steps` control steps, and that
-count is printed with every number it produced.
-"""
+"""The PHYSICS identity test for the insertion contact."""
 
 """Launch Isaac Sim Simulator first."""
 
@@ -140,10 +94,6 @@ simulation_app = app_launcher.app
 
 """Rest everything follows."""
 
-# GUARDED for the same reason scripted_insert.py guards: RT-66 died on an
-# import-time TorchScript failure whose traceback printed while the wrapper
-# still reported exit code 0. A failing run that reports success is the one
-# outcome D-081 exists to prevent.
 try:
     import json  # noqa: E402
 
@@ -156,8 +106,6 @@ try:
     import isaaclab_tasks  # noqa: F401, E402
     from isaaclab_tasks.utils import parse_env_cfg  # noqa: E402
 
-    # D-200 (1), as scripts/zero_agent.py: THIS clone's env package first, whichever
-    # clone the editable `insertion` install points at (RT-242a..d).
     sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent / "source" / "insertion"))
     import insertion  # noqa: E402
     print(f"[seat_probe] insertion package imported from: {pathlib.Path(insertion.__file__).resolve().parent}")
@@ -173,22 +121,13 @@ except BaseException:
 
 
 def _slice(obs: torch.Tensor, name: str) -> torch.Tensor:
-    """Read one observation block by NAME, from the one table that owns it.
-
-    Same helper and same reason as `scripted_insert.py`: `OBS_SLICES` is the
-    single home of the channel layout, and indexing by name keeps this script
-    correct when a block moves.
-    """
+    """Read one observation block by NAME, from the one table that owns it."""
     lo, hi = insertion_math.OBS_SLICES[name]
     return obs[:, lo:hi]
 
 
 def _percentiles(values: list) -> dict:
-    """p50 / max over a list, or an explicit empty marker.
-
-    Deliberately narrower than `scripted_insert.py`'s: this run has one sample
-    per env per rung, so p90/p95 over a handful of envs would be dressing.
-    """
+    """p50 / max over a list, or an explicit empty marker."""
     if not values:
         return {"n": 0, "p50": None, "max": None}
     s = sorted(values)
@@ -203,29 +142,17 @@ def main() -> None:
     env_cfg = parse_env_cfg(
         args_cli.task, device=args_cli.device, num_envs=args_cli.num_envs, use_fabric=not args_cli.disable_fabric
     )
-    # A MEASUREMENT env, the same state zero_agent.py and scripted_insert.py
-    # run in: nothing learns here, and it is the only state that builds while
-    # the RL_PENDING values are unset.
     env_cfg.rl_terms_enabled = False
 
-    # PINNED (2026-09-12). The three Phase-5 scatter fields default ON, and
-    # `obs_noise.resolve_obs_noise_model` does NOT consult `rl_terms_enabled`
-    # -- the noise model is built in a measurement env too, and Isaac Lab
-    # applies it to `obs_buf["policy"]` in `step()`. This probe reads its
-    # depth and its contact force OUT OF THAT BUFFER (`_slice(obs, "tip_rel")`
-    # and `_slice(obs, "force")` below), so the scatter would land straight in
-    # the measurement: 2.5 mm of per-episode pocket bias on the commanded
-    # depth and 3.5 N of per-step jitter on the very force this script exists
-    # to read. An identity test needs the observation to BE the pose.
+    # Keep diagnostic measurements independent of training defaults.
+    env_cfg.obs_wrench_mode = "force"
+    env_cfg.start_floor_m = 0.020
+    env_cfg.autodr_stall_buffers = 0
+    env_cfg.pocket_obs_yaw_rad = 0.0
     env_cfg.obs_noise_pocket_pos_std_m = 0.0
     env_cfg.force_obs_noise_std_n = 0.0
     env_cfg.grasp_obs_offset_x_m = 0.0
 
-    # THE START POSE STAYS THE HOME POSE (D-161, 2026-08-31). The cfg default
-    # is now rung 0 -- the env solves an IK at every reset and starts the tool
-    # point inside the pocket. This run does its OWN teleport and reports
-    # against the 165 mm home stand-off, so a rung-0 reset would move the pose
-    # this script claims to command. Pinned here, not assumed.
     env_cfg.start_tip_above_entrance = None
 
     env = gym.make(args_cli.task, cfg=env_cfg)
@@ -234,7 +161,6 @@ def main() -> None:
     robot = unwrapped.robot
     num_envs = unwrapped.num_envs
 
-    # ---------------------------------------------------------------- fail fast
     peg_body_idx = unwrapped._peg_body_idx
     if peg_body_idx is None:
         raise SystemExit(
@@ -278,50 +204,15 @@ def main() -> None:
     for depth_mm in args_cli.depths_mm:
         target_rel_z = -float(depth_mm) / 1000.0
 
-        # Every rung starts from a clean reset, so a rung cannot inherit the
-        # pose -- or the contact -- the previous one ended in.
         obs_dict, _ = env.reset()
         obs = obs_dict["policy"]
-        # Read ONCE, here: the fixture does not move inside a rung, and the
-        # solve below never steps the env, so no later observation exists to
-        # read it from.
         pocket_quat = _slice(obs, "pocket_quat").clone()
 
-        # ---------------------------------------------------------- SOLVE
-        # KINEMATIC ONLY, and since RT-80 it really is one.
-        #
-        # WHAT RT-80 MEASURED, and it is a defect of this script, not of the
-        # asset: the loop called ``env.step`` after every write, and
-        # ``DirectRLEnv.step`` runs ``decimation`` physics substeps
-        # (direct_rl_env.py:370). So the contact pushed the arm away after each
-        # teleport and the solver chased a target the physics kept undoing.
-        # Every rung from 15 mm on -- the depths where the part is inside the
-        # pocket -- reported ``IK DID NOT CONVERGE`` at forces up to 15262 N and
-        # lateral offsets up to 62.9 mm, while 5 mm and 10 mm, where nothing
-        # touches at 8.1 N, converged. ``env.step`` could additionally
-        # TERMINATE and reset an env mid-solve (``terminated = success |
-        # below_plate``, insertion_env.py:971; the reset happens inside
-        # ``step()``, direct_rl_env.py:396-398), leaving one env at the home
-        # pose while the others were in the pocket -- and ``solved_err_mm``
-        # takes the max over envs, so that one env failed the whole rung.
-        #
-        # NO STEP IS NEEDED. ``write_joint_position_to_sim`` sets
-        # ``_body_link_pose_w.timestamp = -1.0`` (articulation.py:605-610), and
-        # the next read of ``body_pose_w`` re-runs the forward kinematics
-        # (articulation_data.py:590-592). The pose is fresh with no physics at
-        # all. This is the same mechanism ``DirectRLEnv.reset`` relies on.
         solved_err_mm = None
         for _ in range(int(args_cli.solve_steps)):
             with torch.no_grad():
-                # From the env's OWN geometry, not from an observation: there is
-                # no step in this loop to produce one. seat_probe is explicitly
-                # outside the D-108 information boundary (check_env_wiring.py
-                # says so and why) -- it is a probe, not the gate.
                 *_, tip_rel = unwrapped._peg_geometry()
 
-                # The wanted step, in the POCKET frame: null both lateral
-                # components and go to the rung depth. Rotation is left alone --
-                # the part is already parallel and this test is about position.
                 d_pocket = torch.zeros(num_envs, 6, device=device)
                 d_pocket[:, 0] = -tip_rel[:, 0]
                 d_pocket[:, 1] = -tip_rel[:, 1]
@@ -339,23 +230,10 @@ def main() -> None:
                 )
                 jacobian = robot.root_physx_view.get_jacobians()[:, jacobi_idx, :, :n_joints]
                 ik.set_command(cmd_base, ee_pos=ee_pos_b, ee_quat=ee_quat_b)
-                # ``.clone()`` and ``no_grad`` above are one fix, not two.
-                # RT-78 died here: under ``inference_mode`` the solver's
-                # output is an INFERENCE TENSOR, it lands in the
-                # articulation's buffers, and the next ``env.reset()``
-                # cannot overwrite them (articulation.py:578). The clone
-                # additionally stops the env's integrator buffer from
-                # aliasing the tensor handed to the sim.
                 joint_pos_des = ik.compute(
                     ee_pos_b, ee_quat_b, jacobian, robot.data.joint_pos
                 ).clone()
 
-                # THE TELEPORT, and it is the env's own reset triple
-                # (insertion_env.py:1038-1041 plus the target buffer). All three
-                # parts are needed: the state so the arm IS there, the drive
-                # target so it is not immediately pulled back, and the env's
-                # integrator buffer so the next zero action means "hold" rather
-                # than "return to where you were".
                 robot.write_joint_state_to_sim(joint_pos_des, torch.zeros_like(joint_pos_des))
                 robot.set_joint_position_target(joint_pos_des)
                 unwrapped._joint_targets[:] = joint_pos_des
@@ -363,10 +241,6 @@ def main() -> None:
             if solved_err_mm is not None and solved_err_mm < float(args_cli.solve_tol_mm):
                 break
 
-        # THE RESIDUAL IS MEASURED AGAIN, after the last write. Inside the loop
-        # it is computed BEFORE the teleport of that iteration, so the pose the
-        # settle actually starts from was never the pose the residual described.
-        # One extra read closes that gap; it costs a forward kinematics call.
         with torch.no_grad():
             *_, tip_rel = unwrapped._peg_geometry()
             solved_err_mm = float(torch.linalg.norm(
@@ -376,9 +250,6 @@ def main() -> None:
 
         converged = solved_err_mm is not None and solved_err_mm < float(args_cli.solve_tol_mm)
 
-        # --------------------------------------------------------- SETTLE
-        # No more writing. Zero action, so the drives hold the teleported
-        # target and everything that happens now is the contact.
         terminated_any = False
         for _ in range(int(args_cli.settle_steps)):
             with torch.no_grad():
@@ -386,10 +257,6 @@ def main() -> None:
                 obs = obs_dict["policy"]
                 if bool(terminated.any()):
                     terminated_any = True
-                    # A termination RESETS that env inside step(), so anything
-                    # read after this is the post-reset pose, not the seat. Stop
-                    # and report it -- a success at the seated pose is itself
-                    # the answer this run is looking for.
                     break
 
         with torch.no_grad():
@@ -432,9 +299,6 @@ def main() -> None:
     out = pathlib.Path(args_cli.out)
     out.write_text(json.dumps(metrics, indent=2), encoding="utf-8")
 
-    # PRINTED AS WELL AS WRITTEN. RT-70 taught this: a metrics file whose path
-    # is printed but whose contents are not proves nothing in a log, and the log
-    # is what /rt-check reads.
     print("[seat_probe] commanded -> achieved depth, and the force at the seat:")
     for r in rungs:
         flag = "" if r["solve_converged"] else "  IK DID NOT CONVERGE -- not a contact result"
@@ -454,8 +318,6 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    # D-081: set the exit status BEFORE the shutdown. close() does not return
-    # (RT-22), so anything after it never decides anything.
     try:
         main()
     except BaseException:

@@ -69,76 +69,51 @@ def _load_module(name: str, path: pathlib.Path):
 
 ES = _load_module("eval_stats", REPO / "scripts" / "eval_stats.py")
 KEY = ES.KEY
-# D-195 CURVE AXIS: training curves over total env steps, one home for the rule.
 run_axis = _load_module("run_axis", REPO / "scripts" / "tools" / "run_axis.py")
-XLABEL_TRAINING = "Env-Schritte (alle Envs)"   # F7, F8
+XLABEL_TRAINING = "Env-Schritte (alle Envs)"
 
-# House pair (plot_run_curves.py:52-53, plot_autodr_run.py:47-48). Fixed-DR
-# (D-192) takes the dataviz reference palette's third slot, aqua, at its darker
-# step #199e70 (references/palette.md, dark column): the light step #1baf7a
-# gave 2.82:1 on white. Validator 2026-09-23, light, surface #FFFFFF, all
-# pairs: ALL CHECKS PASS; worst CVD #199e70<->#D97706 protan 9.0, tritan 7.4
-# (6-8 band: legal with the legend / axis labels every figure carries).
-# Colour follows the METHOD.
 METHOD_COLOR = {"autodr": "#3B6FD4", "nodr": "#D97706", "fixeddr": "#199e70"}
 METHOD_LABEL = {"autodr": "AutoDR", "nodr": "No-DR", "fixeddr": "Fixed-DR"}
-# The pre-registered pair; every figure needs both. Fixed-DR is optional: it
-# is drawn where its blocks exist (ARM_BLOCK), else the figure keeps two methods.
 METHODS = ("autodr", "nodr")
 ARMS = (*METHODS, "fixeddr")
-# Fixed-DR plays the same tables in its own blocks (eval_plan.md section 3.2).
 ARM_BLOCK = {"T-nominal": "T-nominal-F", "T-final": "T-final-F"}
 INK = "#1F2933"
 INK_MUTED = "#6B7280"
 GRID = "#E5E7EB"
-# dataviz status palette (references/palette.md), in the stack order that
-# passes the validator's adjacent CVD and normal-vision checks (2026-09-23).
 OUTCOMES = (
     ("success", "Erfolg", "#0ca30c"),
     ("success_with_force_violation", "Erfolg mit Kraftverletzung", "#fab219"),
     ("force_abort", "Kraftabbruch", "#d03b3b"),
     ("timeout", "Zeitlimit", "#ec835a"),
 )
-HEAT_CMAP = "Purples"   # one hue, light -> dark; neither method hue
+HEAT_CMAP = "Purples"
 
-# The ten frozen policies (eval_plan.md "Kontext"; scripts/run_eval.ps1).
 TRAINING_RUNS = {(m, s): f"RT-{206 if m == 'autodr' else 207}s{s}" for m in METHODS for s in range(1, 6)}
-# The five Fixed-DR training runs (D-192, rt_logs/RT-231_expectation.md): F7
-# only, extracted when all five folders exist, refused when some do.
 FIXED_RUNS = {("fixeddr", s): f"RT-231s{s}" for s in range(1, 6)}
 TRAINING_TAGS = ("Episode/success_rate", "dr/lat_r_hi", "dr/yaw_lo", "dr/yaw_hi", "dr/tilt_hi",
                  "dr/start_height_hi", "dr/start_height_floor", "dr/friction_lo", "dr/friction_hi")
-# No-DR's training values of the F3 axes: env.yaml keys (RT-207s<N>_env.yaml).
 NODR_ENV_KEYS = ("dr_mode", "start_lateral_offset", "fixture_yaw_rad", "fixture_yaw_noise_rad",
                  "fixture_tilt_rad", "fixture_tilt_noise_rad")
 
-# F3 panels: episodes_all column, axis label, factor to the axis unit.
 F3_PANELS = (
     ("lat_r_mm", "Seitlicher Versatz in mm", 1.0),
     ("yaw_abs_deg", "Gierwinkel (Betrag) in °", 1.0),
     ("tilt_deg", "Kippung in °", 1.0),
     ("start_height_m", "Starthöhe in mm", 1000.0),
 )
-# F4: the seven T-grenze keys (eval_table_boundary_seed10.json order).
 K3_ORDER = ("lat_r_hi", "yaw_lo", "yaw_hi", "tilt_hi", "start_height_hi", "friction_lo", "friction_hi")
 K3_LABEL = {"lat_r_hi": "Versatz\nmax", "yaw_lo": "Gier\nmin", "yaw_hi": "Gier\nmax",
             "tilt_hi": "Kippung\nmax", "start_height_hi": "Starthöhe\nmax",
             "friction_lo": "Reibung\nmin", "friction_hi": "Reibung\nmax"}
 F8_PANELS = (("start_height_floor", "Startboden"), ("lat_r", "Seitlicher Versatz"), ("yaw", "Gierwinkel"),
              ("tilt", "Kippung"), ("start_height", "Starthöhe (Decke)"), ("friction", "Reibung"))
-FIG_W = 6.3   # inches, ~16 cm text width
-# The thesis body is Helvetica (thesis/includes/preamble.tex: helvet + \sfdefault);
-# Arial has Helvetica's metrics and is on the laptop (user 2026-09-23).
+FIG_W = 6.3
 FONT = "Arial"
 
 
 class FigError(RuntimeError):
     """The input cannot draw what the plan asks."""
 
-
-# ---------------------------------------------------------------------------
-# helpers
-# ---------------------------------------------------------------------------
 
 def _policies(summary: dict, block: str) -> list:
     return sorted((p for p in summary["policies"] if p["block"] == block and p["tag"] == ""),
@@ -167,10 +142,7 @@ def _num(v: float, fmt: str) -> str:
 
 
 def _yerr(rate: float, w) -> list:
-    """Error-bar lengths below/above ``rate`` for its Wilson interval ``w``, in %.
-    statsmodels returns the lower bound at k = 0 as ~2.2e-19, not 0 (RT-232:
-    Fixed-DR s1/s2, 0 of 1000), and matplotlib refuses any negative length.
-    Rounding is set to 0; a bound really beyond the rate is refused."""
+    """Error-bar lengths below/above ``rate`` for its Wilson interval ``w``, in %."""
     lo, hi = rate - w[0], w[1] - rate
     if min(lo, hi) < -1e-12:
         raise FigError(f"rate {rate} lies outside its Wilson interval {w}")
@@ -188,10 +160,6 @@ def _de_formatter():
     return _DeScalarFormatter()
 
 
-# ---------------------------------------------------------------------------
-# DATA functions -- pure, one per figure
-# ---------------------------------------------------------------------------
-
 def arms_present(summary: dict) -> tuple:
     return _arms_of({p["block"] for p in summary["policies"] if p["method"] == "fixeddr"})
 
@@ -202,9 +170,7 @@ def arms_in(df: pd.DataFrame) -> tuple:
 
 
 def _arms_of(blocks: set) -> tuple:
-    """METHODS, plus Fixed-DR when BOTH of its blocks hold runs (D-192).
-    ``blocks``: the blocks Fixed-DR runs sit in. One block without the other
-    is refused, never drawn half."""
+    """METHODS, plus Fixed-DR when BOTH of its blocks hold runs (D-192)."""
     if not blocks:
         return METHODS
     if blocks == set(ARM_BLOCK.values()):
@@ -243,8 +209,6 @@ def data_f2(summary: dict) -> list:
             raise FigError(f"F2: {kname} is not about {block}")
         rows.append({"block": block, "key": kname, "diff": k["diff"], "label": "AutoDR − No-DR",
                      "welch": list(k["welch_ci"]), "boot": list(k["bootstrap_percentile_ci"])})
-    # K5 (D-192), only when the Fixed-DR blocks exist; eval_stats writes
-    # {"missing": ...} otherwise, and an "error" is not drawn over.
     if arms_present(summary) == ARMS:
         for kname, block in (("K5_nominal", "T-nominal"), ("K5", "T-final")):
             k = summary[kname]
@@ -271,7 +235,6 @@ def data_f3(summary: dict) -> dict:
                     ns = n_k
                 elif n_k != ns:
                     raise FigError(f"F3: {k} {col} holds other bin counts than the first policy")
-        # Same table rows for every policy -> the same bins are empty for all.
         keep = [i for i, n in enumerate(ns) if n > 0]
         per = {}
         for m, keys in keys_of.items():
@@ -301,7 +264,7 @@ def data_f4(summary: dict) -> dict:
 
 def data_f5(summary: dict) -> list:
     rows = []
-    arms_present(summary)   # one Fixed-DR block without the other is refused
+    arms_present(summary)
     for p in _arm_policies(summary, "T-final"):
         counts = [p["outcomes"][k] for k, _l, _c in OUTCOMES]
         if p["outcomes"].get("other", 0):
@@ -316,17 +279,13 @@ def _final(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def _mean_std(stack, fig: str):
-    """Mean and sample standard deviation (ddof=1, eval_plan.md section 5) over
-    axis 0 = the seeds. The one home of the spread band's numbers."""
+    """Mean and sample standard deviation (ddof=1, eval_plan.md section 5) over axis 0 = the seeds."""
     a = np.asarray(stack, dtype=float)
     if a.shape[0] < 2:
         raise FigError(f"{fig}: {a.shape[0]} seed; the spread band needs two or more")
     return a.mean(axis=0), a.std(axis=0, ddof=1)
 
 
-# F6(a) evaluates every seed's ECDF on one shared force grid, so seeds with
-# different success counts can be averaged point by point. Rounded to 6
-# decimals so a grid point equals its decimal value exactly.
 F6_FORCE_STEP_N = 0.05
 
 
@@ -341,15 +300,11 @@ def data_f6(df: pd.DataFrame) -> dict:
     grid = np.round(np.arange(0.0, math.ceil(fmax) + F6_FORCE_STEP_N / 2, F6_FORCE_STEP_N), 6)
     for m in arms_in(df):
         g = fin[fin["method"] == m]
-        # Per seed: share of THAT seed's successes with peak force <= x.
         ok = g[g[KEY] == 1]
         ecdf, no_success = {}, []
         for s, gs in g.groupby("seed", sort=True):
             f = np.sort(ok.loc[ok["seed"] == s, "force_max_filtered_n"].to_numpy(dtype=float))
             if len(f) == 0:
-                # A seed without one success has no force ECDF (RT-232: Fixed-DR
-                # s1/s2, 0 of 1000). User 2026-09-25 ("A"): (a) averages the
-                # seeds that have one and names the others; (b) keeps them all.
                 no_success.append(int(s))
                 continue
             ecdf[int(s)] = np.searchsorted(f, grid, side="right") / len(f)
@@ -365,8 +320,7 @@ def data_f6(df: pd.DataFrame) -> dict:
 
 
 def data_f7(curves: pd.DataFrame) -> dict:
-    """Per arm over total env steps (D-195); the seeds of one arm must share
-    one grid, arms may differ (each run its own factor)."""
+    """Per arm over total env steps (D-195); the seeds of one arm must share one grid, arms may differ (each run its own factor)."""
     out = {}
     for m in ARMS:
         g = curves[curves["method"] == m]
@@ -381,7 +335,7 @@ def data_f7(curves: pd.DataFrame) -> dict:
                 raise FigError(f"F7: {m} s{s} logs other env steps than the first seed")
             seeds[int(s)] = gs["Episode/success_rate"].to_numpy(dtype=float)
         if not seeds and m == "fixeddr":
-            continue   # optional arm: extract_training took all five runs or none
+            continue
         if not seeds:
             raise FigError(f"F7: no {m} curves")
         mean, std = _mean_std(list(seeds.values()), "F7")
@@ -390,8 +344,7 @@ def data_f7(curves: pd.DataFrame) -> dict:
 
 
 def data_f8(curves: pd.DataFrame, sidecars: dict) -> dict:
-    """Same normalisation as plot_autodr_run.fig_stufen: (v - centre)/(max - centre)
-    per side; the floor (v - f0)/(top - f0). Read from each run's sidecar."""
+    """Same normalisation as plot_autodr_run.fig_stufen: (v - centre)/(max - centre) per side; the floor (v - f0)/(top - f0)."""
     out = {}
     g = curves[curves["method"] == "autodr"]
     for s, gs in g.groupby("seed", sort=True):
@@ -439,7 +392,6 @@ def data_f9(df: pd.DataFrame) -> dict:
 
 def data_f10(df: pd.DataFrame, t1_mm: float) -> dict:
     fin = _final(df)
-    # Beyond the largest reading of a SUCCESS no curve moves any more.
     top = float(fin.loc[fin[KEY] == 1, "ip_max_mm"].max())
     taus =np.unique(np.concatenate([np.linspace(0.0, max(top, t1_mm) * 1.05, 400), [t1_mm]]))
     out = {"tau": taus, "t1": t1_mm, "methods": {}}
@@ -450,10 +402,6 @@ def data_f10(df: pd.DataFrame, t1_mm: float) -> dict:
         out["methods"][m] = np.array([(ok & (ip < t)).sum() for t in taus]) / len(g)
     return out
 
-
-# ---------------------------------------------------------------------------
-# training data: extraction (reads git-ignored rt_logs) and loading
-# ---------------------------------------------------------------------------
 
 def _env_value(path: pathlib.Path, key: str) -> str:
     for line in path.read_text(encoding="utf-8").splitlines():
@@ -472,7 +420,6 @@ def extract_training(src: pathlib.Path, out: pathlib.Path) -> dict:
     nodr_env = {}
 
     def _curve(m, s, run):
-        # D-195: each run's own factor, from the params files beside its scalars.csv.
         factor = run_axis.read_factor(src / run / f"{run}_agent.yaml", src / run / f"{run}_env.yaml")
         with open(src / run / f"{run}_scalars.csv", newline="", encoding="utf-8") as fh:
             for r in csv.DictReader(fh):
@@ -488,7 +435,6 @@ def extract_training(src: pathlib.Path, out: pathlib.Path) -> dict:
         shutil.copyfile(d / f"{run}_autodr_1499.json", out / f"{m}_s{s}_autodr_1499.json")
         if m == "nodr":
             nodr_env[s] = {k: _env_value(d / f"{run}_env.yaml", k) for k in NODR_ENV_KEYS}
-    # After the pair, so the pair's rows keep their place in curves.csv.
     for (m, s), run in sorted(FIXED_RUNS.items()) if have else ():
         _curve(m, s, run)
     first = next(iter(nodr_env.values()))
@@ -502,7 +448,6 @@ def extract_training(src: pathlib.Path, out: pathlib.Path) -> dict:
                            lineterminator="\n")
         w.writeheader()
         w.writerows(rows)
-    # Start height of No-DR: the range its own provider held at the end.
     last = {}
     for r in rows:
         if r["method"] == "nodr" and (r["seed"] not in last or r["iteration"] > last[r["seed"]]["iteration"]):
@@ -531,13 +476,8 @@ def load_training(folder: pathlib.Path):
     return curves, sidecars, nodr
 
 
-# ---------------------------------------------------------------------------
-# DRAW functions
-# ---------------------------------------------------------------------------
-
 def _style(ax, ylabel: str = "", xlabel: str = ""):
     from matplotlib.ticker import ScalarFormatter
-    # Numeric axes only; an axis with text ticks (set_xticks with labels) keeps them.
     for axis in (ax.xaxis, ax.yaxis):
         if type(axis.get_major_formatter()) is ScalarFormatter:
             axis.set_major_formatter(_de_formatter())
@@ -547,7 +487,7 @@ def _style(ax, ylabel: str = "", xlabel: str = ""):
         ax.spines[side].set_visible(False)
     for side in ("left", "bottom"):
         ax.spines[side].set_color(INK_MUTED)
-    ax.tick_params(colors=INK_MUTED, labelcolor=INK, labelsize=8)   # numbers black (user 2026-09-24)
+    ax.tick_params(colors=INK_MUTED, labelcolor=INK, labelsize=8)
     if ylabel:
         ax.set_ylabel(ylabel, color=INK, fontsize=9)
     if xlabel:
@@ -555,9 +495,7 @@ def _style(ax, ylabel: str = "", xlabel: str = ""):
 
 
 def _legend_methods(fig, loc="lower center", extra=(), marker=True, methods=METHODS, ax=None):
-    """``marker=False`` for figures that draw lines only: the legend shows what
-    the plot shows. ``methods``: the arms the figure draws, in ARMS order.
-    ``ax``: a framed legend inside that axes instead of one row below the figure."""
+    """``marker=False`` for figures that draw lines only: the legend shows what the plot shows."""
     from matplotlib.lines import Line2D
     h = [Line2D([], [], color=METHOD_COLOR[m], marker="o" if marker else None, linewidth=1.6, markersize=5,
                 label=METHOD_LABEL[m])
@@ -569,11 +507,7 @@ def _legend_methods(fig, loc="lower center", extra=(), marker=True, methods=METH
 
 
 def _title(target, what: str, n_seeds: int):
-    """Short title in the figure (user 2026-09-24, after the example
-    'Lernkurven im Vergleich — Mittel ± Std. über 3 Seeds'). ``target``: an
-    axes, or the figure when it has several panels."""
-    # One step above the axis labels, well clear of the plot (user 2026-09-24,
-    # after trying 10 pt / default gap and 9 pt / pad 12).
+    """Short title in the figure (user 2026-09-24, after the example 'Lernkurven im Vergleich — Mittel ± Std."""
     text = f"{what} — Mittel ± Standardabweichung über {n_seeds} Seeds"
     if hasattr(target, "suptitle"):
         target.suptitle(text, fontsize=10, fontweight="bold", color=INK)
@@ -614,8 +548,6 @@ def draw_f1(plt, d):
 
 
 def draw_f2(plt, rows):
-    # Two rows = the pre-registered K1/K2 figure, unchanged. With K5 each row
-    # names its own comparison, and the axis label turns general.
     pair_only = len(rows) == 2
     fig, axes = plt.subplots(len(rows), 1, figsize=(FIG_W, 1.2 * len(rows)))
     for ax, r in zip(axes, rows):
@@ -657,7 +589,6 @@ def draw_f3(plt, d, nodr):
             v = nodr[col]
             ax.axvline(v, color=INK_MUTED, linewidth=1.0, linestyle="--")
             ax.text(v, 3, " No-DR-Training", fontsize=7, color=INK_MUTED, va="bottom")
-        # All bands first, then all means (as F7).
         for m in p["methods"]:
             c = p["methods"][m]
             _band(ax, p["x"], np.asarray(c["mean"]), np.asarray(c["std"]), METHOD_COLOR[m])
@@ -668,9 +599,6 @@ def draw_f3(plt, d, nodr):
         _style(ax, "Erfolgsrate in %" if ax in axes[:, 0] else "", label)
     first = d[F3_PANELS[0][0]]["methods"]
     _title(fig, "Erfolgsrate je Störgröße", _seed_count(first, "F3"))
-    # No panel has a free corner (AutoDR runs along the top, No-DR and the
-    # training marks along the bottom); inside the middle of a panel read badly
-    # (user 2026-09-24): one row below the panels.
     _legend_methods(fig, methods=tuple(first))
     fig.tight_layout(rect=(0, 0.05, 1, 1))
     return fig
@@ -682,8 +610,6 @@ def draw_f4(plt, d):
     lo, hi = d["overall_wilson"]
     ax.axhspan(100 * lo, 100 * hi, color=GRID, linewidth=0)
     ax.axhline(100 * d["overall"], color=INK_MUTED, linewidth=1.0, linestyle="--")
-    # Label above the band where no interval reaches above it; looked for in the
-    # data, not fixed at a position (RT-225: between tilt_hi and start_height_hi).
     tops = [w[1] for w in d["wilson"]]
     gaps = [i for i in range(len(tops) - 1) if max(tops[i], tops[i + 1]) < hi]
     ax.text((gaps[0] + 0.5) if gaps else (len(x) - 1) / 2, 100 * hi + 0.1, f"T-final gesamt {_num(100 * d['overall'], '.1f')} % (Wilson-Band)", fontsize=7,
@@ -701,10 +627,7 @@ def draw_f4(plt, d):
 
 
 def draw_f5(plt, rows):
-    # 3.4 in holds the ten pair bars; each further bar (Fixed-DR) adds its pitch.
     fig, ax = plt.subplots(figsize=(FIG_W, 3.4 + 0.25 * max(0, len(rows) - 10)))
-    # Top to bottom in list order, with a gap of 0.6 bar pitches where the
-    # method changes, so the two groups read as two groups.
     pos, p = [], 0.0
     for i, r in enumerate(rows):
         if i > 0 and r["method"] != rows[i - 1]["method"]:
@@ -733,8 +656,6 @@ def draw_f5(plt, rows):
 
 def draw_f6(plt, d):
     fig, (a1, a2) = plt.subplots(1, 2, figsize=(FIG_W, 3.1))
-    # Both panels as F7: all bands first, then all means; lines 20 % under the
-    # old 1.6 / 1.8 (user 2026-09-24).
     for ax, part, x in ((a1, "ecdf", "x"), (a2, "cum", "k")):
         for m in d[part]:
             c = d[part][m]
@@ -746,9 +667,6 @@ def draw_f6(plt, d):
     a1.axvline(lim, color=INK, linewidth=0.9, linestyle="--")
     a1.text(lim, 50, f" Abbruch-\n grenze {_num(lim, 'g')} N", fontsize=7, color=INK, va="center")
     a1.set_ylim(0, 102)
-    # Seeds without a success are not in (a); the panel says so, low and left
-    # of the force line (every ECDF is above 85 % past 20 N there -- RT-232;
-    # upper left ran into the curves at 100 %, lower right into the line).
     notes = [f"{METHOD_LABEL[m]}: {', '.join(f's{s}' for s in c['no_success'])} ohne Erfolg,\n"
              f"Kurve über {len(c['seeds'])} Seeds" for m, c in d["ecdf"].items() if c["no_success"]]
     if notes:
@@ -763,25 +681,20 @@ def draw_f6(plt, d):
 
 
 def _band(ax, x, mean, std, colour):
-    """Mean +- 1 sample std over the seeds as a shaded band (user 2026-09-24:
-    the spread, not the single seeds). A rate cannot leave 0..1: clipped there."""
+    """Mean +- 1 sample std over the seeds as a shaded band (user 2026-09-24: the spread, not the single seeds)."""
     ax.fill_between(x, 100 * np.clip(mean - std, 0.0, 1.0), 100 * np.clip(mean + std, 0.0, 1.0),
                     color=colour, alpha=0.2, linewidth=0)
 
 
 def draw_f7(plt, d):
     fig, ax = plt.subplots(figsize=(FIG_W, 3.0))
-    # All bands first, then all means: no method's band may cover the other
-    # method's mean.
     for m in d:
         _band(ax, d[m]["x"], d[m]["mean"], d[m]["std"], METHOD_COLOR[m])
     for m in d:
-        ax.plot(d[m]["x"], 100 * d[m]["mean"], color=METHOD_COLOR[m], linewidth=1.44)   # 1.8 x 0.8 (user 2026-09-24: 20 % thinner)
+        ax.plot(d[m]["x"], 100 * d[m]["mean"], color=METHOD_COLOR[m], linewidth=1.44)
     ax.set_ylim(0, 102)
     _style(ax, "Erfolgsrate im Training in %", XLABEL_TRAINING)
     _title(ax, "Lernkurven im Vergleich", _seed_count(d, "F7"))
-    # One row below the figure, as F6: inside, lower right was empty only
-    # while every curve sat above 40 %; Fixed-DR's band reaches 5 % (RT-231).
     _legend_methods(fig, marker=False, methods=tuple(d))
     fig.tight_layout(rect=(0, 0.07, 1, 1))
     return fig
@@ -829,8 +742,6 @@ def draw_f9(plt, d):
                         color="white" if (not np.isnan(v) and v > 0.6) else INK)
                 ax.text(b, a - 0.25, f"n={r['rows'][a, b]}", ha="center", va="center", fontsize=6.5,
                         color="white" if (not np.isnan(v) and v > 0.6) else INK_MUTED)
-        # Three panels leave ~0.35 in per cell: 7 pt labels run into each other,
-        # so they stand at 45 deg there (6.5 pt, the n= size the user set).
         three = len(arms) > 2
         ax.set_xticks(range(len(le)), xl, fontsize=6.5 if three else 7, rotation=45 if three else 0,
                       ha="right" if three else "center", rotation_mode="anchor")
@@ -853,8 +764,6 @@ def draw_f10(plt, d):
     for m in d["methods"]:
         ax.plot(d["tau"], 100 * d["methods"][m], color=METHOD_COLOR[m], linewidth=1.8)
     ax.axvline(d["t1"], color=INK, linewidth=0.9, linestyle="--")
-    # At 75 %: between Fixed-DR (~57 %) and AutoDR (~90 % and up) right of t1;
-    # at 50 % the Fixed-DR curve ran through it (RT-232).
     ax.text(d["t1"], 75, f" t1 ={_num(d['t1'], '.3f')} mm\n (algorithmische Schwelle,\n keine Zulässigkeitsgrenze)",
             fontsize=7, color=INK, va="center")
     ax.set_ylim(0, 102)
@@ -918,20 +827,16 @@ def draw_all(results: pathlib.Path, training: pathlib.Path, out: pathlib.Path, o
     return written
 
 
-# ---------------------------------------------------------------------------
 # Self-test (D-080): checks on built data; each mutation of THIS file's source
-# must flip exactly its declared checks.
-# ---------------------------------------------------------------------------
 
 def _synthetic():
-    """Two seeds per method, 20 rows per policy and block; T-grenze 7 x 4 rows
-    for autodr s1. Known answers are written next to the checks."""
+    """Two seeds per method, 20 rows per policy and block; T-grenze 7 x 4 rows for autodr s1."""
     rows = []
     n = 20
     k_by = {("autodr", 1): 18, ("autodr", 2): 16, ("nodr", 1): 6, ("nodr", 2): 4}
     for (m, s), k in k_by.items():
         for block in ("T-final", "T-nominal", "T-auswahl"):
-            kk = k if block != "T-nominal" else 20 - s   # 19 / 18: K2 has a variance
+            kk = k if block != "T-nominal" else 20 - s
             for i in range(n):
                 ok = int(i < kk)
                 abort = int((not ok) and i == n - 1)
@@ -940,10 +845,8 @@ def _synthetic():
                              "success_train": ok, "success_strict": ok, "force_abort": abort,
                              "steps": 10 + i if ok else 256, "force_max_filtered_n": 5.0 + i,
                              "force_max_raw_n": 5.0 + i, "ip_max_mm": 0.01 * i, "force_limit_n": 30.0,
-                             # lat 0..28.5 mm, tilt 0..9.5 deg; start height 0.030..0.258 m, i.e. the five 50 mm bins above H_min (D-204), none below
                              "lat_r_mm": 1.5 * i, "yaw_abs_deg": 0.25 * i, "tilt_deg": 0.5 * i,
                              "start_height_m": 0.03 + 0.012 * i, "friction": 0.14})
-    # Fixed-DR (D-192) in its own blocks: T-final-F 12/20 and 10/20, T-nominal-F 17/20 and 16/20.
     for s, k in ((1, 12), (2, 10)):
         for block, kk in (("T-final-F", k), ("T-nominal-F", 18 - s)):
             for i in range(n):
@@ -969,7 +872,7 @@ def _synthetic():
 
 def _synthetic_curves():
     rows = []
-    for m in ARMS:   # Fixed-DR curves too (D-192); F8 reads autodr only
+    for m in ARMS:
         for s in (1, 2):
             for it in range(3):
                 rows.append({"method": m, "seed": s, "iteration": it, "env_steps": (it + 1) * 64,
@@ -987,7 +890,6 @@ def _synthetic_curves():
     return pd.DataFrame(rows), {("autodr", s): side for s in (1, 2)}
 
 
-# D-195: each arm's synthetic num_steps_per_env, all with num_envs 4.
 ARM_STEPS = {"autodr": 16, "nodr": 128, "fixeddr": 32}
 
 
@@ -1000,7 +902,7 @@ def _write_rt_logs(root: pathlib.Path, bad_seed: int | None = None, runs=None):
             w.writerow(["step", "wall_time", *TRAINING_TAGS])
             for it in range(2):
                 w.writerow([it, 0, 0.5, "", "", "", "", 0.12, 0.02, "", ""])
-            w.writerow([1, 0, "", "", "", "", "", "", "", "", ""])   # a */time row
+            w.writerow([1, 0, "", "", "", "", "", "", "", "", ""])
         (d / f"{run}_autodr_1499.json").write_text("{}", encoding="utf-8")
         tilt = "0.01" if (m == "nodr" and s == bad_seed) else "0.0"
         (d / f"{run}_env.yaml").write_text(
@@ -1051,7 +953,6 @@ def _run_checks(ns) -> dict:
     curves, side = _synthetic_curves()
 
     def _check(i, fn):
-        # A mutation that makes a data function RAISE counts as a red check.
         try:
             res[CHECKS[i]] = bool(fn())
         except Exception:   # noqa: BLE001
@@ -1071,7 +972,6 @@ def _run_checks(ns) -> dict:
         return len(sh["x"]) == 5 and all(v > 0 for v in sh["n"])
 
     def c3():
-        # lat 24..28.5 mm = rows 16..19: s1 succeeds on 16, 17 (0.5), s2 on none (0.0)
         return abs(ns["data_f3"](s)["lat_r_mm"]["methods"]["autodr"]["mean"][-1] - 0.25) < 1e-12
 
     def c4():
@@ -1082,7 +982,6 @@ def _run_checks(ns) -> dict:
     def c6():
         d6 = ns["data_f6"](df)
         c = d6["cum"]["autodr"]
-        # No-DR successes: s1 forces 5..10 N (6), s2 5..8 N (4). At 8 N: 4/6 and 4/4.
         e = d6["ecdf"]["nodr"]
         at8 = int(np.flatnonzero(e["x"] == 8.0)[0])
         return (abs(c["seeds"][1][-1] - 0.9) < 1e-12 and np.all(np.diff(c["mean"]) >= 0)
@@ -1094,7 +993,6 @@ def _run_checks(ns) -> dict:
                 and abs(p["yaw"]["hi"][-1] - 1.0) < 0.01 and abs(p["start_height_floor"]["hi"][-1] - 1.0) < 1e-9)
 
     def c9():
-        # lat 1.5*i < 6 -> i 0..3; tilt 0.5*i < 2 -> i 0..3: 4 rows, all successes for both seeds
         a = ns["data_f9"](df)["methods"]["autodr"]
         return a["rows"][0, 0] == 4 and abs(a["rate"][0, 0] - 1.0) < 1e-12
 
@@ -1153,7 +1051,6 @@ def _run_checks(ns) -> dict:
                 and len(ns["data_f2"](ES.summarize(no_f))) == 2)
 
     _check(17, c17)
-    # lat 12..16.5 mm = rows 8..11: Fixed-DR s1 (12 successes) all, s2 (10) rows 8, 9.
     _check(18, lambda: abs(ns["data_f3"](s)["lat_r_mm"]["methods"]["fixeddr"]["mean"][2] - 0.75) < 1e-12)
 
     def c19():
@@ -1165,7 +1062,6 @@ def _run_checks(ns) -> dict:
 
     def c20():
         d6 = ns["data_f6"](df)
-        # Fixed-DR successes: s1 forces 5..16 N (12), s2 5..14 N (10). At 14 N: 10/12 and 10/10.
         e = d6["ecdf"]["fixeddr"]
         at14 = int(np.flatnonzero(e["x"] == 14.0)[0])
         return (abs(d6["cum"]["fixeddr"]["seeds"][1][-1] - 0.6) < 1e-12
@@ -1191,14 +1087,10 @@ def _run_checks(ns) -> dict:
         return np.allclose(d7["fixeddr"]["mean"], [0.05, 0.15, 0.25]) and sorted(pair) == ["autodr", "nodr"]
 
     _check(24, c24)
-    # Seeds 1 and 2 differ by 0.1 at every iteration: sample std = 0.1 / sqrt(2).
     _check(25, lambda: np.allclose(ns["data_f7"](curves)["autodr"]["std"], [0.1 / math.sqrt(2)] * 3))
-    # Same bin as check 3: seeds 0.5 and 0.0 -> sample std 0.5 / sqrt(2).
     _check(26, lambda: abs(ns["data_f3"](s)["lat_r_mm"]["methods"]["autodr"]["std"][-1] - 0.5 / math.sqrt(2)) < 1e-12)
 
     def c27():
-        # ECDF No-DR at 8 N: 4/6 and 1 -> std (1/3)/sqrt(2); share at the last step
-        # AutoDR: 0.9 and 0.8 -> std 0.1/sqrt(2).
         d6 = ns["data_f6"](df)
         e = d6["ecdf"]["nodr"]
         at8 = int(np.flatnonzero(e["x"] == 8.0)[0])
@@ -1208,7 +1100,6 @@ def _run_checks(ns) -> dict:
     _check(27, c27)
 
     def c28():
-        # RT-232: Fixed-DR s1, 0 of 1000 -> statsmodels' lower bound 2.168e-19.
         if ns["_yerr"](0.0, [2.168404344971009e-19, 0.003826758485555125])[0][0] != 0.0:
             return False
         try:
@@ -1220,7 +1111,6 @@ def _run_checks(ns) -> dict:
     _check(28, c28)
 
     def c29():
-        # A third Fixed-DR seed in T-final-F with 0 of 20 (RT-232 s1/s2 pattern).
         zero = df[(df["block"] == "T-final-F") & (df["seed"] == 1)].copy()
         zero["seed"], zero["success_train"], zero["success_strict"], zero["outcome"] = 3, 0, 0, "timeout"
         d6 = ns["data_f6"](pd.concat([df, zero], ignore_index=True))
@@ -1257,14 +1147,12 @@ def _run_checks(ns) -> dict:
             res[CHECKS[12]] = res[CHECKS[12]] and got["rows"] == 2 * len(TRAINING_RUNS)
         except Exception:   # noqa: BLE001
             res[CHECKS[12]] = False
-        # Fixed-DR training runs (D-192): all five -> extracted; four -> refused.
         _write_rt_logs(t / "rt_f", runs={**TRAINING_RUNS, **FIXED_RUNS})
         try:
             got = ns["extract_training"](t / "rt_f", t / "out_f")
             res[CHECKS[23]] = got["rows"] == 2 * (len(TRAINING_RUNS) + len(FIXED_RUNS))
         except Exception:   # noqa: BLE001
             res[CHECKS[23]] = False
-        # D-195: three arms, three factors (ARM_STEPS x 4 envs); each row on its own.
         try:
             cv = pd.read_csv(t / "out_f" / "curves.csv")
             want = (cv["iteration"] + 1) * cv["method"].map(ARM_STEPS) * 4
@@ -1285,11 +1173,8 @@ MUTATIONS = (
      (CHECKS[0], CHECKS[14])),
     ("f2-blocks-swapped", '(("K2", "T-nominal"), ("K1", "T-final"))', '(("K1", "T-nominal"), ("K2", "T-final"))',
      (CHECKS[1], CHECKS[17])),
-    # An empty bin has rate None, which _mean_std turns into NaN without
-    # raising: only the bin-count check sees the kept empty bins.
     ("f3-keeps-empty-bins", "keep = [i for i, n in enumerate(ns) if n > 0]",
      "keep = list(range(len(ns)))", (CHECKS[2],)),
-    # One seed left: the spread helper refuses, the whole of data_f3 goes red.
     ("f3-band-from-first-seed-only", '_mean_std([seeds[k] for k in keys], "F3")',
      '_mean_std([seeds[k] for k in keys[:1]], "F3")', (CHECKS[2], CHECKS[3], CHECKS[18], CHECKS[26])),
     ("f4-band-from-wilson-n-minus-1", '"overall_wilson": ES.wilson(ov["k"], ov["n"])',
@@ -1297,7 +1182,6 @@ MUTATIONS = (
     ("f5-drops-timeouts", '    ("timeout", "Zeitlimit", "#ec835a"),\n', "", (CHECKS[5], CHECKS[19])),
     ("f6-counts-all-episodes-in-ecdf", "ok = g[g[KEY] == 1]\n        ecdf, no_success = {}, []",
      "ok = g\n        ecdf, no_success = {}, []", (CHECKS[6], CHECKS[20], CHECKS[27], CHECKS[29])),
-    # The spread helper _mean_std is the one home of F3/F6/F7 band numbers.
     ("spread-mean-is-max", "return a.mean(axis=0), a.std(axis=0, ddof=1)",
      "return a.max(axis=0), a.std(axis=0, ddof=1)",
      (CHECKS[3], CHECKS[6], CHECKS[7], CHECKS[18], CHECKS[20], CHECKS[24], CHECKS[29])),
@@ -1315,8 +1199,6 @@ MUTATIONS = (
     ("figure-numbers-keep-the-point", 'return s.replace(".", ",")', "return s", (CHECKS[13],)),
     ("style-keeps-the-default-tick-formatter", "            axis.set_major_formatter(_de_formatter())\n",
      "            pass\n", (CHECKS[13],)),
-    # Fixed-DR (D-192): its own blocks, optional, both or none.
-    # data_f1 then finds no Fixed-DR run and raises: both F1 checks go red.
     ("f1-reads-fixed-dr-from-the-pair-block", "_policies(summary, ARM_BLOCK[block])", "_policies(summary, block)",
      (CHECKS[0], CHECKS[14], CHECKS[19])),
     ("fixed-dr-always-required", "    if not blocks:\n        return METHODS", "    if False:\n        return METHODS",
@@ -1330,8 +1212,6 @@ MUTATIONS = (
     ("f5-ignores-fixed-dr", "    for p in _arm_policies(summary, \"T-final\"):", "    for p in _policies(summary, \"T-final\"):",
      (CHECKS[19],)),
     ("final-ignores-the-fixed-dr-block", 'df["block"].isin(("T-final", ARM_BLOCK["T-final"]))',
-     # Fixed-DR then has no T-final rows: data_f6 refuses the seedless arm
-     # (_mean_std), so every F6 check goes red with it.
      'df["block"].isin(("T-final",))', (CHECKS[6], CHECKS[20], CHECKS[21], CHECKS[22], CHECKS[27], CHECKS[29])),
     ("f9-ignores-fixed-dr", 'list(te), "methods": {}}\n    for m in arms_in(df):', 'list(te), "methods": {}}\n    for m in METHODS:',
      (CHECKS[21],)),
@@ -1345,7 +1225,6 @@ MUTATIONS = (
      (CHECKS[28],)),
     ("f6-refuses-a-seed-without-success", "                no_success.append(int(s))\n                continue",
      '                raise FigError("F6: no success")', (CHECKS[29],)),
-    # D-195: No-DR and Fixed-DR read the AutoDR run's params files.
     ("one-arm-with-the-other-arms-factor",
      'factor = run_axis.read_factor(src / run / f"{run}_agent.yaml", src / run / f"{run}_env.yaml")',
      'factor = run_axis.read_factor(*(src / TRAINING_RUNS[("autodr", s)] / f"{TRAINING_RUNS[(\'autodr\', s)]}_{k}.yaml"'

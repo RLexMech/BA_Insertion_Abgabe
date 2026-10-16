@@ -1,108 +1,7 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-r"""A named check that must prove it can distinguish -- the harness (D-080).
-
-WHY THIS EXISTS
----------------
-Run RT-13 (2026-08-23) welded the tool into the UR5e correctly and was refused
-by two of its own twenty checks. Both checks were wrong, not the asset:
-
-  * ``diagonal_inertia_left_to_physx`` asserted ``Get() is None``. USD returns
-    the SCHEMA FALLBACK for an unauthored attribute, and ``UsdPhysics`` gives
-    ``physics:diagonalInertia`` a fallback of (0,0,0) -- itself the sentinel
-    that asks PhysX to compute the tensor. The assertion could never pass.
-  * ``self_contained`` asserted the composition-dependency list is empty. A
-    flattened layer always reports exactly one dependency whose path is the
-    empty string; measured in RT-15, the SHIPPED UR5e does the same with no
-    tool involved. Also could never pass.
-
-Neither mistake was findable by reading. Both cost a round trip to the training
-machine. And the CORRECT form of the second one already existed in this repo,
-in ``verify_fixture_usd.py`` -- so it was written wrong twice while a working
-version sat three files away.
-
-A check is only a check if it can DISTINGUISH: it needs a world where it says
-PASS and a world where it says FAIL. Two ways to lose that, and the second is
-the dangerous one:
-
-  can never pass  -> blocks a run. Visible, costs one round trip.
-  can never fail  -> certifies nothing, and NOBODY EVER FINDS OUT.
-
-WHAT THIS MODULE DOES
----------------------
-Three legs, and what each one actually buys (measured, not asserted):
-
-  A  CLAIM KIND      every check declares what KIND of claim it makes, the way
-                     every constant in insertion_tasks_cfg.py already declares
-                     its provenance (M/R/A/P). An ``api-shape`` claim -- "Get()
-                     returns None", "the list is empty" -- is not knowable by
-                     reading and must be paid for once by a PROBE run.
-                     Catches "can never pass" BEFORE the expensive script runs.
-  B  MUTATION        the counter-proof. Break the KNOWN-GOOD asset in exactly
-                     one way and require the named checks to flip. The ONLY leg
-                     that catches "can never fail".
-  C  EXPECT-BEFORE   what the check must report on the UNMODIFIED input. A check
-                     that already passes there is testing the input, not the
-                     work. Would have caught the inertia bug: the old assertion
-                     reads True on a robot that has no tool_link at all.
-
-This module is STDLIB ONLY -- no pxr, no isaaclab, no numpy. It stores names,
-booleans and bookkeeping; every USD call stays in the caller and arrives here
-already evaluated. That is deliberate: it makes the harness itself testable on
-the dev laptop, where ``import pxr`` fails. ``scripts/tools/`` is the repo's
-"offline tools (no Isaac needed)" directory and is not a package -- load this
-by path with ``importlib.util.spec_from_file_location``, as
-``check_demo_reward_math.py`` already does for ``torch_shim.py``.
-
-THE SELF-TEST CONTRACT, written before the implementation
----------------------------------------------------------
-``python scripts/tools/checks.py --self-test`` must prove all of the following
-with invented checks and invented mutations, and NO USD anywhere:
-
-   1. an api-shape check with no probe is reported            (rule 1)
-   2. an api-shape check WITH a probe is not reported         (rule 1, control)
-   3. a probe naming a file that is not on disk is reported   (rule 4)
-   4. an invariance check with expect_before=PASS is reported (rule 3)
-   5. an api-shape check with no mutation is reported         (rule 2)
-   6. Unprovable(reason) satisfies rule 2 but is announced    (rule 2, escape)
-   7. a mutation whose flips name an unknown check is reported(rule 5)
-   8. a mutation with an empty flips tuple is reported        (rule 5)
-   9. two mutations sharing a name are reported               (rule 5)
-  10. a suite in which NO check expects FAIL before is reported(rule 6)
-  11. ``no_before_state=True`` suppresses rule 6 only         (rule 6, control)
-  12. a mutation that flips NOTHING fails the counter-proof   (can never fail)
-  13. a mutation that flips an EXTRA check fails it too       (not surgical)
-  14. a mutation that flips exactly its declared set passes
-  15. compare_before reports a check that passes before authoring
-  16. compare_before is silent when every check matches its declaration
-  17. as_dict() is byte-identical to the plain dict[str, bool] it replaces
-  18. a check whose thunk raises reports ERROR, and ERROR is not PASS
-  19. the RT-13 inertia bug, replayed: the OLD assertion evaluated on a
-      before-state dict reads True, so compare_before catches it
-  20. a clean suite produces no findings at all                (whole-file control)
-  21. a preservation check that expects FAIL before is reported (rule 3, mirror)
-  22. a preservation check with no mutation is reported          (rule 2)
-  23. a preservation check that expects PASS before and carries a mutation is
-      clean                                                      (rule 3, control)
-  24. audit_source resolves the DOTTED constant form (harness.API_SHAPE) that
-      the migrated scripts actually write -- reading only bare names made the
-      static audit fire no rule at all and pass every file
-
-The last one matters as much as the rest: a harness that flags everything is
-as useless as one that flags nothing.
-
-Cases 21-23 exist because the first real suite produced a check the rules got
-wrong: ``articulation_roots_unchanged`` is SUPPOSED to pass before and after --
-that is the claim (D-018/D-019, the Robot Assembler stripping the
-ArticulationRootAPI). The kinds were split into INVARIANCE (something must
-change) and PRESERVATION (something must not) rather than weakening the rule
-that caught it.
-
-Usage:
-
-    python scripts/tools/checks.py --self-test
-"""
+"""A named check that must prove it can distinguish -- the harness (D-080)."""
 
 from __future__ import annotations
 
@@ -115,14 +14,12 @@ from typing import Any, Callable
 
 CHECKS_MARKER = "checks-2026-08-24c"
 
-# --- claim kinds -----------------------------------------------------------
 ARITHMETIC = "arithmetic"
 API_SHAPE = "api-shape"
 INVARIANCE = "invariance"
 PRESERVATION = "preservation"
 KINDS = (ARITHMETIC, API_SHAPE, INVARIANCE, PRESERVATION)
 
-# --- outcomes --------------------------------------------------------------
 PASS = "PASS"
 FAIL = "FAIL"
 NA = "n/a"
@@ -134,13 +31,7 @@ NOTE = "NOTE"
 
 @dataclass(frozen=True)
 class Probe:
-    """What paid for an api-shape claim: one run that MEASURED the API's shape.
-
-    ``script`` is checked against the repo, so a probe cannot outlive the file
-    that produced it. ``found`` is free text and is not machine-checkable --
-    same standing as the M/R/A/P provenance tags on the constants. The LINK is
-    what this makes checkable; the CLAIM is made checkable by the mutation.
-    """
+    """What paid for an api-shape claim: one run that MEASURED the API's shape."""
 
     run: str
     script: str
@@ -153,17 +44,7 @@ class Probe:
 
 @dataclass(frozen=True)
 class Mutation:
-    """Break the known-good subject in exactly ONE way.
-
-    ``apply`` receives an open stage (or whatever the caller's suite builder
-    consumes), edits it, and returns a non-empty description of what it did.
-    It is DECLARED by the authoring script and only ever CALLED by the runner,
-    so declaring a mutation costs the authoring run nothing.
-
-    ``flips`` is the exact set of checks that must turn FAIL. Fewer means the
-    check cannot fail. More means the mutation is not surgical and proves
-    nothing about the check it names.
-    """
+    """Break the known-good subject in exactly ONE way."""
 
     name: str
     apply: Callable[[Any], str]
@@ -175,11 +56,7 @@ class Mutation:
 
 @dataclass(frozen=True)
 class Unprovable:
-    """Escape hatch for a check that genuinely cannot be counter-proved.
-
-    Satisfies the mutation requirement, and is announced every single time so
-    it stays a decision rather than an omission.
-    """
+    """Escape hatch for a check that genuinely cannot be counter-proved."""
 
     reason: str
 
@@ -190,7 +67,7 @@ class Unprovable:
 @dataclass
 class _Check:
     name: str
-    ok: Any  # bool, or a zero-argument callable returning bool
+    ok: Any
     kind: str
     why: str
     expect_before: str
@@ -200,12 +77,7 @@ class _Check:
 
 
 class Suite:
-    """A named set of checks that carries WHY it can be trusted.
-
-    ``as_dict()`` returns the plain ``dict[str, bool]`` the scripts used before
-    this module existed, so a migration is a move, not a rewrite, and the
-    sidecar's ``checks`` key does not change shape.
-    """
+    """A named set of checks that carries WHY it can be trusted."""
 
     def __init__(self, tag: str, subject: str, *, no_before_state: bool = False) -> None:
         self.tag = tag
@@ -214,7 +86,6 @@ class Suite:
         self._checks: dict[str, _Check] = {}
         self._values: dict[str, Any] = {}
 
-    # -- building ----------------------------------------------------------
     def add(
         self,
         name: str,
@@ -240,7 +111,6 @@ class Suite:
         """Record a measurement that is not a check. Lands in the sidecar."""
         self._values[name] = v
 
-    # -- reading -----------------------------------------------------------
     def names(self) -> tuple[str, ...]:
         return tuple(self._checks)
 
@@ -294,7 +164,6 @@ class Suite:
             if isinstance(c.mutation, Unprovable)
         }
 
-    # -- verdict -----------------------------------------------------------
     def failed(self) -> tuple[str, ...]:
         return tuple(n for n in self._checks if self.result(n) != PASS)
 
@@ -306,53 +175,29 @@ class Suite:
         return 0 if self.verdict() == PASS else 1
 
     def print_lines(self) -> None:
-        """``[tag] name: PASS|FAIL``.
-
-        The format is constrained by scripts/filter_rt_log.py: the line must
-        start with a lowercase ``[tag]`` to be picked up as own-script output,
-        and must contain the literal token FAIL on failure to reach the anomaly
-        section. Change either and /rt-check goes blind.
-        """
+        """``[tag] name: PASS|FAIL``."""
         for n in self._checks:
             print(f"[{self.tag}] {n}: {self.result(n)}")
-        # The unprovable checks are NOT announced here: audit() already says so,
-        # and RT-17 printed each of them twice in the same run.
 
 
-# --- the six rules ---------------------------------------------------------
 def audit(suite: Suite, repo_root: pathlib.Path | str) -> list[str]:
-    """Check the CHECKS. Returns findings, prefixed VIOLATION or NOTE.
-
-    An empty list means every claim in the suite is paid for and counter-proved.
-    """
+    """Check the CHECKS."""
     root = pathlib.Path(repo_root)
     findings: list[str] = []
     seen_mutations: dict[str, str] = {}
     names = set(suite.names())
 
     for n, c in suite._checks.items():  # noqa: SLF001 -- same module
-        # rule 1: an api-shape claim is not knowable by reading.
         if c.kind == API_SHAPE and c.probe is None:
             findings.append(
                 f"{VIOLATION}: {n} is an {API_SHAPE} claim with no probe. "
                 "What the API returns must be MEASURED once before it is asserted."
             )
-        # rule 4: a probe cannot outlive the script that produced it.
         if c.probe is not None and not (root / c.probe.script).is_file():
             findings.append(
                 f"{VIOLATION}: {n} cites probe {c.probe.run} in {c.probe.script}, "
                 "which is not in the repo."
             )
-        # rule 3: a claim about CHANGE that already holds before the work is
-        # not about the work. Its mirror image: a claim about PRESERVATION that
-        # does NOT hold before the work has nothing to preserve.
-        #
-        # The two kinds were one kind until this rule met a real suite:
-        # ``articulation_roots_unchanged`` is supposed to pass before AND after
-        # -- that IS the claim (D-018/D-019: the Robot Assembler stripped the
-        # ArticulationRootAPI). Folding it in with ``one_new_joint`` made the
-        # rule flag a correct check, so the kinds were split rather than the
-        # rule weakened.
         if c.kind == INVARIANCE and c.expect_before == PASS:
             findings.append(
                 f"{VIOLATION}: {n} is an {INVARIANCE} claim that expects PASS before the work. "
@@ -364,7 +209,6 @@ def audit(suite: Suite, repo_root: pathlib.Path | str) -> list[str]:
                 f"{VIOLATION}: {n} is a {PRESERVATION} claim that expects {c.expect_before} before the work. "
                 "A property that does not hold beforehand cannot be preserved."
             )
-        # rule 2: it must be shown that the check can fail.
         if c.kind in (API_SHAPE, INVARIANCE, PRESERVATION):
             if c.mutation is None:
                 findings.append(
@@ -373,7 +217,6 @@ def audit(suite: Suite, repo_root: pathlib.Path | str) -> list[str]:
                 )
             elif isinstance(c.mutation, Unprovable):
                 findings.append(f"{NOTE}: {n} is declared unprovable -- {c.mutation.reason}")
-        # rule 5: the counter-proof must itself be well formed.
         if isinstance(c.mutation, Mutation):
             m = c.mutation
             if not m.flips:
@@ -391,7 +234,6 @@ def audit(suite: Suite, repo_root: pathlib.Path | str) -> list[str]:
                 )
             seen_mutations.setdefault(m.name, n)
 
-    # rule 6: a suite where nothing is expected to change cannot see the work.
     if not suite.no_before_state and not any(
         c.expect_before == FAIL for c in suite._checks.values()  # noqa: SLF001
     ):
@@ -404,13 +246,7 @@ def audit(suite: Suite, repo_root: pathlib.Path | str) -> list[str]:
 
 
 def audit_source(py_file: pathlib.Path | str, repo_root: pathlib.Path | str) -> list[str]:
-    """The same rules read off the SOURCE, offline, with no stage and no Isaac.
-
-    Blind spot, stated rather than discovered: checks added in a loop or a
-    comprehension are invisible here (fix_fixture_asset.py builds
-    ``direct_extent_{axis}`` that way). The runtime ``audit()`` covers exactly
-    those, which is why both are kept.
-    """
+    """The same rules read off the SOURCE, offline, with no stage and no Isaac."""
     path = pathlib.Path(py_file)
     root = pathlib.Path(repo_root)
     findings: list[str] = []
@@ -451,15 +287,7 @@ _CONSTANTS = {
 
 
 def _literal(node: Any) -> Any:
-    """Resolve a literal, a bare name, or a dotted name.
-
-    The dotted form matters and was missed once already: the migrated scripts
-    load this module by path under a local alias and write
-    ``kind=harness.API_SHAPE``. Reading only ``ast.Name`` made every kind come
-    back None, so NO rule fired and the static audit passed every file
-    vacuously -- a check that cannot fail, inside the tool built to forbid
-    exactly that. Case 24 pins it.
-    """
+    """Resolve a literal, a bare name, or a dotted name."""
     if node is None:
         return None
     if isinstance(node, ast.Attribute) and node.attr in _CONSTANTS:
@@ -472,14 +300,8 @@ def _literal(node: Any) -> Any:
         return None
 
 
-# --- leg C: the before-state -----------------------------------------------
 def compare_before(before: Suite, after: Suite) -> list[str]:
-    """Every check must report on the UNMODIFIED input what it declared.
-
-    A check that already passes there is certifying the input rather than the
-    work -- which is exactly how the RT-13 inertia assertion looked: on a robot
-    with no tool_link at all, ``measured.get(...) is None`` reads True.
-    """
+    """Every check must report on the UNMODIFIED input what it declared."""
     findings: list[str] = []
     for n in after.names():
         want = after.expectations()[n]
@@ -498,13 +320,8 @@ def compare_before(before: Suite, after: Suite) -> list[str]:
     return findings
 
 
-# --- leg B: the counter-proof ----------------------------------------------
 def counter_proof(baseline: Suite, mutated: dict[str, Suite]) -> list[str]:
-    """Each mutation must flip EXACTLY the checks it names.
-
-    Fewer -> the check cannot fail (the silent failure mode).
-    More   -> the mutation is not surgical and proves nothing about that check.
-    """
+    """Each mutation must flip EXACTLY the checks it names."""
     findings: list[str] = []
     base = {n: baseline.result(n) for n in baseline.names()}
     for m in baseline.mutations():
@@ -532,13 +349,8 @@ def counter_proof(baseline: Suite, mutated: dict[str, Suite]) -> list[str]:
     return findings
 
 
-# --- sidecar ---------------------------------------------------------------
 def sidecar_block(suite: Suite, before_table: Any = None, findings: list[str] | None = None) -> dict:
-    """The keys this harness ADDS. Never touches the legacy ones.
-
-    Additive JSON cannot break a ``data.get(...)`` reader, and
-    insertion_env.py is exactly that reader for ``.author.json``.
-    """
+    """The keys this harness ADDS."""
     return {
         "harness": CHECKS_MARKER,
         "claims": suite.claims(),
@@ -548,13 +360,10 @@ def sidecar_block(suite: Suite, before_table: Any = None, findings: list[str] | 
     }
 
 
-# ===========================================================================
-#  Self-test -- the 20 cases listed in the module docstring. No USD anywhere.
-# ===========================================================================
 def _self_test(repo_root: pathlib.Path) -> int:
     checked = 0
-    real = "scripts/tools/checks.py"          # exists, by construction
-    ghost = "scripts/does_not_exist_ever.py"  # does not
+    real = "scripts/tools/checks.py"
+    ghost = "scripts/does_not_exist_ever.py"
     good_probe = Probe("RT-15", real, "Q1", "HasAuthoredValue=False, source=Fallback")
 
     def mut(name: str, flips: tuple[str, ...]) -> Mutation:
@@ -563,7 +372,6 @@ def _self_test(repo_root: pathlib.Path) -> int:
     def has(findings: list[str], needle: str) -> bool:
         return any(needle in f for f in findings)
 
-    # 1 / 2 -- api-shape without and with a probe
     s = Suite("t", "x")
     s.add("unpaid", True, kind=API_SHAPE, why="w", mutation=mut("m1", ("unpaid",)))
     f = audit(s, repo_root)
@@ -574,26 +382,22 @@ def _self_test(repo_root: pathlib.Path) -> int:
     assert audit(s, repo_root) == [], audit(s, repo_root)
     checked += 1
 
-    # 3 -- a probe pointing at a file that is not there
     s = Suite("t", "x")
     s.add("stale", True, kind=API_SHAPE, why="w",
           probe=Probe("RT-15", ghost, "Q1", "x"), mutation=mut("m1", ("stale",)))
     assert has(audit(s, repo_root), "not in the repo"), audit(s, repo_root)
     checked += 1
 
-    # 4 -- invariance that already holds before the work
     s = Suite("t", "x")
     s.add("inv", True, kind=INVARIANCE, why="w", expect_before=PASS, mutation=mut("m1", ("inv",)))
     assert has(audit(s, repo_root), "expects PASS before"), audit(s, repo_root)
     checked += 1
 
-    # 5 -- api-shape with no counter-proof
     s = Suite("t", "x")
     s.add("nomut", True, kind=API_SHAPE, why="w", probe=good_probe)
     assert has(audit(s, repo_root), "no counter-proof"), audit(s, repo_root)
     checked += 1
 
-    # 6 -- Unprovable satisfies rule 2 but is announced
     s = Suite("t", "x")
     s.add("hard", True, kind=API_SHAPE, why="w", probe=good_probe,
           mutation=Unprovable("the API offers no way to author this attribute"))
@@ -602,26 +406,22 @@ def _self_test(repo_root: pathlib.Path) -> int:
     assert has(f, "declared unprovable"), f
     checked += 1
 
-    # 7 -- flips names a check that does not exist
     s = Suite("t", "x")
     s.add("a", True, kind=API_SHAPE, why="w", probe=good_probe, mutation=mut("m1", ("ghost_check",)))
     assert has(audit(s, repo_root), "not a check in this suite"), audit(s, repo_root)
     checked += 1
 
-    # 8 -- empty flips
     s = Suite("t", "x")
     s.add("a", True, kind=API_SHAPE, why="w", probe=good_probe, mutation=mut("m1", ()))
     assert has(audit(s, repo_root), "flips nothing"), audit(s, repo_root)
     checked += 1
 
-    # 9 -- two checks sharing one mutation name
     s = Suite("t", "x")
     s.add("a", True, kind=API_SHAPE, why="w", probe=good_probe, mutation=mut("same", ("a",)))
     s.add("b", True, kind=API_SHAPE, why="w", probe=good_probe, mutation=mut("same", ("b",)))
     assert has(audit(s, repo_root), "is used by both"), audit(s, repo_root)
     checked += 1
 
-    # 10 / 11 -- a suite that cannot see the work, and the generator exemption
     s = Suite("t", "x")
     s.add("a", True, kind=ARITHMETIC, why="w", expect_before=PASS)
     assert has(audit(s, repo_root), "cannot tell the input from the result"), audit(s, repo_root)
@@ -631,7 +431,6 @@ def _self_test(repo_root: pathlib.Path) -> int:
     assert audit(s, repo_root) == [], audit(s, repo_root)
     checked += 1
 
-    # 12 / 13 / 14 -- the counter-proof itself
     base = Suite("t", "x")
     base.add("target", True, kind=API_SHAPE, why="w", probe=good_probe, mutation=mut("m", ("target",)))
     base.add("other", True, kind=ARITHMETIC, why="w")
@@ -654,7 +453,6 @@ def _self_test(repo_root: pathlib.Path) -> int:
     assert counter_proof(base, {"m": surgical}) == [], counter_proof(base, {"m": surgical})
     checked += 1
 
-    # 15 / 16 -- the before-state
     after = Suite("t", "x")
     after.add("a", True, kind=ARITHMETIC, why="w", expect_before=FAIL)
     before_bad = Suite("t", "x")
@@ -666,7 +464,6 @@ def _self_test(repo_root: pathlib.Path) -> int:
     assert compare_before(before_good, after) == [], compare_before(before_good, after)
     checked += 1
 
-    # 17 -- the legacy shape is unchanged
     s = Suite("t", "x")
     s.add("a", True, kind=ARITHMETIC, why="w")
     s.add("b", False, kind=ARITHMETIC, why="w")
@@ -674,7 +471,6 @@ def _self_test(repo_root: pathlib.Path) -> int:
     assert json.dumps(s.as_dict()) == json.dumps({"a": True, "b": False})
     checked += 1
 
-    # 18 -- a check that cannot be evaluated is ERROR, and ERROR is not a pass
     def boom() -> bool:
         raise RuntimeError("no such prim")
 
@@ -685,8 +481,7 @@ def _self_test(repo_root: pathlib.Path) -> int:
     assert s.verdict() == FAIL and s.exit_code() == 1
     checked += 1
 
-    # 19 -- the RT-13 bug, replayed on the real assertion
-    measured_before: dict = {}          # no tool_link on the shipped robot
+    measured_before: dict = {}
     old_assertion = measured_before.get("diagonal_inertia") is None
     assert old_assertion is True, "the replay must reproduce the bug, not hide it"
     before = Suite("t", "x")
@@ -698,7 +493,6 @@ def _self_test(repo_root: pathlib.Path) -> int:
     assert has(compare_before(before, live), "about the input"), compare_before(before, live)
     checked += 1
 
-    # 20 -- and a clean suite must produce nothing at all
     s = Suite("author_tool", "ur5e_tool.usd")
     s.add("size", True, kind=ARITHMETIC, why="the part measures what the CAD says")
     s.add("inertia", True, kind=API_SHAPE, why="the tensor is left to PhysX",
@@ -709,8 +503,6 @@ def _self_test(repo_root: pathlib.Path) -> int:
     assert s.verdict() == PASS and s.exit_code() == 0
     checked += 1
 
-    # 21 / 22 / 23 -- the preservation kind, split out when it met a real
-    # suite: "articulation_roots_unchanged" must pass BEFORE and after.
     s = Suite("t", "x")
     s.add("keeps", True, kind=PRESERVATION, why="w", expect_before=FAIL, mutation=mut("m", ("keeps",)))
     s.add("changes", True, kind=INVARIANCE, why="w", mutation=mut("m2", ("changes",)))
@@ -730,9 +522,6 @@ def _self_test(repo_root: pathlib.Path) -> int:
     assert audit(s, repo_root) == [], audit(s, repo_root)
     checked += 1
 
-    # 24 -- audit_source must read the DOTTED constant form the migrated
-    # scripts actually use. Missing it made the static audit pass every file
-    # without firing a single rule.
     import tempfile
     src = (
         "def build(s):\n"

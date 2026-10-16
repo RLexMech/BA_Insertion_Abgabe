@@ -1,53 +1,3 @@
-# run_eval.ps1 (rl_games) -- run ONE evaluation block of D-206 on the TRAINING
-# PC, each run of scripts/rl_games/play.py through rt_log.ps1.
-#
-# A copy of scripts/run_eval.ps1, which stays unchanged for RT-222..225 (rsl_rl).
-# Plan: Pläne/D-206_Bauplan.md A3/A4. What differs from the old script:
-#   * policies are FOUND, not typed: logs\rl_games\ur5e_insertion\*__RT-24{2,3,4}s<N>_*,
-#     exactly one folder per seed (242 autodr, 243 fixeddr, 244 nodr);
-#   * checkpoint: exactly nn\last_ur5e_insertion_ep_100_rew_<R>.pth (D-206 (2));
-#     its twin ..._rew__<R>_.pth never matches (no '_' after 'rew_');
-#   * every block runs here, incl. technik, T-grenze (-Final), the Fixed-DR
-#     blocks, T-ood and the noise tags (-Noise);
-#   * the training's Hydra overrides go into every command (the RT-242/243/244
-#     training commands): env.obs_wrench_mode=force_prevact
-#     env.pocket_obs_yaw_rad=0.0223402. NOT env.start_floor_m: table mode
-#     refuses a floor (validate_table_mode, G8).
-#
-# Usage (repo root, conda env active):
-#   .\scripts\rl_games\run_eval.ps1 -Block technik -Rt RT-245
-#   .\scripts\rl_games\run_eval.ps1 -Block T-auswahl -Rt RT-246
-#   .\scripts\rl_games\run_eval.ps1 -Block T-grenze -Rt RT-251 -Final autodr_s1
-#   .\scripts\rl_games\run_eval.ps1 -Block T-final -Rt RT-253 -Noise pn2
-#   ... -DryRun   # checks only, no run
-#
-# Blocks (eval_plan.md 3.2, D-206):
-#   technik                        autodr s1 only: target; target tag rep2 (G6); nominal tag nom
-#   T-auswahl, T-final, T-nominal  autodr s1..s5 + nodr s1..s5 (10)
-#   T-final-F, T-nominal-F         fixeddr s1..s5 (5, D-192)
-#   T-grenze                       ONE policy, -Final <method>_s<N> (eval_plan.md 2 B)
-#   T-ood                          autodr s1..s5 (5), --eval-ood (D-206 (3), D-191)
-#   -Noise pn2|gx2|py2             only with T-final: autodr s1..s5, tag = the noise
-#                                  name, one Hydra override each (D-206 (3); D-191
-#                                  "observation noise x2", RT-230). The untagged
-#                                  T-final runs of the same commit are the reference.
-#
-# Pull ONCE before the evaluation, never during it (eval_collect.py refuses
-# runs that disagree on code_commit). The script holds the clone to that:
-#   before the block  HEAD readable, no tracked change (the manifest's
-#                     code_dirty rule, tools/eval_manifest.py), the table is
-#                     there, every checkpoint is found exactly once, no eval
-#                     folder and no rt_log file of this block exists yet.
-#                     Every problem is listed, then exit 1.
-#   before each run   HEAD unchanged and still no tracked change, else exit 1.
-#   after each run    the run's full and short log, the table's Get-FileHash
-#                     (table_filehash.txt) and HEAD (head.txt) go into the
-#                     run's eval folder. rt_log exit != 0 -> exit with it.
-#
-# Table and width per block are READ from eval_collect.py BLOCKS (their one
-# home). Run names: <Rt>_<method>_s<N>[_<tag>]. -RunRoot exists for the laptop
-# dry-run test only.
-
 param(
     [Parameter(Mandatory = $true)]
     [ValidateSet('technik', 'T-auswahl', 'T-final', 'T-nominal', 'T-final-F', 'T-nominal-F', 'T-grenze', 'T-ood')]
@@ -59,24 +9,21 @@ param(
     [switch]$DryRun
 )
 
-# Continue, as in rt_log.ps1: under 'Stop' PowerShell 5.1 turns any native
-# stderr line (git, python) into a terminating error. Every failure below is
-# caught by an explicit equality check instead.
+
 $ErrorActionPreference = 'Continue'
 
-# eval_plan.md section 3.2 "Abspiel-Seed (Nutzer 2026-09-22)": every policy,
-# every block, --seed 100.
+
 $PlaySeed = 100
 
-# The three rl_games arms (D-206 (1)): training RT prefix per method.
+
 $ArmPrefix = @{ autodr = 'RT-242'; fixeddr = 'RT-243'; nodr = 'RT-244' }
 $CkptPattern = '^last_ur5e_insertion_ep_100_rew_[-+0-9.eE]+\.pth$'
 
-# The training's observation overrides (rt_logs/RT-242_expectation.md command).
+
 $YawBelief = 'env.pocket_obs_yaw_rad=0.0223402'
-$BaseOverrides = @('env.obs_wrench_mode=force_prevact')
-# D-206 (3): x2 of the training value, one quantity per tag (RT-230 for pn2/gx2).
-# py2 REPLACES the training yaw belief, the other two come on top of it.
+$BaseOverrides = @('env.obs_wrench_mode=force_prevact', 'env.start_floor_m=0.020')
+
+
 $NoiseOverride = @{
     pn2 = 'env.obs_noise_pocket_pos_std_m=0.01'
     gx2 = 'env.grasp_obs_offset_x_m=0.006'
@@ -98,13 +45,13 @@ function Get-Tracked { @(git -C $repoRoot status --porcelain --untracked-files=n
 
 Push-Location $repoRoot
 
-# ------------------------------------------------------------ arguments
+
 if ($Rt -notmatch '^RT-[0-9]+$') { Stop-Block @("-Rt '$Rt' is not RT-<number>") }
 if (($Block -eq 'T-grenze') -ne [bool]$Final) { Stop-Block @("-Final is given with -Block T-grenze and only there") }
 if ($Final -and $Final -notmatch '^(autodr|nodr|fixeddr)_s[1-5]$') { Stop-Block @("-Final '$Final' is not <autodr|nodr|fixeddr>_s<1-5>") }
 if ($Noise -and $Block -ne 'T-final') { Stop-Block @("-Noise runs only on the T-final table (-Block T-final)") }
 
-# ------------------------------------------------------------ the runs of this block
+
 function New-Run([string]$Method, [int]$Seed, [string]$Width, [string]$Tag) {
     @{ Method = $Method; Seed = $Seed; Width = $Width; Tag = $Tag }
 }
@@ -133,7 +80,7 @@ switch ($Block) {
     }
 }
 
-# ------------------------------------------------------------ block -> table
+
 $collect = Join-Path $scriptsDir 'eval_collect.py'
 $pattern = '^\s*"' + [regex]::Escape($Block) + '":\s*\("([^"]+)",\s*(?:"(target|nominal)"|None)\),'
 $hits = @(Select-String -Path $collect -Pattern $pattern)
@@ -144,7 +91,7 @@ if ($Block -ne 'technik' -and -not $blockWidth) { Stop-Block @("eval_collect.py 
 foreach ($r in $runs) { if (-not $r.Width) { $r.Width = $blockWidth } }
 $tableAbs = Join-Path $repoRoot $tableRel
 
-# ------------------------------------------------------------ pre-block checks
+
 $problems = @()
 $head = Get-Head
 if (-not $head) { $problems += 'git rev-parse HEAD gave nothing' }
@@ -168,12 +115,12 @@ foreach ($r in $runs) {
     if ($ck.Count -ne 1) { $problems += "$($ck.Count) checkpoints match $CkptPattern in $($r.RunDir)\nn (want exactly 1)"; continue }
     $r.Ckpt = $ck[0].FullName
     if ($tableHash) {
-        # tools/eval_manifest.py eval_dirname
+
         $r.EvalDir = Join-Path $r.RunDir "eval_$($r.Width)_$($tableHash.Substring(0, 8))"
         if ($r.Tag) { $r.EvalDir += "_$($r.Tag)" }
         if (Test-Path -LiteralPath $r.EvalDir) { $problems += "eval folder exists already: $($r.EvalDir)" }
     }
-    # rt_log.ps1 APPENDS to an existing log, so an old one would mix two runs.
+
     if (Test-Path -LiteralPath $r.Log) { $problems += "rt_log file exists already: $($r.Log)" }
 }
 $names = @($runs | ForEach-Object { $_.Name } | Sort-Object -Unique)
@@ -185,7 +132,7 @@ Write-Host "[run_eval] HEAD $head"
 Write-Host "[run_eval] table Get-FileHash $tableHash"
 Write-Host "[run_eval] pre-block checks: $($runs.Count) checkpoints found once, 0 eval folders, 0 rt_log files, clean -- OK"
 
-# ------------------------------------------------------------ the runs
+
 $i = 0
 foreach ($r in $runs) {
     $i++

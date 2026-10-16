@@ -39,6 +39,8 @@ Nicht enthalten:
 
 Die volle Geschichte liegt in den Original-Repos. Die Tags zeigen dort auf die Stände in [STAENDE.md](STAENDE.md).
 
+Bei D sind die gemeinsamen Einstellungen der 100-Epochen-Hauptstudie ebenfalls direkt aktiviert: 256 Envs, 34 Beobachtungswerte, untere Starthöhengrenze −30 mm, drei Stall-Puffer, Gierfehler ±1,28° und Standard-Seed 1. Trainingsbedingungen und Auswertung sind in [D_factory/README.md](D_factory/README.md) beschrieben.
+
 ## Hinweise zum Lesen
 
 - A und B sind die Vorstudie (D-043 im Repo `Ur5e_ContactRich_Insertion`). C und D sind die eigentliche Aufgabe.

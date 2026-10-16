@@ -1,90 +1,7 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-"""Which body carries the force signal? Measure it, do not argue it.
-
-THE QUESTION. D-114 puts three force components into the observation and one
-force threshold into the termination, both read from
-``ArticulationData.body_incoming_joint_wrench_b`` (FORGE pattern,
-``forge_env.py:95``, NOT a ContactSensor). Branch ``p2-rl-code`` has the
-config field ``force_sensor_body_name`` waiting and refuses a placeholder --
-correctly, since a zero that looks like a reading is the same class of silent
-defect as the SAPU sign error that branch just found.
-
-D-114 says the wrench is read "at a dedicated force-sensor link", and
-``HANDOFF-SZENE.md`` assigns building that link to this stream as an asset
-job. But our tool is ALREADY its own link: ``tool_link``, joined to
-``wrist_3_link`` by the fixed joint ``tool_weld`` (D-076..D-079). FORGE needs
-a dedicated link because its held asset is not welded to the arm; ours is.
-If the wrench incoming at ``tool_link`` is the flange-to-tool wrench, then an
-asset re-authoring collapses into one string.
-
-That is an api-shape claim in the sense of D-080 and it is paid for with a
-probe, not with the paragraph above.
-
-THE CONTROL, and it is what makes this a measurement rather than a printout.
-At rest under gravity every link of a serial chain carries a non-zero
-incoming joint wrench: it holds up everything distal to it. ``tool_link`` is
-the LAST link, so nothing hangs below it, and the force incoming at its joint
-must be its own weight:
-
-    |f| ~= m_tool * g
-
-``m_tool`` is read from the articulation itself, not supplied here. A reading
-that matches its own authored mass is evidence the channel means what D-114
-assumes. A reading that does not is the finding, and it is worth more than a
-guess about which link to use.
-
-Both are results. Neither is assumed.
-
-Gravity is ON in this scene (D-105, verified RT-45/RT-46), which is what
-makes the control available at all.
-
-Nothing is written. No file is modified. The env is built, reset, stepped a
-few times so the solver settles, and read.
-
-UNVERIFIED -- authored on the dev laptop, which has no Isaac. On the training
-machine:
-
-    conda activate env_isaaclab
-    python scripts\\probe_wrench_bodies.py --headless
-
-PRUEFBLOCK B (D-188, 2026-09-13): ``--tare-check``
----------------------------------------------------
-The torque twin of the control above, in ONE bundled run through the env's
-own ``step()`` path (4 envs, ``obs_wrench_mode=wrench``, every sigma 0,
-fixture noise off), four points, each a measurement with a prediction
-written next to it:
-
-1. REST. Zero actions for ``--settle-steps``. The raw torque at the force
-   link against ``r x F_hold`` for TWO candidate reference points -- the
-   parent link origin (the Isaac test's, ``test_articulation.py:1871-1882``)
-   and the child link origin -- and BOTH signs. The pair whose residual is
-   within tolerance names the reference point and the sign convention;
-   none within tolerance is a finding, not a pass.
-2. KNOWN LOAD. ``--load-n`` newtons along the tool's local +x at the tool
-   tip (``_tip_offset_local``), through ``set_external_force_and_torque``
-   (local link frame). Prediction: delta force ``R_p^T R_c F``, delta torque
-   ``R_p^T (r_tip x R_c F)`` with ``r_tip`` from the reference point to the
-   tip. Read at the raw wrench, the tared buffers, the EMA AND channels 28:31
-   of the policy observation -- frame, sign, reference point and wiring in
-   one number each.
-3. PARTIAL RESET. ``_reset_idx([0])`` with the load still on, one step:
-   env 0's buffers are 0 and ``_wrench_valid[0]`` False on that step, True
-   on the next; env 1's torque is unchanged.
-4. DOUBLE READ. ``_get_observations()`` twice without physics: the EMA
-   buffers are byte-identical.
-
-Tolerances are OWN CHOICES, stated here rather than tuned: rest residual
-max(0.005 N m, 1 % of the prediction) -- RT-180c's tared force was
-0.00036 N of 8.08, i.e. 4.5e-5 relative, so 1 % is 200x that; load
-magnitude ratio in [0.97, 1.03] and direction cosine >= 0.999 (2.6 deg).
-5 N is "well above the force precision, well below the 50 N abort" -- own
-construction, named. Writes ``wrench_tare_check.json``. Exit 0 only when
-all four points pass.
-
-    python scripts\\probe_wrench_bodies.py --tare-check --headless
-"""
+"""Which body carries the force signal?"""
 
 from __future__ import annotations
 
@@ -118,8 +35,6 @@ simulation_app = app_launcher.app
 
 import torch  # noqa: E402
 
-# D-200 (1), as scripts/zero_agent.py: THIS clone's env package first, whichever
-# clone the editable `insertion` install points at (RT-242a..d).
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent / "source" / "insertion"))
 import insertion  # noqa: E402
 print(f"[wrench] insertion package imported from: {pathlib.Path(insertion.__file__).resolve().parent}")
@@ -138,11 +53,7 @@ G = 9.81
 
 
 def read_attr(data, name):
-    """Return an attribute or None. An absent field is a FINDING, not a crash.
-
-    A missing attribute here costs a whole copy-and-run round trip if it ends
-    the script; printing its name is worth more than a traceback.
-    """
+    """Return an attribute or None."""
     try:
         return getattr(data, name)
     except (AttributeError, NotImplementedError, RuntimeError) as exc:
@@ -185,7 +96,6 @@ def main_bodies() -> int:
     print(f"[wrench] wrench tensor shape: {tuple(wrench.shape)}")
     result["wrench_shape"] = list(wrench.shape)
 
-    # --- per body -----------------------------------------------------------
     print(f"[wrench] {'idx':>3} {'body':<24} {'|f| [N]':>10} {'|tau| [Nm]':>11} "
           f"{'mass [kg]':>10} {'m*g [N]':>9}")
     rows = []
@@ -206,7 +116,6 @@ def main_bodies() -> int:
     result["nonzero_force_bodies"] = nonzero
     print(f"[wrench] bodies with a non-zero force: {len(nonzero)} of {len(rows)}")
 
-    # --- the control --------------------------------------------------------
     tool = next((r for r in rows if r["body"] == geom.TOOL_LINK_NAME), None)
     if tool is None:
         result["verdict"] = "TOOL_LINK_ABSENT"
@@ -230,9 +139,6 @@ def main_bodies() -> int:
           f"against its own weight {tool['weight_n']:.4f} N (mass {tool['mass_kg']:.5f} kg) "
           f"-> ratio {ratio:.3f}")
 
-    # 10 % covers solver residual and the small dynamic term of a settling arm.
-    # It is a band around a PREDICTED value, not a tuned threshold: the
-    # prediction is m*g and the only question is whether the reading is it.
     if 0.9 <= ratio <= 1.1:
         result["verdict"] = "TOOL_LINK_CARRIES_THE_WRENCH"
         result["reason"] = (
@@ -261,8 +167,7 @@ def _l(t) -> list:
 
 
 def _rot_t(quat_w: torch.Tensor, v_w: torch.Tensor) -> torch.Tensor:
-    """World vector (N, 3) -> the body frame of ``quat_w`` (N, 4): R^T v,
-    through the math module's own convention (axes are COLUMNS)."""
+    """World vector (N, 3) -> the body frame of ``quat_w`` (N, 4): R^T v, through the math module's own convention (axes are COLUMNS)."""
     return insertion_math.rotate_into_frame(insertion_math.axes_from_quat(quat_w), v_w)
 
 
@@ -277,7 +182,6 @@ def _cos(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
 
 def main_tare_check() -> int:
     """Pruefblock B (D-188). See the module docstring for the four points."""
-    # Own tolerances, named in the docstring.
     REST_ABS_NM, REST_REL = 0.005, 0.01
     LOAD_RATIO = (0.97, 1.03)
     LOAD_COS = 0.999
@@ -286,8 +190,9 @@ def main_tare_check() -> int:
     cfg.scene.num_envs = int(args_cli.num_envs)
     cfg.seed = 42
     cfg.obs_wrench_mode = "wrench"
-    # A MEASUREMENT: the observation must BE the reading (zero_agent.py's
-    # pinning, same reason), and one deterministic fixture pose.
+    cfg.start_floor_m = 0.020
+    cfg.autodr_stall_buffers = 0
+    cfg.pocket_obs_yaw_rad = 0.0
     cfg.obs_noise_pocket_pos_std_m = 0.0
     cfg.force_obs_noise_std_n = 0.0
     cfg.torque_obs_noise_std_nm = 0.0
@@ -296,16 +201,7 @@ def main_tare_check() -> int:
     cfg.fixture_pos_noise_z = 0.0
     cfg.fixture_yaw_noise_rad = 0.0
     cfg.fixture_tilt_noise_rad = 0.0
-    cfg.report_at_steps = (2,)  # one startup report, not four (log length)
-    # JOINT_PD FOR THE LOAD PROBE (RT-192a4 finding): under the OSC a zero
-    # action re-anchors the target to the CURRENT pose every physics step,
-    # so a constant load drags the arm away without limit (a2: 67 deg, 0.1 m)
-    # and the before/after wrench carries the pose change. Overwriting the
-    # joint state each substep (a4) is no equilibrium either -- the force
-    # ratio fell to 0.33. The USD drives of joint_pd HOLD the pose with
-    # stiffness: a small, static deflection and a real reaction wrench. The
-    # wrench read, the tare and the obs wiring are the same code in both
-    # modes; only the actuator differs.
+    cfg.report_at_steps = (2,)
     cfg.control_mode = "joint_pd"
     env = InsertionEnv(cfg)
     robot = env.robot
@@ -353,7 +249,6 @@ def main_tare_check() -> int:
     passed: dict = {}
     env.reset()
 
-    # ---- 1. REST ---------------------------------------------------------
     for _ in range(int(args_cli.settle_steps)):
         obs_rest = step()
     r1 = read()
@@ -390,52 +285,28 @@ def main_tare_check() -> int:
             if ok:
                 fits.append((name, sgn))
     p1["fits"] = [f"{a}{'+' if s > 0 else '-'}" for a, s in fits]
-    # The env's own tare uses the parent origin with the + sign; it is right
-    # exactly when that pair fits, and the tared buffer then reads ~0.
     env_tare_ok = ("parent_origin", 1.0) in fits and bool(
         (torch.linalg.norm(r1["t_tared"], dim=-1) <= torch.clamp(
             REST_REL * torch.linalg.norm(cands["parent_origin"], dim=-1) * p1["hold_norm_n"],
             min=REST_ABS_NM)).all())
     p1["env_tare_fits"] = env_tare_ok
-    # MEASURED RT-192a first run: the parent and child origins COINCIDE (the
-    # weld joint sits at the link origin), so at rest both candidates fit and
-    # this point cannot separate them; it pins the SIGN (+) and the tare
-    # (~1e-6 N m residual). The reference point is point 2's job.
     p1["origins_distance_m"] = _l(torch.linalg.norm(r1["pos_tool"] - r1["pos_parent"], dim=-1))
     passed["1_rest"] = ("parent_origin", 1.0) in fits and ("parent_origin", -1.0) not in fits and env_tare_ok
     print(f"[tare] 1 RESULT: fitting (reference, sign) pairs {p1['fits']}; env tare (parent_origin+) "
           f"{'reads ~0' if env_tare_ok else 'does NOT read ~0'} -> {'PASS' if passed['1_rest'] else 'FAIL'}")
     result["1_rest"] = p1
 
-    # ---- 2. KNOWN LOAD, TWO APPLICATION POINTS (RT-192a rerun, 2026-09-13) --
-    # THE SIGN CONVENTION IS MEASURED, NOT ASSUMED, since the first RT-192a:
-    # the incoming wrench is the PARENT's reaction, i.e. MINUS the load, for
-    # the force (delta = -R_p^T F_w, ratio 1.0004, cos -1.000) exactly as for
-    # gravity (raw = +hold = -m g). The prediction below carries that sign.
-    # THE REFERENCE POINT is what the first run could not name: the lever
-    # came out 0.255 m where the tip sits 0.152 m from the link origin. One
-    # position cannot separate "positions are ignored" from "the moment is
-    # taken about another point", so the SAME load goes to TWO points along
-    # the tool axis; the DIFFERENCE of the two moments must be F * dz if the
-    # application point is honoured, and the intercept names the reference
-    # point as a distance d along the tool axis from the link origin.
-    # (M_P = M_O - r_OP x F, Auftrag section 4; here in one axis.)
     tip_b = env._tip_offset_local.reshape(1, 1, 3).repeat(n, 1, 1)
-    dz = 0.100  # metres up the tool axis for the second point; own choice
-    # THREE loads: x at the tip, x at tip - dz (the lever difference), and
-    # y at the tip (the only one that can see an x offset of the reference).
+    dz = 0.100
     load_x = torch.zeros(n, 1, 3, device=dev); load_x[:, 0, 0] = float(args_cli.load_n)
     load_y = torch.zeros(n, 1, 3, device=dev); load_y[:, 0, 1] = float(args_cli.load_n)
     points = {"tip": (tip_b.clone(), load_x), "tip_minus_dz": (tip_b.clone(), load_x),
               "tip_y": (tip_b.clone(), load_y)}
     points["tip_minus_dz"][0][:, 0, 2] -= dz
-    # The MEASURED reference point (cfg, RT-192a2) as the third candidate.
     ref_off = env._torque_ref_offset_parent
     p2 = {"load_n": float(args_cli.load_n), "dz_m": dz, "points": {},
           "torque_ref_offset_parent_m": _l(ref_off[0]),
           "sign_convention": "incoming wrench = parent reaction = MINUS the load (measured RT-192a first run)"}
-    # Where the two centres of mass sit, in the PARENT frame, for the reader:
-    # a reference point 0.103 m up the axis has to be SOMETHING's frame.
     p2["com_child_in_parent_m"] = _l(_rot_t(r1["q_parent"], r1["com_w"] - r1["pos_parent"]))
     p2["com_parent_in_parent_m"] = _l(_rot_t(r1["q_parent"], robot.data.body_com_pos_w[:, parent] - r1["pos_parent"]))
     p2["tool_origin_in_parent_m"] = _l(_rot_t(r1["q_parent"], r1["pos_tool"] - r1["pos_parent"]))
@@ -454,7 +325,6 @@ def main_tare_check() -> int:
         F_w = torch.matmul(R_c, load_b[:, 0].unsqueeze(-1)).squeeze(-1)
         pt_w = r2["pos_tool"] + torch.matmul(R_c, pos_b[:, 0].unsqueeze(-1)).squeeze(-1)
         pred_f = -_rot_t(r2["q_parent"], F_w)
-        # RAW deltas: same pose, same gravity, so the difference is the load alone.
         d_tared_f = r2["raw"][:, 0:3] - r1["raw"][:, 0:3]
         d_tared_t = r2["raw"][:, 3:6] - r1["raw"][:, 3:6]
         p2.setdefault("pose_drift_m", {})[pname] = _l(torch.linalg.norm(r2["pos_tool"] - r1["pos_tool"], dim=-1))
@@ -463,8 +333,6 @@ def main_tare_check() -> int:
         d_obs_f = obs_load[:, f_lo:f_hi] - obs_rest[:, f_lo:f_hi]
         f_ratio = torch.linalg.norm(d_tared_f, dim=-1) / torch.linalg.norm(pred_f, dim=-1)
         f_cos = _cos(d_tared_f, pred_f)
-        # The measured lever, in metres: |d tau| / |F| -- the number the
-        # reference point is read from, per application point.
         lever = torch.linalg.norm(d_tared_t, dim=-1) / float(args_cli.load_n)
         lever_meas[pname] = lever
         rec = {"point_local_m": _l(pos_b[:, 0]), "load_local_n": _l(load_b[:, 0]),
@@ -499,19 +367,10 @@ def main_tare_check() -> int:
         for cname, c in rec["candidates"].items():
             print(f"[tare]     ref {cname}: ratio {[round(v, 4) for v in c['ratio']]}, "
                   f"cos {[round(v, 4) for v in c['cos']]} -> {'FITS' if c['fits'] else 'no'}")
-    # Clear the load and let the OSC settle before point 3, so no env drifts
-    # under a load while the reset is read (a3: env 1 drifted, point 3 FAIL).
-    # NOT the documented empty (0, 3) array: the 2.3.2 wrench composer's Warp
-    # kernel refuses it ("expects an array with 2 dimension(s)", RT-192a6).
-    # Zero forces of the SAME shape at the same point switch the load off.
     robot.set_external_force_and_torque(forces=torch.zeros_like(load_x), torques=torch.zeros_like(load_x),
                                         positions=tip_b, body_ids=[tool])
     for _ in range(int(args_cli.settle_steps)):
         step()
-    # THE TWO-POINT READING. Honoured application point: lever(tip) -
-    # lever(tip - dz) = dz. Reference point: d = lever(tip) - z_tip, in
-    # metres up the tool axis from the link origin (0 = origin, negative =
-    # towards the wrist).
     z_tip = float(env._tip_offset_local[2])
     lever_diff = lever_meas["tip"] - lever_meas["tip_minus_dz"]
     d_ref = lever_meas["tip"] - z_tip
@@ -524,16 +383,11 @@ def main_tare_check() -> int:
                                      "-- compare with com_parent_in_parent_m and com_child_in_parent_m above")
     torque_fit = next((c for c in ("parent_origin", "child_origin", "measured_ref")
                        if all(p2["points"][k]["candidates"][c]["fits"] for k in points)), None)
-    # The y load reads the x offset of the reference: |d tau_z| / F along -y.
     ty = p2["points"]["tip_y"]["delta_torque_tared_nm"]
     p2["reference_point_x_from_y_load_m"] = [row[2] / float(args_cli.load_n) for row in ty]
     p2["torque_fit"] = torque_fit
     p2["force_fits"] = f_ok_all
     p2["obs_channel_equals_ema"] = wired_all
-    # PASS needs: force right at both points, wiring right, application point
-    # honoured, AND the moment about the link origin (the env's assumption).
-    # PASS: force right at every point, wiring right, application point
-    # honoured, AND the moment about the env's (measured) reference point.
     passed["2_load"] = f_ok_all and wired_all and p2["application_point_honoured"] and torque_fit == "measured_ref"
     print(f"[tare] 2 RESULT: force {'fits' if f_ok_all else 'does NOT fit'} at both points; "
           f"lever diff {[round(v, 4) for v in _l(lever_diff)]} m vs dz {dz} -> application point "
@@ -542,7 +396,6 @@ def main_tare_check() -> int:
           f"obs==EMA {wired_all} -> {'PASS' if passed['2_load'] else 'FAIL'}")
     result["2_load"] = p2
 
-    # ---- 3. PARTIAL RESET ------------------------------------------------
     before = read()
     env._reset_idx(torch.tensor([0], device=dev))
     fresh_raised = bool(env._wrench_fresh[0]) and not bool(env._wrench_fresh[1:].any())
@@ -572,7 +425,6 @@ def main_tare_check() -> int:
           f"{'PASS' if passed['3_reset'] else 'FAIL'}")
     result["3_reset"] = p3
 
-    # ---- 4. DOUBLE READ --------------------------------------------------
     a = (env._force_smooth.clone(), env._torque_smooth.clone(),
          env._force_tared_raw.clone(), env._torque_tared_raw.clone(), env._wrench_valid.clone())
     env._get_observations()

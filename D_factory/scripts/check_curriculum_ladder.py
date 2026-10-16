@@ -1,16 +1,7 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-r"""Offline check of ``curriculum.py`` -- the manual multi-axis ladder (D-110).
-
-The ladder is plain Python: no torch, no Isaac, no tensors. It is therefore
-the one piece of this stream that the laptop can import for real rather than
-execute under a stand-in. The mutation harness still loads it from SOURCE,
-because the counter-proof needs a broken copy without touching the file.
-
-    python scripts/check_curriculum_ladder.py
-    python scripts/check_curriculum_ladder.py --self-test
-"""
+"""Offline check of ``curriculum.py`` -- the manual multi-axis ladder (D-110)."""
 
 from __future__ import annotations
 
@@ -28,9 +19,6 @@ LADDER_SRC = (
     / "curriculum.py"
 )
 
-# Probe values. The real step sizes are [open] -- D-110 point (3) says they
-# come from this project's own learning curves, not from IndustReal's 5 mm.
-# Nothing here asserts a step size; the checks only exercise the rule.
 AXES = ("start_height", "fixture_offset", "tilt")
 BASE = {"start_height": 0.005, "fixture_offset": 0.001, "tilt": 0.01}
 STEP = {"start_height": 0.010, "fixture_offset": 0.002, "tilt": 0.02}
@@ -61,11 +49,6 @@ def build_checks(ns) -> list[tuple[str, bool, str]]:
     def fresh(max_rung=4):
         return Ladder(axes=AXES, base=BASE, step=STEP, max_rung=max_rung)
 
-    # -- the UNSET guard: step sizes are [open] (D-110 point 3) -------------
-    # LadderError SPECIFICALLY, not "some exception". A ladder that crashes
-    # with a TypeError three lines deeper has also refused to build, but it
-    # refused by accident and says nothing about which number is missing --
-    # which is the whole job of the guard.
     def refuses(name: str, **kwargs) -> None:
         try:
             Ladder(axes=AXES, max_rung=4, **kwargs)
@@ -78,12 +61,9 @@ def build_checks(ns) -> list[tuple[str, bool, str]]:
 
     refuses("an unset step size refuses to build a ladder", base=BASE, step=UNSET)
     refuses("ONE unset axis is enough to refuse", base=BASE, step={**STEP, "tilt": UNSET})
-    # A step that shrinks the range would SHIFT the ladder instead of widening
-    # it -- the one hard constraint of D-110 point (2).
     refuses("a negative step is refused (widen, never shift)",
             base=BASE, step={**STEP, "tilt": -0.01})
 
-    # -- the 80/10 rule (D-110 point 3, IndustReal PAPER thresholds) --------
     lad = fresh()
     check("a fresh ladder starts on rung 0", lad.rung == 0, str(lad.rung))
     check("rung 0 carries the base ranges", lad.ranges == BASE, str(lad.ranges))
@@ -103,7 +83,6 @@ def build_checks(ns) -> list[tuple[str, bool, str]]:
     lad.update(0.9)
     check("advancing moves one rung, not more", lad.rung == 1, str(lad.rung))
 
-    # -- widen, never shift --------------------------------------------------
     lad = fresh()
     seen = [dict(lad.ranges)]
     for _ in range(4):
@@ -124,7 +103,6 @@ def build_checks(ns) -> list[tuple[str, bool, str]]:
           abs(seen[-1]["tilt"] - (BASE["tilt"] + 4 * STEP["tilt"])) < 1e-12,
           f"{seen[-1]['tilt']:.4f}")
 
-    # -- retreat: one rung back AND half the step ---------------------------
     lad = fresh()
     lad.update(0.9)
     lad.update(0.9)
@@ -151,9 +129,6 @@ def build_checks(ns) -> list[tuple[str, bool, str]]:
           all(abs(lad.ranges[a] - quarter[a]) < 1e-12 for a in AXES),
           f"{lad.ranges}")
 
-    # Retreating off the bottom is impossible. Named limitation rather than an
-    # invented rule: the ladder holds at rung 0 and says so, so a human sees
-    # that the FIRST rung is too hard instead of the ladder quietly shrinking.
     lad = fresh()
     ev = lad.update(0.01)
     check("retreat at rung 0 is reported, not invented", ev == "retreat_blocked", ev)
@@ -161,7 +136,6 @@ def build_checks(ns) -> list[tuple[str, bool, str]]:
     check("retreat at rung 0 leaves the step alone", lad.step_scale == 1.0,
           str(lad.step_scale))
 
-    # -- telemetry (plan step 4): every run says which rung it is on --------
     lad = fresh()
     lad.update(0.9)
     d = lad.as_dict()
@@ -245,8 +219,6 @@ def _self_test() -> int:
             print(f"  FAIL  {name}: the mutated ladder raised {type(exc).__name__}: {exc}")
             rc = 1
             continue
-        # A check that DISAPPEARED counts as flipped: a mutation can remove the
-        # branch a check lived in, and "it never ran" is not "it passed".
         flipped = {k for k in baseline if k not in got or not got[k]}
         unknown = set(expected) - set(baseline)
         missing = set(expected) - flipped

@@ -33,8 +33,6 @@ import sys
 from typing import Callable, NamedTuple
 
 SCRIPT_MARKER = "check_mutation_anchors 2026-09-14"
-# The call sites that consume an anchor tuple against ONE `*_SRC` file.
-# `_parse` is check_env_wiring's cached `ast.parse(_read(...))` (2026-09-14).
 READ_FUNCS = ("_read", "_parse")
 
 REPO = pathlib.Path(__file__).resolve().parents[1]
@@ -43,7 +41,7 @@ SCRIPTS_DIR = REPO / "scripts"
 ENV_WIRING = SCRIPTS_DIR / "check_env_wiring.py"
 INSERTION_MATH = SCRIPTS_DIR / "check_insertion_math.py"
 
-UNKNOWN_KEY = -1  # Finding.count when the key maps to no source file at all
+UNKNOWN_KEY = -1
 
 
 class Finding(NamedTuple):
@@ -65,17 +63,8 @@ class Finding(NamedTuple):
                 f"matches {self.count}x: {head}")
 
 
-# --------------------------------------------------------------------------
-# the pure core
-# --------------------------------------------------------------------------
-
 def sweep_pairs(pairs, text: str) -> tuple[int, int, str] | None:
-    """Replay `_read`'s loop over one mutation's anchors against one file.
-
-    Returns the FIRST anchor that does not match exactly once, as
-    ``(index, count, anchor)``, or None when all of them do. Stops there
-    because the text after a mutation that did not apply is undefined.
-    """
+    """Replay `_read`'s loop over one mutation's anchors against one file."""
     for index, (old, new) in enumerate(pairs):
         count = text.count(old)
         if count != 1:
@@ -85,13 +74,7 @@ def sweep_pairs(pairs, text: str) -> tuple[int, int, str] | None:
 
 
 def sweep(entries, key_paths, read_text: Callable[[str], str]) -> list[Finding]:
-    """Sweep normalised entries ``(table, name, key, pairs)``.
-
-    ``key_paths`` maps a mutation key to the tuple of source paths that key is
-    applied to -- more than one when a key feeds two files (`agent_mut` reaches
-    both `zero_agent.py` and `random_agent.py`, and an anchor must be unique in
-    each of them, because `_read` runs once per file).
-    """
+    """Sweep normalised entries ``(table, name, key, pairs)``."""
     findings: list[Finding] = []
     for table, name, key, pairs in entries:
         paths = key_paths.get(key)
@@ -105,10 +88,6 @@ def sweep(entries, key_paths, read_text: Callable[[str], str]) -> list[Finding]:
                 findings.append(Finding(table, name, key, path, count, anchor))
     return findings
 
-
-# --------------------------------------------------------------------------
-# reading the key-to-file map out of a check script
-# --------------------------------------------------------------------------
 
 def read_anchor_calls(tree: ast.AST) -> dict[str, set[str]]:
     """Argument name -> the `*_SRC` names it is `_read` against."""
@@ -129,14 +108,7 @@ def read_anchor_calls(tree: ast.AST) -> dict[str, set[str]]:
 
 def resolve_keys(tree: ast.AST, entry_func: str = "build_checks",
                  suffix: str = "_mut") -> tuple[dict[str, list[str]], list[str]]:
-    """Every `*_mut` parameter of `entry_func`, resolved to `*_SRC` names.
-
-    Direct when the parameter reaches `_read` itself; otherwise one level of
-    indirection (`build_checks` hands `math_mut` to `load_obs_slices`, and that
-    helper's own parameter is what `_read` sees). A parameter that resolves to
-    nothing is returned as unresolved -- it is a key this sweep cannot check,
-    not something to guess a file for.
-    """
+    """Every `*_mut` parameter of `entry_func`, resolved to `*_SRC` names."""
     direct = read_anchor_calls(tree)
     funcs = {n.name: n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)}
     if entry_func not in funcs:
@@ -152,9 +124,6 @@ def resolve_keys(tree: ast.AST, entry_func: str = "build_checks",
         for node in ast.walk(entry):
             if not (isinstance(node, ast.Call) and isinstance(node.func, ast.Name)):
                 continue
-            # `_read` is the destination, not a step on the way to it. Following
-            # it as a helper would hand every key the file of whichever OTHER
-            # caller happens to name its parameter the same thing.
             if node.func.id in READ_FUNCS:
                 continue
             callee = funcs.get(node.func.id)
@@ -183,19 +152,8 @@ def table_names(tree: ast.AST) -> set[str]:
     return {n for n in names if n.endswith("MUTATIONS")}
 
 
-# --------------------------------------------------------------------------
-# adapters for the two real check scripts
-# --------------------------------------------------------------------------
-
 def _is_local(module, root: pathlib.Path) -> bool:
-    """True for a module living under `root`, or a stand-in object with no file.
-
-    The discriminator for the cleanup below. A third-party extension module
-    (numpy) carries a `__file__` far outside `root` and MUST stay cached: its
-    compiled half refuses a second load in the same process. Anything a check
-    script authors itself is either a file beside it (`tools/torch_shim.py`)
-    or a bare object published under a borrowed name.
-    """
+    """True for a module living under `root`, or a stand-in object with no file."""
     file = getattr(module, "__file__", None)
     if file is None:
         return True
@@ -206,14 +164,7 @@ def _is_local(module, root: pathlib.Path) -> bool:
 
 
 def _load_module(path: pathlib.Path):
-    """Import a check script and undo what it published under other names.
-
-    Not politeness: `check_env_wiring.py` publishes its numpy stand-in under
-    the name `torch`, and `check_insertion_math.py` then imports it, believes
-    it found real PyTorch and calls `set_default_dtype` on a stand-in that has
-    no such method. Loading both in one process needs that name gone again --
-    but only the repo's own entries, never the third-party cache.
-    """
+    """Import a check script and undo what it published under other names."""
     root = path.resolve().parent
     before = dict(sys.modules)
     try:
@@ -249,8 +200,6 @@ def _env_wiring_entries(module, tree):
     return entries, key_paths, unresolved
 
 
-# `check_insertion_math` keeps its two tables flat, one file each. Registered
-# by name so a THIRD table cannot appear without this sweep noticing.
 MATH_TABLES = {"MUTATIONS": "MATH_SRC", "CFG_MUTATIONS": "CFG_SRC"}
 
 
@@ -312,10 +261,6 @@ def run_sweep() -> int:
     return rc
 
 
-# --------------------------------------------------------------------------
-# counter-proof (D-080)
-# --------------------------------------------------------------------------
-
 class _FakeMod:
     """A stand-in module with nothing but a `__file__`, for `_is_local`."""
 
@@ -337,57 +282,44 @@ def _self_test() -> int:
     def run(entries):
         return sweep(entries, paths, read)
 
-    # 1 clean table finds nothing
     clean = run([("T", "clean", "k", (("beta\n", "BETA\n"),))])
     checks.append(("a matching anchor is not reported", clean == []))
 
-    # 2 an anchor that matches nothing is caught
     zero = run([("T", "gone", "k", (("epsilon\n", ""),))])
     checks.append(("an anchor matching 0x is reported",
                    len(zero) == 1 and zero[0].count == 0))
     checks.append(("the report names the table, mutation and key",
                    zero[:1] == [Finding("T", "gone", "k", "a.py", 0, "epsilon\n")]))
 
-    # 3 an anchor that matches twice is caught (a mutation that hits two places)
     dup = run([("T", "dup", "dup", (("alpha\n", "A\n"),))])
     checks.append(("an anchor matching 2x is reported",
                    len(dup) == 1 and dup[0].count == 2))
 
-    # 4 THE ORDER CASE: the second anchor exists only after the first applied.
-    #   A pristine-source count would call this stale. It is not.
     ordered = run([("T", "ordered", "k", (("beta\n", "BETA\n"), ("BETA\n", "X\n")))])
     checks.append(("an anchor created by the previous one is accepted", ordered == []))
 
-    # 5 the mirror: the first anchor DESTROYS the second. A pristine-source
-    #   count would call this fine. It is stale.
     broken = run([("T", "broken", "k", (("beta\n", "BETA\n"), ("beta\n", "X\n")))])
     checks.append(("an anchor destroyed by the previous one is reported",
                    len(broken) == 1 and broken[0].count == 0))
 
-    # 6 an unknown key is reported, not skipped
     unknown = run([("T", "stray", "nope", (("beta\n", ""),))])
     checks.append(("an unmapped key is reported",
                    len(unknown) == 1 and unknown[0].count == UNKNOWN_KEY))
     checks.append(("the unmapped line says so", "UNKNOWN KEY" in unknown[0].line()))
 
-    # 7 two bad anchors in one mutation report ONCE -- the state after a
-    #   mutation that did not apply is undefined, so the rest is not judged
     two_bad = run([("T", "two", "k", (("nope1\n", ""), ("nope2\n", "")))])
     checks.append(("a mutation stops at its first bad anchor", len(two_bad) == 1))
 
-    # 8 a key on two files is checked in BOTH
     split = run([("T", "split", "two", (("gamma\n", "G\n"),))])
     checks.append(("a two-file key reports the file that misses it",
                    len(split) == 1 and split[0].path == "b.py" and split[0].count == 0))
     both_ok = run([("T", "both", "two", (("alpha\n", "A\n"),))])
     checks.append(("a two-file key passes when both files match", both_ok == []))
 
-    # 9 sweep_pairs returns the INDEX of the offending anchor
     hit = sweep_pairs((("alpha\n", "A\n"), ("nope\n", "")), files["a.py"])
     checks.append(("the offending anchor index is reported",
                    hit is not None and hit[0] == 1))
 
-    # -- the key map, read out of a synthetic check script ------------------
     src = (
         "def _read(path, mutations):\n"
         "    return path\n"
@@ -422,19 +354,15 @@ def _self_test() -> int:
     checks.append(("every module-level MUTATIONS table is listed",
                    table_names(tree) == {"MUTATIONS", "EXTRA_MUTATIONS"}))
 
-    # the map must FOLLOW the source: re-point foo_mut and the map must move
     repointed = resolve_keys(ast.parse(src.replace("_read(FOO_SRC, foo_mut)",
                                                    "_read(BAR_SRC, foo_mut)")))[0]
     checks.append(("re-pointing a key moves the map with it",
                    repointed.get("foo_mut") == ["BAR_SRC"]))
 
-    # the real registry must cover the real math tables
     math_tree = ast.parse(INSERTION_MATH.read_text(encoding="utf-8"), str(INSERTION_MATH))
     checks.append(("the real check_insertion_math tables are all registered",
                    table_names(math_tree) == set(MATH_TABLES)))
 
-    # -- module-table isolation: a check script that publishes a name must not
-    #    leave it behind for the NEXT one (this is the `torch` stand-in case)
     import tempfile
 
     with tempfile.TemporaryDirectory() as tmp:
@@ -451,14 +379,12 @@ def _self_test() -> int:
                        "anchor_probe_fake_torch" not in sys.modules))
         checks.append(("the probe module itself is dropped again",
                        "anchor_probe_mod" not in sys.modules))
-        # numpy's compiled half refuses a second load, so the cache must survive
         checks.append(("a module from OUTSIDE the repo stays cached",
                        "colorsys" in sys.modules))
         probe_root = probe.resolve().parent
         checks.append(("the local/foreign split is what decides",
                        _is_local(loaded, probe_root)
                        and not _is_local(sys.modules["colorsys"], probe_root)))
-        # the real case: `tools/torch_shim.py` must count as local to `scripts/`
         checks.append(("torch_shim counts as local to the check scripts",
                        _is_local(_FakeMod(SCRIPTS_DIR / "tools" / "torch_shim.py"),
                                  SCRIPTS_DIR)))

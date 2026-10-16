@@ -31,10 +31,7 @@ import re
 
 
 def read_config_yaml(run_dir: pathlib.Path) -> dict:
-    """Configuration a run was trained under, from the params/env.yaml that
-    train.py dumps. This is how runs predating the per-run metrics file can
-    still be told apart -- without it they are indistinguishable timestamps.
-    """
+    """Configuration a run was trained under, from the params/env.yaml that train.py dumps."""
     path = run_dir / "params" / "env.yaml"
     if not path.is_file():
         return {}
@@ -50,8 +47,6 @@ def read_config_yaml(run_dir: pathlib.Path) -> dict:
         return {}
     held = cfg.get("held_asset") if isinstance(cfg.get("held_asset"), dict) else {}
     fixed = cfg.get("fixed_asset") if isinstance(cfg.get("fixed_asset"), dict) else {}
-    # Square runs carry `side`; round runs (pre-pivot) carried `diameter`.
-    # Reading both keeps the old run directories legible in one table.
     side = held.get("side")
     diameter = held.get("diameter")
     hole = fixed.get("side") if side is not None else fixed.get("diameter")
@@ -62,17 +57,12 @@ def read_config_yaml(run_dir: pathlib.Path) -> dict:
         "episode_length_s": cfg.get("episode_length_s"),
         "peg_side_m": side,
         "peg_diameter_m": diameter,
-        # The pocket is the curriculum variable since D-033, so it has to
-        # survive the yaml-recovery path too -- a run recovered without it
-        # would rank fine and replay wrong.
         "pocket_side_m": hole if side is not None else None,
     }
     if isinstance(hole, (int, float)) and isinstance(peg, (int, float)):
         clearance = (hole - peg) / 2.0 * 1000.0
         if side is not None:
             out["side_clearance_mm"] = clearance
-            # Free-yaw window of the square peg, clamped to the C4 fundamental
-            # domain below the diagonal rung (side <= pocket / sqrt(2)).
             diagonal = side * math.sqrt(2.0)
             out["yaw_window_deg"] = (
                 45.0 if diagonal <= hole else math.degrees(math.asin(hole / diagonal) - math.pi / 4.0)
@@ -86,20 +76,7 @@ def read_config_yaml(run_dir: pathlib.Path) -> dict:
 
 
 def read_tensorboard_success(run_dir: pathlib.Path) -> dict:
-    """Last logged success rate from the run's TensorBoard events.
-
-    Recovers runs written before the per-run metrics file existed, whose
-    numbers went to one shared path and overwrote each other. Needs the
-    tensorboard package (present where training runs, absent on a bare dev
-    PC); returns {} rather than failing if it is missing.
-
-    Tag names confirmed on the training machine (2026-07-27): a pre-fix run
-    exposes ``Episode/success_rate`` and ``Episode/mean_final_depth_mm``,
-    which are the first and second candidates below. Runs written after the
-    metrics fix publish ``Episode/success_rate`` as the trailing window plus
-    ``Episode/success_rate_cumulative`` and ``Episode/mean_max_depth_mm``;
-    those carry a metrics file, so this path is not reached for them.
-    """
+    """Last logged success rate from the run's TensorBoard events."""
     try:
         from tensorboard.backend.event_processing import event_accumulator
     except ModuleNotFoundError:
@@ -148,9 +125,6 @@ def find_checkpoints(run_dir: pathlib.Path) -> list[pathlib.Path]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    # Must stay the same string as PPORunnerCfg.experiment_name -- that is
-    # the folder train.py writes into, and a reader pointed at a different
-    # one silently compares nothing. check_env_wiring.py pins the pair.
     parser.add_argument("--experiment", default="ur5e_insertion", help="Experiment folder under logs/rsl_rl/.")
     parser.add_argument("--logs", default="logs", help="Root logs directory.")
     parser.add_argument("--top", type=int, default=0, help="Show only the best N runs (0 = all).")
@@ -170,21 +144,15 @@ def main() -> int:
         m: dict = {}
         if metrics_file.is_file():
             try:
-                # utf-8-sig: tolerate a byte-order mark, which some Windows
-                # editors add and json.loads otherwise chokes on.
                 m = json.loads(metrics_file.read_text(encoding="utf-8-sig"))
             except (OSError, ValueError) as exc:
                 missing.append((run_dir.name, f"unreadable: {exc}"))
                 continue
         else:
-            # Runs from before the per-run metrics file: recover what can be
-            # recovered rather than dropping real training time.
             m = read_tensorboard_success(run_dir)
             if not m:
                 missing.append((run_dir.name, len(checkpoints)))
                 continue
-        # The config dump fills in whatever the metrics file does not carry,
-        # which for recovered runs is everything.
         for key, value in read_config_yaml(run_dir).items():
             m.setdefault(key, value)
         rows.append(
@@ -196,9 +164,6 @@ def main() -> int:
                 "window": m.get("recent_window_episodes", 0),
                 "depth_mm": m.get("mean_max_depth_mm", 0.0),
                 "to_threshold": m.get("episodes_to_threshold"),
-                # Square runs report side_clearance_mm; round (pre-pivot)
-                # runs radial_clearance_mm. One column, two meanings -- the
-                # yaw column is what tells them apart.
                 "clearance_mm": m.get("side_clearance_mm", m.get("radial_clearance_mm")),
                 "yaw_deg": m.get("yaw_window_deg"),
                 "size_m": m.get("peg_side_m", m.get("peg_diameter_m")),
@@ -220,10 +185,6 @@ def main() -> int:
                 print(f"  {name}  ({info} checkpoints)" if isinstance(info, int) else f"  {name}  ({info})")
         return 1
 
-    # Rate first, then sample efficiency. Once several configurations all
-    # finish at 100 % the rate stops separating them, and the episode count
-    # at which each first held the threshold is what does. Runs that never
-    # reached it sort last within their rate.
     def sort_key(r):
         reached = r["to_threshold"] if isinstance(r["to_threshold"], int) else float("inf")
         return (-round(r["recent"], 4), reached)
@@ -266,10 +227,6 @@ def main() -> int:
     print(f"  recent success rate : {best['recent']:.1%} over {best['window']} episodes")
     if best["checkpoint"] is not None:
         print(f"  latest checkpoint   : {best['checkpoint']}")
-        # play.py passes --checkpoint through retrieve_file_path, i.e. it is a
-        # PATH, not a filename inside --load_run (which is how train.py reads
-        # it). Printing the bare filename here produced a command that looked
-        # right and failed.
         print("\nWatch it run (windowed, real time):")
         print(
             f"  C:\\Isaaclab\\isaaclab.bat -p .\\scripts\\rsl_rl\\play.py "
@@ -279,12 +236,6 @@ def main() -> int:
         if isinstance(best["size_m"], (int, float)):
             peg_mm = best["size_m"] * 1000.0
             if best["square"]:
-                # A rung is the PAIR since D-033, so the hint has to set both:
-                # replaying a 45 mm-pocket policy against the default 32 mm
-                # pocket is a different task, and it would look like the policy
-                # regressed. The pocket comes from the metrics file; for runs
-                # written before that key existed it is back-solved from the
-                # clearance, which is exact (clearance IS half the difference).
                 pocket_mm = (
                     best["pocket_m"] * 1000.0
                     if isinstance(best["pocket_m"], (int, float))
@@ -313,10 +264,6 @@ def main() -> int:
                     f"  square task only. Check out the demo-insertion-sprint branch to replay."
                 )
         elif isinstance(best["clearance_mm"], (int, float)) and best["square"]:
-            # Neither size recorded: only the pre-D-033 runs are in this state,
-            # and those all used the then-fixed 32 mm pocket, which is what
-            # makes back-solving the peg from the clearance valid here. Newer
-            # runs always carry peg_side_m and never reach this branch.
             peg_mm = round(32.0 - 2 * best["clearance_mm"], 1)
             print(
                 f"\n  This policy was trained on the {peg_mm:g} mm square peg against the fixed\n"
@@ -333,10 +280,6 @@ def main() -> int:
         for name, info in missing:
             print(f"  {name}  ({info} checkpoints)" if isinstance(info, int) else f"  {name}  ({info})")
 
-    # Same-configuration groups are the only fair head-to-head comparisons.
-    # The key is (clearance, yaw window): the pair that defines a curriculum
-    # rung of the square task. Round runs have yaw None, so they can never
-    # land in a square rung's group by accident.
     groups: dict = {}
     for r in rows:
         groups.setdefault((r["clearance_mm"], r["yaw_deg"], r["noise_rad"]), []).append(r)

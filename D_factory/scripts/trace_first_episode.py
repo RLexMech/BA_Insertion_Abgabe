@@ -35,20 +35,11 @@ from collections import Counter
 
 SCRIPT_MARKER = "trace_first_episode-2026-09-06b"
 
-# DirectRLEnv truncates at ``episode_length_buf >= max_episode_length - 1``
-# (insertion_env.py:1356). RT-149 measured the resulting episode at 255 policy
-# steps (VERDICTS.md, 2026-09-05 14:07). 1-based step index of the timeout.
 DEFAULT_TIMEOUT_STEP = 255
 
 
 def first_episode(done, timeout_step: int = DEFAULT_TIMEOUT_STEP) -> dict:
-    """Per env: 1-based step of the FIRST done, classified.
-
-    success   -- done fires before ``timeout_step``
-    timeout   -- done fires exactly at ``timeout_step``
-    late      -- done fires after it: the assumed timeout is wrong
-    censored  -- no done in the whole trace: the first episode never finished
-    """
+    """Per env: 1-based step of the FIRST done, classified."""
     n_steps = len(done)
     n_env = len(done[0]) if n_steps else 0
     first = [None] * n_env
@@ -60,11 +51,6 @@ def first_episode(done, timeout_step: int = DEFAULT_TIMEOUT_STEP) -> dict:
     timeout = sum(1 for s in first if s is not None and s == timeout_step)
     late = sum(1 for s in first if s is not None and s > timeout_step)
     censored = sum(1 for s in first if s is None)
-    # every done in the trace = an episode that COMPLETED inside the trace.
-    # The POOLED view is what the env's own counter reports: every completed
-    # episode, first or later, success if it was shorter than the timeout.
-    # Added 2026-09-06b so the censoring bias can be read off ONE trace
-    # (first-episode rate against pooled rate) instead of two runs.
     completed = 0
     pooled_success = 0
     for e in range(n_env):
@@ -132,7 +118,6 @@ def _synth(pattern, n_steps: int):
 
 def _self_test() -> int:
     checks = []
-    # 1) three envs: one fast success, one timeout, one never done
     d = _synth([70, 255, None], 288)
     r = first_episode(d)
     checks.append(("success counted", r["success"] == 1))
@@ -141,46 +126,34 @@ def _self_test() -> int:
     checks.append(("completed episodes", r["completed_episodes"] == 2))
     txt = "\n".join(report(r, 0.0))
     checks.append(("censored blocks verdict", "VERDICT INVALID" in txt))
-    # 2) all envs resolve, force abort zero -> valid verdict
     d = _synth([10, 20, 255, 255], 288)
     r = first_episode(d)
     checks.append(("rate 0.5", abs(r["success"] / r["envs"] - 0.5) < 1e-9))
     txt = "\n".join(report(r, 0.0))
     checks.append(("valid verdict", "VERDICT VALID" in txt))
     checks.append(("rate printed", "first_episode_success_rate 0.5000" in txt))
-    # 3) a non-zero force abort must block the verdict
     txt = "\n".join(report(r, 0.01))
     checks.append(("force abort blocks", "NO VERDICT: force_abort_rate" in txt))
     txt = "\n".join(report(r, None))
     checks.append(("missing rate blocks", "NO VERDICT: force_abort_rate not given" in txt))
-    # 4) only the FIRST done per env counts (a second episode must not be read)
     d = _synth([30, None], 288)
-    d[100][0] = True  # env 0 finishes a second episode at step 101
+    d[100][0] = True
     d[254][1] = True
     r = first_episode(d)
     checks.append(("first done only", r["first_done_step"] == [30, 255]))
     checks.append(("second episode still completed", r["completed_episodes"] == 3))
-    # 4b) the pooled view counts the second episode by its OWN length:
-    #     env 0's second episode ran 101-30 = 71 steps -> success; env 1's
-    #     first ran 255 -> timeout. Pooled 2/3, first-episode 1/2.
     checks.append(("pooled counts later episodes", r["pooled_success"] == 2))
     checks.append(("pooled above first-episode", r["pooled_success"] / r["completed_episodes"] > r["success"] / r["envs"]))
     txt = "\n".join(report(r, 0.0))
     checks.append(("pooled printed", "pooled_success_rate 2/3 = 0.6667" in txt))
-    # 4c) MUTATION (D-080): a second episode of EXACTLY timeout length is a
-    #     timeout, not a success -- with <= it would count. Env 0 succeeds at
-    #     step 10 and its second episode is done at 10+255 = 265.
     d = _synth([10], 288)
     d[264][0] = True
     r = first_episode(d)
     checks.append(("second timeout not a success", r["completed_episodes"] == 2 and r["pooled_success"] == 1))
-    # 5) a done AFTER the assumed timeout is flagged, not silently a success
     d = _synth([260, 10], 288)
     r = first_episode(d)
     checks.append(("late flagged", r["late"] == 1 and r["success"] == 1))
     checks.append(("late blocks verdict", "VERDICT INVALID" in "\n".join(report(r, 0.0))))
-    # 6) MUTATION (D-080): with <= instead of < in the success test the four
-    #    timeout envs would count as successes and the rate would be 1.0.
     d = _synth([255, 255, 255, 255], 288)
     r = first_episode(d)
     checks.append(("all timeouts -> rate 0", r["success"] == 0 and r["timeout"] == 4))

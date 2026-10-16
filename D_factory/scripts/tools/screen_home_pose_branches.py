@@ -1,37 +1,4 @@
-"""Screen every UR IK branch for clearance against the real workcell.
-
-Convention, established by MATCHING measured simulator poses rather than
-assumed: the DH chain is driven by the USD joint angles directly, and its
-output sits in a frame rotated by pi about z relative to the env frame:
-
-    p_env = BASE + Rz(pi) . p_DH(q_USD)
-
-The first version applied both the point rotation and a q1 shift; those cancel
-exactly, which is why both variants gave the same wrong answer. It is one or
-the other.
-
-Step 1 re-derives that convention per robot from a measured pose instead of
-trusting it. For the UR5e the measurement comes from the workcell startup
-report of 2026-08-18 (t = 3.0 s, all joint velocities zero, so the pose is
-settled). The identity convention is carried as a NEGATIVE CONTROL: it is
-wrong by up to a metre, which is what makes a 0.07 mm match meaningful rather
-than a coincidence of a lenient tolerance.
-
-Obstacles are the real cell (D-058): both table plates AND the fixture block,
-each an axis-aligned box. The proxy version screened a single plate, which is
-why it could not have caught an arm swinging through the lower table.
-
-Since D-204 (2026-09-28) the "tool point is lowest" gate is read over the
-BLOCK, from the block top, and must hold along the whole reset descent: every
-tool height from the lowest legal start to the home, over every corner of the
-fixture spread (step 2b). The reset IK stays inside the home's branch family.
-
-Runs offline -- pure kinematics, no Isaac.
-
-    python scripts\\tools\\screen_home_pose_branches.py
-    python scripts\\tools\\screen_home_pose_branches.py --standoff 0.400 --fixture-spread 0.05
-    python scripts\\tools\\screen_home_pose_branches.py --robot ur10e
-"""
+"""Screen every UR IK branch for clearance against the real workcell."""
 import argparse
 import ast
 import importlib.util
@@ -57,22 +24,15 @@ spec = importlib.util.spec_from_file_location("chp", MOD)
 chp = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(chp)
 
-# --- cell geometry, read from the ONE owner -------------------------------
 CFG_PATH = (HERE.parent.parent / "source" / "insertion" / "insertion" / "tasks"
             / "direct" / "insertion" / "insertion_tasks_cfg.py")
-if "isaaclab" not in sys.modules:                    # the dev laptop has no Isaac
+if "isaaclab" not in sys.modules:
     _pkg = types.ModuleType("isaaclab")
     _utils = types.ModuleType("isaaclab.utils")
     _utils.configclass = lambda c: c
     _pkg.utils = _utils
     sys.modules["isaaclab"] = _pkg
     sys.modules["isaaclab.utils"] = _utils
-# A throwaway package whose __path__ is the real task directory: the cfg does
-# `from .insertion_paths import ...` (a RELATIVE import, since the path block
-# moved out on 2026-08-29), and exec'd into a bare module that raised
-# "attempted relative import with no known parent package" -- this tool did
-# not run from then until 2026-09-28. Same device as
-# scripts/check_fixture_mesh.py load_cfg(); nothing on disk is touched.
 _PKG_NAME = "_screen_cfg_pkg"
 _shell = types.ModuleType(_PKG_NAME)
 _shell.__path__ = [str(CFG_PATH.parent)]
@@ -81,13 +41,8 @@ geom = types.ModuleType(f"{_PKG_NAME}.insertion_tasks_cfg")
 geom.__file__ = str(CFG_PATH)
 geom.__package__ = _PKG_NAME
 sys.modules[geom.__name__] = geom
-# Compiled from source rather than imported: __pycache__ once let a checker in
-# this repo certify numbers that were no longer in the file. See the docstring
-# of load_cfg() in scripts/check_workcell_geometry.py.
 exec(compile(CFG_PATH.read_text(encoding="utf-8"), str(CFG_PATH), "exec"), geom.__dict__)
 
-# The fixture spread lives in the ENV cfg, which imports isaaclab for real, so
-# it is read by AST from its one home instead of restated here.
 ENV_CFG_PATH = CFG_PATH.parent / "insertion_env_cfg.py"
 SPREAD_FIELDS = ("fixture_pos_noise_xy", "fixture_pos_noise_z")
 
@@ -114,18 +69,7 @@ RZ_PI = np.diag([-1.0, -1.0, 1.0])
 FRAME_OF = {"shoulder_link": 1, "forearm_link": 2, "wrist_1_link": 4,
             "wrist_2_link": 5, "wrist_3_link": 6}
 
-# Matched pairs: the ACTUAL joint angles together with the ACTUAL body
-# positions the simulator reported for them. Not a commanded pose -- gravity
-# droop makes commanded and actual differ, and only the actual pair is a valid
-# forward-kinematics test.
-#
-# These angles were captured under the UR10e PLACEHOLDER gains, so they are not
-# the angles a run reports today (RT-46, USD drives: max joint deviation
-# 0.000029 rad, so commanded and actual now nearly coincide). That does not
-# invalidate the test: it only needs the angles and the positions to come from
-# the SAME run, which they do. Do not read this block as a current pose.
 MEASURED = {
-    # Workcell startup report, marker square-peg-2026-08-16-d038, step 180.
     "ur5e": {
         "base": np.zeros(3),
         "q": np.array([3.134709358215332, -1.5560652017593384, 1.5989718437194824,
@@ -136,8 +80,6 @@ MEASURED = {
                    "wrist_2_link": np.array([-0.4985, -0.1299, 0.5649]),
                    "wrist_3_link": np.array([-0.4929, -0.1303, 0.4655])},
     },
-    # Proxy task, old repo, startup report marker ...-26c. Kept so the UR10e
-    # result stays reproducible after the switch.
     "ur10e": {
         "base": np.array([0.0, 0.190, 0.755]),
         "q": np.array([-1.8887712955, 0.9098067284, -2.3225746155,
@@ -150,10 +92,6 @@ MEASURED = {
     },
 }
 BASE = MEASURED[args.robot]["base"]
-# The standoff is quoted for the LEADING TOOL POINT, not the flange. For the
-# ur5e that point is the part bottom, which hangs FLANGE_TO_PART_BOTTOM below
-# the flange (D-069). The ur10e path is the legacy proxy robot and has no tool
-# chain in this repo, so its length is zero and its behaviour is unchanged.
 TOOL_CHAIN_LEN = geom.FLANGE_TO_PART_BOTTOM if args.robot == "ur5e" else 0.0
 PART_STANDOFF = geom.HOME_STANDOFF_Z if args.standoff is None else args.standoff
 FLANGE_STANDOFF = PART_STANDOFF + TOOL_CHAIN_LEN
@@ -173,33 +111,16 @@ def to_env(origins, rot=RZ_PI):
 
 
 def obstacles(off=(0.0, 0.0, 0.0)):
-    """Axis-aligned boxes as (x0, x1, y0, y1, top, name).
-
-    ``off`` is a fixture displacement (D-203/D-204): the block and its rear
-    wall ARE the kinematic fixture the env teleports per reset
-    (``insertion_env.py`` ``_fixture.write_root_pose_to_sim``), so they move
-    with it; the tables do not.
-    """
+    """Axis-aligned boxes as (x0, x1, y0, y1, top, name)."""
     if args.robot != "ur5e":
         hx, hy = geom.PLATE_HALF_EXTENTS
         return [(-hx, hx, -hy, hy, geom.PLATE_TOP_Z, "proxy plate")]
     dx, dy, dz = off
     t1c, t2c = geom.TABLE1_POS, geom.TABLE2_POS
-    # The block is read from its NEAR FACE outwards, not from its centre
-    # (2026-08-24). Two reasons: the model is 225.0876 mm deep, not 210 (the
-    # 15 mm rear wall stands past the raw block and has collision), and the
-    # near face is the anchored end of the measured chain.
     bx0 = geom.BLOCK_NEAR_EDGE_X
     bx1 = bx0 + geom.BLOCK_MODEL_SIZE_X
     by0 = geom.BLOCK_CENTRE_Y - geom.BLOCK_SIZE_Y / 2
     by1 = geom.BLOCK_CENTRE_Y + geom.BLOCK_SIZE_Y / 2
-    # The rear wall is a SEPARATE obstacle, and it has to be: this model is
-    # 2.5D -- one flat top per box -- so folding a 100 mm wall into the block
-    # would raise the whole block top and refuse every branch. Its footprint is
-    # the cut-out's rear strip, converted from asset-local to env coordinates.
-    # Its footprint is the whole 15 mm rear wall, from the stage-1 outline to
-    # the block's far face -- NOT to the cut-out's rear face. Since 2026-08-24
-    # (evening) the block stands BLOCK_BEHIND_POCKET_X proud of the cut-out.
     wx0 = geom.POCKET_ORIGIN_X + geom.POCKET_STAGE1_X_RANGE[1]
     wx1 = bx1
     return [
@@ -220,18 +141,13 @@ _S = np.linspace(0.0, 1.0, 120)
 
 
 def arm_points(pts):
-    """Sample points along every arm segment, (N, 3).
-
-    The base->shoulder segment is skipped: it runs vertically out of the
-    mounting point and is inside the table footprint by construction.
-    """
+    """Sample points along every arm segment, (N, 3)."""
     a, b = pts[1:-1], pts[2:]
     return (a[:, None, :] + _S[None, :, None] * (b - a)[:, None, :]).reshape(-1, 3)
 
 
 def min_clearance(pts, obst=None):
-    """Smallest (point z - obstacle top) over every arm segment: a COLLISION
-    reading, each box against its own top."""
+    """Smallest (point z - obstacle top) over every arm segment: a COLLISION reading, each box against its own top."""
     p = arm_points(pts)
     worst, who = float("inf"), None
     for x0, x1, y0, y1, top, name in (OBST if obst is None else obst):
@@ -244,17 +160,7 @@ def min_clearance(pts, obst=None):
 
 
 def block_clearance(pts, obst):
-    """Lowest arm point over the BLOCK FOOTPRINT, measured from the BLOCK TOP.
-
-    The plane matters (D-204 (2)). The gate compares this against the tool
-    point's height, which is quoted above the block top. Until 2026-09-28 the
-    gate took `min_clearance` over ALL boxes, each from its own top, and the
-    minimum was the fixed shoulder origin, +0.1865 m over table 1 at every
-    standoff (DH d1 0.1625 m + the 24 mm plate): above ~0.19 m every branch
-    was rejected for a point that cannot move. The rear wall stands inside
-    the block footprint and is read from the block top here too; its own
-    collision is `min_clearance`'s job.
-    """
+    """Lowest arm point over the BLOCK FOOTPRINT, measured from the BLOCK TOP."""
     x0, x1, y0, y1, top, _ = next(o for o in obst if o[5] == "block")
     p = arm_points(pts)
     inside = (p[:, 0] >= x0) & (p[:, 0] <= x1) & (p[:, 1] >= y0) & (p[:, 1] <= y1)
@@ -262,18 +168,7 @@ def block_clearance(pts, obst):
 
 
 def family(q, target):
-    """The closed-form branch a solution belongs to: shoulder, wrist flip
-    (sign q5), elbow (sign q3) -- the three binary choices of
-    `compute_home_pose.inverse_kinematics`. A descent over the pocket keeps
-    the tool down and never straightens the elbow or crosses the shoulder
-    cylinder, so it stays inside one family; the reset IK (dls, seeded from
-    home) follows it continuously.
-
-    The SHOULDER choice is not q1 itself: q1 moves when the fixture moves
-    sideways. The IK takes q1 = phi + psi or phi + pi - psi, with phi the
-    azimuth of the wrist centre O5 and psi = asin(d4/r) < pi/2, so the two
-    lie on either side of phi + pi/2 and the sign of sin(q1 - phi - pi/2)
-    names the choice for any target. Same two lines as the IK, restated."""
+    """The closed-form branch a solution belongs to: shoulder, wrist flip (sign q5), elbow (sign q3) -- the three binary choices of `compute_home_pose.inverse_kinematics`."""
     p05 = target @ np.array([0.0, 0.0, -DH["d"][5], 1.0])
     phi = np.arctan2(p05[1], p05[0])
     return (int(np.sign(np.sin(q[0] - phi - np.pi / 2))),
@@ -307,22 +202,10 @@ print("=" * 78)
 print("STEP 2 - screen every IK branch against the workcell")
 print("=" * 78)
 if args.robot == "ur5e":
-    # THE POCKET, not the block centre (2026-08-24). Until then this aimed at
-    # the centre of a solid box, which was never a place the part had to go;
-    # the two are 49.8 mm apart in x. The z is unchanged: the block top IS the
-    # stage-1 rim (block_recess_boxes(): top == STAGE1_DEPTH above the origin).
     tgt_env = np.array([geom.POCKET_ORIGIN_X, geom.POCKET_ORIGIN_Y,
                         geom.BLOCK_TOP_Z + FLANGE_STANDOFF])
 else:
     tgt_env = np.array([0.0, geom.OPENING_OFFSET_Y, geom.PLATE_TOP_Z + FLANGE_STANDOFF])
-# Tool axis down, then spun about that axis by TOOL_HOME_YAW_RAD. The spin is
-# POST-multiplied on purpose: post-multiplying rotates in the TOOL frame, which
-# is the frame the angle is quoted in. Pre-multiplying would spin about world z
-# and tilt nothing, which happens to look identical for a tool pointing exactly
-# down and would stop being identical the moment the approach is tilted.
-#
-# The ur10e branch is the legacy proxy robot and carries no tool, so it keeps
-# its zero rather than inheriting a number that means nothing for it.
 TOOL_YAW = geom.TOOL_HOME_YAW_RAD if args.robot == "ur5e" else 0.0
 _c, _s = np.cos(TOOL_YAW), np.sin(TOOL_YAW)
 RZ_TOOL = np.array([[_c, -_s, 0.0], [_s, _c, 0.0], [0.0, 0.0, 1.0]])
@@ -337,31 +220,11 @@ print(f"  flange target (env): {np.round(tgt_env, 4)}   "
 print(f"  tool chain {TOOL_CHAIN_LEN:.4f} m  ->  leading tool point "
       f"{PART_STANDOFF:.3f} m above the block top")
 
-# The gate is NOT merely "clearance > 0". A branch that clears the lower table
-# by 55 mm while the tool hangs 150 mm up has some other part of the arm as its
-# lowest point, and that part will be the first thing to touch when the policy
-# moves. What the gate protects is therefore not "nothing collides" but "the
-# thing that leads downwards is the thing you mean to insert".
-#
-# Written first as "the flange is the lowest point" (the proxy said it in prose
-# but never encoded it, because with one plate flange and lowest point
-# coincided). That wording died the moment a gripper and a part were welded
-# under the flange: with a 152 mm chain the flange can never be lowest again,
-# and all eight branches were rejected at the standoff the cell actually needs.
-# The INTENT is unchanged -- only the reference point moves from the flange
-# down to the leading tool point.
-#
-# D-204 (2), 2026-09-28: the comparison is made OVER THE BLOCK, from the block
-# top (`block_clearance`) -- the plane the tool standoff is quoted in -- and
-# every box, tables included, must still clear by > 0 (`min_clearance`, the
-# proxy screening's rule). The ur10e legacy path keeps the old reading.
 TOOL_IS_LOWEST = 1e-4
 
 
 def solve_at(tool_above_top, off=(0.0, 0.0, 0.0)):
-    """Every IK branch with the leading tool point `tool_above_top` above the
-    (displaced) block top, over the (displaced) pocket. Rows:
-    (idx, gate_clear, collide_clear, collide_who, fk_err, q, family, passes)."""
+    """Every IK branch with the leading tool point `tool_above_top` above the (displaced) block top, over the (displaced) pocket."""
     obst = obstacles(off)
     if args.robot == "ur5e":
         tgt = np.array([geom.POCKET_ORIGIN_X + off[0], geom.POCKET_ORIGIN_Y + off[1],
@@ -401,17 +264,6 @@ print()
 print("=" * 78)
 print("STEP 2b - the gate along the whole reset descent (D-204 (2))")
 print("=" * 78)
-# THE RESET IK DESCENDS INSIDE THE HOME'S FAMILY (`family` above): a home whose
-# family breaks the gate lower down leads the arm into exactly the pose the
-# gate refuses as a home. Measured 2026-09-28: at 0.400 m D-025 alone picked a
-# shoulder-flipped family that hangs 140 mm below the tool point, 9.8 mm above
-# the block, at 0.150 m. So a family survives only if it passes the gate at
-# EVERY start the env can ask for: tool heights from the lowest legal start
-# (the env refuses a start at or below -depth_min = -SEATED_SUCCESS_DEPTH
-# above the entrance; the entrance is STAGE1_DEPTH below the block top) up to
-# the home, over every corner of the fixture spread (block and wall move with
-# it). NOT swept, named: the lateral start offset and the pocket tilt/yaw
-# (the target here is the pocket axis, tool down).
 survivors = None
 if args.robot == "ur5e":
     low = -geom.SEATED_SUCCESS_DEPTH - geom.STAGE1_DEPTH
@@ -503,10 +355,6 @@ else:
     sel = qualified[0]
     print(f"selected: branch {sel[0]}   over the block {sel[1]:+.4f} m, "
           f"min clearance {sel[2]:+.4f} m over {sel[3]}")
-    # Restated, not imported: the owning list is UR5E_HOME_JOINT_POS in
-    # source/insertion/insertion/tasks/direct/insertion/ur5e_cfg.py, whose
-    # keys carry this order. That module needs isaaclab, which this tool
-    # deliberately does not, so the two move together by hand.
     names = ["shoulder_pan_joint", "shoulder_lift_joint", "elbow_joint",
              "wrist_1_joint", "wrist_2_joint", "wrist_3_joint"]
     for name, val in zip(names, sel[5]):

@@ -1,46 +1,7 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-r"""Export a USD asset's mesh as a Wavefront OBJ. Runs on the training PC only.
-
-WHY
----
-``insertion_sdf.py`` -- the Warp half of M2.2 -- needs the part and the fixture
-as OBJ files, because that is what the published pattern consumes. Isaac Lab
-2.3.2 ``isaaclab_tasks/direct/automate/industreal_algo_utils.py::
-load_asset_mesh_in_warp`` loads an OBJ with ``trimesh``, hands its vertices and
-faces to ``wp.Mesh`` and samples the surface with
-``trimesh.sample.sample_surface_even``. It never reads the USD stage.
-
-WHAT IT WRITES, AND IN WHOSE FRAME
-----------------------------------
-The OBJ carries the mesh expressed in ``--frame-prim``'s frame, and choosing
-that frame is the whole point of the script. The env reads the part's pose at
-``peg_body_name = TOOL_LINK_NAME``, not at the part prim, so the part mesh has
-to be expressed at ``tool_link`` or every SDF distance is off by the constant
-transform between the two. Exporting from the USD gives that for free;
-exporting from the STEP would mean applying the FUEGETEIL -> tool_link
-transform by hand.
-
-The relative transform is RIGID and pose-independent -- the part is welded to
-``tool_link`` -- so the joints' rest pose does not enter the result. It is
-exact, not an approximation.
-
-Units are METRES, because the stage is ``metersPerUnit 1.0`` (RT-36) and
-``trimesh`` performs no conversion. The script REFUSES a stage that says
-anything else rather than scaling it silently.
-
-THIS SCRIPT WRITES NOTHING TO A USD. It opens the stage read-only.
-
-The arithmetic is not here. Transforming points into another frame, merging
-several mesh prims and writing the OBJ text all live in
-``scripts/tools/mesh_export.py``, which has no ``pxr`` and is proved on the
-laptop (``--self-test``, 10 cases). This file collects numbers and reports.
-
-    .\scripts\rt_log.ps1 RT-85 python scripts\export_asset_mesh.py --usd source\insertion\insertion\tasks\direct\insertion\assets\Robot\ur5e_tool.usd --prim FUEGETEIL --frame-prim tool_link --out source\insertion\insertion\tasks\direct\insertion\assets\Robot\fuegeteil.obj --expect-part-bbox
-
-    .\scripts\rt_log.ps1 RT-86 python scripts\export_asset_mesh.py --usd source\insertion\insertion\tasks\direct\insertion\assets\Werkzeug\Aufnahme_real_v1_mm.usd --out source\insertion\insertion\tasks\direct\insertion\assets\Werkzeug\aufnahme.obj
-"""
+"""Export a USD asset's mesh as a Wavefront OBJ."""
 
 from __future__ import annotations
 
@@ -52,8 +13,6 @@ import traceback
 
 from isaaclab.app import AppLauncher
 
-# Loaded by path because scripts/tools is not a package -- the idiom
-# verify_fixture_usd.py and author_tool_ur5e.py already use.
 _TOOLS = pathlib.Path(__file__).resolve().parent / "tools"
 
 
@@ -117,9 +76,6 @@ args_cli.headless = True
 app_launcher = AppLauncher(args_cli)
 simulation_app = app_launcher.app
 
-# GUARDED for the same reason scripted_insert.py guards its imports: a failure
-# here runs BEFORE __main__ and would print a traceback while the wrapper still
-# reported exit 0 (RT-40). The import path leaves through the same door.
 try:
     from pxr import Gf, Usd, UsdGeom  # noqa: E402
 except BaseException:
@@ -128,13 +84,7 @@ except BaseException:
 
 
 def resolve_prim(stage, spec: str):
-    """A prim from a PATH ('/a/b') or from a NAME that must be unique.
-
-    Ambiguity is an error, not a first match. Two prims called ``FUEGETEIL``
-    would make the export depend on traversal order, and a mesh exported from
-    the wrong one of two identical names is exactly the defect no downstream
-    number could reveal.
-    """
+    """A prim from a PATH ('/a/b') or from a NAME that must be unique."""
     if spec.startswith("/"):
         prim = stage.GetPrimAtPath(spec)
         if not prim or not prim.IsValid():
@@ -157,14 +107,7 @@ def resolve_prim(stage, spec: str):
 
 
 def to_column_major(m) -> list:
-    """``Gf.Matrix4d`` (ROW-vector, ``p * M``) as a column-vector 4x4 list.
-
-    USD multiplies a point on the LEFT; ``mesh_export.transform_points``
-    multiplies on the right. The two conventions are transposes of each other,
-    so the transpose happens exactly once, here, in the open. A convention
-    applied twice -- or not at all -- yields a valid OBJ of a part in the wrong
-    orientation, and nothing downstream can see it.
-    """
+    """``Gf.Matrix4d`` (ROW-vector, ``p * M``) as a column-vector 4x4 list."""
     return [[float(m[c][r]) for c in range(4)] for r in range(4)]
 
 
@@ -226,8 +169,6 @@ def main() -> int:
                 f"[export_asset_mesh] {prim.GetPath()} is a Mesh but is missing "
                 "points, faceVertexCounts or faceVertexIndices. Nothing written."
             )
-        # local -> world -> target frame, in USD's own row-vector order, then
-        # transposed once for the pure helper.
         rel = UsdGeom.Xformable(prim).ComputeLocalToWorldTransform(time) * frame_inv
         moved = me.transform_points([(p[0], p[1], p[2]) for p in pts], to_column_major(rel))
         parts.append((moved, [int(c) for c in counts], [int(i) for i in idx]))
@@ -258,11 +199,6 @@ def main() -> int:
 
     verdict = 0
     if args_cli.expect_part_bbox:
-        # Imported here and not at module scope: the cross-check is optional
-        # and this file is otherwise task-agnostic, so a machine without the
-        # package can still run the fixture export.
-        # D-200 (1), as scripts/zero_agent.py: THIS clone's env package first, whichever
-        # clone the editable `insertion` install points at (RT-242a..d).
         sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent / "source" / "insertion"))
         import insertion  # noqa: E402
         print(f"[export_asset_mesh] insertion package imported from: {pathlib.Path(insertion.__file__).resolve().parent}")
@@ -302,16 +238,10 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    # D-081: the exit status is set BEFORE the shutdown. close() does not
-    # return (RT-22), so anything after it decides nothing.
     _code = 1
     try:
         _code = main()
     except SystemExit as _exc:
-        # SystemExit's code is a MESSAGE here, not a number: every fail-fast
-        # above raises SystemExit(str). int() on that raises ValueError and
-        # would turn a clean refusal into a traceback, so the two cases are
-        # separated instead of assumed.
         if _exc.code is None:
             _code = 0
         elif isinstance(_exc.code, int):

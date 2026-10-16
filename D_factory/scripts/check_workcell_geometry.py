@@ -44,33 +44,7 @@ CFG_PATH = (
 
 
 def load_cfg() -> types.ModuleType:
-    """Read the cfg module FROM SOURCE with ``isaaclab`` stubbed out.
-
-    The dev laptop has no Isaac. The WORKCELL constants are plain floats and
-    need nothing from isaaclab, but the module imports ``configclass`` at the
-    top, so a bare import would die before reaching them. Stubbing is honest
-    here in a way that copying the numbers into this file would not be: the
-    check then reads the SAME constants the environment reads.
-
-    The source text is compiled here instead of going through
-    ``spec.loader.exec_module``, and that is not style. Bytecode caching bit
-    this script on 2026-08-18: a negative-control run edited one constant from
-    0.105 to 0.505, ``__pycache__`` was written from the edited file, and the
-    restore produced a source of IDENTICAL LENGTH within the SAME SECOND. The
-    cache validity header (mtime + size) therefore still matched, and the next
-    run silently reported the numbers of a file that no longer existed. A
-    checker that can certify values which are not in the file is worse than no
-    checker, so the cache is taken out of the path entirely.
-
-    The cfg does ``from .insertion_paths import ...`` (a RELATIVE import, since
-    the path block moved out on 2026-08-29). Exec'd into a bare module that
-    raised "attempted relative import with no known parent package", and this
-    check did not run from then until 2026-09-28. A throwaway package whose
-    ``__path__`` is the real task directory satisfies it -- the same device as
-    ``scripts/check_fixture_mesh.py`` ``load_cfg()``; nothing on disk is
-    touched. ``insertion_paths`` itself goes through the normal importer; it
-    holds file names only, none of the numbers this check certifies.
-    """
+    """Read the cfg module FROM SOURCE with ``isaaclab`` stubbed out."""
     if "isaaclab" not in sys.modules:
         pkg = types.ModuleType("isaaclab")
         utils = types.ModuleType("isaaclab.utils")
@@ -116,10 +90,7 @@ class Report:
               f"diff {diff:+7.1f}  (tol {tol_mm:g}){tail}")
 
     def require(self, label: str, ok: bool, detail: str) -> None:
-        """One-sided condition. Separate from ``check`` on purpose: expressing
-        'must be inside' as a two-sided tolerance invites picking a tolerance
-        so wide that the test cannot fail, which is what the first draft of
-        this file did."""
+        """One-sided condition."""
         if not ok:
             self.failed += 1
         self.rows.append({"label": label, "ok": ok, "note": detail})
@@ -181,9 +152,6 @@ def main() -> int:
     print("=" * 78)
     print("3b. Frame signs (2026-08-19 rotation: +X robot->fixture, +Y robot's left)")
     print("=" * 78)
-    # Sign tests, not magnitudes: every check above is a magnitude or a
-    # containment, so a mirrored cell would pass all of them. These pin the
-    # two facts the rotation hangs on.
     r.require("block is IN FRONT of the robot (+X)",
               c.BLOCK_CENTRE_X > 0.0,
               f"x = {c.BLOCK_CENTRE_X * MM:+.1f} mm (must be > 0)")
@@ -191,13 +159,9 @@ def main() -> int:
               c.BLOCK_CENTRE_Y < 0.0,
               f"y = {c.BLOCK_CENTRE_Y * MM:+.1f} mm (must be < 0; "
               "user call 2026-08-18: fixture to the robot's right)")
-    # Regression against the pre-rotation cell: the rotation is x_new = y_old,
-    # y_new = -x_old applied to block (0.133, 0.4512, 0.0775).
     r.check("block centre x  vs  pre-rotation y", c.BLOCK_CENTRE_X * MM, 451.2, 0.1)
     r.check("block centre y  vs  -(pre-rotation x)", c.BLOCK_CENTRE_Y * MM, -133.0, 0.1)
     r.check("block top z unchanged by the rotation", c.BLOCK_TOP_Z * MM, 77.5, 0.1)
-    # Origin convention 2026-08-19: the asset origin/entrance is the stage-2
-    # opening plane, STAGE1_DEPTH (measured in the user's CAD) below the rim.
     r.check("insertion plane = block top - stage 1",
             c.INSERTION_PLANE_Z * MM, 77.5 - 15.0, 0.1)
     r.check("fixture spawns on the insertion plane",
@@ -207,30 +171,12 @@ def main() -> int:
     print("=" * 78)
     print("3c. The pocket INSIDE the block (2026-08-24 CAD placement)")
     print("=" * 78)
-    # Until 2026-08-24 the fixture was spawned at the block CENTRE, which was
-    # never measured. B12 of the Massblatt gives four edge distances instead,
-    # and every one of them was re-derived from the STEP. These are the closing
-    # probes for that chain: each runs from one block face, through the pocket,
-    # out the other side, and must land on the block dimension.
-    # The depth chain is now OVER-DETERMINED, and this is the honest form of
-    # it. Two independent readings constrain the same distance: the tape says
-    # the raw block is 210 mm, while the B12 gap (80 mm, re-measured on the
-    # real block) plus the stage-1 outline (130.0876 mm, STEP point cloud)
-    # says 210.0876. The 0.0876 mm is reported, not absorbed.
-    #
-    # Deliberately NOT checked here any more: "80 + stage 1 + wall == model
-    # depth". BLOCK_MODEL_SIZE_X is DEFINED as that sum since the rear wall was
-    # re-measured at 15 mm, so the check would compare a number with itself.
     r.check("depth chain: 80 front + 130.088 stage 1 vs the raw block width",
             (c.BLOCK_FRONT_TO_STAGE1 + c.POCKET_STAGE1_SIZE_X) * MM,
             c.BLOCK_SIZE_X * MM, 0.1,
             "OVER-DETERMINED: tape reading against gap + STEP outline")
     r.value("model depth past the raw block", (c.BLOCK_MODEL_SIZE_X - c.BLOCK_SIZE_X) * MM,
             "the 15 mm rear wall reaches past the 210 mm raw block by this much")
-    # The rear wall was 10 mm until 2026-08-24 evening, when the user
-    # re-measured it at 15 on the real block. The cut-out's OWN rear wall is
-    # 9.9124 mm (STEP), so the block must now stand PROUD of the fixture --
-    # flush is what produced the two-tone back face the user reported.
     _cutout_rear_wall = c.POCKET_LOCAL_X_RANGE[1] - c.POCKET_STAGE1_X_RANGE[1]
     r.value("the cut-out's own rear wall (STEP)", _cutout_rear_wall * MM,
             "inside the block's 15 mm wall, not equal to it any more")
@@ -246,10 +192,6 @@ def main() -> int:
              + c.POCKET_ASSET_BBOX_M[0] + c.BLOCK_BEHIND_POCKET_X) * MM,
             c.BLOCK_MODEL_SIZE_X * MM, 0.001)
 
-    # THE TWO HOLES the first render showed (user, 2026-08-24 evening). The
-    # +Y body edge is inset from the bbox except under a middle tab, so a
-    # recess cut to the bbox opens two slots. Closure: slot + tab + slot must
-    # be the whole recess width, or a strip is still missing.
     _slot_a = c.POCKET_TAB_X_RANGE[0] - c.POCKET_LOCAL_X_RANGE[0]
     _slot_b = c.POCKET_LOCAL_X_RANGE[1] - c.POCKET_TAB_X_RANGE[1]
     _tab = c.POCKET_TAB_X_RANGE[1] - c.POCKET_TAB_X_RANGE[0]
@@ -262,10 +204,6 @@ def main() -> int:
               _slot_a > 0.0 and _slot_b > 0.0,
               f"slot -x {_slot_a * MM:.1f} mm, slot +x {_slot_b * MM:.1f} mm "
               "(both must be > 0, and they are the two holes that were open)")
-    # CONSTRUCTION CHECK, not evidence, and the tolerance says so: since
-    # 2026-08-24 (evening) BLOCK_MINUSY_TO_STAGE1 is SET to the value that
-    # closes this sum, so it closes exactly or something else moved without it.
-    # The 1.1 mm tolerance it used to carry would now pass for free.
     r.check("lateral chain: 50 (+Y) + 153.0 stage 1 + 57 (-Y) = block width",
             (c.BLOCK_PLUSY_TO_STAGE1 + c.POCKET_STAGE1_SIZE_Y
              + c.BLOCK_MINUSY_TO_STAGE1) * MM,
@@ -275,9 +213,6 @@ def main() -> int:
               abs(c.WORKCELL_POCKET_Y_RESIDUAL) * MM < 0.001,
               f"{c.WORKCELL_POCKET_Y_RESIDUAL * MM:+.4f} mm -- a non-zero value here means "
               "one of 50 / 153.0 / 260 moved and the modelled -Y wall was not updated")
-    # THE DISAGREEMENT ITSELF, which the zero above hides. It did not go away
-    # when the 153.0 was re-measured; it moved out of the pocket length and
-    # into this wall, and it is still one unmeasured millimetre.
     r.value("modelled -Y wall vs the B12 drawing reading",
             c.WORKCELL_POCKET_MINUSY_VS_B12 * MM,
             "B12 says 58.0, the model uses 57.0; nothing in the task touches "
@@ -293,24 +228,18 @@ def main() -> int:
             c.WORKCELL_BLOCK_POS[0] * MM, c.POCKET_ORIGIN_X * MM, 0.001)
     r.check("fixture spawns at the pocket origin, y",
             c.WORKCELL_BLOCK_POS[1] * MM, c.POCKET_ORIGIN_Y * MM, 0.001)
-    # The move this whole section exists for. Quoted so a reader of the log can
-    # see WHY the home pose had to be recomputed.
     r.value("pocket origin vs the old block centre, x",
             (c.POCKET_ORIGIN_X - c.BLOCK_CENTRE_X) * MM,
             "the fixture moved this far when it stopped being spawned centred")
     r.value("pocket origin vs the old block centre, y",
             (c.POCKET_ORIGIN_Y - c.BLOCK_CENTRE_Y) * MM)
 
-    # A sign slip anywhere above produces a box with a negative edge, which USD
-    # authors as an inverted cube without complaining.
     boxes = c.block_recess_boxes()
     worst = min((min(b["size"]), b["name"]) for b in boxes)
     r.require("no recess box has a negative or zero edge",
               worst[0] > 0.0,
               f"smallest edge {worst[0] * MM:.1f} mm, in {worst[1]} "
               f"({len(boxes)} boxes)")
-    # The recess must be the cut-out's bounding box EXACTLY -- same material,
-    # faces touching, no clearance (user, 2026-08-24).
     r.check("recess opening in X equals the cut-out bbox",
             (c.POCKET_LOCAL_X_RANGE[1] - c.POCKET_LOCAL_X_RANGE[0]) * MM,
             c.POCKET_ASSET_BBOX_M[0] * MM, 0.001)
@@ -323,9 +252,6 @@ def main() -> int:
     print("4. Containment (a body outside its parent means a sign error)")
     print("=" * 78)
     block_near = c.BLOCK_NEAR_EDGE_X
-    # MODEL width, not raw block width (2026-08-24): the fixture's own 10 mm
-    # rear wall stands past the block and has collision, so it is the far face
-    # that has to fit inside the rectangle.
     block_far = block_near + c.BLOCK_MODEL_SIZE_X
     rect_near = c.RECT_NEAR_EDGE_X
     rect_far = rect_near + c.RECT_SIZE_X
@@ -344,17 +270,12 @@ def main() -> int:
     print("=" * 78)
     print("5. Reachability sanity (UR5e published reach 850 mm)")
     print("=" * 78)
-    # Quoted to the POCKET, not to the block centre (2026-08-24). The block
-    # centre is not a point anything spawns at or aims for any more, and it is
-    # 49.8 mm nearer the robot -- reporting it would flatter the margin.
     dist = (c.POCKET_ORIGIN_X ** 2 + c.POCKET_ORIGIN_Y ** 2 + c.BLOCK_TOP_Z ** 2) ** 0.5
     r.value("robot foot -> pocket rim, straight line", dist * MM)
     r.require("the pocket is inside the UR5e reach",
               dist * MM <= 850.0,
               f"{dist * MM:.1f} mm of 850 mm published reach "
               f"({850.0 - dist * MM:+.1f} mm margin)")
-    # The far end of the fixture, which is what the arm has to clear on the way
-    # in. Farther than the pocket by half the stage-1 outline.
     _far = ((c.POCKET_ORIGIN_X + c.POCKET_LOCAL_X_RANGE[1]) ** 2
             + c.POCKET_ORIGIN_Y ** 2
             + (c.BLOCK_TOP_Z + c.BLOCK_REAR_WALL_H) ** 2) ** 0.5
@@ -376,10 +297,6 @@ def main() -> int:
 
     verdict = "PASS" if r.failed == 0 else f"FAIL ({r.failed} check(s))"
     print()
-    # The suffix has to follow the list, not restate a fixed sentence: once the
-    # last PENDING entry was resolved the old wording still printed "UNVERIFIED
-    # while PENDING is non-empty" under an empty list, which is the kind of
-    # stale verdict this whole script exists to prevent.
     if c.WORKCELL_PENDING:
         suffix = (f"-- absolute placement UNVERIFIED, {len(c.WORKCELL_PENDING)} "
                   "input(s) still PENDING")

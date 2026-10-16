@@ -37,21 +37,11 @@ import re
 import sys
 
 _ACTOR_WEIGHT = re.compile(r"^actor\.(\d+)\.weight$")
-# D-195: rsl_rl's ActorCriticRecurrent (3.0.1 `actor_critic_recurrent.py:62`,
-# 3.1.2 the same name) feeds the observation into `memory_a`, an
-# `nn.LSTM` whose first layer's input weight is (4 * hidden, obs_width).
 _LSTM_INPUT_WEIGHT = "memory_a.rnn.weight_ih_l0"
 
 
 def actor_input_width(state_dict) -> int | None:
-    """The observation width the actor's first layer expects, or ``None``
-    when the state dict carries neither ``memory_a.rnn.weight_ih_l0`` nor an
-    ``actor.<n>.weight`` of rank 2.
-
-    A recurrent actor is read at its LSTM: there ``actor.0.weight`` takes
-    the LSTM's output, not the observation. Otherwise the lowest layer
-    index wins, whatever the dict's insertion order: the first layer is the
-    one that sees the observation."""
+    """The observation width the actor's first layer expects, or ``None`` when the state dict carries neither ``memory_a.rnn.weight_ih_l0`` nor an ``actor.<n>.weight`` of rank 2."""
     lstm_shape = tuple(getattr(state_dict.get(_LSTM_INPUT_WEIGHT), "shape", ()))
     if len(lstm_shape) == 2:
         return int(lstm_shape[1])
@@ -75,11 +65,7 @@ def width_mismatch_message(
     mode_widths: dict[str, int],
     path: str = "",
 ) -> str | None:
-    """``None`` when the checkpoint fits the env (or its width is unknown);
-    otherwise the one line to print before refusing.
-
-    ``mode_widths`` maps every observation mode to its width, so the message
-    can name the mode that WOULD fit -- or say that none does."""
+    """``None`` when the checkpoint fits the env (or its width is unknown); otherwise the one line to print before refusing."""
     if ckpt_width is None or ckpt_width == env_width:
         return None
     fitting = sorted(m for m, w in mode_widths.items() if w == ckpt_width)
@@ -97,10 +83,7 @@ def width_mismatch_message(
 
 def refusal_for_checkpoint(path: str, env_mode: str, env_width: int,
                            mode_widths: dict[str, int], loader) -> str | None:
-    """The whole guard in one call: load ``path`` with ``loader`` (torch.load
-    bound by the caller), read the actor width out of ``model_state_dict``,
-    compare. ``None`` = load it. A checkpoint without ``model_state_dict``
-    or without an actor weight is NOT refused here -- ``runner.load`` speaks."""
+    """The whole guard in one call: load ``path`` with ``loader`` (torch.load bound by the caller), read the actor width out of ``model_state_dict``, compare."""
     loaded = loader(path)
     state = loaded.get("model_state_dict") if isinstance(loaded, dict) else None
     if not isinstance(state, dict):
@@ -110,7 +93,7 @@ def refusal_for_checkpoint(path: str, env_mode: str, env_width: int,
 
 
 def _self_test() -> int:
-    class _T:  # anything with a .shape
+    class _T:
         def __init__(self, *shape):
             self.shape = shape
 
@@ -119,8 +102,6 @@ def _self_test() -> int:
             "actor.0.bias": _T(128), "actor.2.weight": _T(128, 128), "critic.0.weight": _T(128, 28)}
     sd31 = dict(sd28, **{"actor.0.weight": _T(128, 31)})
     modes_p = dict(modes, force_prevact=34)
-    # 2 layers x 256 (D-195): layer 1 takes the 34 channels, layer 2 layer 1's
-    # 256; the actor MLP's first Linear takes 256. The critic has its own.
     sd_lstm = {"actor_obs_normalizer._mean": _T(1, 34),
                "memory_a.rnn.weight_ih_l1": _T(1024, 256), "memory_a.rnn.weight_hh_l0": _T(1024, 256),
                "memory_a.rnn.weight_ih_l0": _T(1024, 34),
@@ -146,10 +127,8 @@ def _self_test() -> int:
          "No observation mode builds 25" in (width_mismatch_message(25, 28, "force", modes) or "")),
         ("the path is quoted when given",
          "(model_10.pt)" in (width_mismatch_message(28, 31, "wrench", modes, "model_10.pt") or "")),
-        # MUTATION (D-080): the guard must never pass a mismatch through.
         ("a mismatch never returns None",
          width_mismatch_message(28, 31, "wrench", modes) is not None),
-        # The whole guard, with a fake loader in place of torch.load.
         ("refusal_for_checkpoint refuses a 28 checkpoint in a 31 env",
          refusal_for_checkpoint("m.pt", "wrench", 31, modes,
                                 lambda p: {"model_state_dict": sd28}) is not None),
@@ -158,10 +137,6 @@ def _self_test() -> int:
                                 lambda p: {"model_state_dict": sd31}) is None),
         ("a checkpoint without model_state_dict is left to runner.load",
          refusal_for_checkpoint("m.pt", "wrench", 31, modes, lambda p: {"iter": 3}) is None),
-        # D-195: the rsl_rl ActorCriticRecurrent layout (3.0.1 and 3.1.2 alike):
-        # the observation enters `memory_a.rnn`, the actor MLP sees the LSTM's
-        # 256-wide output. Reading `actor.0.weight` here would call every LSTM
-        # checkpoint 256 wide and refuse it.
         ("an LSTM checkpoint reads its width from memory_a.rnn.weight_ih_l0",
          actor_input_width(sd_lstm) == 34),
         ("an LSTM checkpoint in a 34 env is let through",

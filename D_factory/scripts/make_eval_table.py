@@ -77,9 +77,6 @@ import check_autodr  # noqa: E402 - owns the one loader of autodr.py
 DEFAULT_OUT_DIR = SCRIPTS / "eval"
 DEFAULT_ROWS = 1000
 DEFAULT_ROWS_PER_BLOCK = 150
-# Second entry of the seed sequence for the boundary table. numpy documents a
-# sequence of ints as a seed (SeedSequence entropy); [seed, 1] is a stream
-# independent of default_rng(seed).
 BOUNDARY_STREAM = 1
 
 
@@ -87,33 +84,14 @@ class TableError(RuntimeError):
     """A table that cannot be written as asked. Never a silent fallback."""
 
 
-# THE OOD STEP (D-206 (3); D-055/D-191, user 2026-09-23 "1,5-fach").
-# Source: Tang et al. 2023 (IndustReal, arXiv 2305.17110) Table X -- Insert
-# policies "trained with moderate randomization (i.e., plug randomization of
-# +- 10 mm ...)" are evaluated at [-15, 15] and [-20, 20] mm, i.e. x1.5 and x2.0
-# of the training range, 5 seeds x 1000 trials. Measured from the CENTRE of
-# each quantity, on its own side. Row in Belege_Streuwerte.md.
 OOD_FACTOR = 1.5
-# WHERE x1.5 DOES NOT FIT (D-206 (3), the D-191 point 2 rule "start inside
-# the box"). start_height: the OSC tip box is z half-width
-# `osc_pos_clamp_z_m` = 0.2915 m about THIS episode's entrance
-# (insertion_env_cfg.py; the box rides the fixture, D-204 (4)). The worst
-# start of the start_height_hi block (radius 0.030 m, tilt 10 deg drawn in the
-# target band) reaches h*cos(10 deg) + 0.030*sin(10 deg) (the disk formula of
-# check_env_wiring.py, D-180 (1)); inside the box needs h <= 0.2907 m, i.e.
-# h = 0.020 + f*0.250 with f <= 1.083 (D-180's "plus one action step" rule:
-# f <= 1.0016). x1.5 (h = 0.395 m) starts 0.103 m above the box. Below 1.083
-# no tenth is free of the D-180 step rule, so the block stays at the ceiling:
-# f = 1.0 makes it EQUAL to the T-grenze block -- kept as a control (same rows,
-# same outcome expected, as RT-226's --compare), an own choice named in D-206.
 OOD_FACTOR_CAP = {"start_height_hi": 1.0}
 
 _ENV_DIR = SCRIPTS.parent / "source" / "insertion" / "insertion" / "tasks" / "direct" / "insertion"
 
 
 def _tasks_const(name: str) -> float:
-    """A LITERAL module-level constant of insertion_tasks_cfg.py (that file
-    imports isaaclab, so it is read, not imported)."""
+    """A LITERAL module-level constant of insertion_tasks_cfg.py (that file imports isaaclab, so it is read, not imported)."""
     tree = ast.parse((_ENV_DIR / "insertion_tasks_cfg.py").read_text(encoding="utf-8"))
     for n in tree.body:
         if (isinstance(n, ast.Assign) and len(n.targets) == 1
@@ -134,8 +112,7 @@ def _cfg_default_expr(field: str) -> ast.expr:
 
 
 def _resolve_centre(expr: ast.expr) -> float:
-    """The three expression shapes the env's table-centre dict holds; anything
-    else is refused, never guessed."""
+    """The three expression shapes the env's table-centre dict holds; anything else is refused, never guessed."""
     if isinstance(expr, ast.Constant) and isinstance(expr.value, (int, float)):
         return float(expr.value)
     if (isinstance(expr, ast.Attribute) and isinstance(expr.value, ast.Name)
@@ -148,8 +125,7 @@ def _resolve_centre(expr: ast.expr) -> float:
 
 
 def table_centres() -> dict:
-    """The centres the env binds for dr_mode='table' -- read from ITS OWN
-    `_table_dims = autodr.bind_centres({...})` (insertion_env.py), the one home."""
+    """The centres the env binds for dr_mode='table' -- read from ITS OWN `_table_dims = autodr.bind_centres({...})` (insertion_env.py), the one home."""
     tree = ast.parse((_ENV_DIR / "insertion_env.py").read_text(encoding="utf-8"))
     hits = [n for n in ast.walk(tree) if isinstance(n, ast.Assign) and len(n.targets) == 1
             and getattr(n.targets[0], "id", None) == "_table_dims"
@@ -163,15 +139,10 @@ def table_centres() -> dict:
 
 
 def ood_step(dim, side: str, centre: float, factor: float) -> tuple:
-    """``(unit, physical)`` of the nailed cell: the physical value sits
-    ``factor`` times the target distance from the centre, on ``side``; the
-    unit value is what the env's OWN maps turn into it (`disk_offset` for the
-    radius, `map_unit_to_bounds` on the table band otherwise)."""
+    """``(unit, physical)`` of the nailed cell: the physical value sits ``factor`` times the target distance from the centre, on ``side``; the unit value is what the env's OWN maps turn into it (`disk_offset` for the radius, `map_unit_to_bounds` on the table band otherwise)."""
     if dim.name == "lat_r":
-        # r = R * sqrt(u) (D-178 (1)): u = factor**2 gives r = factor * R.
         return factor ** 2, factor * dim.hi_max
     if dim.one_sided:
-        # The band starts AT the centre (the env binds lo := centre), so u = factor.
         return factor, centre + factor * (dim.hi_max - centre)
     lo, hi = dim.lo_max, dim.hi_max
     p = (centre - lo) / (hi - lo)
@@ -193,10 +164,7 @@ def ood_layout(ns: dict) -> list:
 
 
 def ood_problems(unit: np.ndarray, base: np.ndarray, rows_per_block: int, ns: dict) -> list:
-    """Every way ``unit`` is NOT the boundary table ``base`` with its nailed
-    cells moved outwards. Empty list = it is. A block capped at factor 1.0
-    keeps its boundary value, so it equals its boundary block row for row
-    (the control, D-206 (3)); only a factor above 1 must leave [0, 1]."""
+    """Every way ``unit`` is NOT the boundary table ``base`` with its nailed cells moved outwards."""
     layout = ood_layout(ns)
     if unit.shape != base.shape or unit.shape[0] != len(layout) * rows_per_block:
         return [f"shape {unit.shape} vs boundary {base.shape}, {len(layout)} blocks x {rows_per_block}"]
@@ -307,7 +275,6 @@ def make(kind: str, seed: int, n_rows: int, rows_per_block: int, out_dir: pathli
         name = f"eval_table_seed{seed}_c{unit.shape[1]}"
         meta = {"kind": kind, "seed": seed, "rng": f"numpy.random.default_rng({seed})"}
     elif kind == "ood":
-        # NOT drawn: the committed boundary table of the same seed and width is the base.
         bpath = out_dir / f"eval_table_boundary_seed{seed}_c{len(ns['TABLE_COLUMNS'])}.csv"
         bside = json.loads(bpath.with_suffix(".json").read_text(encoding="utf-8"))
         braw = bpath.read_bytes()
@@ -388,17 +355,12 @@ def _self_test() -> int:
         good = tmp / "good.csv"
         first = write_new(good, a)
         table = ns["RowTable"].from_csv(good)
-        # MUTATION (D-080, eval_plan.md row A): two header columns swapped.
         head = list(cols)
         head[2], head[3] = head[3], head[2]
         swapped = tmp / "swapped.csv"
         swapped.write_bytes(a.replace(",".join(cols).encode(), ",".join(head).encode(), 1))
         other = table_bytes(draw_rows(20, 50, ns), ns)
-        # MUTATION: a boundary table whose nailing was skipped.
         not_nailed = np.random.default_rng([10, BOUNDARY_STREAM]).random(unit_b.shape)
-        # The file name carries the width READ BACK from the written header
-        # (HANDOFF-RL 2a (b)(1): the 17-column tables get new names, the
-        # 16-column ones keep theirs).
         made = tmp / "made"
         with contextlib.redirect_stdout(io.StringIO()):
             make("rows", 10, 50, 6, made, ns)
@@ -454,7 +416,6 @@ def _self_test() -> int:
              made_ood["from"] == {"file": f"eval_table_boundary_seed10_c{w}.csv",
                                   "sha256": made_bnd["sha256"]}),
         ]
-        # -- OOD (D-206 (3); D-055/D-191, from p6-TestAusserhalb 019ae3d8) ---
         centres = table_centres()
         ood = {k: (u, p, f) for k, _c, u, p, f in ood_layout(ns)}
         rad = np.pi / 180.0
@@ -467,13 +428,10 @@ def _self_test() -> int:
         for b, (_k, col, u, _p, _f) in enumerate(ood_layout(ns)):
             ood_unit[b * 6:(b + 1) * 6, col] = u
         sh = [k for k, _c, _s in layout].index("start_height_hi")
-        # MUTATION: a cell outside the nailed column changed.
         stray = ood_unit.copy()
         stray[0, layout[1][1]] += 0.01
-        # MUTATION: the nailed cell left at the boundary value.
         stuck = ood_unit.copy()
         stuck[0:6, layout[0][1]] = 1.0
-        # MUTATION: the capped start-height block pushed to D-191's x1.2.
         pushed = ood_unit.copy()
         pushed[sh * 6:(sh + 1) * 6, layout[sh][1]] = 1.2
         checks += [

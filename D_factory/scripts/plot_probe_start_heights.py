@@ -50,10 +50,6 @@ import tempfile
 
 SCRIPT_MARKER = "plot_probe_start_heights-2026-09-05"
 
-# The training distribution of the policy this probe replays. Drawn as a
-# shaded band so a reader sees at a glance which bars are in-distribution.
-# NOT a threshold and not read from the files: it is the caller's context,
-# passed in, with this pair only as the default for the RT-156 policy.
 TRAINED_RANGE_MM = (-30.0, 30.0)
 
 
@@ -75,8 +71,6 @@ def read_probe(path: pathlib.Path) -> dict:
             f"{path}: no 'start_tip_above_entrance_mm'. A home-pose run has no "
             "start height to plot."
         )
-    # Guard on EQUALITY, not on presence: a sampled run carries both keys and
-    # would otherwise be drawn at its upper bound, which no episode used.
     if low is not None and float(low) != float(high):
         raise ProbeError(
             f"{path}: start height is SAMPLED in [{low}, {high}] mm, not fixed. "
@@ -148,8 +142,6 @@ def draw(probes: list[dict], out: pathlib.Path, run: str, note: str | None,
     ax.spines[["top", "right"]].set_visible(False)
     ax.grid(axis="y", color="0.88", zorder=0)
     if any(inside):
-        # NOT "lower left": that is where the per-bar episode counts sit,
-        # and the legend covered the n of the first bar (observed 2026-09-06).
         ax.legend(loc="upper right", frameon=False, fontsize=9)
     if not no_title:
         title = f"{run}: Erfolgsrate je fester Starthöhe" if run else \

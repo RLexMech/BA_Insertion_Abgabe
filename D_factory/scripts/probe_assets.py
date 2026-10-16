@@ -1,43 +1,7 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-"""Probe the robot and fixture assets before the first environment increment.
-
-UNVERIFIED — authored on the dev PC (no Isaac installation); run on the
-training machine:
-
-    cd C:\\Isaaclab
-    conda activate env_isaaclab
-    .\\isaaclab.bat -p <insertion>\\scripts\\probe_assets.py --usd <path\\to\\Tisch.usd>
-
-Joint drives only -- no Nucleus config listing, no fixture, no API dump:
-
-    .\\isaaclab.bat -p <insertion>\\scripts\\probe_assets.py --only-robots
-
-Answers four questions that the environment code depends on and that cannot be
-decided from the dev PC:
-
-  1. Which UR articulation configs does ``isaaclab_assets`` actually ship, and
-     which USD does each point at? DECISIONS D-018/D-020 assume a shipped
-     ``UR10e_CFG``; this reports whether that is true. UR10 and UR10e differ in
-     link lengths, so the answer selects the DH table used by
-     ``scripts/tools/compute_home_pose.py``.
-  2. For each candidate robot USD: default prim, joint prims with their body
-     relations, rigid-body links, and where ``PhysicsArticulationRootAPI`` sits.
-     CAVEAT: the joint order printed here is stage-traversal order. The binding
-     order is whatever ``Articulation.joint_names`` reports at runtime; that is
-     what the environment startup report prints, and that is the authority.
-  2b. Per joint prim, the authored PhysX DRIVE: type, stiffness, damping,
-     maxForce, plus armature and joint friction. Since 2026-08-25 ``ur5e_cfg.py``
-     sets every drive field to ``None``, so these USD values ARE the effective
-     gains the training run uses; the drive type fixes their UNIT. This probe
-     verifies the supervisor decision (gravity on, drives from the USD) on the
-     welded robot+tool+peg USD.
-  3. For the fixture stage (--usd): its ``defaultPrim``. ``UsdFileCfg`` spawns by
-     adding a reference, which resolves to nothing when no default prim is set.
-
-Read-only: opens stages, writes nothing, modifies nothing.
-"""
+"""Probe the robot and fixture assets before the first environment increment."""
 
 from __future__ import annotations
 
@@ -84,7 +48,6 @@ args_cli.headless = True
 app_launcher = AppLauncher(args_cli)
 simulation_app = app_launcher.app
 
-# Both isaaclab_assets and pxr are importable only after the app is up.
 from pxr import Tf, Usd, UsdPhysics  # noqa: E402
 
 from isaaclab.utils.assets import ISAAC_NUCLEUS_DIR, ISAACLAB_NUCLEUS_DIR  # noqa: E402
@@ -98,10 +61,7 @@ def rule(title: str) -> None:
 
 
 def report_shipped_cfgs() -> list[str]:
-    """List UR-related ArticulationCfg objects shipped by isaaclab_assets.
-
-    Returns the usd_path of every config found, for use as probe candidates.
-    """
+    """List UR-related ArticulationCfg objects shipped by isaaclab_assets."""
     rule("1. Shipped configs in isaaclab_assets.robots.universal_robots")
 
     print(f"ISAAC_NUCLEUS_DIR    = {ISAAC_NUCLEUS_DIR}")
@@ -137,34 +97,7 @@ def report_shipped_cfgs() -> list[str]:
 
 
 def report_joint_drive(path: str, prim) -> None:
-    """Print the PhysX drive authored on one joint prim.
-
-    Why this is read from the USD: since 2026-08-25 ``ur5e_cfg.py`` sets every
-    drive field to ``None``, so the USD values ARE the effective gains (Isaac
-    Lab 2.3: ``None`` -> value from the USD joint prim). This probe is now the
-    direct measurement of what the training run uses — including whether the
-    WELDED robot+tool+peg USD carries the same drives as the bare arm. The
-    drive TYPE still fixes the UNIT of the numbers ("force" = N*m/rad,
-    "acceleration" = rad/s^2 per rad), and ``maxForce`` shows whether a drive
-    clips at its ceiling in the home pose.
-
-    Printed generically -- every attribute in the ``drive:`` namespace, plus the
-    joint-level armature and friction -- so a name this script guessed wrong
-    shows up as an extra line rather than as a silent omission. Each line says
-    whether the value is AUTHORED in the layer or the schema fallback, because
-    an unauthored "force" and a deliberately authored "force" are not the same
-    evidence.
-
-    ONE FULLY SELF-CONTAINED LINE PER ATTRIBUTE, each carrying the
-    ``[probe_assets]`` tag and the joint path. That is deliberately redundant
-    and it is the only shape that survives the log filter: the committed
-    ``scripts/filter_rt_log.py`` keeps ONLY lines that start with a lowercase
-    ``[tag]`` and drops everything else, and the surrounding section-2 output
-    (dividers, ``USD:``, indented joint lines) is dropped with it. A value
-    printed in the surrounding style, or indented under a tagged header, never
-    reaches ``/rt-check``. Verified on the laptop against both the committed
-    filter and the newer one in the working tree.
-    """
+    """Print the PhysX drive authored on one joint prim."""
     drive_attrs = sorted(
         (a for a in prim.GetAttributes() if a.GetName().startswith("drive:")),
         key=lambda a: a.GetName(),
@@ -175,9 +108,6 @@ def report_joint_drive(path: str, prim) -> None:
         origin = "authored" if attr.HasAuthoredValue() else "schema default"
         print(f"[probe_assets] drive {path} :: {attr.GetName()} = {attr.Get()!r}  ({origin})")
 
-    # Effective joint inertia is I + armature, so an armature authored in the
-    # asset would change the frequency computed in step 3 of the gains plan.
-    # ur5e_cfg.py sets armature=None since 2026-08-25, so the USD value applies.
     extra = sorted(
         (
             a
@@ -197,13 +127,8 @@ def probe_robot_stage(usd_path: str) -> None:
     print("-" * 78)
     print(f"USD: {usd_path}")
     print("-" * 78)
-    # Tagged duplicate of the line above. The untagged one does not survive
-    # filter_rt_log.py, and without it the per-joint drive blocks below cannot
-    # be told apart between two USDs that carry the same joint paths.
     print(f"[probe_assets] probing robot USD: {usd_path}")
 
-    # A missing layer raises rather than returning None, and a probe must never
-    # abort the run just because one speculative candidate does not exist.
     try:
         stage = Usd.Stage.Open(usd_path)
     except Tf.ErrorException as exc:
@@ -230,12 +155,6 @@ def probe_robot_stage(usd_path: str) -> None:
             joint = UsdPhysics.Joint(prim)
             body0 = joint.GetBody0Rel().GetTargets()
             body1 = joint.GetBody1Rel().GetTargets()
-            # localPos0/localRot0 is the joint frame relative to body0. For a
-            # marker-only fixed joint such as ur10e's ee_joint (body1 empty)
-            # this is the flange offset from wrist_3_link -- the number needed
-            # to compare the IK target (DH frame 6, i.e. the flange) against
-            # the only pose the environment can actually read, which is the
-            # rigid body wrist_3_link.
             local_pos = joint.GetLocalPos0Attr().Get()
             local_rot = joint.GetLocalRot0Attr().Get()
             joints.append(
@@ -296,13 +215,7 @@ def probe_fixture_stage(usd_path: str) -> None:
 
 
 def report_api_surface() -> None:
-    """Dump the real field names and signatures the environment code is written against.
-
-    The dev PC has no Isaac installation, so every cfg field and method signature
-    used in the environment would otherwise be written from memory and validated
-    by crashing on the training machine, one guess per round trip. One
-    introspection pass replaces that.
-    """
+    """Dump the real field names and signatures the environment code is written against."""
     rule("4. API surface (field names and signatures used by the environment)")
 
     import dataclasses
@@ -397,9 +310,6 @@ def report_api_surface() -> None:
 
 
 def main() -> None:
-    # Staleness detector. This script is copied to the training machine by hand, and a
-    # stale copy has twice looked like a script that silently skips a section. If the
-    # banner below is absent from a run, the copy over there predates that section.
     print(
         "[probe_assets] sections available: 1 shipped cfgs, 2 robot USDs (with joint "
         "drives), 3 fixture stage, 4 API surface"
@@ -422,14 +332,7 @@ def main() -> None:
             print(f"shipped-config probe failed: {type(exc).__name__}: {exc}")
             candidates = []
 
-    # The asset the environment actually spawns. ur5e_cfg.py still names the
-    # bare Nucleus arm, but insertion_env.py overwrites spawn.usd_path with
-    # this one at _setup_scene time, so the drives that reach PhysX are the
-    # ones composed here. Resolved, not hard-coded, and never fatal: a machine
-    # without the authored asset still gets the rest of the probe.
     try:
-        # D-200 (1), as scripts/zero_agent.py: THIS clone's env package first, whichever
-        # clone the editable `insertion` install points at (RT-242a..d).
         sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent / "source" / "insertion"))
         import insertion
         print(f"[probe_assets] insertion package imported from: {pathlib.Path(insertion.__file__).resolve().parent}")
@@ -443,18 +346,7 @@ def main() -> None:
     except Exception as exc:  # noqa: BLE001
         print(f"[probe_assets] tool-welded robot USD not resolvable: {type(exc).__name__}: {exc}")
 
-    # Candidates the plan expects to exist; duplicates are dropped below.
     candidates += [
-        # Scene-build phase C: isaaclab_assets ships no UR5e config, so section 1
-        # cannot surface this path. Probed 2026-08-18 on the training machine:
-        # it opens (defaultPrim /ur5e, root API on /ur5e/root_joint, the six
-        # UR10e joint names).
-        #
-        # No "_instanceable" variant is listed under ISAAC_NUCLEUS_DIR any more.
-        # All three tried there on 2026-08-18 (ur5e, ur10e, ur10) failed to open
-        # the layer; the only instanceable asset that exists is the UR10 one
-        # under ISAACLAB_NUCLEUS_DIR, which section 1 already supplies via
-        # UR10_CFG. Re-adding them here only prints three stack traces per run.
         f"{ISAAC_NUCLEUS_DIR}/Robots/UniversalRobots/ur5e/ur5e.usd",
         f"{ISAAC_NUCLEUS_DIR}/Robots/UniversalRobots/ur10e/ur10e.usd",
     ]

@@ -66,26 +66,20 @@ import statistics
 import sys
 import tempfile
 
-# Loaded by path because scripts/tools is not a package (author_tool_ur5e.py idiom).
 _spec = importlib.util.spec_from_file_location("run_axis", pathlib.Path(__file__).resolve().parent / "tools" / "run_axis.py")
 run_axis = importlib.util.module_from_spec(_spec)
 sys.modules["run_axis"] = run_axis
 _spec.loader.exec_module(run_axis)
 
-XLABEL = "Env-Schritte (alle Envs)"   # D-195 CURVE AXIS
-RUN = "#3B6FD4"   # series 1 (plot_run_curves.py precedent, validated with REF)
-REF = "#D97706"   # series 2
+XLABEL = "Env-Schritte (alle Envs)"
+RUN = "#3B6FD4"
+REF = "#D97706"
 INK = "#1F2933"
 INK_MUTED = "#6B7280"
 GRID = "#E5E7EB"
 
 NAMES = ("erfolg", "stufen", "kraft", "ppo", "physik", "endfenster", "randerfolg", "dauer")
 
-# rsl_rl tag -> rl_games tag. rl_games writes every env key as "Episode/<key>"
-# (IsaacAlgoObserver, algo_observer.py:127 @ 6b3534f2); rsl_rl 3.0.1 wrote a key
-# with "/" as is. The trainer's tags have their own names. Value loss = the
-# separate critic's, whose values give the advantages (a2c_common.py:428-429,
-# central_value.py:236); losses/c_loss is the actor's auxiliary value head.
 RL_GAMES_TAG = {
     "Train/mean_reward": "rewards/iter",
     "Loss/surrogate": "losses/a_loss",
@@ -102,9 +96,7 @@ DIM_LABEL = {
 
 
 def load_curves(path: pathlib.Path, factor: tuple[int, int]) -> dict:
-    """``{tag: (x, y)}`` over the iteration rows, x in total env steps with the
-    run's own ``factor = (num_steps_per_env, num_envs)``; prints the run's
-    wall-time line. Every figure and event marker takes its x from here."""
+    """``{tag: (x, y)}`` over the iteration rows, x in total env steps with the run's own ``factor = (num_steps_per_env, num_envs)``; prints the run's wall-time line."""
     with open(path, newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
     if not rows or "step" not in rows[0]:
@@ -129,8 +121,7 @@ def load_curves(path: pathlib.Path, factor: tuple[int, int]) -> dict:
 
 
 def load_curves_rl_games(path: pathlib.Path, factor: tuple[int, int]) -> dict:
-    """``{tag: (x, y)}`` of an rl_games run: every tag on its own step axis
-    (``run_axis.rl_games_x``), read per TAG because the axes share rows."""
+    """``{tag: (x, y)}`` of an rl_games run: every tag on its own step axis (``run_axis.rl_games_x``), read per TAG because the axes share rows."""
     with open(path, newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
     if not rows or "step" not in rows[0]:
@@ -338,7 +329,7 @@ def fig_randerfolg(plt, c, sidecar, ev):
     fig, axes = plt.subplots(nrows, 3, figsize=(7.2, 2.0 * nrows + 0.5), sharex=True, sharey=True, squeeze=False)
     for ax, key in zip(axes.flat, keys):
         xs, ys = need(c, f"dr/{key}_last_rate")
-        pts = [(x, 100 * y) for x, y in zip(xs, ys) if y >= 0]   # -1 = no full buffer yet
+        pts = [(x, 100 * y) for x, y in zip(xs, ys) if y >= 0]
         if pts:
             ax.plot([p[0] for p in pts], [p[1] for p in pts], color=RUN, linewidth=1.0)
         else:
@@ -368,10 +359,7 @@ def fig_randerfolg(plt, c, sidecar, ev):
 
 
 def dauer_points(rows, factor, lib: str) -> list[tuple[int, int, int]]:
-    """``(x, median steps, p90 steps)`` per iteration over the successful
-    episodes of ``episodes.csv``. rsl_rl: episode 0 of each env is dropped
-    (init_at_random_ep_len, its steps is not its length); rl_games starts no
-    env at a random step (``Pläne/D-200_Bauplan.md`` Part 2 (7))."""
+    """``(x, median steps, p90 steps)`` per iteration over the successful episodes of ``episodes.csv``."""
     by_it: dict[int, list[int]] = {}
     for r in rows:
         if r["outcome"] != "success" or (lib == "rsl_rl" and int(r["episode"]) == 0):
@@ -383,7 +371,6 @@ def dauer_points(rows, factor, lib: str) -> list[tuple[int, int, int]]:
     out = []
     for it in sorted(by_it):
         v = sorted(by_it[it])
-        # p90 with the index rule of _force_stats (insertion_env.py)
         out.append((run_axis.env_steps(it, *factor), int(statistics.median(v)),
                     v[min(len(v) - 1, int(math.ceil(0.9 * len(v))) - 1)]))
     return out
@@ -490,8 +477,6 @@ def _synthetic(tmp: pathlib.Path, drop_tag: str | None = None, lib: str = "rsl_r
     tags = [t for t in tags if t != drop_tag]
     val = lambda t, i: min(1.0, i / 20) if "/" in t else 0
     if lib == "rl_games":
-        # D-200: one wide table, three step axes (run_axis docstring), F = 16 * 8 = 128.
-        # rewards/time at 10 * epoch s shares the rows of epochs 10, 20, 30, 40.
         env_tag = lambda t: t if t.startswith("Episode/") else "Episode/" + t
         cells: dict[int, dict[str, float]] = {}
         for e in range(1, 41):
@@ -520,11 +505,9 @@ def _synthetic(tmp: pathlib.Path, drop_tag: str | None = None, lib: str = "rsl_r
             w.writerow(["step", "wall_time"] + tags)
             for i in range(40):
                 w.writerow([i, 120.0 * i] + [val(t, i) for t in tags])
-                w.writerow([i, 99999.0] + ["" for _ in tags])  # a */time-only row
-        # D-195: the run's own factor, one iteration = 16 * 8 = 128 env steps.
+                w.writerow([i, 99999.0] + ["" for _ in tags])
         (tmp / "agent.yaml").write_text("seed: 1\nnum_steps_per_env: 16\n", encoding="utf-8")
     (tmp / "env.yaml").write_text("seed: 1\nscene:\n  num_envs: 8\n  env_spacing: 3.0\n", encoding="utf-8")
-    # episodes.csv: iteration 0 holds episode 0 (10 steps) and episode 1 (50 steps).
     with open(tmp / "e.csv", "w", newline="") as f:
         w = csv.writer(f)
         w.writerow(["iteration", "env_id", "episode", "outcome", "steps"])
@@ -571,10 +554,8 @@ def _axis_checks(ns: dict, tmp: pathlib.Path) -> dict[str, bool]:
         factor = ns["run_axis"].read_factor(tmp / "agent.yaml", tmp / "env.yaml")
         with contextlib.redirect_stdout(out):
             c = ns["load_curves"](tmp / "s.csv", factor)
-        # draw_all takes its event markers from first_step on these same x.
         res[AXIS_CHECKS[0]] = ns["first_step"](c, "dr/phase", 1.0) == 2688
         res[AXIS_CHECKS[1]] = c["Episode/success_rate"][0] == [(i + 1) * 128 for i in range(40)]
-        # 39 intervals of 120 s = 1.30 h; the */time-only rows (wall 99999) would move both numbers.
         res[AXIS_CHECKS[2]] = "wall time 1.30 h over 40 iterations (steps 0..39," in out.getvalue()
     except BaseException:   # noqa: BLE001 - every check stays False
         pass
@@ -636,7 +617,6 @@ def self_test() -> int:
         ok = len(written) == 16 and all(p.stat().st_size > 0 for p in written)
         print(f"[{'PASS' if ok else 'FAIL'}] T7 rl_games run: eight figures x two formats written")
         fails += not ok
-        # MUTATION: one required tag missing must stop the script, not draw a blank panel.
         mut = tmp / "mut"
         mut.mkdir()
         _synthetic(mut, drop_tag="dr/yaw_lo")

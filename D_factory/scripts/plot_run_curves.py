@@ -57,7 +57,6 @@ import pathlib
 import sys
 import tempfile
 
-# Loaded by path because scripts/tools is not a package (author_tool_ur5e.py idiom).
 _spec = importlib.util.spec_from_file_location("run_axis", pathlib.Path(__file__).resolve().parent / "tools" / "run_axis.py")
 run_axis = importlib.util.module_from_spec(_spec)
 sys.modules["run_axis"] = run_axis
@@ -65,14 +64,12 @@ _spec.loader.exec_module(run_axis)
 
 HEADER_FIXED = ("step", "wall_time")
 
-# One hue per series (dataviz: categorical pair; text wears text tokens).
 RUN = "#3B6FD4"
 REF = "#D97706"
 INK = "#1F2933"
 INK_MUTED = "#6B7280"
 GRID = "#E5E7EB"
 
-# curve -> (candidate tags in order, y label, scale, y limits or None)
 CURVES: dict[str, tuple[tuple[str, ...], str, float, tuple[float, float] | None]] = {
     "reward": (("Train/mean_reward", "Episode_Reward/total"), "Mittlerer Episoden-Reward [–]", 1.0, None),
     "success": (("Episode/success_rate", "success_rate"), "Erfolgsrate [%]", 100.0, (0.0, 100.0)),
@@ -81,10 +78,6 @@ CURVES: dict[str, tuple[tuple[str, ...], str, float, tuple[float, float] | None]
 }
 TITLES = {"reward": "Reward", "success": "Erfolgsrate", "depth": "Fügetiefe", "force_abort": "Kraftabbruch-Rate"}
 
-
-# --------------------------------------------------------------------------
-# CSV + resolver
-# --------------------------------------------------------------------------
 
 def read_csv(path: pathlib.Path) -> tuple[list[str], list[int], list[float], dict[str, list[float | None]]]:
     """(tags, steps, wall times, {tag: values aligned to steps, None where empty})."""
@@ -109,9 +102,7 @@ def read_csv(path: pathlib.Path) -> tuple[list[str], list[int], list[float], dic
 
 def load_run(scalars: pathlib.Path, label: str, factor: tuple[int, int]
              ) -> tuple[list[str], list[int], dict[str, list[float | None]]]:
-    """(tags, x in total env steps, series) of one run, with ITS OWN factor
-    ``(num_steps_per_env, num_envs)``; prints the run's wall-time line.
-    Iteration rows are the rows with a value in any tag but ``*/time``."""
+    """(tags, x in total env steps, series) of one run, with ITS OWN factor ``(num_steps_per_env, num_envs)``; prints the run's wall-time line."""
     tags, steps, walls, series = read_csv(scalars)
     it = [i for i in range(len(steps)) if any(series[t][i] is not None for t in tags if not t.endswith("/time"))]
     print(f"  {label}: " + run_axis.wall_time_line([steps[i] for i in it], [walls[i] for i in it]))
@@ -143,14 +134,9 @@ def smooth(values: list[float | None], window: int) -> list[float | None]:
     return out
 
 
-# --------------------------------------------------------------------------
-# drawing
-# --------------------------------------------------------------------------
-
 def draw_curve(curve: str, runs: list[tuple[str, list[int], list[float | None]]], out_base: pathlib.Path,
                title: bool = True, tag_note: str = "") -> list[pathlib.Path]:
-    """Draw one curve for one or two runs (x already in total env steps);
-    returns the two files written."""
+    """Draw one curve for one or two runs (x already in total env steps); returns the two files written."""
     import matplotlib
 
     matplotlib.use("Agg")
@@ -194,8 +180,7 @@ def draw_curve(curve: str, runs: list[tuple[str, list[int], list[float | None]]]
 def plot_all(scalars: pathlib.Path, run: str, factor: tuple[int, int], out_dir: pathlib.Path, which: list[str],
              ref: pathlib.Path | None, ref_run: str, ref_factor: tuple[int, int] | None, reward_tag: str | None,
              window: int, title: bool) -> int:
-    """Draw the requested curves; returns how many were drawn. ``factor`` and
-    ``ref_factor`` are each run's own ``(num_steps_per_env, num_envs)``."""
+    """Draw the requested curves; returns how many were drawn."""
     tags, steps, series = load_run(scalars, run, factor)
     ref_data = load_run(ref, ref_run, ref_factor) if ref is not None else None
     drawn = 0
@@ -221,10 +206,6 @@ def plot_all(scalars: pathlib.Path, run: str, factor: tuple[int, int], out_dir: 
     return drawn
 
 
-# --------------------------------------------------------------------------
-# self-test
-# --------------------------------------------------------------------------
-
 # D-195 axis self-test: main() on a synthetic yaml pair
 AXIS_CHECKS = (
     "main run: first x = (0 + 1) * 128 * 4 = 512",
@@ -241,8 +222,7 @@ _SELF_TEST_MARKER = "# D-195 axis self-test: main() on a synthetic yaml pair"
 
 
 def _axis_checks(text: str, root: pathlib.Path) -> dict[str, bool]:
-    """Run ``main`` of the source ``text`` on two synthetic runs; ``draw_curve``
-    is replaced by a recorder, so the x values reach the checks undrawn."""
+    """Run ``main`` of the source ``text`` on two synthetic runs; ``draw_curve`` is replaced by a recorder, so the x values reach the checks undrawn."""
     import contextlib
     import io
 
@@ -353,10 +333,6 @@ def _self_test() -> int:
     print("SELF-TEST PASSED" if rc == 0 else "SELF-TEST FAILED")
     return rc
 
-
-# --------------------------------------------------------------------------
-# main
-# --------------------------------------------------------------------------
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)

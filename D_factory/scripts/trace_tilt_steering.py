@@ -74,23 +74,15 @@ from trace_outcome_split import _q, per_env  # noqa: E402
 
 SCRIPT_MARKER = "trace_tilt_steering-2026-09-06a"
 
-WINDOW = 20  # steps before the end of the episode, as in trace_outcome_split
-# Splits the timeouts into the two poses RT-157/RT-158 found. Mode A ("rim")
-# ends around 17.7 mm lateral, mode B ("mouth") around 5.0 mm; 10 mm is the
-# gap between them, not a tuned value.
+WINDOW = 20
 MODE_SPLIT_LAT_MM = 10.0
-# Below this much tilt there is no deep side to steer towards and the
-# direction of `deep` is numerical noise. sin(1 deg) = 0.017.
 MIN_TILT_DEG = 1.0
-# Below this much command the direction of `cmd` is noise too. The action is
-# the raw policy output in [-1, 1] per axis.
 MIN_CMD = 0.02
 
 
 def rotate_by_quat(q, v):
     """Rotate ``v`` (3) by the wxyz quaternion ``q`` (4). Stdlib, no numpy."""
     w, x, y, z = q
-    # t = 2 * (q_vec x v)
     tx = 2.0 * (y * v[2] - z * v[1])
     ty = 2.0 * (z * v[0] - x * v[2])
     tz = 2.0 * (x * v[1] - y * v[0])
@@ -115,13 +107,7 @@ def angle_deg(a, b):
 
 
 def tool_axis_sign(quat, e: int) -> float:
-    """+1 or -1 so that ``sign * R(q0) @ ez`` points DOWN.
-
-    The reset pose is vertical by construction, so its tool axis decides the
-    convention once instead of the script asserting one. Returns 0.0 when the
-    reset axis is not vertical -- then the whole reading is refused rather
-    than silently measuring the wrong direction.
-    """
+    """+1 or -1 so that ``sign * R(q0) @ ez`` points DOWN."""
     a0 = rotate_by_quat(quat[0][e], (0.0, 0.0, 1.0))
     if abs(a0[2]) < 0.9:
         return 0.0
@@ -149,10 +135,6 @@ def steering(trace: dict, recs: list, window: int = WINDOW) -> list:
         n = (end + 1) - lo
         cmd = (sum(act[i][e][0] for i in range(lo, end + 1)) / n,
                sum(act[i][e][1] for i in range(lo, end + 1)) / n)
-        # The mean of the VECTOR cancels an oscillation; the mean of the
-        # MAGNITUDE does not. Their ratio separates "pushes gently" from
-        # "pushes hard both ways", and without it a small `cmd_mag` cannot be
-        # read at all. 1.0 = one steady direction, 0 = pure chatter.
         cmd_abs = sum(math.hypot(act[i][e][0], act[i][e][1]) for i in range(lo, end + 1)) / n
         moved = ((tip[end][e][0] - tip[lo][e][0]) * 1000.0,
                  (tip[end][e][1] - tip[lo][e][1]) * 1000.0)
@@ -216,10 +198,6 @@ def report(recs: list, window: int = WINDOW) -> list:
     return lines
 
 
-# --------------------------------------------------------------------------
-# self-test
-# --------------------------------------------------------------------------
-
 def _quat_axis_angle(axis, deg):
     n = math.sqrt(sum(v * v for v in axis)) or 1.0
     a = math.radians(deg) / 2.0
@@ -228,22 +206,9 @@ def _quat_axis_angle(axis, deg):
 
 
 def _synth():
-    """3 envs, 288 steps, every direction known by construction.
-
-    The reset pose turns ez to POINT DOWN (180 deg about x), which is what a
-    real trace does and what fixes the sign convention.
-
-    env 0 succeeds at step 60, upright, no command.
-    env 1 times out on the rim (lat 18 mm), tilted so the deep side is +x,
-          and commands +x -- it steers TOWARDS the deep side.
-    env 2 times out in the mouth (lat 5 mm), same tilt, deep side +x, but
-          commands -x -- it steers AWAY.
-    """
+    """3 envs, 288 steps, every direction known by construction."""
     T, E = 288, 3
     down = _quat_axis_angle((1.0, 0.0, 0.0), 180.0)
-    # A further -20 deg about y leans the DOWNWARD axis towards +x:
-    # R_y(-20) takes (0, 0, -1) to (+sin20, 0, -cos20). The sign is worked
-    # out here, once, so the checks below state a KNOWN direction.
     lean = _mul(_quat_axis_angle((0.0, 1.0, 0.0), -20.0), down)
     tip, yaw, frc, act, done, quat = [], [], [], [], [], []
     for i in range(T):
@@ -299,22 +264,11 @@ def _self_test() -> int:
         ("upright env has no readable deep side", "(n=1, of which 0 have" in txt),
         ("angle_deg is unsigned", abs(angle_deg((1.0, 0.0), (0.0, -1.0)) - 90.0) < 1e-9),
     ]
-    # MUTATION (D-080) 1: drop the sign from tool_axis_sign, i.e. read the
-    # tool axis UP instead of DOWN. Then env 1's command reads 180 deg
-    # instead of 0 and "towards" and "away" swap. The two must differ by
-    # exactly 180 deg, or the sign is doing nothing.
     checks.append(("flipping the axis sign flips the verdict",
                    abs(abs(by[1]["angle_cmd_deep_deg"] - by[2]["angle_cmd_deep_deg"]) - 180.0) < 1e-6))
-    # MUTATION (D-080) 2: reading the command at the LAST step only instead of
-    # averaging the window must still be testable -- here both are constant,
-    # so the guard is that the magnitude is the commanded 0.5, not 0.
     checks.append(("command magnitude survives the mean", abs(by[1]["cmd_mag"] - 0.5) < 1e-12))
-    # A constant command is perfectly straight; the ratio must read 1.
     checks.append(("a constant command reads straightness 1",
                    abs(by[1]["cmd_straightness"] - 1.0) < 1e-12))
-    # MUTATION (D-080) 4: a command that flips sign every step has the SAME
-    # mean magnitude and a ZERO vector mean. Without the ratio the two read
-    # alike, so this case must separate them.
     t3 = {k: v for k, v in t.items()}
     t3["action"] = [[list(c) for c in row] for row in t["action"]]
     for i in range(len(t3["action"])):
@@ -323,8 +277,6 @@ def _self_test() -> int:
     checks.append(("chatter keeps the mean magnitude",
                    abs(r3[1]["cmd_abs_mean"] - by[1]["cmd_abs_mean"]) < 1e-12))
     checks.append(("chatter reads straightness ~0", r3[1]["cmd_straightness"] < 1e-9))
-    # MUTATION (D-080) 3: a trace without `action` must be REFUSED, not read
-    # as "no steering". Guard on equality with the untouched record.
     t2 = dict(t)
     t2.pop("action")
     r2 = steering(t2, per_env(t2))

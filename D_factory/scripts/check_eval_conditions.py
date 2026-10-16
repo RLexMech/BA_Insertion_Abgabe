@@ -46,7 +46,6 @@ import sys
 
 SCRIPT_MARKER = "check_eval_conditions-2026-09-26a"
 
-# The table layout, the check's own literal (autodr.TABLE_COLUMNS).
 TABLE_COLUMNS = (
     "lat_r", "lat_phi", "yaw", "tilt", "tilt_azimuth", "start_height", "friction",
     "fixture_noise_x", "fixture_noise_y",
@@ -54,8 +53,6 @@ TABLE_COLUMNS = (
     "joint_noise_4", "joint_noise_5", "grasp_obs_x", "pocket_obs_yaw",
     "fixture_noise_z",
 )
-# applied.csv, the check's own literal (insertion_env.APPLIED_LOG_COLUMNS; L-06:
-# the list comes from the function that WRITES the file).
 APPLIED_COLUMNS = (
     "row_id", "lat_x_m", "lat_y_m", "start_height_m", "yaw_rad",
     "pocket_qw", "pocket_qx", "pocket_qy", "pocket_qz",
@@ -65,9 +62,6 @@ APPLIED_COLUMNS = (
 )
 FRICTION_READBACKS = APPLIED_COLUMNS[15:]
 
-# eval_plan.md section 1.1 (homes: autodr.DR_DIMS, D-178/179/181). `nominal`:
-# everything but the start height sits on its centre; friction centre 0.140 is
-# D-111's CONTACT_FRICTION, read back in RT-207s1 (inbox 2026-09-21, V1).
 BANDS = {
     "target": {
         "lat_r": (0.0, 0.030),
@@ -84,12 +78,12 @@ BANDS = {
         "friction": (0.140, 0.140),
     },
 }
-FIXTURE_NOISE_XY_M = 0.05    # eval_plan.md 1.1, cfg fixture_pos_noise_xy (D-203/D-204)
-FIXTURE_NOISE_Z_M = 0.05     # cfg fixture_pos_noise_z (D-204 (4))
-GRASP_OBS_X_M = 0.003        # D-183
-POCKET_OBS_YAW_RAD = 0.0223402   # D-194, Belege_Streuwerte B6 (the run's value)
-TOL = 1e-6                   # eval_plan.md G3
-TOL_BAND = 1e-9              # the env's bands are float64 arithmetic on the same numbers
+FIXTURE_NOISE_XY_M = 0.05
+FIXTURE_NOISE_Z_M = 0.05
+GRASP_OBS_X_M = 0.003
+POCKET_OBS_YAW_RAD = 0.0223402
+TOL = 1e-6
+TOL_BAND = 1e-9
 
 CHECK_NAMES = (
     "G1a table bytes = sidecar = manifest = applied_meta",
@@ -118,7 +112,6 @@ def map_row(u: dict, width: str) -> dict:
     az = 2.0 * math.pi * u["tilt_azimuth"]
     c, s = math.cos(0.5 * yaw), math.sin(0.5 * yaw)
     a, bx, by = math.cos(half), math.cos(az) * math.sin(half), math.sin(az) * math.sin(half)
-    # Hamilton product (c, 0, 0, s) * (a, bx, by, 0), wxyz, then w >= 0.
     q = [c * a, c * bx - s * by, c * by + s * bx, s * a]
     if q[0] < 0.0:
         q = [-v for v in q]
@@ -140,8 +133,7 @@ def map_row(u: dict, width: str) -> dict:
 
 def judge(table, sidecar, table_sha, log_shas, filehash, ep_header, ep_rows,
           ap_header, ap_rows, meta, manifest) -> dict:
-    """``{check name: (ok, detail)}`` over CHECK_NAMES. ``ok`` is None for a
-    check whose outside evidence was not handed over (INCOMPLETE)."""
+    """``{check name: (ok, detail)}`` over CHECK_NAMES."""
     out: dict = {}
     n = len(table)
     width = str(manifest.get("width"))
@@ -156,8 +148,6 @@ def judge(table, sidecar, table_sha, log_shas, filehash, ep_header, ep_rows,
     if log_shas is None:
         out[CHECK_NAMES[1]] = (None, "no --log given")
     else:
-        # One line per startup report (`report_at_steps`, RT-209: four). At
-        # least one, and EVERY one the table's hash -- never "any".
         out[CHECK_NAMES[1]] = (bool(log_shas) and all(h == table_sha for h in log_shas),
                                f"{len(log_shas)} [eval-table] line(s): {[h[:12] for h in log_shas]}")
     if filehash is None:
@@ -211,10 +201,6 @@ def judge(table, sidecar, table_sha, log_shas, filehash, ep_header, ep_rows,
     return out
 
 
-# ---------------------------------------------------------------------------
-# Loading
-# ---------------------------------------------------------------------------
-
 def _read_csv(path: pathlib.Path):
     with open(path, newline="", encoding="utf-8") as fh:
         reader = csv.reader(fh)
@@ -237,13 +223,8 @@ def log_hashes(path: pathlib.Path) -> list:
     return re.findall(r"\[eval-table\].*?sha256 ([0-9a-f]{64})", text)
 
 
-# ---------------------------------------------------------------------------
-# Self-test: a built run, each broken one way (D-080)
-# ---------------------------------------------------------------------------
-
 def _good(width: str = "target"):
     n = 6
-    # Deterministic unit values in every TABLE_COLUMNS column, 0 and 1 included.
     table = [[((7 * i + 3 * j) % 11) / 10.0 for j in range(len(TABLE_COLUMNS))] for i in range(n)]
     sha = "c3" * 32
     sidecar = {"sha256": sha, "n_rows": n}
@@ -255,7 +236,7 @@ def _good(width: str = "target"):
         row.update({k: f"{want['friction_cmd']:.9g}" for k in FRICTION_READBACKS})
         ap_rows.append(row)
     ep_rows = [{"env_id": str(i), "episode": "0"} for i in range(n)]
-    ep_rows += [{"env_id": "2", "episode": "1"}]          # a G4 repeat, not counted
+    ep_rows += [{"env_id": "2", "episode": "1"}]
     meta = {"table": {"sha256": sha}, "bounds": {k: list(v) for k, v in BANDS[width].items()},
             "fixture_pos_noise_xy_m": FIXTURE_NOISE_XY_M, "fixture_pos_noise_z_m": FIXTURE_NOISE_Z_M,
             "grasp_obs_offset_x_m": GRASP_OBS_X_M,
@@ -282,7 +263,6 @@ def _shift_rows(g):
 
 
 CASES = (
-    # The plan's own mutation for D1: one value + 1e-3.
     ("one-value-plus-1e-3", _bump(3, "start_height_m", 1e-3), ("G3c",)),
     ("a-quaternion-component-moves", _bump(1, "pocket_qx", 1e-4), ("G3c",)),
     ("every-env-plays-the-next-row", _shift_rows, ("G3c", "G3d")),
@@ -294,8 +274,6 @@ CASES = (
     ("manifest-names-another-table", lambda g: g["manifest"].update(table_sha256="00" * 32), ("G1a",)),
     ("log-line-carries-another-hash", lambda g: g.update(log_shas=["00" * 32]), ("G1b",)),
     ("log-has-no-eval-table-line", lambda g: g.update(log_shas=[]), ("G1b",)),
-    # RT-209: the env prints its startup report at every `report_at_steps`
-    # entry, four by default, each with its own [eval-table] line. Legal.
     ("report-prints-four-times", lambda g: g.update(log_shas=[g["table_sha"]] * 4), ()),
     ("one-of-four-lines-carries-another-hash",
      lambda g: g.update(log_shas=[g["table_sha"]] * 2 + ["00" * 32, g["table_sha"]]), ("G1b",)),
@@ -303,18 +281,14 @@ CASES = (
     ("an-env-has-no-first-episode", lambda g: g["ep_rows"].pop(0), ("G2a",)),
     ("an-env-id-twice", lambda g: g["ep_rows"][1].update(env_id="0"), ("G2a",)),
     ("one-env-never-finished", lambda g: g["manifest"].update(envs_finished_first_episode=5), ("G2b",)),
-    # D-194: the evaluation ran without `env.pocket_obs_yaw_rad` (default 0.0 = off).
     ("yaw-belief-error-was-off",
      lambda g: [r.update(pocket_obs_yaw_rad="0") for r in g["ap_rows"]], ("G3c",)),
-    # ... and the env says so itself, in applied_meta.json.
     ("env-says-yaw-belief-error-off", lambda g: g["meta"].update(pocket_obs_yaw_rad=0.0), ("G3b",)),
 )
 
 
 def _applied_columns_vs_env() -> tuple[bool, str]:
-    """``APPLIED_COLUMNS`` against the tuple the env WRITES,
-    ``insertion_env.APPLIED_LOG_COLUMNS``, read as AST (the env needs Isaac).
-    Only the column NAMES are shared; the mapping stays the check's own."""
+    """``APPLIED_COLUMNS`` against the tuple the env WRITES, ``insertion_env.APPLIED_LOG_COLUMNS``, read as AST (the env needs Isaac)."""
     env_py = (pathlib.Path(__file__).resolve().parents[1] / "source" / "insertion" / "insertion"
               / "tasks" / "direct" / "insertion" / "insertion_env.py")
     for node in ast.parse(env_py.read_text(encoding="utf-8")).body:
@@ -326,10 +300,7 @@ def _applied_columns_vs_env() -> tuple[bool, str]:
 
 
 def _yaw_belief_example() -> tuple[bool, str]:
-    """D-194 worked example, not recomputed: Belege_Streuwerte B6 says uniform in
-    +-0.0223402 rad, and the env maps the column like ``grasp_obs_x``
-    (``insertion_env._reset_idx``). Unit 0 / 0.5 / 1 -> lower edge / 0 / upper
-    edge, at every width (a belief error has no band)."""
+    """D-194 worked example, not recomputed: Belege_Streuwerte B6 says uniform in +-0.0223402 rad, and the env maps the column like ``grasp_obs_x`` (``insertion_env._reset_idx``)."""
     base = {k: 0.5 for k in TABLE_COLUMNS}
     want = [-0.0223402, 0.0, 0.0223402] * len(BANDS)
     got = [map_row(dict(base, pocket_obs_yaw=u), w).get("pocket_obs_yaw_rad")
@@ -339,15 +310,7 @@ def _yaw_belief_example() -> tuple[bool, str]:
 
 
 def _oracle_vs_production() -> tuple[bool, str]:
-    """``map_row`` against the functions the env really calls, on the committed
-    seed-20 table with the shape the env hands over, (1000, 18) (L-14).
-
-    The baseline above builds its applied.csv WITH ``map_row``, so it cannot see
-    a wrong oracle. This can: ``autodr.map_unit_to_bounds``,
-    ``insertion_math.disk_offset`` and ``insertion_math.quat_mul`` run here under
-    ``torch_shim`` (or real torch) and must agree within ``TOL``. What stays
-    unproven offline is only that the ENV calls them as ``_reset_idx`` reads.
-    """
+    """``map_row`` against the functions the env really calls, on the committed seed-20 table with the shape the env hands over, (1000, 18) (L-14)."""
     import importlib.util
 
     repo = pathlib.Path(__file__).resolve().parents[1]
@@ -362,7 +325,6 @@ def _oracle_vs_production() -> tuple[bool, str]:
 
     torch, _ = _load("torch_shim", repo / "scripts" / "tools" / "torch_shim.py").load()
     sys.modules.setdefault("torch", torch)
-    # autodr.py has a relative import; check_autodr.py owns the scaffolding for it.
     autodr = _load("check_autodr", repo / "scripts" / "check_autodr.py").load_autodr()
     ns: dict = {"torch": torch, "math": math, "__name__": "insertion_math"}
     exec(compile((pkg / "insertion_math.py").read_text(encoding="utf-8"), "insertion_math.py", "exec"), ns)  # noqa: S102
