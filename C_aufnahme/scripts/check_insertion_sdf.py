@@ -142,8 +142,6 @@ import pathlib
 import sys
 import types
 
-# Printed on every run. A log without this line is a run that proves nothing,
-# whatever its exit code says (RT-2 / RT-37 both delivered old code silently).
 SCRIPT_MARKER = "check_insertion_sdf-2026-09-15a-poseladder"
 
 _HERE = pathlib.Path(__file__).resolve().parent
@@ -154,46 +152,14 @@ _SDF_SRC = _PKG_DIR / "insertion_sdf.py"
 _MATH_SRC = _PKG_DIR / "insertion_math.py"
 _TASKS_SRC = _PKG_DIR / "insertion_tasks_cfg.py"
 
-# The source's own constants, written here once so a check reads like the
-# decision it defends. Neither is a default of the module -- it owns no numbers.
-MAX_DIST_M = 1.5  # mesh_sdf L299 / get_batch_sdf L323, metres
-# DECIDED 2026-08-30 by D-154, and it replaces Isaac Lab's
-# `num_mesh_sample_points = 1000`, which was chosen for another task's env
-# count. 64,000 puts the mean point spacing at 1.047 mm on the part's MEASURED
-# surface (701.2 cm2, RT-97) -- 1.78x the 0.5876 mm cross play and below the
-# 1.6 mm long-axis play -- at 174 ms per call for 128 envs. Home of the number
-# and of the curve it was chosen from is D-154; this line restates it the way
-# MAX_DIST_M restates its source.
+MAX_DIST_M = 1.5
 NUM_SAMPLE_POINTS = 64000
 
-# P4's tolerance, DERIVED and not picked. It was 1e-6 m until 2026-08-29, a
-# number with no entry anywhere in this repo; RT-88 failed on it at 5.358e-06 m
-# and RT-89 then measured the spread: median 3.725e-09 m, but 17 of 953 points
-# above 1e-06 m, which is the part mesh's 380 unpaired edges, not arithmetic.
-#
-# The number that replaces it existed BEFORE the measurement, so it is not
-# fitted to it: FLANGE_TO_PART_BOTTOM is defined to about +/- 0.03 mm
-# (insertion_tasks_cfg.py L1291, user 2026-08-22), and the success-depth
-# threshold rests on that number. A geometry error BELOW the uncertainty of the
-# threshold it feeds cannot move a task decision. Home of the +/- 0.03 mm is
-# that comment; this line restates it the way MAX_DIST_M restates its source.
-#
-# What this tolerance does NOT cover, stated so nobody reads a green P4 as more
-# than it is: the SIGN close to one of those holes. P2/P3/P5 test the sign far
-# outside the mesh, never within microns of an open edge. See D-152.
 ON_SURFACE_TOL_M = 3e-5
 
-# The probe ladder, in MULTIPLES of the mesh's own extent along each axis. 2.0
-# is the smallest multiple at which the translated bounding box is disjoint
-# from the mesh's by a full extent, so "every point is outside" needs no
-# tolerance and no margin anybody had to pick.
 PROBE_MULTIPLES = (0.5, 1.0, 2.0, 4.0)
 PROBE_ASSERT_FROM = 2.0
 
-
-# ---------------------------------------------------------------------------
-# P4's verdict, as a pure function
-# ---------------------------------------------------------------------------
 
 IdentityVerdict = collections.namedtuple(
     "IdentityVerdict", "p4 p99 dmax n_above n_points"
@@ -201,12 +167,7 @@ IdentityVerdict = collections.namedtuple(
 
 
 def percentile(values, q: float) -> float:
-    """The q-th percentile with linear interpolation, on a plain list.
-
-    Written out rather than taken from numpy for one reason: the number the
-    probe PRINTS and the number the offline cases judge have to come from the
-    same code, and the offline side runs under the numpy stand-in.
-    """
+    """The q-th percentile with linear interpolation, on a plain list."""
     if not values:
         raise ValueError("percentile of an empty sequence")
     v = sorted(float(x) for x in values)
@@ -219,41 +180,7 @@ def percentile(values, q: float) -> float:
 
 
 def judge_identity(abs_dists, tol: float) -> IdentityVerdict:
-    """P4 over the identity transform's absolute distances. Pure Python.
-
-    RESTATED 2026-08-30 after RT-98, and the restatement is about WHICH
-    statistic, not about the tolerance -- ``tol`` is still D-152's 3e-5 m,
-    derived from the success-depth uncertainty, and it does not move.
-
-    THE ARGUMENT. P4 asks whether the sampled cloud and the queried mesh
-    really describe the same object, and it asks it of the pair
-    part-against-part, which is what the SDF REWARD term reads. That term
-    reduces over every sample point. A statistic that decides it must
-    therefore describe the BULK of the cloud, and the maximum does not: one
-    point in sixty-four thousand moves it without moving anything the reward
-    computes.
-
-    WHAT CHANGED UNDER US. At 953 points RT-89/RT-90 measured a maximum of
-    5.358e-06 m, comfortably inside the tolerance, so max and bulk agreed and
-    the distinction never mattered. D-154 raised the count to 64,000, and
-    RT-98 measured median 3.455e-09 m and p99 1.348e-06 m -- both BETTER than
-    at 953 points -- beside a maximum of 7.387e-05 m carried by 11 points.
-    The bulk improved and the extreme got worse, which is what sampling 67x
-    more points near a mesh's 380 unpaired edges does.
-
-    WHY THIS IS NOT THE TOLERANCE BEING LOOSENED. p99 is judged against the
-    SAME 3e-5 m. A cloud that reads off-surface broadly still fails, and so
-    does one with more than one per cent of its points outside the tolerance
-    (cases I2 and I4). What no longer fails is a handful of edge artefacts in
-    a cloud whose 99th percentile sits four orders of magnitude inside the
-    bound.
-
-    WHAT THIS DOES NOT COVER, and it is the same gap D-152 records: the sign
-    AT the surface, and the SAPU pair. SAPU queries the part's points against
-    the FIXTURE, reduces by MAXIMUM (``insertion_math.max_interpen_dist``),
-    and P4 says nothing about it -- different queried mesh, different edges.
-    That gap is D-152's and D-153's, not this function's.
-    """
+    """P4 over the identity transform's absolute distances."""
     vals = [abs(float(x)) for x in abs_dists]
     n = len(vals)
     if n == 0:
@@ -264,24 +191,14 @@ def judge_identity(abs_dists, tol: float) -> IdentityVerdict:
     return IdentityVerdict(p99 <= tol, p99, dmax, n_above, n)
 
 
-# One ladder of identity distributions, each with the verdict it MUST get.
-# I2 and I4 are the counter-proof: a rule that only ever passes is not a rule.
 def _ident(bulk_value, bulk_n, tail_value, tail_n):
     return [bulk_value] * bulk_n + [tail_value] * tail_n
 
 
 IDENTITY_CASES = {
-    # I1 -- RT-98's SHAPE: a quiet bulk with a handful of edge artefacts far
-    # outside. This is the case the restatement exists for.
     "I1_rare_outliers_pass": (_ident(1e-9, 995, 1e-4, 5), True),
-    # I2 -- THE COUNTER-PROOF: the same outlier value, but on five per cent of
-    # the cloud. p99 lands inside the tail and P4 must fail.
     "I2_many_outliers_fail": (_ident(1e-9, 950, 1e-4, 50), False),
-    # I3 -- RT-90's shape at 953 points: everything inside the tolerance, so
-    # the runs that were green before this change stay green.
     "I3_rt90_shape_passes": (_ident(5.358e-6, 953, 5.358e-6, 0), True),
-    # I4 -- the broad shift: every point off-surface by the same amount. That
-    # is arithmetic or a wrong mesh, not an edge artefact, and it must fail.
     "I4_broad_shift_fails": (_ident(1e-4, 1000, 1e-4, 0), False),
 }
 
@@ -303,10 +220,6 @@ def run_identity_cases() -> int:
     return bad
 
 
-# ---------------------------------------------------------------------------
-# The ladder's verdict, as a pure function
-# ---------------------------------------------------------------------------
-
 LadderRow = collections.namedtuple("LadderRow", "name mult dist dmin dmean asserted")
 LadderVerdict = collections.namedtuple(
     "LadderVerdict", "p2 p3 p5 p2_bad p3_bad p5_bad n_asserted n_p3_pairs"
@@ -314,48 +227,17 @@ LadderVerdict = collections.namedtuple(
 
 
 def judge_ladder(rows, diameter: float) -> LadderVerdict:
-    """Turn the measured ladder into P2, P3 and P5. Pure Python, no GPU.
-
-    SPLIT OUT OF ``run_probe`` on 2026-08-30, and the split is the point: the
-    rule used to run only on the training PC, so its PREMISE had never been
-    tested against a table. RT-92 then failed on that untested premise. The
-    laptop cases in ``LADDER_CASES`` now cover it, including the table RT-92
-    actually produced.
-    """
+    """Turn the measured ladder into P2, P3 and P5."""
     n_asserted = sum(1 for r in rows if r.asserted)
 
-    # P2 -- no distance may be negative where every point is outside.
     p2_bad = [(r.name, r.mult, r.dmin) for r in rows if r.asserted and r.dmin < 0.0]
 
-    # P5 -- a rigid translation by `dist` of a cloud inside a bbox of diagonal
-    # `diameter` cannot land closer than dist - diameter nor farther than
-    # dist + diameter from the mesh.
     p5_bad = [
         (r.name, r.mult, r.dmean)
         for r in rows
         if r.asserted and not (r.dist - diameter <= r.dmean <= r.dist + diameter)
     ]
 
-    # P3 -- monotonicity, RESTATED 2026-08-30 after RT-92 measured it wrong.
-    #
-    # The old rule required the mean distance to rise over EVERY rung. That
-    # premise belongs to the ONE-MESH mode, where the sampled cloud starts ON
-    # the queried surface and a translation can only carry it away. With TWO
-    # meshes the part starts BESIDE the fixture, so the first rungs carry it
-    # PAST the fixture: the mean MUST fall before it rises. RT-92 measured
-    # exactly that on z- -- 0.066 -> 0.024 -> 0.048 -> 0.271 m, with no
-    # negative value anywhere (min +0.000244 m) -- and the probe called it
-    # SIGN_SUSPECT. The dip was geometry, not a flipped sign.
-    #
-    # The rule now reads the ASSERTED rows only. There the translated cloud's
-    # bounding box is provably disjoint from the queried mesh's, and each
-    # further rung is a pure translation along the same axis away from it, so
-    # the mean cannot fall. Rows that are not asserted are printed and not
-    # judged -- the treatment P4 already gets in this mode.
-    #
-    # The clamp at 0 is kept: under --mutate-sign every mean is negative and
-    # clamps to a flat zero, so P3 stays green and the mutation verdict keeps
-    # resting on P2 and P5 alone, exactly as it did before.
     by_dir: dict[str, list] = {}
     for r in rows:
         if r.asserted:
@@ -368,34 +250,14 @@ def judge_ladder(rows, diameter: float) -> LadderVerdict:
         if any(b < a for a, b in zip(means, means[1:])):
             p3_bad.append((name, means))
 
-    # A rule with nothing to compare is not a passing rule. P2 and P3 each
-    # carry their own emptiness guard.
-    #
-    # NAMED GAP, left as it stands so this commit changes ONE rule: P5 has no
-    # such guard, so an empty ladder prints "P5 PASS" vacuously. The RUN still
-    # fails, because P2's guard fires on the same table (case L5 pins this
-    # behaviour). Closing it is a separate change.
     p2 = (not p2_bad) and n_asserted > 0
     p3 = (not p3_bad) and n_p3_pairs > 0
     p5 = not p5_bad
     return LadderVerdict(p2, p3, p5, p2_bad, p3_bad, p5_bad, n_asserted, n_p3_pairs)
 
 
-# ---------------------------------------------------------------------------
-# Loading the module under test
-# ---------------------------------------------------------------------------
-
-
 def load_sdf_module(sdf_source: str | None = None, pkg_name: str = "_insertion_pkg"):
-    """Import ``insertion_sdf`` with its relative import satisfied.
-
-    ``insertion_sdf.py`` does ``from . import insertion_math``, so it needs a
-    package around it. A throwaway package module supplies one; nothing is
-    installed and nothing on disk is touched.
-
-    ``sdf_source`` replaces the file's text -- that is how a mutation is
-    injected without writing to the repo.
-    """
+    """Import ``insertion_sdf`` with its relative import satisfied."""
     for name in list(sys.modules):
         if name == pkg_name or name.startswith(pkg_name + "."):
             del sys.modules[name]
@@ -421,13 +283,7 @@ def load_sdf_module(sdf_source: str | None = None, pkg_name: str = "_insertion_p
 
 
 def load_paths_module():
-    """Import ``insertion_paths`` -- stdlib only, no Isaac, no SimulationApp.
-
-    RT-88 failed here on its first try: the probe asked ``insertion_tasks_cfg``
-    for a file path, and that module imports ``isaaclab.utils.configclass`` at
-    module level, so a PATH cost a simulation app. The path block now lives in
-    ``insertion_paths.py`` and the cfg re-exports it.
-    """
+    """Import ``insertion_paths`` -- stdlib only, no Isaac, no SimulationApp."""
     spec = importlib.util.spec_from_file_location(
         "_insertion_paths", _PKG_DIR / "insertion_paths.py"
     )
@@ -436,37 +292,25 @@ def load_paths_module():
     return mod
 
 
-# ---------------------------------------------------------------------------
-# The offline checks
-# ---------------------------------------------------------------------------
-
-
 def offline_checks(torch, sdf) -> dict[str, bool]:
     """Every check of the pure-torch half. Returns ``{name: passed}``."""
     import numpy as np
 
     res: dict[str, bool] = {}
 
-    # C1 -- the module imported at all with no Warp and no trimesh installed.
-    # That is the lazy-import claim, and it is what lets this check exist.
     res["C1_imports_without_warp"] = (
         "warp" not in sys.modules and hasattr(sdf, "SdfDistanceQuery")
     )
 
-    # C2 -- wxyz -> xyzw on quaternions whose two orders differ visibly.
     ident_wxyz = torch.tensor([[1.0, 0.0, 0.0, 0.0]])
     got = np.asarray(sdf.quat_wxyz_to_xyzw(ident_wxyz))
     ok_ident = np.allclose(got, [[0.0, 0.0, 0.0, 1.0]])
-    labelled = torch.tensor([[10.0, 21.0, 32.0, 43.0]])  # w, x, y, z
+    labelled = torch.tensor([[10.0, 21.0, 32.0, 43.0]])
     ok_order = np.allclose(
         np.asarray(sdf.quat_wxyz_to_xyzw(labelled)), [[21.0, 32.0, 43.0, 10.0]]
     )
     res["C2_quat_reorder"] = bool(ok_ident and ok_order)
 
-    # C3 -- part pose == goal pose must give the identity transform: no
-    # translation, and the xyzw identity (0, 0, 0, 1). If the reorder were
-    # skipped this returns (1, 0, 0, 0), which Warp reads as 180 deg about x --
-    # exactly the defect the published code carries.
     pos = torch.tensor([[0.3, -0.2, 0.5]])
     quat = torch.tensor([[0.7071067811865476, 0.0, 0.0, 0.7071067811865476]])
     rel_pos, rel_quat = sdf.goal_relative_transform(pos, quat, pos, quat)
@@ -475,11 +319,6 @@ def offline_checks(torch, sdf) -> dict[str, bool]:
         and np.allclose(np.abs(np.asarray(rel_quat)), [[0.0, 0.0, 0.0, 1.0]], atol=1e-12)
     )
 
-    # C4 -- DEPARTURE 1, the substitution the whole batched design rests on:
-    # |T_curr.p - T_goal.m| == |(T_goal^-1 . T_curr).p - m| for arbitrary poses
-    # and arbitrary points. Checked on distances, which is what the SDF reads,
-    # and against the direct construction rather than against a second copy of
-    # the same formula.
     rng = np.random.default_rng(0)
 
     def _rand_quat(n):
@@ -493,8 +332,8 @@ def offline_checks(torch, sdf) -> dict[str, bool]:
     n = 64
     p_curr, p_goal = rng.normal(size=(n, 3)), rng.normal(size=(n, 3))
     q_curr, q_goal = _rand_quat(n), _rand_quat(n)
-    pt = rng.normal(size=(n, 3))  # a sampled point, mesh frame
-    mp = rng.normal(size=(n, 3))  # a mesh point, mesh frame
+    pt = rng.normal(size=(n, 3))
+    mp = rng.normal(size=(n, 3))
 
     direct = np.linalg.norm(
         _apply(q_curr, p_curr, pt) - _apply(q_goal, p_goal, mp), axis=1
@@ -503,8 +342,6 @@ def offline_checks(torch, sdf) -> dict[str, bool]:
         torch.tensor(p_curr), torch.tensor(q_curr),
         torch.tensor(p_goal), torch.tensor(q_goal),
     )
-    # back to wxyz to reuse the checked rotation helper: the substitution is
-    # what is under test here, not the reorder (C2 owns that).
     rq = np.asarray(rel_quat_xyzw)
     rel_wxyz = np.concatenate([rq[:, 3:4], rq[:, 0:3]], axis=1)
     substituted = np.linalg.norm(
@@ -514,18 +351,11 @@ def offline_checks(torch, sdf) -> dict[str, bool]:
         np.allclose(direct, substituted, atol=1e-10)
     )
 
-    # C5 -- the clamp: inside is dropped, outside survives untouched.
     d = torch.tensor([[-3.0, -1e-9, 0.0, 1e-9, 2.5]])
     res["C5_clamp_outside"] = bool(
         np.allclose(np.asarray(sdf.clamp_outside(d)), [[0.0, 0.0, 0.0, 1e-9, 2.5]])
     )
 
-    # C6 -- the OBJ path resolves with no Isaac in reach. This is the RT-88
-    # regression: the probe used to ask insertion_tasks_cfg, which imports
-    # isaaclab.utils.configclass, so a FILE PATH cost a SimulationApp. The
-    # resolver raises FileNotFoundError on the laptop because the OBJ is a
-    # training-PC artefact -- that is the CORRECT outcome and proves the module
-    # ran. An ImportError is the failure this check exists to catch.
     try:
         paths = load_paths_module()
         paths.default_part_obj_path()
@@ -540,10 +370,6 @@ def offline_checks(torch, sdf) -> dict[str, bool]:
     return res
 
 
-# One mutation per entry: the text edit, and the checks it MUST break. A
-# mutation that flips nothing proves the checks cannot fail; one that flips
-# extra checks proves they are not surgical. Both count as failures of the
-# check, not of the module.
 MUTATIONS = {
     "quat_not_reordered": (
         "return quat[..., [1, 2, 3, 0]]",
@@ -568,22 +394,9 @@ MUTATIONS = {
 }
 
 
-# ---------------------------------------------------------------------------
-# The ladder rule's own cases (D-080, laptop)
-# ---------------------------------------------------------------------------
-#
-# Every number below is RT-92's, read off `rt_logs/VERDICTS.md` line 96 and the
-# two meshes' extents, so these are not invented tables: the z- means really
-# were 0.066 -> 0.024 -> 0.048 -> 0.271 m with no negative value anywhere. The
-# ladder step in SAPU mode is the fixture's z extent plus the part's
-# (0.061000 + 0.050514 m), and P5's slack is the sum of the two bbox diagonals.
-#
-# The point of the set is NOT that L1 passes. It is that L2 -- the same shape
-# with the dip moved INSIDE the asserted region -- FAILS. A rule nothing can
-# break is not a rule.
 _CASE_STEP_Z = 0.061000 + 0.050514
 _CASE_DISTS = tuple(m * _CASE_STEP_Z for m in PROBE_MULTIPLES)
-_CASE_DIAMETER = 0.182600 + 0.248957  # part diagonal + fixture diagonal, metres
+_CASE_DIAMETER = 0.182600 + 0.248957
 
 
 def _case_rows(means, mins=None, asserted=(False, False, True, True), name="z-"):
@@ -599,32 +412,17 @@ def _case_rows(means, mins=None, asserted=(False, False, True, True), name="z-")
 _RT92_MEANS = (0.066, 0.024, 0.048, 0.271)
 
 LADDER_CASES = {
-    # L1 -- RT-92's own table. The dip sits on the rungs where the part has
-    # not yet cleared the fixture, so it is geometry and P3 must NOT fire.
-    # Under the rule this run used, this table produced SIGN_SUSPECT.
     "L1_rt92_shape_passes": (_case_rows(_RT92_MEANS), (True, True, True)),
-    # L2 -- THE COUNTER-PROOF. Same rungs, dip moved into the asserted region,
-    # where a fall is impossible for a pure translation away from the mesh.
     "L2_dip_inside_asserted_fails_p3": (
         _case_rows((0.066, 0.024, 0.271, 0.048)), (True, False, True)),
-    # L3 -- one negative distance where every point is outside. P2 alone.
     "L3_negative_min_fails_p2": (
         _case_rows(_RT92_MEANS, mins=(0.0002, 0.0002, -0.001, 0.135)),
         (False, True, True)),
-    # L4 -- a mean no rigid translation can produce. P5 alone.
     "L4_mean_off_band_fails_p5": (
         _case_rows((0.066, 0.024, 0.048, 5.0)), (True, True, False)),
-    # L5 -- nothing asserted. P2 and P3 must refuse to pass on an empty table.
-    # P5 reads PASS here, and that is the NAMED GAP `judge_ladder` records:
-    # the run still fails, because P2 fires on this same table.
     "L5_empty_ladder_is_not_a_pass": (
         _case_rows(_RT92_MEANS, asserted=(False, False, False, False)),
         (False, False, True)),
-    # L6 -- the --mutate-sign shape on RT-92's own numbers. P2 and P5 must
-    # both fall (that is the mutation verdict) while P3 stays green, because
-    # the clamp flattens every negated mean to zero. This case is what says
-    # the SAPU mutation run can be caught at all: at mult 2.0 the negated mean
-    # still sits inside P5's band, and only the mult 4.0 rung carries it out.
     "L6_mutation_shape_is_caught": (
         _case_rows(tuple(-m for m in _RT92_MEANS),
                    mins=tuple(-0.5 * m for m in _RT92_MEANS)),
@@ -678,21 +476,14 @@ def run_self_test(torch) -> int:
                   f"expected {sorted(must_break)}, broke {sorted(got)}")
             bad += 1
 
-    load_sdf_module()  # leave the real module in sys.modules
+    load_sdf_module()
 
-    # The ladder rule. It belongs to THIS script, not to insertion_sdf.py, so
-    # it is tested against tables instead of against a source mutation.
     bad += run_ladder_cases()
 
-    # P4's rule. Same reason as the ladder's: it used to live inside the
-    # GPU-only probe, so RT-98 was the first thing that ever tested it.
     bad += run_identity_cases()
 
-    # The pose ladder's rules: expectation arithmetic, Q1-Q3, constant fold.
     bad += run_pose_cases(torch, base_mod)
 
-    # The spacing arithmetic --bench prints. Pinned against the table D-122
-    # PUBLISHED, so a typo in the formula shows up here and not in a decision.
     bad += run_spacing_cases()
 
     total = (len(base) + len(MUTATIONS) + len(LADDER_CASES)
@@ -704,40 +495,9 @@ def run_self_test(torch) -> int:
     return 1 if bad else 0
 
 
-# ---------------------------------------------------------------------------
-# The sign probe (training PC)
-# ---------------------------------------------------------------------------
-
-
-# ---------------------------------------------------------------------------
-# The D-122 cost measurement (training PC)
-# ---------------------------------------------------------------------------
-#
-# D-122 quantified WHAT the sample count buys -- the mean point spacing, i.e.
-# the smallest feature whose penetration can be seen at all -- and then said
-# outright what it could not supply:
-#
-#   "the cost is a mesh query per point per env per step, and that cost has
-#    never been measured for our env count either. Both numbers belong in the
-#    same decision."
-#
-# This mode measures the missing half. It asserts nothing and decides nothing:
-# it is a MEASUREMENT run, so it has no verdict and no mutation. The decision
-# it feeds is p2-rl-code's, per D-122's own Decision line.
-
-# The part treated as a box, from the CAD constants D-122 used: 90.00 x 143.50
-# x 50.506 mm. Written here so the check reproduces the published table rather
-# than trusting it; SPACING_CASES pins that it does.
 BOX_PART_M = (0.09000, 0.14350, 0.050506)
-# The cross play the spacing is measured against. Home of the value is
-# `insertion_tasks_cfg.PLAY_X` (D-121); restated here the way MAX_DIST_M
-# restates its source, because this script must not import Isaac.
 PLAY_X_M = 0.0005876
-# The ladder. The last rung is not a round number: it is roughly where the
-# spacing meets the cross play, which is the only rung with a geometric
-# meaning rather than a habit.
 BENCH_POINTS = (1000, 4000, 16000, 64000, 143000)
-# Our scene's env count, `insertion_env_cfg.py:456`.
 BENCH_ENVS = 128
 
 
@@ -748,19 +508,12 @@ def box_area_m2(dims) -> float:
 
 
 def spacing_from_area(area_m2: float, n: int) -> float:
-    """Mean spacing of ``n`` evenly sampled points on ``area_m2``, metres.
-
-    D-122's formula, sqrt(area/N). Pure arithmetic, so it is pinned offline
-    against the table D-122 published rather than re-derived here.
-    """
+    """Mean spacing of ``n`` evenly sampled points on ``area_m2``, metres."""
     if n <= 0:
         raise ValueError(f"n must be positive, got {n}")
     return (area_m2 / float(n)) ** 0.5
 
 
-# D-122's own table, three rows, in millimetres. The third is the row that
-# gives the ladder its top rung: "Spacing equal to the cross play would need
-# about 143,000 points."
 SPACING_CASES = {
     "S1_d122_1000_is_7.03mm": (1000, 7.03),
     "S2_d122_16000_is_1.76mm": (16000, 1.76),
@@ -774,8 +527,6 @@ def run_spacing_cases() -> int:
     bad = 0
     for name, (n, want_mm) in SPACING_CASES.items():
         got_mm = spacing_from_area(area, n) * 1000.0
-        # 0.01 mm: the table is printed to two decimals, so a tighter
-        # tolerance would fail on the printing, not on the formula.
         if abs(got_mm - want_mm) <= 0.01:
             print(f"[check_insertion_sdf]   spacing {name}: PASS "
                   f"({got_mm:.4f} mm against D-122's {want_mm} mm)")
@@ -841,8 +592,6 @@ def run_bench(args) -> int:
         quat = torch.zeros((envs, 4), dtype=torch.float32)
         quat[:, 3] = 1.0
 
-        # Warm-up is excluded on purpose: the FIRST call compiles the kernel
-        # and allocates, and a training step never pays that again.
         for _ in range(int(args.bench_warmup)):
             query.signed_distances(pos, quat)
         if cuda:
@@ -851,16 +600,10 @@ def run_bench(args) -> int:
         t0 = time.perf_counter()
         for _ in range(int(args.bench_repeats)):
             out = query.signed_distances(pos, quat)
-        # Device-wide sync, not a stream sync: Warp launches on its own stream,
-        # so a torch-stream wait would time the LAUNCH, not the kernel.
         if cuda:
             torch.cuda.synchronize()
         per_call_ms = (time.perf_counter() - t0) * 1000.0 / float(args.bench_repeats)
 
-        # The returned count, which is NOT the requested one:
-        # `sample_surface_even` drops points that fall too close together, and
-        # RT-95 measured 953 of 1000. How that shortfall grows with N is one of
-        # the things this run exists to show.
         returned = query.num_points
         mesh_a = float(query.sampled_area_m2)
         box_sp = spacing_from_area(box_a, returned) * 1000.0
@@ -888,21 +631,10 @@ def run_bench(args) -> int:
     return 0
 
 
-# ---------------------------------------------------------------------------
-# The pose ladder (training PC for the reading; its rules run offline)
-# ---------------------------------------------------------------------------
-
-# The constants the ladder needs, read from their one home by folding the
-# module-level arithmetic of insertion_tasks_cfg.py. That module imports
-# isaaclab and cannot be imported here (RT-88); its plain assignments can be
-# evaluated without it.
 POSE_LADDER_CONSTANTS = (
     "PLAY_X", "PLAY_Y", "POCKET_SEAT_DEPTH", "SEATED_SUCCESS_DEPTH",
     "INTERPEN_THRESH", "FLANGE_TO_PART_BOTTOM", "SEATED_TOOL_QUAT_LOCAL",
 )
-# Probe offsets in mm -- probe points, not decisions. They straddle each
-# expected contact (0 at the floor, PLAY_X/2 = 0.2938, PLAY_Y/2 = 0.8) and
-# reach ~2 mm past it.
 FLOOR_STEPS_MM = (-1.0, -0.5, -0.2, 0.0, 0.2, 0.5, 1.0, 2.0)
 LATERAL_X_MM = (0.0, 0.1, 0.2, 0.4, 0.6, 1.0, 2.0)
 LATERAL_Y_MM = (0.0, 0.4, 0.8, 1.2, 2.0, 3.0)
@@ -989,8 +721,6 @@ def judge_pose_ladder(rows, readings, far_reading: float, far_disjoint: bool, to
     return PoseVerdict(not q1_bad, not q2_bad, q3, q1_bad, q2_bad, n_match, len(rows))
 
 
-# Constants of the offline cases -- written out, not folded, so the cases do
-# not depend on the cfg they would then assert against itself.
 _CASE_C = {"PLAY_X": 0.0005876, "PLAY_Y": 0.0016, "POCKET_SEAT_DEPTH": 0.036,
            "SEATED_SUCCESS_DEPTH": 0.033}
 
@@ -1037,10 +767,6 @@ def run_pose_cases(torch=None, sdf=None) -> int:
          tuple(c["SEATED_TOOL_QUAT_LOCAL"]) == (0.0, 0.0, 1.0, 0.0))
     case("PK3 a name whose right-hand side cannot be folded is refused, not guessed",
          _refuses("PLAY_X = f(1)\n"))
-    # PK4 -- THE POSE CHAIN ITSELF, the part RT-208 died in. 180 deg about y
-    # sends the tip offset (0, 0, +0.152) to (0, 0, -0.152), so the tool_link
-    # sits at tip + (0, 0, 0.152): (dx, dy, 0.152 - depth), orientation
-    # xyzw (0, 1, 0, 0). Written out by hand, not from the chain.
     ok4 = False
     if torch is not None and sdf is not None:
         try:
@@ -1054,7 +780,7 @@ def run_pose_cases(torch=None, sdf=None) -> int:
             want_q = np.array([[0.0, 1.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0]])
             ok4 = (rp.shape == (2, 3) and np.abs(rp - want_p).max() < 1e-6
                    and np.abs(np.abs(rq) - want_q).max() < 1e-6)
-        except Exception as exc:  # a shape error is exactly the failure this case exists for
+        except Exception as exc:
             print(f"[check_insertion_sdf]   pose PK4 raised {type(exc).__name__}: {exc}")
     case("PK4 the pose chain with the env's shapes lands the tool_link at (dx, dy, 0.152 - depth)", ok4)
     return bad
@@ -1072,15 +798,7 @@ POSE_CASES_COUNT = 12
 
 
 def ladder_rel_poses(torch, im, sdf, c: dict, poses) -> tuple:
-    """(depth, dx, dy) poses -> SAPU ``(rel_pos, rel_quat_xyzw)``, the env's chain.
-
-    The SHAPES are the env's, read off ``insertion_env.__init__``:
-    ``_tip_offset_local`` is ``(3,)`` (``torch.tensor(cfg.peg_tip_offset)``)
-    and ``_seat_quat_local`` is ``(1, 4)``. RT-208 (2026-09-15) died here on a
-    ``(1, 3)`` tip offset; since then this function runs offline too (PK4).
-    The fixture sits at the identity, so ``T_fixture^-1 . T_part`` is the
-    part pose itself.
-    """
+    """(depth, dx, dy) poses -> SAPU ``(rel_pos, rel_quat_xyzw)``, the env's chain."""
     seat_q = torch.tensor([list(c["SEATED_TOOL_QUAT_LOCAL"])])
     tip_off = torch.tensor([0.0, 0.0, float(c["FLANGE_TO_PART_BOTTOM"])])
     ident_q = torch.tensor([[1.0, 0.0, 0.0, 0.0]])
@@ -1139,8 +857,6 @@ def run_pose_ladder(args) -> int:
 
     rows = pose_ladder_rows(c)
     mesh_hi_z = float(query.mesh_bounds[1][2])
-    # Lift = the fixture's top plus the part's own height: DERIVED, and the
-    # disjointness below is MEASURED on the transformed points anyway.
     far_depth = -(mesh_hi_z + float(query.extents[2]) + float(query.extents[0]))
     poses = [(r.depth_m, r.dx_m, r.dy_m) for r in rows] + [(far_depth, 0.0, 0.0)]
 
@@ -1151,9 +867,6 @@ def run_pose_ladder(args) -> int:
         signed = -signed
     reading = im.max_interpen_dist(im.interpen_from_signed(signed)).cpu().numpy().astype(np.float64)
 
-    # The frame chain, measured: the transformed sample points' lowest z must
-    # sit at -depth for the leading tool point, and the far row's lowest point
-    # must clear the fixture's bounding box.
     pts = np.asarray(query.points.numpy(), dtype=np.float64)
     rp = rel_p.cpu().numpy().astype(np.float64)
     rq = rel_q.cpu().numpy().astype(np.float64)
@@ -1170,9 +883,6 @@ def run_pose_ladder(args) -> int:
     print(f"[check_insertion_sdf]  far   depth {far_depth * 1e3:.3f} mm, lowest z {low_z[-1] * 1e3:.4f} mm "
           f"vs fixture top {mesh_hi_z * 1e3:.4f} mm, disjoint {far_disjoint}, reading {reading[-1] * 1e3:.6f} mm")
 
-    # The part centre against the pocket centre, READ OFF the two sides of each
-    # lateral axis where both read an overlap: half their difference. Reported
-    # only; it rests on the planar-wall assumption.
     for axis, steps in (("x", LATERAL_X_MM), ("y", LATERAL_Y_MM)):
         for s in steps:
             ip = rows.index(next(r for r in rows if r.direction == axis + "+" and r.offset_mm == s))
@@ -1234,16 +944,8 @@ def run_probe(args) -> int:
     sample_extents = np.asarray(query.extents, dtype=np.float64)
     mesh_extents = np.asarray(query.mesh_extents, dtype=np.float64)
 
-    # The ladder steps along the QUERIED mesh, plus the sampled cloud's own span
-    # when the two differ. With one mesh this is exactly the old step and RT-90's
-    # rows are unchanged; with two, stepping by the part's extent would move the
-    # cloud far too little to clear the fixture and the probe would assert
-    # nothing while looking green.
     step = mesh_extents + (sample_extents if two_meshes else 0.0)
 
-    # P5's slack. Same reasoning: one mesh -> the sampled bbox diagonal, as
-    # RT-90 used it; two meshes -> the sum, because the query point and the
-    # nearest surface point can now each sit a full diagonal off centre.
     diameter = float(np.linalg.norm(sample_extents))
     if two_meshes:
         diameter += float(np.linalg.norm(mesh_extents))
@@ -1255,11 +957,6 @@ def run_probe(args) -> int:
     print(f"[check_insertion_sdf] ladder step per axis {step[0]:.6f} x {step[1]:.6f} "
           f"x {step[2]:.6f} m, P5 slack {diameter:.6f} m")
 
-    # The sampled cloud's own bounding box, read from the array the kernel
-    # reads. It is what turns "outside by construction" from a rule of thumb
-    # (mult >= 2) into a MEASURED condition per row: a translated box that no
-    # longer overlaps the queried mesh's box contains no interior point, and
-    # that needs no watertightness and no oracle.
     pts_np = np.asarray(query.points.numpy(), dtype=np.float64)
     pts_lo, pts_hi = pts_np.min(axis=0), pts_np.max(axis=0)
     mesh_lo = np.asarray(query.mesh_bounds[0], dtype=np.float64)
@@ -1272,31 +969,16 @@ def run_probe(args) -> int:
     def distances(offsets: np.ndarray):
         pos = torch.tensor(offsets, dtype=torch.float32)
         quat = torch.zeros((offsets.shape[0], 4), dtype=torch.float32)
-        quat[:, 3] = 1.0  # xyzw identity
+        quat[:, 3] = 1.0
         d = query.signed_distances(pos, quat)
         return -d if args.mutate_sign else d
 
-    # --- P4: the identity transform. The sampled points sit ON the surface, so
-    # every distance must be ~0. Any large value means the mesh, the points or
-    # the transform do not describe the same object.
-    # Announced BEFORE the launch on purpose. RT-88's second attempt stopped
-    # between the kernel's compile message and the P4 line with no traceback and
-    # no exit code, and `python -u` rules out buffering -- so the launch itself
-    # was where it stayed. A line on each side of it turns "somewhere in there"
-    # into a fact.
     print(f"[check_insertion_sdf] launching first query: 1 env x "
           f"{query.num_points} points on {query.wp_device!s} "
           f"(torch side: {query.torch_device!r}) ...")
     d0 = distances(np.zeros((1, 3))).cpu().numpy()
     print("[check_insertion_sdf] first query returned.")
 
-    # P4 is a claim about ONE mesh: the sampled points lie on the surface being
-    # queried, so at the identity every distance must read ~0. With two meshes
-    # the part's points do not lie on the fixture's surface and there is no
-    # expected value at all -- so P4 is SKIPPED and says so, rather than being
-    # printed with a number that means nothing. The identity-transform distances
-    # are still reported, because they are the seated part's clearance to the
-    # fixture and that is worth a line.
     if two_meshes:
         p4 = True
         print("[check_insertion_sdf] P4 identity transform: SKIPPED (sampled mesh != "
@@ -1306,11 +988,6 @@ def run_probe(args) -> int:
               f"min {d0.min():.6f} m, mean {d0.mean():.6f} m, max {d0.max():.6f} m, "
               f"negative points {int((d0 < 0.0).sum())} of {d0.size}")
     else:
-        # The statistic is p99, not the max, and `judge_identity` carries the
-        # argument: this pair feeds the SDF reward, which reduces over every
-        # point, so the verdict has to describe the bulk. The tolerance is
-        # unchanged (D-152). The max is printed on the same line, because it
-        # is what RT-98 found and it must stay visible.
         _iv = judge_identity(np.abs(d0).ravel().tolist(), args.on_surface_tol_m)
         p4 = _iv.p4
         print(f"[check_insertion_sdf] P4 identity transform: p99 |d| = "
@@ -1320,19 +997,10 @@ def run_probe(args) -> int:
               f"points above tol; p99 judges because this pair feeds the "
               f"AVERAGING SDF reward -- see judge_identity)")
 
-    # --- P4's DISTRIBUTION. The max alone cannot say whether the whole point
-    # set reads off-surface or a single point does, and the two mean different
-    # things: broad noise is arithmetic, a lone outlier is a hole in the mesh
-    # -- this part carries 380 unpaired edges. RT-88 reported 5.358e-06 m
-    # against a 1e-06 m tolerance that has no source in this repo; printing the
-    # spread is what lets that tolerance be DERIVED instead of picked.
-    # This block only prints. It changes no verdict.
     if not two_meshes:
         _a0 = np.abs(d0).ravel()
         _worst = int(np.argmax(_a0))
         _pt = pts_np[_worst % query.num_points]
-        # Every number here comes from the same code that produced the
-        # verdict, so the printed p99 and the judged p99 cannot drift apart.
         _vals = _a0.tolist()
         print(f"[check_insertion_sdf] P4 spread over {_a0.size} points: "
               f"median {percentile(_vals, 50.0):.3e} m, "
@@ -1343,9 +1011,6 @@ def run_probe(args) -> int:
               f"|d| = {float(_a0[_worst]):.3e} m, "
               f"xyz = ({_pt[0]:.6f}, {_pt[1]:.6f}, {_pt[2]:.6f}) m")
 
-    # --- the ladder: pure translations along each axis, in multiples of that
-    # axis' own step. No number here was picked; every one comes from the
-    # meshes.
     rows, offsets, labels = [], [], []
     for axis in range(3):
         for mult in PROBE_MULTIPLES:
@@ -1360,12 +1025,6 @@ def run_probe(args) -> int:
           " max d[m]  disjoint  asserted")
     for k, (axis, sgn, mult, dist, disjoint) in enumerate(labels):
         row = d[k]
-        # BOTH conditions, and the second is the one that carries the proof.
-        # `mult >= PROBE_ASSERT_FROM` is the rule of thumb RT-90 ran with;
-        # `disjoint` is the measured fact that the translated cloud's bounding
-        # box no longer overlaps the queried mesh's, so every point is outside
-        # with no oracle and no watertightness assumed. With one mesh the two
-        # agree and RT-90's asserted rows are unchanged.
         asserted = mult >= PROBE_ASSERT_FROM and disjoint
         name = f"{'xyz'[axis]}{'+' if sgn > 0 else '-'}"
         print(f"[check_insertion_sdf]  {name}  {mult:4.1f}  {dist:10.6f}  "
@@ -1375,13 +1034,8 @@ def run_probe(args) -> int:
         rows.append(LadderRow(name, mult, dist, float(row.min()),
                               float(row.mean()), asserted))
 
-    # Every verdict below is computed by `judge_ladder`, which runs offline and
-    # is pinned by LADDER_CASES. This block only prints what it returns.
     v = judge_ladder(rows, diameter)
 
-    # A probe with nothing to assert is not a green probe. If no row cleared
-    # both conditions, P2 and P5 are vacuously true and the run proves exactly
-    # nothing -- the failure mode a "0 of 0 checks failed" report hides.
     if v.n_asserted == 0:
         print("[check_insertion_sdf] *** NO ROW IS ASSERTED: no offset put the sampled "
               "cloud provably outside the queried mesh, so P2 and P5 are vacuous. "
@@ -1393,10 +1047,6 @@ def run_probe(args) -> int:
     print(f"[check_insertion_sdf] P2 sign holds where every point is outside by "
           f"construction: {'PASS' if p2 else 'FAIL -- ' + repr(v.p2_bad)}")
 
-    # --- P3: monotonicity along each axis+direction, over the ASSERTED rows
-    # only. A sign that flips somewhere makes the curve dip; a cloud that has
-    # not yet passed the queried mesh makes it dip too, and only the second is
-    # geometry. RT-92 could not tell them apart. See `judge_ladder`.
     p3 = v.p3
     print(f"[check_insertion_sdf] P3 mean distance rises over the ASSERTED rows "
           f"({v.n_p3_pairs} consecutive pairs; rows before the cloud clears the "
@@ -1413,10 +1063,6 @@ def run_probe(args) -> int:
 
     all_ok = p2 and p3 and p4 and p5
     if args.mutate_sign:
-        # The counter-proof inverts what "good" means: the mutation must be
-        # caught. P3 is not named -- negating every value keeps the ordering
-        # question meaningful only after the clamp, so it is reported, not
-        # required.
         caught = (not p2) and (not p5) and p4
         print(f"[check_insertion_sdf] MUTATION VERDICT: "
               f"{'PASS -- the probe catches a flipped sign' if caught else 'FAIL -- the probe survived its own mutation and proves nothing'}")

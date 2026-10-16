@@ -1,50 +1,7 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-r"""Offline check of ``autodr.py`` -- the AutoDR boundary state machine.
-
-Same shape as ``check_curriculum_ladder.py``: load the module FROM SOURCE so
-the counter-proof can break a copy without touching the file, build every
-check, then prove each check can fail.
-
-``autodr.py`` is stdlib-only, so the state machine runs here for real. Its
-three ARRAY helpers take tensors; those are exercised against the numpy
-stand-in (``scripts/tools/torch_shim.py``), which grew ``.long()`` and
-``.clamp()`` for exactly this -- the house rule is that the module under test
-keeps the idiomatic torch form.
-
-WHAT THE PLAN ASKS FOR (section 11)
------------------------------------
-7 boundaries, 7 buffers (the plan's section 11 counted 11, before D-178 made the
-lateral offset one radius and D-179 made the start height one-sided); no lower
-boundary on a one-sided quantity; 240 flags at 0.80 -> +delta, at 0.10
--> -delta, at 0.5 -> hold; 239 -> nothing; clamping at both ends; p_b over
-1e4 draws inside [0.47, 0.53]; map(0) == lo and map(1) == hi; bounds_version
-rises exactly on a movement; state round-trip; every quantity without a
-source carries [TESTWERT].
-
-ONE FACT READ FROM THE ENV
---------------------------
-The LAST bin edge of ``success_by_lateral_bin`` / ``success_by_yaw_bin`` /
-``success_by_tilt_bin`` must BE the matching ceiling (D-178 (7); the tilt twin
-added 2026-09-12). The edges live in ``insertion_env.py``, the ceilings in
-``DR_DIMS`` here, so these three checks are the only ones that read a second
-file -- as text, because the env imports isaaclab.
-
-BOTH DIRECTIONS OF D-080
-------------------------
-``--self-test`` proves two things, not one:
-
-  mutation -> check   every mutation flips EXACTLY the checks it declares.
-  check -> mutation   every check is named by SOME mutation, or is listed in
-                      ``UNPROVABLE`` with a reason. Without this second
-                      direction a suite can grow checks nobody ever proved
-                      could fail -- which is the quiet half of D-080, the one
-                      that certifies nothing and where nobody finds out.
-
-    python scripts/check_autodr.py
-    python scripts/check_autodr.py --self-test
-"""
+"""Offline check of ``autodr.py`` -- the AutoDR boundary state machine."""
 
 from __future__ import annotations
 
@@ -64,22 +21,10 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 PKG_DIR = ROOT / "source" / "insertion" / "insertion" / "tasks" / "direct" / "insertion"
 AUTODR_SRC = PKG_DIR / "autodr.py"
 CURRICULUM_SRC = PKG_DIR / "curriculum.py"
-# The readout tables of D-178 (7) live in the env, whose ceilings live here.
-# insertion_env.py imports isaaclab and torch, so it is READ, not imported --
-# the same `ast` route check_env_wiring.py takes to the same file.
 ENV_SRC = PKG_DIR / "insertion_env.py"
 
-# A stand-in package name, so `from .curriculum import ...` resolves without
-# importing the real task package (which would drag in torch and Isaac).
 PKG = "_autodr_check_pkg"
 
-# Probe centres. They are NOT the task's values -- the task's values live in
-# insertion_tasks_cfg.py and arrive as arguments; these only exercise the rule.
-# They sit INSIDE the maxima of DR_DIMS and, for start_height and friction,
-# deliberately off zero so a lost lower edge is visible. start_height's probe
-# centre also sits off the table's placeholder `lo_max`, so a bind that kept
-# the placeholder instead of the centre shows. friction's probe centre is
-# strictly inside its band and deliberately NOT the task's CONTACT_FRICTION.
 CENTRES = {
     "lat_r": 0.0,
     "yaw": 0.0,
@@ -88,7 +33,6 @@ CENTRES = {
     "friction": 0.10,
 }
 
-# The seven boundaries, in the order `state_dict` and `scalars` depend on.
 EXPECTED_KEYS = (
     "lat_r_hi",
     "yaw_lo", "yaw_hi",
@@ -97,26 +41,9 @@ EXPECTED_KEYS = (
     "friction_lo", "friction_hi",
 )
 
-# The OUTSIDE number for the provenance report. Until 2026-09-12 both sides of
-# the marked-line count came out of the same `d.source` expression -- the
-# report's mark and `testwert_dims` -- so dropping a marker moved both and the
-# comparison could not fail (critic finding). These two literals are the
-# anchor that does not move with the module.
-#
-# The four quantities whose limits are DECIDED and not derived: the ceilings
-# of lat_r, yaw and tilt (D-178 (5)) and start_height's (D-179 (1)). friction
-# is deliberately absent -- D-181 (2) gives its band a source.
 EXPECTED_TESTWERT = ("lat_r", "yaw", "tilt", "start_height")
-# ... and how many REPORT LINES carry the marker: those four, plus the one
-# constant line `delta steps (10)`, whose DELTA_STEPS_SOURCE is itself
-# [TESTWERT]. Unmarked are the Akkaya header line and the friction line.
-# MEASURED by running `provenance_lines(DR_DIMS)` on 2026-09-12: 7 lines,
-# 5 of them containing "[TESTWERT]". Not copied out of any prose.
 MARKED_PROVENANCE_LINES = 5
 
-# Checks that genuinely cannot be counter-proved, with the reason. Announced
-# every run so an omission can never hide as a decision. Same escape hatch as
-# `Unprovable` in scripts/tools/checks.py.
 UNPROVABLE: dict = {}
 
 
@@ -140,13 +67,7 @@ def load_autodr(mutations: tuple = ()) -> dict:
 
 
 def load_autodr_src(src: str) -> dict:
-    """The exec half of ``load_autodr``, for a caller that read the source itself.
-
-    ``check_env_wiring`` reads ``autodr.py`` through its own ``_read`` so its
-    mutation anchors live where every other anchor of that file lives, and then
-    needs the module built from THAT text. The package scaffolding below is the
-    part neither caller should own twice.
-    """
+    """The exec half of ``load_autodr``, for a caller that read the source itself."""
     pkg = types.ModuleType(PKG)
     pkg.__path__ = [str(PKG_DIR)]
     sys.modules[PKG] = pkg
@@ -156,9 +77,6 @@ def load_autodr_src(src: str) -> dict:
          cur.__dict__)  # noqa: S102 - the point of the file
     sys.modules[PKG + ".curriculum"] = cur
 
-    # A real module object, not a bare dict: @dataclass resolves a field's
-    # type by looking its own module up in sys.modules, and a namespace that
-    # is not registered there makes it crash on `KW_ONLY` detection.
     mod = types.ModuleType(PKG + ".autodr")
     mod.__package__ = PKG
     sys.modules[PKG + ".autodr"] = mod
@@ -167,12 +85,7 @@ def load_autodr_src(src: str) -> dict:
 
 
 def env_bin_edges(attr: str) -> tuple:
-    """The bin edges of ONE readout table, read out of ``insertion_env.py``.
-
-    Guarded on EQUALITY, not on "something was found": two assignments to the
-    same attribute would mean one of them is dead and the check would silently
-    grade whichever `ast.walk` reached first.
-    """
+    """The bin edges of ONE readout table, read out of ``insertion_env.py``."""
     tree = ast.parse(ENV_SRC.read_text(encoding="utf-8"), str(ENV_SRC))
     found = [
         node.value
@@ -194,25 +107,12 @@ def env_bin_edges(attr: str) -> tuple:
 
 
 def magnitude_ceiling(dim) -> float:
-    """How far the quantity can get from zero once its boundary is at the top.
-
-    All three tables bin a MAGNITUDE -- the lateral hypot, |yaw| (D-173 (3),
-    (4)) and the tilt magnitude (D-037; its direction is the separate
-    `tilt_azimuth` column) -- so the number a bin edge must meet is the larger
-    of the two maxima in absolute value, not `hi_max` by convention.
-    """
+    """How far the quantity can get from zero once its boundary is at the top."""
     return max(abs(dim.lo_max), abs(dim.hi_max))
 
 
 def same_number(a: float, b: float) -> bool:
-    """Equal up to unit-conversion rounding.
-
-    The two sides are stored in different units (m against mm, rad against
-    deg), so exact equality is not on offer: the conversion itself rounds at
-    ~1e-16 relative. 1e-12 sits four decades above that noise and far below
-    the smallest mismatch anyone could mean -- 0.1 mm on a 30 mm ceiling is
-    3e-3 relative.
-    """
+    """Equal up to unit-conversion rounding."""
     return math.isclose(a, b, rel_tol=1e-12, abs_tol=0.0)
 
 
@@ -247,8 +147,7 @@ def build_checks(ns, torch) -> list:
         return AutoDR(DIMS)
 
     def refuses(name: str, fn) -> None:
-        """AutoDRError SPECIFICALLY. A TypeError three lines deeper has also
-        refused, but it refused by accident and names no cause."""
+        """AutoDRError SPECIFICALLY."""
         try:
             fn()
         except AutoDRError as exc:
@@ -262,7 +161,6 @@ def build_checks(ns, torch) -> list:
         for i in range(n_total):
             prov.record(key, i < n_success)
 
-    # -- the boundary set: seven, in a fixed order ---------------------------
     p = fresh()
     check("the boundary set has exactly seven entries", p.n_boundaries == 7,
           f"{p.n_boundaries}: {p.keys}")
@@ -270,20 +168,13 @@ def build_checks(ns, torch) -> list:
           "tilt_lo" not in p.keys, str(p.keys))
     check("there are seven success buffers, one per boundary", len(p.fill()) == 7,
           str(len(p.fill())))
-    # The ORDER, not just the set: state_dict, scalars and boundary_columns
-    # are all positional, so a reordering would silently re-label a resume.
     check("the seven boundaries come in the fixed documented order",
           p.keys == EXPECTED_KEYS, str(p.keys))
 
-    # -- centres come from the task config, never from autodr.py ------------
     refuses("a missing centre refuses to build the table",
             lambda: bind_centres({k: v for k, v in CENTRES.items() if k != "friction"}))
     refuses("a centre outside the maxima refuses",
             lambda: bind_centres({**CENTRES, "friction": 9.9}))
-    # D-179 (2): a one-sided quantity's lower edge IS its centre, so `bind`
-    # writes the centre into `lo_max` before every range check. The probe
-    # centre of start_height sits off the table's placeholder on purpose --
-    # without that a bind that kept the placeholder would pass unseen.
     _sh_table = next(d for d in DR_DIMS if d.name == "start_height")
     check("bind sets lo_max = centre for one-sided dims",
           all(d.lo_max == d.centre for d in DIMS if d.one_sided)
@@ -300,10 +191,6 @@ def build_checks(ns, torch) -> list:
         _inv = str(exc)
     check("inverted maxima are refused BY NAME, not by the centre-range guard",
           "is above hi_max" in _inv, _inv[:70])
-    # MEASURED 2026-09-09 on the broken version: a two-sided quantity whose
-    # lower maximum equals its centre has delta 0, so ten "expansions" left
-    # the bounds untouched and still drove bounds_version to 10 -- the R12
-    # failure the module exists to prevent. Two gates now gate it.
     refuses("a movable boundary with nowhere to go refuses at bind time",
             lambda: DimSpec("start_height", "m", 0.030, 0.050, False, "probe")
             .bind(0.030))
@@ -313,7 +200,6 @@ def build_checks(ns, torch) -> list:
           and ns["BoundEvent"]("lat_r_hi", "expand", 1.0, 0.0, 0.1).moved is True,
           f"{_zero.before} -> {_zero.after}")
 
-    # -- a generator must not slip through as an empty table ----------------
     gen = AutoDR(d for d in DIMS)
     check("a generator of dimensions is materialised, not consumed away",
           gen.n_boundaries == 7 and gen.all_at_max() is False
@@ -326,21 +212,15 @@ def build_checks(ns, torch) -> list:
             lambda: AutoDR((DimSpec("wobble", "m", -1.0, 1.0, False, "probe")
                             .bind(0.0),)))
 
-    # -- the parameter contract ---------------------------------------------
     refuses("buffer_m below 1 refuses", lambda: AutoDR(DIMS, buffer_m=0))
     refuses("p_boundary outside [0, 1] refuses", lambda: AutoDR(DIMS, p_boundary=7.5))
     refuses("a retreat threshold above the advance threshold refuses",
             lambda: AutoDR(DIMS, advance_at=0.1, retreat_at=0.9))
-    # Deviation (1) -- corrected 2026-09-12, it read "(2)", which is the
-    # uniform boundary draw: our measure is a RATE. Akkaya's t_H = 20 / t_L = 10
-    # are COUNTS, and pasting them in here would freeze every boundary for
-    # the whole run without a single log line saying so.
     refuses("an advance threshold above 1 refuses -- the measure is a rate",
             lambda: AutoDR(DIMS, advance_at=20.0, retreat_at=10.0))
     refuses("a negative retreat threshold refuses",
             lambda: AutoDR(DIMS, advance_at=0.8, retreat_at=-5.0))
 
-    # -- width 0 at the start (Akkaya: every boundary starts on the centre) --
     p = fresh()
     b = p.bounds()
     check("a fresh provider starts at width 0 -- lo == hi == centre",
@@ -348,11 +228,6 @@ def build_checks(ns, torch) -> list:
     check("bounds_version starts at 0", p.bounds_version == 0, str(p.bounds_version))
     check("all_at_max is False at width 0", p.all_at_max() is False)
 
-    # -- bounds_max: what the env sizes its once-per-run buffers from --------
-    # The whole point of the method. At width 0 `bounds()` reports a zero span
-    # for the two ANGLE quantities, so an env that sizes `_tilt_rot` from it
-    # leaves the buffer at None for a run that is about to tilt, and the
-    # pocket-frame measurement silently stays env-local for 1500 iterations.
     m = p.bounds_max()
     check("bounds_max gives the dimension maxima, not the width-0 bounds",
           all(m[d.name] == (d.lo_max, d.hi_max) for d in DIMS), str(m))
@@ -360,7 +235,6 @@ def build_checks(ns, torch) -> list:
           m["yaw"][1] - m["yaw"][0] > 0.0 and m["tilt"][1] - m["tilt"][0] > 0.0
           and b["yaw"][1] - b["yaw"][0] == 0.0 and b["tilt"][1] - b["tilt"][0] == 0.0,
           f"max yaw {m['yaw']} tilt {m['tilt']}; now yaw {b['yaw']} tilt {b['tilt']}")
-    # A boundary that has actually moved must never leave the reach.
     q = fresh()
     fill(q, "tilt_hi", 240, 240)
     q.update()
@@ -368,17 +242,11 @@ def build_checks(ns, torch) -> list:
           q.bounds()["tilt"][1] <= q.bounds_max()["tilt"][1]
           and q.bounds_max() == m,
           f"{q.bounds()['tilt']} in {q.bounds_max()['tilt']}")
-    # FixedWidth OVERRIDES it: a No-DR run randomises nothing and must not
-    # make the env allocate tilt buffers or write a per-episode pocket pose.
     check("FixedWidth.at_centre: bounds_max == bounds, zero span everywhere",
           FixedWidth.at_centre(DIMS).bounds_max() == FixedWidth.at_centre(DIMS).bounds()
           and all(v[1] - v[0] == 0.0
                   for v in FixedWidth.at_centre(DIMS).bounds_max().values()),
           str(FixedWidth.at_centre(DIMS).bounds_max()))
-    # ABSTRACT ON PURPOSE. bounds_max drives a SAFETY property in the env --
-    # it turns the pocket-frame transform and the per-reset fixture write on
-    # and off -- and the two right answers pull opposite ways. A default of
-    # either kind is silently wrong for the other family of provider.
     _base = ns["_Provider"]
     _inherits = False
     try:
@@ -394,7 +262,6 @@ def build_checks(ns, torch) -> list:
                   for d in DIMS),
           str(FixedWidth.at_max(DIMS).bounds_max()))
 
-    # -- the rule: a buffer only fires when it is FULL ------------------------
     p = fresh()
     fill(p, "lat_r_hi", 239, 239)
     ev = p.update()
@@ -405,7 +272,6 @@ def build_checks(ns, torch) -> list:
     refuses("value refuses the same unknown boundary, the same way",
             lambda: p.value("tilt_lo"))
 
-    # 240 at 1.00 -> one delta out.
     p = fresh()
     fill(p, "lat_r_hi", 240, 240)
     ev = p.update()
@@ -416,40 +282,35 @@ def build_checks(ns, torch) -> list:
           f"{[e.action for e in ev]} -> {p.value('lat_r_hi'):.6g} vs {delta:.6g}")
     check("a processed buffer is emptied", p.fill()["lat_r_hi"] == 0,
           str(p.fill()["lat_r_hi"]))
-    # n_steps, NOT a literal 10: DELTA_STEPS is [TESTWERT] and the smoke run
-    # may change it. A suite that fails for that would get "fixed" wrongly.
     _ns = dim_of["lat_r"].n_steps
     check("the delta is (maximum - centre) / n_steps",
           abs(delta - (dim_of["lat_r"].hi_max - 0.0) / float(_ns)) < 1e-18,
           f"{delta:.6g} at n_steps {_ns}")
 
-    # Overflow: record and update are separate calls, so it CAN happen.
     p = fresh()
-    fill(p, "lat_r_hi", 500, 1000)      # 760 more than the buffer holds
+    fill(p, "lat_r_hi", 500, 1000)
     check("flags arriving at a full buffer are dropped AND counted",
           p.fill()["lat_r_hi"] == 240 and p.dropped()["lat_r_hi"] == 760
           and p.scalars().get("dr/flags_dropped") == 760.0,
           f"fill {p.fill()['lat_r_hi']}, dropped {p.dropped()['lat_r_hi']}")
 
-    # EXACTLY 0.80 -- Akkaya is INCLUSIVE, curriculum.Ladder is strict.
     p = fresh()
-    fill(p, "lat_r_hi", 192, 240)          # 192/240 = 0.80 exactly
+    fill(p, "lat_r_hi", 192, 240)
     ev = p.update()
     check("exactly 0.80 EXPANDS -- Akkaya uses >=, unlike curriculum.Ladder",
           len(ev) == 1 and ev[0].action == "expand", f"{[e.action for e in ev]}")
 
-    # EXACTLY 0.10 -- inclusive on the low end too.
     p = fresh()
     fill(p, "lat_r_hi", 240, 240)
-    p.update()                              # one step out, so there is room to retreat
-    fill(p, "lat_r_hi", 24, 240)            # 24/240 = 0.10 exactly
+    p.update()
+    fill(p, "lat_r_hi", 24, 240)
     ev = p.update()
     check("exactly 0.10 SHRINKS -- Akkaya uses <=",
           len(ev) == 1 and ev[0].action == "shrink" and p.value("lat_r_hi") == 0.0,
           f"{[e.action for e in ev]} -> {p.value('lat_r_hi')}")
 
     p = fresh()
-    fill(p, "lat_r_hi", 120, 240)           # 0.50
+    fill(p, "lat_r_hi", 120, 240)
     ev = p.update()
     check("0.50 holds, writes a hold event that moves nothing, and STILL empties the buffer",
           len(ev) == 1 and ev[0].action == "hold" and ev[0].moved is False
@@ -459,8 +320,6 @@ def build_checks(ns, torch) -> list:
           f"events {[e.action for e in ev]}, fill {p.fill()['lat_r_hi']}, "
           f"version {p.bounds_version}")
 
-    # Two buffers full in one pass: both fire, in key order, version +2.
-    # `yaw_lo` is the first LOWER boundary in the key order.
     p = fresh()
     fill(p, "friction_hi", 240, 240)
     fill(p, "yaw_lo", 240, 240)
@@ -469,7 +328,6 @@ def build_checks(ns, torch) -> list:
           [e.key for e in ev] == ["yaw_lo", "friction_hi"] and p.bounds_version == 2,
           f"{[e.key for e in ev]}, version {p.bounds_version}")
 
-    # -- clamping at both ends -----------------------------------------------
     p = fresh()
     for _ in range(_ns):
         fill(p, "lat_r_hi", 240, 240)
@@ -491,7 +349,6 @@ def build_checks(ns, torch) -> list:
           len(ev) == 1 and ev[0].action == "clamped_zero" and p.value("lat_r_hi") == 0.0,
           f"{[e.action for e in ev]}")
 
-    # A LOWER boundary walks towards lo_max, i.e. DOWN, and lands on it.
     p = fresh()
     for _ in range(_ns):
         fill(p, "friction_lo", 240, 240)
@@ -500,7 +357,6 @@ def build_checks(ns, torch) -> list:
           p.value("friction_lo") == dim_of["friction"].lo_max,
           f"{p.value('friction_lo'):.17g} vs {dim_of['friction'].lo_max:.17g}")
 
-    # -- bounds_version: only a REAL change (plan section 4, risk R12) -------
     p = fresh()
     fill(p, "yaw_hi", 240, 240)
     p.update()
@@ -525,7 +381,6 @@ def build_checks(ns, torch) -> list:
     check("clamped_zero does NOT bump bounds_version", p.bounds_version == 0,
           str(p.bounds_version))
 
-    # -- all_at_max drives the stop rule -------------------------------------
     p = fresh()
     for key in p.keys[:-1]:
         for _ in range(_ns):
@@ -538,7 +393,6 @@ def build_checks(ns, torch) -> list:
     check("all_at_max turns True only when EVERY boundary is at its maximum",
           p.all_at_max() is True, str(p.as_dict()["steps"]))
 
-    # -- resume (plan section 5, risk R13) -----------------------------------
     p = fresh()
     fill(p, "tilt_hi", 240, 240)
     p.update()
@@ -597,8 +451,6 @@ def build_checks(ns, torch) -> list:
     wide_thresh["retreat_at"] = -5.0
     refuses("a resume with thresholds outside [0, 1] refuses",
             lambda: fresh().load_state_dict(wide_thresh))
-    # A truncated or hand-edited autodr_<it>.json is exactly what a resume
-    # meets. A bare KeyError refuses by accident and names no file.
     _missing_ok = True
     _missing_detail = ""
     for _k in ("keys", "steps", "buf_n", "buf_s", "bounds_version",
@@ -634,8 +486,6 @@ def build_checks(ns, torch) -> list:
     neg_drop["dropped"] = {k: -99 for k in st["keys"]}
     refuses("a resume with a negative dropped count refuses",
             lambda: fresh().load_state_dict(neg_drop))
-    # The dims block was raw-indexed until 2026-09-09 and refused with a
-    # bare KeyError, which names no file and no cause on the training PC.
     _dimless = dict(st)
     _dimless["dims"] = [dict(d) for d in st["dims"]]
     _dimless["dims"][0].pop("n_steps")
@@ -653,19 +503,10 @@ def build_checks(ns, torch) -> list:
     refuses("a resume naming a boundary this table does not have refuses",
             lambda: fresh().load_state_dict(_extra))
 
-    # -- provenance: four ceilings marked, the friction band sourced ---------
-    # D-181 (2) gives the friction band a SOURCE, so it is the one quantity
-    # without the marker (user, 2026-09-12). The four ceilings are decided and
-    # not derived, which is exactly what the marker means.
     check("every quantity but friction carries [TESTWERT]",
           set(testwert_dims(DR_DIMS)) == {d.name for d in DR_DIMS} - {"friction"},
           str(testwert_dims(DR_DIMS)))
     prov = provenance_lines(DR_DIMS)
-    # The marked-line count is pinned to MARKED_PROVENANCE_LINES and the
-    # derived count is pinned to the SAME literal. Comparing the report only
-    # against `testwert_dims` compared one fact with itself: both sides read
-    # `d.source`, so a marker dropped from a ceiling moved them together and
-    # the check stayed green (critic finding, 2026-09-12).
     _marked = sum(1 for line in prov if "[TESTWERT]" in line)
     check("the provenance report names every quantity and both constants",
           len(prov) == len(DR_DIMS) + 2
@@ -674,39 +515,18 @@ def build_checks(ns, torch) -> list:
           and len(testwert_dims(DR_DIMS)) + 1 == MARKED_PROVENANCE_LINES,
           f"{len(prov)} lines, {_marked} marked, "
           f"{len(testwert_dims(DR_DIMS)) + 1} derived, anchor {MARKED_PROVENANCE_LINES}")
-    # The other half of the same fact, in the line a human reads: the mark
-    # column must say `sourced` for friction and nothing else may.
     _fric_line = [line for line in prov if line.startswith("friction ")]
     check("the friction line is reported as sourced, not as a [TESTWERT]",
           len(_fric_line) == 1 and "(sourced)" in _fric_line[0]
           and "[TESTWERT]" not in _fric_line[0],
           _fric_line[0][:70] if _fric_line else "no friction line")
-    # -- and the telemetry PUBLISHES those names ----------------------------
-    # `as_dict()["testwert"]` is the route by which the provisional list
-    # reaches the run's JSON, and until 2026-09-12 nothing read it back
-    # (critic finding): the list could lose a name, or all of them, with
-    # every check above still green. Pinned against the EXPECTED_TESTWERT
-    # literal, not against `testwert_dims` -- that is the function the
-    # telemetry itself calls, and grading it with itself is the same trap.
     check("AutoDR.as_dict publishes the decided-not-derived names",
           tuple(fresh().as_dict()["testwert"]) == EXPECTED_TESTWERT,
           str(fresh().as_dict()["testwert"]))
-    # The fixed-width provider has its OWN as_dict body, so it needs its own
-    # read: a shrink in one is invisible in the other.
     check("FixedWidth.as_dict publishes the decided-not-derived names",
           tuple(FixedWidth.at_centre(DIMS).as_dict()["testwert"]) == EXPECTED_TESTWERT,
           str(FixedWidth.at_centre(DIMS).as_dict()["testwert"]))
 
-    # -- the ceiling IS the last bin edge (D-178 (7)) ------------------------
-    # The three readout tables live in insertion_env.py; `_rate_by_bin` makes
-    # ONE bin per edge and the LAST bin also takes everything at or above the
-    # last edge. So an edge above the ceiling names a bin no draw can ever
-    # reach, and an edge below it collapses every wide draw into one bin --
-    # which is what D-178 (7) measured on the old (2, 4, 6, 8) mm edges:
-    # 96.0 % of a 30 mm disk landed in the last bin. Nothing compared the two
-    # homes until 2026-09-12 (critic finding, HANDOFF-RL § Open point 000).
-    # BOTH sides are read: the edge out of the env source, the ceiling out of
-    # DR_DIMS. A literal on either side would compare one fact with itself.
     _lat_edges = env_bin_edges("_lateral_bin_edges_mm")
     _lat_ceil_mm = magnitude_ceiling(next(d for d in DR_DIMS if d.name == "lat_r")) * 1000.0
     check("the last LATERAL bin edge is the lat_r ceiling",
@@ -717,26 +537,17 @@ def build_checks(ns, torch) -> list:
     check("the last YAW bin edge is the yaw magnitude ceiling",
           same_number(_yaw_edges[-1], _yaw_ceil_deg),
           f"edge {_yaw_edges[-1]:.10g} deg vs ceiling {_yaw_ceil_deg:.10g} deg")
-    # The TILT twin (2026-09-12, user). D-178 (7) re-cut lateral and yaw and
-    # left this table on D-037's superseded ladder, (3, 6, 9, 12, 15) deg:
-    # against the 10 deg ceiling the [12, inf) bin could never fill and
-    # [9, 12) only ever saw 9-10 deg, so two of the five bins carried no
-    # measurement. Same two homes, same route, same helpers as the two above.
     _tilt_edges = env_bin_edges("_tilt_bin_edges_deg")
     _tilt_ceil_deg = math.degrees(magnitude_ceiling(next(d for d in DR_DIMS if d.name == "tilt")))
     check("the last TILT bin edge is the tilt magnitude ceiling",
           same_number(_tilt_edges[-1], _tilt_ceil_deg),
           f"edge {_tilt_edges[-1]:.10g} deg vs ceiling {_tilt_ceil_deg:.10g} deg")
-    # The HEIGHT twin (D-179 (5), after the H_min measurement 2026-09-14):
-    # the last edge is the start_height ceiling, so the AutoDR phase of a
-    # floored run has a bin for every 20 mm up to 0.120 m.
     _h_edges = env_bin_edges("_start_height_bin_edges_m")
     _h_ceil_m = next(d for d in DR_DIMS if d.name == "start_height").hi_max
     check("the last HEIGHT bin edge is the start_height ceiling",
           same_number(_h_edges[-1], _h_ceil_m),
           f"edge {_h_edges[-1]:.10g} m vs ceiling {_h_ceil_m:.10g} m")
 
-    # -- FixedWidth: No-DR and the evaluation --------------------------------
     nod = FixedWidth.at_centre(DIMS)
     check("No-DR keeps every quantity at its centre",
           all(v == (d.centre, d.centre) for d, v in zip(DIMS, nod.bounds().values())),
@@ -771,27 +582,10 @@ def build_checks(ns, torch) -> list:
           and nod.scalars()["dr/flags_dropped"] == 0.0,
           str(sorted(set(fresh().scalars()) ^ set(nod.scalars()))))
 
-    # -- the 16-column table layout ------------------------------------------
     check("the evaluation table has sixteen columns", width == 16, str(width))
     check("the tilt AZIMUTH owns a column but is not an AutoDR quantity",
           "tilt_azimuth" in TABLE_COLUMNS
           and "tilt_azimuth" not in {d.name for d in DIMS})
-    # THE GRASP BELIEF ERROR (D-183) is the sixteenth column, and the only
-    # one that moves no part: it is the per-episode error in where the
-    # policy believes the cups hold it, applied to the observation alone.
-    # It is in the table so the evaluation can replay it -- an episode
-    # replayed with a freshly drawn belief error is not the same episode --
-    # and so that a run with the magnitude at 0.0 consumes exactly the same
-    # random numbers as one with it on.
-    #
-    # BY NAME, because the env asks for the NAME
-    # (`self._col["grasp_obs_x"]`): a rename here is a KeyError at the
-    # first reset, or a header mismatch against a table CSV written under
-    # the old name. AND NO BOUNDARY: it carries no `DimSpec`, so it is in
-    # neither `DR_DIM_NAMES` nor `boundary_columns`. The COUNT of boundaries
-    # is not restated here -- "the boundary set has exactly seven entries"
-    # above owns that fact, and a second copy would flip with it and prove
-    # nothing of its own.
     _grasp_col = COLUMN_INDEX.get("grasp_obs_x")
     check("the grasp belief error owns a table column and nails NO boundary",
           _grasp_col is not None
@@ -823,7 +617,6 @@ def build_checks(ns, torch) -> list:
           f"friction ({a_lo[TABLE_COLUMNS.index('friction')]}, "
           f"{a_hi[TABLE_COLUMNS.index('friction')]})")
 
-    # -- the pre-drawn table -------------------------------------------------
     rows = [[(r * width + c) % 7 / 7.0 for c in range(width)] for r in range(5)]
     t = RowTable(rows, "deadbeef")
     check("take() hands out row ids in table order and wraps",
@@ -841,8 +634,6 @@ def build_checks(ns, torch) -> list:
     _mine[0][0] = 99.0
     check("the table is COPIED, so a later write cannot walk back validation",
           _t2.rows[0][0] == 0.5, str(_t2.rows[0][0]))
-    # Wrapping IS duplication -- the docstring said otherwise until
-    # 2026-09-09. It is the caller that must stop at served >= n_rows.
     _one = RowTable([[0.25] * width], "x")
     check("a wrapped take REPEATS a row id -- served is what says so",
           _one.take(3) == [0, 0, 0] and _one.served == 3 and _one.n_rows == 1,
@@ -866,9 +657,6 @@ def build_checks(ns, torch) -> list:
               loaded.sha256[:12])
         bad_csv = pathlib.Path(td) / "b.csv"
         bad_csv.write_text("a,b\n0.1,0.2\n", encoding="utf-8")
-        # By the MESSAGE: a two-column file also fails the row-width check
-        # three lines later, and both raise AutoDRError, so 'it raised' does
-        # not prove the header was looked at.
         try:
             RowTable.from_csv(bad_csv)
             _hdr = "no error raised"
@@ -893,19 +681,15 @@ def build_checks(ns, torch) -> list:
             lambda: GridTable(grid_rows, "x", ("lat_r", "tilt", "yaw"), cells=3, reps=2))
     refuses("a grid pair that repeats one quantity refuses",
             lambda: GridTable(grid_rows, "x", ("lat_r", "lat_r"), cells=3, reps=2))
-    # Plan section 8: the azimuth is explicitly NOT a pair partner.
     refuses("a grid pair naming a non-randomised column refuses",
             lambda: GridTable(grid_rows, "x", ("lat_r", "tilt_azimuth"),
                               cells=3, reps=2))
-    # D-178 (2): the lateral ANGLE is a table column without a boundary, like
-    # the azimuth, so it is no pair partner either.
     refuses("a grid pair naming the lateral ANGLE refuses -- lat_phi is a column, not a quantity",
             lambda: GridTable(grid_rows, "x", ("lat_r", "lat_phi"),
                               cells=3, reps=2))
     refuses("a grid table with negative cells or reps refuses",
             lambda: GridTable(grid_rows, "x", ("lat_r", "tilt"), cells=-2, reps=-3))
 
-    # -- the array helpers (numpy stand-in) ----------------------------------
     lo, hi = 0.2, 0.6
     check("map(0) == lo EXACTLY", map_unit_to_bounds(0.0, lo, hi) == lo,
           repr(map_unit_to_bounds(0.0, lo, hi)))
@@ -921,17 +705,9 @@ def build_checks(ns, torch) -> list:
           and float(unit[1, 3]) == 0.5,
           f"{float(unit[0, 3])}, {float(unit[2, 6])}, {float(unit[1, 3])}")
 
-    # THE EVALUATION ROWS (eval plan step B2), through the SAME call the env
-    # makes and with the SHAPES the env passes (L-14): the committed practice
-    # table, (1000, 16) on the "device", a partial reset `(k,)` and the full
-    # first reset `(1000,)`, written into a (1000, 16) `_reset_unit`.
-    # Read with the csv module, NOT with RowTable.from_csv: a mutation that
-    # breaks the reader must flip the reader's checks, not this one.
     with open(ROOT / "scripts" / "eval" / "eval_table_seed20.csv", newline="",
               encoding="utf-8") as _fh:
         _eval_rows = [[float(v) for v in r] for r in list(csv.reader(_fh))[1:]]
-    # The width of the FILE, not `width`: a mutation that shortens
-    # TABLE_COLUMNS must flip the layout checks, not crash this one.
     _w = len(_eval_rows[0])
     _tbl = torch.tensor(_eval_rows)
     _part = torch.tensor([0, 7, 999]).long()
@@ -948,8 +724,6 @@ def build_checks(ns, torch) -> list:
           f"table {tuple(_tbl.shape)}, partial {tuple(_got.shape)}")
 
     n = 10_000
-    # THREE seeds, not one: with a single seed the tolerance is decoration
-    # and the check is really an exact-value assertion.
     shares = []
     for seed in (7, 11, 13):
         rng = random.Random(seed)
@@ -976,11 +750,6 @@ def build_checks(ns, torch) -> list:
     refuses("boundary_assignment refuses a probability outside [0, 1]",
             lambda: boundary_assignment(edge, edge, 7, 5.0))
 
-    # -- the nailing chain, END TO END ---------------------------------------
-    # boundary_assignment -> boundary_columns/sides -> apply_boundary ->
-    # map_unit_to_bounds is the module's central promise, and it was tested
-    # only in disconnected pieces. Here it runs as one chain, for all seven
-    # boundaries at a part-open width.
     chain = fresh()
     for key in chain.keys:
         for _ in range(4):
@@ -1004,7 +773,6 @@ def build_checks(ns, torch) -> list:
     check("the nailed value equals the boundary EXACTLY, for all seven",
           exact, detail or f"{n_b}/{n_b} exact at 4 steps of width")
 
-    # -- telemetry -----------------------------------------------------------
     p = fresh()
     fill(p, "tilt_hi", 240, 240)
     p.update()
@@ -1026,7 +794,6 @@ def build_checks(ns, torch) -> list:
     check("a bound event writes a marked [autodr] line",
           ev.line().startswith("[autodr] tilt_hi:"), ev.line())
 
-    # -- the start floor (SBC step 0, Pläne/SBC_Schritt0_Entwurf.md) --------
     FloorSpec = ns["FloorSpec"]
     FLOOR_KEY = ns["FLOOR_KEY"]
     H_MIN = CENTRES["start_height"]
@@ -1037,8 +804,7 @@ def build_checks(ns, torch) -> list:
         return AutoDR(DIMS, floor=FLOOR)
 
     def attempt(fn):
-        """(value, None) or (None, exc) -- a refusal inside a check must be a
-        FAIL of that check, not a crash of the whole run."""
+        """(value, None) or (None, exc) -- a refusal inside a check must be a FAIL of that check, not a crash of the whole run."""
         try:
             return fn(), None
         except Exception as exc:  # noqa: BLE001
@@ -1057,10 +823,6 @@ def build_checks(ns, torch) -> list:
           f"{f.value(FLOOR_KEY)}, {FLOOR.value_at(5)}, {f.phase}")
     check("map(0) on the floor band IS the floor, exactly",
           map_unit_to_bounds(0.0, F0, H_MIN) == F0, repr(map_unit_to_bounds(0.0, F0, H_MIN)))
-    # Drive the SEVEN to their maxima while the floor is still down: the
-    # invariant must hold even then -- it is what replaces the env's static
-    # negative-start guards (a tilted or offset start inside the pocket is a
-    # wall contact at reset, RT-120).
     for _ in range(10):
         for key in f.keys[:7]:
             fill(f, key, 240, 240)
@@ -1151,8 +913,6 @@ def build_checks(ns, torch) -> list:
                                                            if d.name != "start_height")),
                            floor=FLOOR))
 
-    # The No-DR branch: the same machine with ONE dimension -- the floor
-    # first, then the start_height ceiling up to 0.120 m, nothing else.
     nd = AutoDR(bind_centres({"start_height": H_MIN}, dims=(_sh_table,)), floor=FLOOR)
     for _ in range(5):
         fill(nd, FLOOR_KEY, 240, 240)
@@ -1167,11 +927,6 @@ def build_checks(ns, torch) -> list:
           and nd.bounds()["start_height"] == (H_MIN, _sh_table.hi_max),
           f"{nd.keys}, {nd.bounds()}")
 
-    # -- STAGNATION READINGS (user, 2026-09-14): last_rate, holds, STALL note --
-    # A boundary parked between the thresholds moves nothing and bumps no
-    # version. Its last full-buffer rate and its run of unmoved buffers are
-    # the two curves that make it visible; the STALL note is a review
-    # trigger on the event line, never a change of the rule.
     p = fresh()
     check("before the first full buffer last_rate reads -1 and holds 0",
           p.scalars()["dr/lat_r_hi_last_rate"] == -1.0
@@ -1179,7 +934,7 @@ def build_checks(ns, torch) -> list:
           str({k: v for k, v in p.scalars().items() if k.startswith("dr/lat_r_hi")}))
     fill(p, "lat_r_hi", 120, 240)
     p.update()
-    fill(p, "lat_r_hi", 96, 240)                # 0.40, a second hold
+    fill(p, "lat_r_hi", 96, 240)
     ev = p.update()
     check("two holds in a row: last_rate is the LAST rate (0.40) and holds counts 2",
           p.scalars()["dr/lat_r_hi_last_rate"] == 0.4
@@ -1197,9 +952,9 @@ def build_checks(ns, torch) -> list:
           p.scalars()["dr/yaw_hi_holds"] == 0.0 and p.scalars()["dr/yaw_hi_last_rate"] == -1.0,
           str(p.scalars()["dr/yaw_hi_holds"]))
     fill(p, "lat_r_hi", 0, 240)
-    p.update()                                  # shrink back to 0 = a move
+    p.update()
     fill(p, "lat_r_hi", 0, 240)
-    p.update()                                  # clamped_zero = no move
+    p.update()
     check("clamped_zero counts as a hold (the boundary did not move)",
           p.scalars()["dr/lat_r_hi_holds"] == 1.0, str(p.scalars()["dr/lat_r_hi_holds"]))
     q = fresh()
@@ -1248,7 +1003,6 @@ def build_checks(ns, torch) -> list:
             lambda: AutoDR(DIMS, stall_buffers=2).load_state_dict(
                 {**st_s, "last_rate": {**st_s["last_rate"], "tilt_hi": 2.0}}))
 
-    # -- FIXED-DR (D-192): AutoDR's floor phase, then the full width ---------
     FixedDR = ns["FixedDR"]
 
     def fixed_dr():
@@ -1299,9 +1053,6 @@ def build_checks(ns, torch) -> list:
     refuses("a Fixed-DR state with a boundary off its maximum refuses",
             lambda: fixed_dr().load_state_dict(
                 {**st_x, "steps": {**st_x["steps"], "lat_r_hi": 0}}))
-    # A run in miniature: the env's record/update order, 1000 resets per
-    # pass, success 1 in phase floor and 0 in phase dr. The floor must rise
-    # to H_min and the seven must never leave their maximum.
     def simulated_run():
         sim = fixed_dr()
         rng_s = random.Random(7)
@@ -1327,7 +1078,6 @@ def build_checks(ns, torch) -> list:
 
 
 MUTATIONS: tuple = (
-    # -- the start floor ----------------------------------------------------
     (
         "floor-phase-bounds-read-the-seven-steps",
         (("            out = {d.name: (d.centre, d.centre) for d in self.dims}\n"
@@ -1453,8 +1203,6 @@ MUTATIONS: tuple = (
         (
             "with a floor the boundary set has eight entries and the floor comes LAST",
             "the floor key resolves to the start_height column with side 0.0 -- no geometry change",
-            # Index 7 is then friction_hi, `keys[:7]` holds the floor, and the
-            # No-DR key order flips: the ORDER is load-bearing, not cosmetic.
             "in phase floor every boundary env is nailed to the floor (index 7)",
             "in phase floor every other quantity is its centre and start_height is [floor, H_min], "
             "even with the seven at their maxima",
@@ -1503,8 +1251,6 @@ MUTATIONS: tuple = (
         ("a resume state that is not a dict refuses",),
     ),
     (
-        # _field's OWN dict guard protects the nested blocks, which the
-        # loader's top-level guard never sees.
         "nested-resume-block-need-not-be-a-dict",
         (("    if not isinstance(state, dict):\n"
           "        raise AutoDRError(\n"
@@ -1686,45 +1432,24 @@ MUTATIONS: tuple = (
         ),
     ),
     (
-        # The ceiling walks up and the top lateral bin stops short of it: every
-        # draw between the last edge and the ceiling is then filed in a bin
-        # whose printed upper bound is a lie, and the widest offsets -- the
-        # ones the run exists to measure -- are the ones it mislabels.
         "the-lat_r-ceiling-outgrows-the-last-lateral-bin-edge",
         (('DimSpec("lat_r", "m", 0.0, 0.030, True, _D178),',
           'DimSpec("lat_r", "m", 0.0, 0.040, True, _D178),'),),
         ("the last LATERAL bin edge is the lat_r ceiling",),
     ),
     (
-        # Same defect on the yaw axis: the ceiling goes to 6 deg and the last
-        # bin edge stays at 5. Moved SYMMETRICALLY, because the yaw table is
-        # symmetric about 0 (D-173 (4)) -- a one-sided move would also break
-        # the exactness of the nailing chain through map_unit_to_bounds, and
-        # this mutation would then be counter-proving two things at once.
         "the-yaw-ceiling-outgrows-the-last-yaw-bin-edge",
         (('DimSpec("yaw", "rad", -0.08726646259971648, 0.08726646259971648, False, _D178),',
           'DimSpec("yaw", "rad", -0.10471975511965977, 0.10471975511965977, False, _D178),'),),
         ("the last YAW bin edge is the yaw magnitude ceiling",),
     ),
     (
-        # Same defect on the TILT axis: the ceiling goes to 12 deg and the last
-        # bin edge stays at 10. Every draw between 10 and 12 deg is then filed
-        # in a bin whose printed upper bound is a lie, and those are the angles
-        # the Phase-5 run exists to measure.
-        # CUT ONE-SIDED ON PURPOSE, and this is not cosmetic: `tilt` is a
-        # one-sided magnitude (D-178 (2)), so moving `lo_max` too -- the shape
-        # the yaw twin above needs -- would grow a `tilt_lo` boundary and flip
-        # the eight checks that `one-sided-quantity-grows-a-lower-boundary`
-        # already counter-proves. Only `hi_max` moves, exactly like the lat_r
-        # mutation above, and the declared set stays the single bin-edge check.
         "the-tilt-ceiling-outgrows-the-last-tilt-bin-edge",
         (('DimSpec("tilt", "rad", 0.0, 0.17453292519943295, True, _D178),',
           'DimSpec("tilt", "rad", 0.0, 0.20943951023931953, True, _D178),'),),
         ("the last TILT bin edge is the tilt magnitude ceiling",),
     ),
     (
-        # The HEIGHT twin: only `hi_max` moves, so the ceiling outgrows the
-        # last height bin edge and the top of the AutoDR phase has no bin.
         "the-height-ceiling-outgrows-the-last-height-bin-edge",
         (('DimSpec("start_height", "m", 0.0, 0.120, True,',
           'DimSpec("start_height", "m", 0.0, 0.140, True,'),),
@@ -1934,7 +1659,6 @@ MUTATIONS: tuple = (
         ),
     ),
     (
-        # eval plan step B2, the plan's own mutation: env i plays row i+1.
         "table-rows-shifted-by-one",
         (("return table_unit[env_ids]",
           "return table_unit[(env_ids + 1) % table_unit.shape[0]]"),),
@@ -1945,21 +1669,12 @@ MUTATIONS: tuple = (
         (("return tuple(d.name for d in dims if TESTWERT in d.source)", "return ()"),),
         (
             "every quantity but friction carries [TESTWERT]",
-            # The report counts its marked LINES against testwert_dims, so an
-            # empty list and four marked lines stop agreeing.
             "the provenance report names every quantity and both constants",
-            # ... and both as_dict bodies call the same emptied function.
             "AutoDR.as_dict publishes the decided-not-derived names",
             "FixedWidth.as_dict publishes the decided-not-derived names",
         ),
     ),
     (
-        # THE mutation the old marked-line count could not see: one ceiling
-        # quietly loses its marker. `testwert_dims` drops to three AND the
-        # report prints one marked line fewer, so the two derived sides still
-        # agree with each other -- only the MARKED_PROVENANCE_LINES literal
-        # notices. The as_dict readers notice too, because the published list
-        # is the same shrunken one.
         "a-decided-ceiling-quietly-loses-its-marker",
         (('            "[TESTWERT] hi = Phase-5 ceiling, decided not derived -- D-179 (1); "',
           '            "hi = Phase-5 ceiling, decided not derived -- D-179 (1); "'),),
@@ -1971,10 +1686,6 @@ MUTATIONS: tuple = (
         ),
     ),
     (
-        # The telemetry key shrinks while `testwert_dims` stays whole: the
-        # provenance checks above all read the FUNCTION, so only a reader of
-        # the published dict can see this. Both bodies, because each carries
-        # its own copy of the line.
         "the-published-testwert-list-loses-a-name",
         (
             ('            "retreat_at": self.retreat_at,\n'
@@ -1996,18 +1707,12 @@ MUTATIONS: tuple = (
         ),
     ),
     (
-        # The friction band gets the marker back. D-181 (2) gives it a source,
-        # so the marker would announce a provisional number that is not one,
-        # beside four ceilings that really are decided-not-derived.
         "the-sourced-friction-band-is-marked-again",
         (('            "DuPont PA66/POM table span, assumed PA6/POM pairing, "',
           '            "[TESTWERT] DuPont PA66/POM table span, assumed PA6/POM pairing, "'),),
         (
             "every quantity but friction carries [TESTWERT]",
             "the friction line is reported as sourced, not as a [TESTWERT]",
-            # A FIFTH marked line and a fifth published name: the literal
-            # anchor and both as_dict readers see the sourced band join the
-            # provisional ones.
             "the provenance report names every quantity and both constants",
             "AutoDR.as_dict publishes the decided-not-derived names",
             "FixedWidth.as_dict publishes the decided-not-derived names",
@@ -2031,10 +1736,6 @@ MUTATIONS: tuple = (
         ),
     ),
     (
-        # ONE column goes and the width drops back to fifteen. The anchor is
-        # the joint-noise line rather than the last line of the tuple: the
-        # last line moved when D-183 appended the grasp column, and an
-        # anchor on "whatever is last" would have to move again next time.
         "a-table-column-is-lost",
         (('    "joint_noise_5",    # 14\n', ""),),
         ("the evaluation table has sixteen columns",),
@@ -2049,24 +1750,12 @@ MUTATIONS: tuple = (
         ),
     ),
     (
-        # THE ONE HOME OF THE LAYOUT RENAMES THE GRASP COLUMN. The width is
-        # unchanged, every AutoDR quantity still maps to its own column and
-        # nothing in this file notices -- but `insertion_env` asks for
-        # `self._col["grasp_obs_x"]` and gets a KeyError at the first reset,
-        # and a table CSV written under the old header stops loading.
         "the-grasp-column-is-renamed",
         (('    "grasp_obs_x",      # 15 grasp belief error',
           '    "grasp_obs_off_x",  # 15 grasp belief error'),),
         ("the grasp belief error owns a table column and nails NO boundary",),
     ),
     (
-        # EVERY boundary env nails the GRASP column instead of its own
-        # quantity. The belief error -- which no boundary owns and no buffer
-        # tracks -- is driven to 0 or 1 on half the episodes, while the
-        # quantity the boundary is supposed to probe stays uniform inside
-        # the band. The buffer then fills with flags from episodes that
-        # never sat at the edge, and the boundary opens on evidence about a
-        # quantity it does not describe.
         "every-boundary-nails-the-grasp-column",
         (('return tuple(self._dim_of[k.rsplit("_", 1)[0]].column for k in self.keys)',
           'return tuple(COLUMN_INDEX["grasp_obs_x"] for k in self.keys)'),),
@@ -2219,9 +1908,6 @@ MUTATIONS: tuple = (
         ),
     ),
     (
-        # A future provider (the eval/table one, a DORAEMON wrapper) that
-        # forgets to answer inherits "I reach the dimension maxima" and
-        # turns on the tilt buffers for a run whose pocket never moves.
         "provider-bounds_max-gets-a-default-again",
         (('        raise NotImplementedError\n\n    def bounds_arrays(self) -> tuple:',
           '        return {d.name: (d.lo_max, d.hi_max) for d in self.dims}\n\n    def bounds_arrays(self) -> tuple:'),),
@@ -2230,9 +1916,6 @@ MUTATIONS: tuple = (
         ),
     ),
     (
-        # THE B2 DEFECT ITSELF: the env sizes `_tilt_rot` from the width-0
-        # bounds instead of the reach, so an AutoDR run keeps None for the
-        # whole run and measures env-local while the pocket tilts.
         "bounds_max-collapses-onto-the-current-bounds",
         (("        return {d.name: (d.lo_max, d.hi_max) for d in self.dims}",
           "        return self.bounds()"),),
@@ -2243,8 +1926,6 @@ MUTATIONS: tuple = (
         ),
     ),
     (
-        # The other direction: a No-DR run inherits the base class and would
-        # allocate tilt buffers for a pocket that never moves.
         "fixedwidth-inherits-the-dimension-maxima",
         (("        return self.bounds()\n\n    def record(self, key: str, success: bool) -> None:\n        return None",
           "        return {d.name: (d.lo_max, d.hi_max) for d in self.dims}\n\n"
@@ -2254,9 +1935,6 @@ MUTATIONS: tuple = (
         ),
     ),
     (
-        # The evaluation provider (plan section 3) is the one every policy is
-        # scored against; at anything but full width the shared table is
-        # mapped onto bounds nobody agreed on.
         "eval-provider-does-not-start-at-full-width",
         (("        return cls(dims, steps=steps.pop())", "        return cls(dims, steps=0)"),),
         (
@@ -2296,10 +1974,6 @@ MUTATIONS: tuple = (
         ("a centre outside the maxima refuses",),
     ),
     (
-        # D-179 (2) undone: a one-sided quantity keeps the table's placeholder
-        # lower edge instead of its centre. The width-0 bounds still read the
-        # centre, so only `lo_max` itself -- what `bounds_max` reports and a
-        # FixedWidth state saves -- carries the wrong number.
         "one-sided-lower-edge-keeps-the-placeholder",
         (("lo_max=float(centre)", "lo_max=self.lo_max"),),
         (
@@ -2315,9 +1989,6 @@ MUTATIONS: tuple = (
 )
 
 
-# The floor rides on the same machine, so the OLD mutations break floor checks
-# too. Listed here, in one place, rather than spread over the entries above:
-# each line says which floor promise a pre-floor defect would also break.
 STALL_MUTATIONS: tuple = (
     (
         "hold-writes-no-event",
@@ -2427,8 +2098,6 @@ STALL_MUTATIONS: tuple = (
     ),
 )
 
-# FIXED-DR (D-192, 2026-09-23). Every expected flip below was confirmed by
-# --self-test on 2026-09-23.
 FIXED_DR_MUTATIONS: tuple = (
     (
         "fixed-dr-seven-start-at-width-0",
@@ -2490,7 +2159,6 @@ FIXED_DR_MUTATIONS: tuple = (
 MUTATIONS = MUTATIONS + STALL_MUTATIONS + FIXED_DR_MUTATIONS
 
 FLOOR_EXTRA_FLIPS: dict = {
-    # Stagnation pins (2026-09-14) that the OLDER mutations also flip.
     "all_at_max-ignores-the-step-count": (
         "clamped_max does NOT count as a hold -- a boundary at its ceiling is done",
     ),
@@ -2595,8 +2263,6 @@ _FD_STATE = ("a Fixed-DR state round-trips under its own format; AutoDR refuses 
 _FD_SIM = "Fixed-DR in a simulated run: the floor reaches H_min and the seven never move"
 
 FIXED_DR_EXTRA_FLIPS: dict = {
-    # Fixed-DR pins (2026-09-23) that the OLDER mutations also flip: FixedDR
-    # inherits every AutoDR line these break, so the flip is the point.
     "floor-not-excluded-from-the-dr-draw": (_FD_SIM,),
     "floor-envs-not-nailed": (_FD_SIM,),
     "phase-never-leaves-floor": (_FD_SIM, _FD_AT_MAX, _FD_NO_B, _FD_FLOOR, _FD_CURVES),
@@ -2624,11 +2290,7 @@ _WORKER_TORCH = None
 
 
 def _run_mutation(index: int):
-    """One mutation by its table index -- the unit of the process pool.
-
-    Returns ``(name, got)`` or ``(name, exc)``: a crash of the mutated module
-    is a result the parent reports, not a crash of the pool.
-    """
+    """One mutation by its table index -- the unit of the process pool."""
     global _WORKER_TORCH
     if _WORKER_TORCH is None:
         _WORKER_TORCH = _load_torch()
@@ -2657,8 +2319,6 @@ def _self_test(torch) -> int:
         return 1
     print(f"  PASS  baseline: {len(baseline)} checks green")
 
-    # MEASURED 2026-09-14: 132 mutations in sequence took 210 s; the table
-    # is spread over a process pool, the report keeps the table's order.
     results: dict = {}
     with concurrent.futures.ProcessPoolExecutor() as pool:
         for name, got in pool.map(_run_mutation, range(len(MUTATIONS)), chunksize=4):
@@ -2671,8 +2331,6 @@ def _self_test(torch) -> int:
             print(f"  FAIL  {name}: the mutated module raised {type(exc).__name__}: {exc}")
             rc = 1
             continue
-        # A check that DISAPPEARED counts as flipped: a mutation can remove the
-        # branch a check lived in, and "it never ran" is not "it passed".
         flipped = {k for k in baseline if k not in got or not got[k]}
         unknown = set(expected) - set(baseline)
         missing = set(expected) - flipped

@@ -44,10 +44,6 @@ BOOT_RESAMPLES = 10000
 BOOT_SEED = 20260921
 KEY = "success_train"
 
-# Bin edges: COPIES of the env's tuples (Belege_Streuwerte.md section D), same
-# rule as `insertion_env._rate_by_bin`: bin i = first edge the value is below;
-# the last bin also takes everything at or above the last edge. Friction has no
-# edges anywhere in the repo -> no friction bins (named gap, not invented).
 BIN_EDGES = {
     "lat_r_mm": (6.0, 12.0, 18.0, 24.0, 30.0),
     "yaw_abs_deg": (1.0, 2.0, 3.0, 4.0, 5.0),
@@ -74,8 +70,7 @@ def pct_nearest_rank(values, q: float) -> float | None:
 
 
 def policy_rows(df: pd.DataFrame) -> list:
-    """One dict per (block, method, seed, tag): rates with Wilson, outcomes,
-    force and steps over the SUCCESSES only (eval_plan.md section 4)."""
+    """One dict per (block, method, seed, tag): rates with Wilson, outcomes, force and steps over the SUCCESSES only (eval_plan.md section 4)."""
     out = []
     for (block, method, seed, tag), g in df.groupby(["block", "method", "seed", "tag"], sort=True):
         n = int(len(g))
@@ -110,9 +105,7 @@ def policy_rows(df: pd.DataFrame) -> list:
 
 
 def method_diff(a, b, names=("autodr", "nodr")) -> dict:
-    """``names[0] - names[1]`` over the per-seed rates (K1/K2: AutoDR - No-DR,
-    K5: AutoDR - Fixed-DR). Welch is the headline (Colas et al. 2018 Sec. 6);
-    the percentile bootstrap stands beside it (Sec. 3.2)."""
+    """``names[0] - names[1]`` over the per-seed rates (K1/K2: AutoDR - No-DR, K5: AutoDR - Fixed-DR)."""
     a = np.asarray(a, dtype=float)
     b = np.asarray(b, dtype=float)
     if len(a) < 2 or len(b) < 2:
@@ -148,8 +141,6 @@ def method_rates(pol: list, block: str) -> tuple[list, list]:
     return seed_rates(pol, block, "autodr"), seed_rates(pol, block, "nodr")
 
 
-# K5 (D-192, eval_plan.md section 1.4, section 5 point 7): AutoDR's rates from
-# the block K1/K2 already read, Fixed-DR's from its own -F block (same table).
 K5_BLOCKS = (("K5", "T-final", "T-final-F"), ("K5_nominal", "T-nominal", "T-nominal-F"))
 
 
@@ -179,9 +170,7 @@ def k5(pol: list, blocks: set) -> dict:
 
 
 def select_final(pol: list) -> dict:
-    """eval_plan.md section 2 B, on T-auswahl: highest rate; tie -> smaller force
-    p95 over the successes; tie -> smaller seed number. A tie that survives all
-    three (same seed number in both methods) is not settled by the plan."""
+    """eval_plan.md section 2 B, on T-auswahl: highest rate; tie -> smaller force p95 over the successes; tie -> smaller seed number."""
     cand = [p for p in pol if p["block"] == "T-auswahl" and p["tag"] == ""]
     if not cand:
         raise StatsError("no T-auswahl runs: the final policy cannot be selected")
@@ -197,8 +186,7 @@ def select_final(pol: list) -> dict:
 
 
 def k3_blocks(df: pd.DataFrame, final: dict) -> dict:
-    """Each boundary block of the FINAL policy against its overall T-final rate,
-    Newcombe difference (block - overall)."""
+    """Each boundary block of the FINAL policy against its overall T-final rate, Newcombe difference (block - overall)."""
     sel = lambda b: df[(df["block"] == b) & (df["method"] == final["method"])
                        & (df["seed"] == final["seed"]) & (df["tag"] == "")]
     g, f = sel("T-grenze"), sel("T-final")
@@ -255,8 +243,6 @@ def summarize(df: pd.DataFrame) -> dict:
             try:
                 out["K3"] = k3_blocks(df, out["final_policy"])
             except StatsError as exc:
-                # e.g. T-grenze ran another policy than the rule selects. Kept in
-                # the file and turned into exit 1 by main(), never dropped.
                 out["K3"] = {"error": str(exc)}
     k4 = {}
     for m in ("autodr", "nodr"):
@@ -265,8 +251,6 @@ def summarize(df: pd.DataFrame) -> dict:
             k4[m] = {"rates": r, "min": min(r), "max": max(r),
                      "sd": float(np.std(r, ddof=1)) if len(r) > 1 else None}
     out["K4"] = k4
-    # Fixed-DR plays T-final's table in its own block T-final-F (D-192); eval_collect
-    # keeps each method in its own block, so the keys stay unique.
     fin = df[df["block"].isin(("T-final", "T-final-F")) & (df["tag"] == "")]
     out["bins_T_final"] = {
         f"{m}_s{s}": {c: bin_rates(g, c, e) for c, e in BIN_EDGES.items()}
@@ -285,16 +269,11 @@ def write_outputs(results: pathlib.Path, summary: dict) -> None:
         results / "summary_tables.csv", index=False, lineterminator="\n")
 
 
-# ---------------------------------------------------------------------------
 # Self-test (D-080): checks on built data; each mutation of THIS file's source
-# must flip exactly its declared checks.
-# ---------------------------------------------------------------------------
 
 N_EP = 100
-K_AUTODR = (90, 92, 94, 96, 98)       # mean 0.94
-K_NODR = (40, 42, 44, 46, 90)         # mean 0.524, skewed: Welch != pooled, BCa != percentile
-# Fixed-DR (D-192): T-final-F mean 0.74 -> K5 interval wholly above 0;
-# T-nominal-F mean 0.928 -> K5_nominal interval contains 0.
+K_AUTODR = (90, 92, 94, 96, 98)
+K_NODR = (40, 42, 44, 46, 90)
 K_FIXED = {"T-final-F": (70, 72, 74, 76, 78), "T-nominal-F": (80, 90, 95, 99, 100)}
 
 
@@ -305,7 +284,6 @@ def _frame() -> pd.DataFrame:
             for block in ("T-final", "T-nominal", "T-auswahl"):
                 for i in range(N_EP):
                     ok = int(i < k)
-                    # autodr: two successes per seed hit the force limit -> strict differs
                     viol = int(ok and method == "autodr" and i < 2)
                     rows.append({"block": block, "method": method, "seed": seed, "tag": "",
                                  "row_id": i, "boundary_key": "", "outcome": "success" if ok else "timeout",
@@ -323,7 +301,6 @@ def _frame() -> pd.DataFrame:
                              "steps": 40 + i, "force_max_filtered_n": 10.0 + seed,
                              "lat_r_mm": (i % 31) * 1.0, "yaw_abs_deg": (i % 6) * 1.0,
                              "tilt_deg": (i % 11) * 1.0, "start_height_m": 0.02 + (i % 10) * 0.01})
-    # Boundary block of the final policy (autodr s5): 2 keys x 50 rows.
     for j in range(100):
         rows.append({"block": "T-grenze", "method": "autodr", "seed": 5, "tag": "", "row_id": j,
                      "boundary_key": "lat_r_hi" if j < 50 else "yaw_lo", "outcome": "success",
@@ -396,7 +373,6 @@ def _run_checks(ns) -> dict:
     res[CHECKS[7]] = ("blocks" in k3 and k3["met"] is False
                       and np.allclose(k3["blocks"]["lat_r_hi"]["newcombe_ci"], ref, atol=1e-12))
     lb = s["bins_T_final"]["autodr_s1"]["lat_r_mm"]
-    # values 0..30 (i % 31): 30 -> last bin; 24..29 -> last bin as well.
     res[CHECKS[8]] = lb[-1]["n"] == sum(1 for i in range(N_EP) if (i % 31) >= 24)
     res[CHECKS[9]] = ns["pct_nearest_rank"](range(1, 21), 0.95) == 19
     import tempfile
@@ -423,7 +399,6 @@ def _run_checks(ns) -> dict:
 MUTATIONS = (
     ("rate-denominator-n-minus-1",
      '"success_train": k / n, "success_train_k"', '"success_train": k / (n - 1), "success_train_k"',
-     # The selection keeps its order (every rate scales by the same 100/99).
      (CHECKS[1], CHECKS[2], CHECKS[3], CHECKS[5], CHECKS[11])),
     ("welch-pooled-variance",
      "welch = st.ttest_ind(a, b, equal_var=False)", "welch = st.ttest_ind(a, b, equal_var=True)",
@@ -451,12 +426,10 @@ MUTATIONS = (
      (CHECKS[4],)),
     ("selection-picks-the-lowest-rate",
      "key = lambda p: (-p[KEY],", "key = lambda p: (p[KEY],",
-     # K3 then finds no T-grenze run of the selected policy and records an error.
      (CHECKS[6], CHECKS[7])),
     ("p95-drops-the-ceil",
      "int(math.ceil(q * len(v))) - 1", "int(q * len(v))",
      (CHECKS[9],)),
-    # K5 (D-192, eval_plan.md section 5 point 7).
     ("k5-swaps-the-arms",
      "d = method_diff(a, f, names=", "d = method_diff(f, a, names=",
      (CHECKS[11], CHECKS[12])),
@@ -477,8 +450,6 @@ MUTATIONS = (
      'fin = df[(df["block"] == "T-final") & (df["tag"] == "")]',
      (CHECKS[13],)),
 )
-# Mutations apply to the code ABOVE this marker only -- the table itself
-# carries every anchor a second time.
 _SELF_TEST_MARKER = "# Self-test (D-080): checks on built data"
 
 

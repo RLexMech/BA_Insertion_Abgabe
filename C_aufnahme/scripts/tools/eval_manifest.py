@@ -1,20 +1,7 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-r"""The evaluation run's folder name and its ``eval_manifest.json`` (eval_plan.md
-section 7, step C).
-
-Pure and stdlib, so ``play.py`` loads it by path (like ``checkpoint_width.py``)
-and the laptop runs the self-test without Isaac.
-
-ONE HOME for the manifest's field list: ``MANIFEST_FIELDS``. ``build_manifest``
-refuses a field set that is not EXACTLY that tuple -- equality, not "nothing
-missing" -- so a field cannot be dropped or misspelled in ``play.py`` without
-the run ending non-zero. A value of ``None`` is allowed only for the fields in
-``MAY_BE_NONE``; everything else must be known when the run ends.
-
-    python scripts/tools/eval_manifest.py --self-test
-"""
+"""The evaluation run's folder name and its ``eval_manifest.json`` (eval_plan.md section 7, step C)."""
 
 from __future__ import annotations
 
@@ -28,38 +15,34 @@ import sys
 SCHEMA = "eval-manifest-v1"
 
 MANIFEST_FIELDS: tuple[str, ...] = (
-    "plan_commit",            # last commit that touched eval_plan.md
-    "code_commit",            # HEAD of the clone that ran
-    "code_dirty",             # True when `git status --porcelain` is not empty
+    "plan_commit",
+    "code_commit",
+    "code_dirty",
     "checkpoint_path",
     "checkpoint_sha256",
     "table_path",
     "table_sha256",
     "table_rows",
-    "width",                  # target | nominal
-    "tag",                    # folder suffix, "" without --eval-tag
+    "width",
+    "tag",
     "task",
     "seed",
     "num_envs",
     "episode_cap_steps",
     "step_dt_s",
-    "action_mode",            # how the action is chosen at inference
+    "action_mode",
     "control_mode",
     "obs_wrench_mode",
-    "noise",                  # the observation-noise widths of the env cfg
-    "versions",               # isaacsim / isaaclab / rsl_rl / torch / python
-    "normalizer_sha256_before",   # G5
-    "normalizer_sha256_after",    # G5
+    "noise",
+    "versions",
+    "normalizer_sha256_before",
+    "normalizer_sha256_after",
     "policy_steps_run",
     "envs_finished_first_episode",
     "wall_time_s",
-    "env_cfg",                # the full env cfg as a dict
+    "env_cfg",
 )
 
-# `plan_commit`: a sparse run clone may not carry eval_plan.md's history.
-# The two normaliser hashes: an agent cfg without observation normalisation
-# has no `_mean/_var`. Each None is a finding for check G5 / eval_collect to
-# judge, not for this module to hide.
 MAY_BE_NONE = ("plan_commit", "normalizer_sha256_before", "normalizer_sha256_after")
 
 WIDTHS = ("target", "nominal")
@@ -94,18 +77,13 @@ def eval_dirname(width: str, table_sha256: str, tag: str = "") -> str:
 
 
 def count_table_rows(path) -> int:
-    """Data rows of the table CSV (header and blank lines not counted) -- the
-    same rule ``autodr.RowTable.from_csv`` reads with."""
+    """Data rows of the table CSV (header and blank lines not counted) -- the same rule ``autodr.RowTable.from_csv`` reads with."""
     lines = pathlib.Path(path).read_bytes().decode("utf-8").splitlines()
     return sum(1 for line in lines[1:] if line.strip())
 
 
 def git_commits(repo_dir, plan_file: str = "eval_plan.md") -> dict:
-    """``{"plan_commit", "code_commit", "code_dirty"}`` of the clone at ``repo_dir``.
-
-    ``code_commit`` must exist -- a run nobody can tie to a commit is refused.
-    ``plan_commit`` is ``None`` when git knows no commit for ``plan_file``.
-    """
+    """``{\"plan_commit\", \"code_commit\", \"code_dirty\"}`` of the clone at ``repo_dir``."""
     def _git(*args: str) -> str:
         out = subprocess.run(
             ["git", "-C", str(repo_dir), *args],
@@ -141,14 +119,8 @@ def write_manifest(run_dir, manifest: dict) -> pathlib.Path:
     path = pathlib.Path(run_dir) / "eval_manifest.json"
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8") as fh:
-        # default=str: the env cfg carries slices, paths and callables.
         json.dump(manifest, fh, indent=2, default=str)
     return path
-
-
-# ---------------------------------------------------------------------------
-#  Self-test
-# ---------------------------------------------------------------------------
 
 
 def _refuses(fn, *args, **kwargs) -> bool:

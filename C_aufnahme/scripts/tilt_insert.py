@@ -1,161 +1,7 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-r"""THE KIPP INSTRUMENT: a scripted insertion that goes in STRAIGHT and TILTED,
-and reads the peak force and the SAPU interpenetration AGAINST the depth.
-
-STATUS: SPENT (2026-09-01). It ran six times, RT-124 .. RT-129
-(``rt_logs/VERDICTS.md``), and RT-129 answered the question it was built
-for AGAINST the instrument: the "capture depth" it reads is the commanded
-``--upright-depth-mm`` ramp (the depth profile's ``tilt max`` column falls
-linearly from the start tilt to zero exactly over that distance), and the
-forces it reads are this controller's, not the task's. The two measurement
-rules quoted below (F_max lower bound, engaged capture depth) are WITHDRAWN
-and the suction-cup datasheet anchor with them -- home: the inbox entry "The tilted scripted insertion is SPENT ..." (2026-09-01).
-No further runs are planned; the text below is kept as the record of what
-the run was meant to pay and how it commands the tilt.
-
-WHY THIS FILE EXISTS (as written 2026-09-01, before RT-129)
---------------------
-Three numbers in ``insertion_env_cfg.py`` are marked PLACEHOLDER -- invented,
-no source -- and all three name the SAME missing measurement in their marks:
-
-* ``force_abort_f_max_n`` (``:940-952``). The selection RULE is decided and the
-  number is not: the lower bound is "the largest measured peak force of a CLEAN
-  scripted insertion, straight AND tilted (edge-first), several repeats, across
-  the fixture noise"; the upper anchor is the suction cup's holding force from
-  its datasheet, ``[Datenblatt pending]``. The datasheet limit must be VERIFIED
-  above the measured peak -- a limit below it is a conflict and the decision
-  stops. Today's 60.0 N came down from 100.0 N after RT-107 and has no source
-  either way.
-* ``engaged_depth_m`` (``:953-963``). The RULE is "the MEASURED CAPTURE DEPTH
-  of the tilted scripted insertion". Today's 10.8 mm is 30 % of the seat depth,
-  set by hand on 2026-08-30 and downgraded again on 2026-09-01.
-* ``abort_payment`` (``:627``). Its magnitude was left coupled to ``F_max`` at
-  the same measurement (D-114, "decided together with ``F_max``").
-
-None of them can be read off a run that cannot tilt. D-071 records that the
-real part goes in EDGE FIRST and, in the same entry, that nothing in the code
-encodes the tilted entry. This run encodes it -- as a commanded SCHEDULE, not
-as a search.
-
-WHAT IT MEASURES, AND WHAT IT REFUSES TO DECIDE
------------------------------------------------
-Four quantities, all against the same depth axis, in the same bins:
-
-    force N | interpenetration mm (SAPU) | tilt deg | lateral offset mm
-
-and per episode the peaks plus whether the episode was CLEAN.
-
-IT SETS NO THRESHOLD, the same refusal ``seat_probe.py`` makes. What counts as
-``F_max``, what counts as the capture depth, and what the abort should pay are
-DECISIONS. This run reports the distributions those decisions need, marks the
-``[Datenblatt pending]`` half as still missing, and stops there.
-
-"CLEAN" IS NOT A JUDGEMENT EITHER. It is the rule the ``force_abort_f_max_n``
-mark already fixed: an episode is clean when the part reached the success depth
-``SEATED_SUCCESS_DEPTH`` INSIDE the pocket cross-section, and did not end in
-``ABORT_FORCE``. Both halves matter -- RT-107 is the standing proof that a
-depth reading without the lateral gate can be 109 mm beside the fixture and
-still read 0.0 mm of depth.
-
-HOW THE TILT IS COMMANDED
--------------------------
-``scripted_policy.tilt_offsets`` gives ONE fixed start tilt per env, spanning
-the requested range with the endpoints included. A span that crosses zero
-therefore measures the STRAIGHT insertion and both tilt SIGNS in one run, under
-the same controller, the same gains and the same noise draw. Two separate runs
-would differ in all three and the comparison would carry those differences.
-
-The sign is a result, not a detail: the part's underside is a sloped strip on
-one side and a parallel strip on the other
-(``insertion_tasks_cfg.py:1393-1409``), so the two tilt directions meet
-different geometry.
-
-WHAT "TILT" MEANS HERE, and it is not the pocket axis. RT-127 (training PC,
-git e38e687) measured the start attitude at ``signed p50 -180.0000 deg`` in all
-16 envs: the tool axis is held ANTIPARALLEL to the pocket axis. So the run
-LATCHES the step-1 attitude per env (``scripted_policy.latch_tilt_reference``,
-the same refusal-to-assume ``latch_yaw_target`` makes for the yaw) and both
-commands and reports the tilt as the difference from it
-(``tilt_since_reference``). A commanded +8 deg is eight degrees away from how
-the part is held, which is what "edge-first" names. The ABSOLUTE angle to the
-pocket axis stays in the log next to it, as ``peak_axis_tilt_rad`` and in the
-step-1 line; the two are not interchangeable.
-
-``scripted_policy.tilt_schedule`` holds the full tilt above the opening plane
-and ramps it LINEARLY to zero by ``--upright-depth-mm``. A ramp and not a step,
-because the walls forbid the tilt long before the seat (D-106 (2): 0.935 deg
-across, 1.905 / 2.821 deg along at full seat). The ramp shape is a measurement
-setting; the run reports the force and the interpenetration THAT ramp produced.
-
-THE ALIGN GATE GAINS ONE CONDITION, and it lives here rather than in
-``advance_phase``: an env that is otherwise ready to descend but has not
-reached its commanded tilt is held in ALIGN. Without it the descent starts
-while the wrist is still turning, and the force recorded would be the
-schedule's, not the task's. ``advance_phase`` is left untouched because the
-D-108 gate run shares it.
-
-WHERE THIS RUN STANDS ON THE D-108 INFORMATION BOUNDARY
--------------------------------------------------------
-This is a PROBE, like ``seat_probe.py``, not the gate. The split is deliberate
-and it is drawn INSIDE the loop:
-
-* THE CONTROLLER reads observation channels only -- ``tip_rel``,
-  ``pocket_quat``, ``yaw_cos_sin``, ``ee_quat``, ``force`` -- exactly what the
-  policy will get. Every command in this file is computed from those.
-* THE INSTRUMENT reads env internals: ``_entrance_pos`` and ``_fixture_quat``
-  for the SAPU pose, and the peg body index. It has to: interpenetration is not
-  an observation channel and never will be.
-
-So the measurement is outside the boundary and the control is inside it. Said
-here because ``check_env_wiring.py`` enforces the boundary on
-``scripted_insert.py`` only, and a reader must not have to infer which rule
-applies to which file.
-
-THE SAPU QUERY IS BUILT HERE, NOT BORROWED FROM THE ENV
--------------------------------------------------------
-The env builds its two Warp queries only when ``rl_terms_enabled`` is True
-(``insertion_env.py:508-528``), and this run needs the terms OFF: with them on,
-the force abort and the success termination end episodes mid-descent and the
-depth profile stops exactly where it gets interesting.
-
-So this script constructs the SAME query the env constructs -- part OBJ
-sampled, fixture OBJ queried,
-``insertion_sdf.SdfDistanceQuery(..., mesh_obj_path=...)`` -- and calls it with
-the SAME transform (``insertion_env.py:1167-1171``, copied line for line,
-including the env-local part position). One class, one kernel, no second
-implementation.
-
-NAMED, UNRESOLVED: the fixture mesh is not watertight (9 unpaired edges,
-RT-64) and the SDF sign has never been measured AT the surface. Every
-interpenetration number this run prints inherits that flag. It is a comparison
-between tilt values under one query, not an absolute penetration depth.
-
-THE FORCE ABORT IS A MEASUREMENT SETTING HERE
-----------------------------------------------
-``--f-abort`` writes the limit into the cfg BEFORE ``gym.make``, the same way
-``scripted_insert.py`` does and for the same reason (the startup banner is the
-only proof the override arrived). A run that aborts is a TRUNCATED curve: the
-peak force it reports is the limit, not the task's. The run says so in one loud
-line and the metrics file carries ``abort_truncated``.
-
-INVOCATION
-----------
-Laptop: nothing here runs without Isaac. The offline arithmetic underneath it
-is checked by ``scripts/check_scripted_insert.py --self-test``.
-
-Training PC, the straight-and-tilted sweep this file was written for::
-
-    .\scripts\rt_log.ps1 RT-N python scripts/tilt_insert.py
-        --task Ur5e-Insertion-Direct-v0 --num_envs 16 --headless
-        --tilt-axis y --tilt-sweep-deg -8 8 --upright-depth-mm 8
-        --f-abort 300 --max-steps 900
-
-``--f-abort 300`` is not a proposal for ``F_max``. It is how the curve is kept
-from being truncated by the invented limit of the day while the clean peak is being
-found -- the same move RT-69 made with 200 N.
-"""
+"""THE KIPP INSTRUMENT: a scripted insertion that goes in STRAIGHT and TILTED, and reads the peak force and the SAPU interpenetration AGAINST the depth."""
 
 """Launch Isaac Sim Simulator first."""
 
@@ -372,8 +218,6 @@ simulation_app = app_launcher.app
 
 """Rest everything follows."""
 
-# GUARDED for the reason D-081 exists: RT-66 died on an import-time TorchScript
-# failure whose traceback printed while the wrapper still reported exit 0.
 try:
     import json  # noqa: E402
 
@@ -400,23 +244,13 @@ except BaseException:
 
 
 def _slice(obs, name: str):
-    """Read one observation block by NAME, from the one table that owns it.
-
-    Same helper and same reason as ``scripted_insert.py`` and ``seat_probe.py``:
-    ``OBS_SLICES`` is the single home of the channel layout, and indexing by
-    name keeps this script correct when a block moves.
-    """
+    """Read one observation block by NAME, from the one table that owns it."""
     lo, hi = insertion_math.OBS_SLICES[name]
     return obs[:, lo:hi]
 
 
 def _percentiles(values: list) -> dict:
-    """p50 / p90 / p95 / max over a list, or an explicit empty marker.
-
-    NEAREST-RANK, no interpolation -- the same reading ``scripted_insert.py``
-    uses, so two metrics files can be compared row by row. An empty list
-    returns ``None``s, which land in the JSON as ``null`` rather than as NaN.
-    """
+    """p50 / p90 / p95 / max over a list, or an explicit empty marker."""
     if not values:
         return {"n": 0, "p50": None, "p90": None, "p95": None, "max": None}
     s = sorted(values)
@@ -431,42 +265,13 @@ def main() -> int:
     env_cfg = parse_env_cfg(
         args_cli.task, device=args_cli.device, num_envs=args_cli.num_envs, use_fabric=not args_cli.disable_fabric
     )
-    # A MEASUREMENT env, and here it is not only "a scripted controller never
-    # learns". With the RL terms ON the force abort and the success termination
-    # end episodes mid-descent, and the depth profile this run exists to
-    # produce would stop exactly where it gets interesting. The abort that
-    # stays armed is the CONTROLLER's own (advance_phase), which stops
-    # commanding without ending the episode.
     env_cfg.rl_terms_enabled = False
-    # PINNED (2026-09-12). The three Phase-5 scatter fields default ON, and
-    # `obs_noise.resolve_obs_noise_model` does NOT consult `rl_terms_enabled`
-    # -- a measurement env builds the noise model as readily as a training env
-    # does, and Isaac Lab applies it to `obs_buf["policy"]` in `step()`. This
-    # script reads its pose AND its force straight out of that buffer
-    # (`obs = obs_dict["policy"]`, then `_slice(obs, "tip_rel" / "force" /
-    # "yaw_cos_sin" / "ee_quat")`), so 2.5 mm of per-episode pocket bias would
-    # move the depth column of the profile, 3.5 N of per-step jitter would
-    # move the peak force this run exists to pay, and the D-183 belief error
-    # would move `tip_rel` a third time. A measurement needs the observation
-    # to BE the reading.
-    # THE SCRIPT IS SPENT (2026-09-01, after RT-124..RT-129: both its rules
-    # were withdrawn) AND IT STILL RUNS. That is exactly why the pins are
-    # here: a spent instrument that anyone can still start must not quietly
-    # measure a noised observation.
     env_cfg.obs_noise_pocket_pos_std_m = 0.0
     env_cfg.force_obs_noise_std_n = 0.0
     env_cfg.grasp_obs_offset_x_m = 0.0
-    # THE START POSE STAYS THE HOME POSE (D-161). The cfg default is rung 0,
-    # which starts the tool point inside the pocket -- a part already in the
-    # hole cannot be inserted edge-first. Pinned here, not assumed.
     env_cfg.start_tip_above_entrance = None
-    # Into the CFG and BEFORE gym.make, the same two reasons as
-    # scripted_insert.py: one home for the limit, and the startup banner prints
-    # during __init__.
     if args_cli.f_abort is not None:
         env_cfg.force_abort_f_max_n = float(args_cli.f_abort)
-    # THE CONTROLLER OVERRIDES, into the cfg and before gym.make, for the same
-    # two reasons as --f-abort: one home, and the startup banner is the proof.
     if args_cli.control_mode is not None:
         env_cfg.control_mode = args_cli.control_mode
     if args_cli.osc_kp_pos is not None:
@@ -476,10 +281,6 @@ def main() -> int:
     if args_cli.decimation is not None:
         env_cfg.decimation = int(args_cli.decimation)
         env_cfg.osc_decimation = int(args_cli.decimation)
-    # BEFORE gym.make: resolve_control_mode (insertion_env.py:128, inside
-    # __init__) reads cfg.episode_steps to derive episode_length_s. Setting
-    # it here, not after, is what lets a run choose the per-episode SECONDS
-    # independently of decimation (RT-146 fix, 2026-09-04).
     if args_cli.episode_steps is not None:
         env_cfg.episode_steps = int(args_cli.episode_steps)
 
@@ -488,11 +289,8 @@ def main() -> int:
     device = unwrapped.device
     robot = unwrapped.robot
     num_envs = unwrapped.num_envs
-    # READ from the env, not from the flag: the env resolved it (and refused
-    # an unknown mode) in its own constructor.
     control_mode = str(unwrapped._control_mode)
 
-    # ---------------------------------------------------------------- fail fast
     peg_body_idx = unwrapped._peg_body_idx
     if peg_body_idx is None:
         raise SystemExit(
@@ -520,7 +318,6 @@ def main() -> int:
         device=device,
     )
 
-    # ---------------------------------------------------- geometry, all READ
     seat_depth_m = float(insertion_tasks_cfg.POCKET_SEAT_DEPTH)
     success_depth_m = float(insertion_tasks_cfg.SEATED_SUCCESS_DEPTH)
     play_x_m = float(insertion_tasks_cfg.PLAY_X)
@@ -537,11 +334,6 @@ def main() -> int:
     _tilt_start_deg = [round(math.degrees(v), 4) for v in tilt_start.tolist()]
     upright_depth_m = float(args_cli.upright_depth_mm) / 1000.0
     max_tilt_step_rad = math.radians(float(args_cli.max_tilt_step_deg))
-    # THE DESCENT NEEDS AN END. RT-128: DESCEND commanded a constant rate
-    # into the pocket floor, 2072 samples piled into the last millimetre
-    # against ~50 per bin elsewhere, force ~20 N -> the 300 N abort, 0 clean.
-    # The default is the CAD floor; a smaller --stop-depth-mm stops short of
-    # it and is a setting of THIS RUN, not a redefinition of the seat.
     stop_depth_m = (seat_depth_m if args_cli.stop_depth_mm is None
                     else float(args_cli.stop_depth_mm) / 1000.0)
     tilt_tol_rad = math.radians(float(args_cli.tilt_tol_deg))
@@ -577,9 +369,6 @@ def main() -> int:
           "it was written for are withdrawn and the datasheet anchor with them; see the inbox entry "
           "'The tilted scripted insertion is SPENT ...'. The numbers below describe THIS controller.")
 
-    # ------------------------------------------------------------ SAPU query
-    # The env's own query, built here because the env only builds it with the
-    # RL terms on (insertion_env.py:508-528) and this run needs them off.
     sapu_query = None
     sapu_note = "disabled by --no-interpen"
     sdf_points = int(args_cli.sdf_points) if args_cli.sdf_points is not None else int(
@@ -610,19 +399,11 @@ def main() -> int:
             env.close()
             return 1
 
-    # ------------------------------------------------------------ script state
     phase = torch.full((num_envs,), sp.PHASE_ALIGN, device=device)
     yaw_target = torch.zeros(num_envs, 2, device=device)
     latched = torch.zeros(num_envs, 1, device=device)
-    # THE TILT REFERENCE, latched exactly like the yaw target and for the
-    # measured reason in `scripted_policy.latch_tilt_reference`: RT-127 read
-    # the start attitude at -180 deg against the pocket axis, so steering
-    # against that axis is steering against a constant of the setup.
     tilt_ref_cs = torch.zeros(num_envs, 2, device=device)
     tilt_latched = torch.zeros(num_envs, 1, device=device)
-    # NO LATERAL SWEEP HERE. The aim stays the pocket axis: this run varies the
-    # TILT, and varying two things at once would make neither column readable.
-    # The lateral sweep is scripted_insert.py's --aim-sweep and stays there.
     aim = torch.zeros(num_envs, 2, device=device)
     peak_depth = torch.zeros(num_envs, device=device)
     peak_force = torch.zeros(num_envs, device=device)
@@ -630,15 +411,6 @@ def main() -> int:
     peak_tilt = torch.zeros(num_envs, device=device)
     peak_axis_tilt = torch.zeros(num_envs, device=device)
     aborted = torch.zeros(num_envs, dtype=torch.bool, device=device)
-    # JOINT TORQUES, all six joints, every control step (inbox entry 'Audit
-    # 2026-09-03 (a)', discriminating measurement). Read off
-    # ``robot.data.applied_torque`` -- the actuator model's applied effort
-    # after its own clip: under joint_pd that is stiffness*err +
-    # damping*err_vel (the implicit drive's formula, an ESTIMATE of what
-    # PhysX applied, not a read-back), under osc the OSC's effort target
-    # after the maxForce clip. Saturation = |tau| >= 0.99 * maxForce, per
-    # joint, counted in control steps. maxForce is READ
-    # (``joint_effort_limits``, the USD's 150 / 28).
     tau_max_force = robot.data.joint_effort_limits[0].clone()
     peak_tau = torch.zeros(num_envs, n_joints, device=device)
     sat_steps = torch.zeros(num_envs, n_joints, device=device)
@@ -679,22 +451,11 @@ def main() -> int:
             depth = -tip_rel[:, 2]
             force_norm = insertion_math.force_magnitude(force)
 
-            # THE LATERAL GATE, and it is not decoration: RT-107 is the standing
-            # proof that a depth without it reads 0.0 mm while the part is
-            # 109 mm beside the fixture. Computed from the OBSERVATION with the
-            # env's own predicate, so no env internal enters the control path.
             in_pocket = insertion_math.in_pocket_cross_section(tip_rel, wall_x, wall_y)
             gated_depth = torch.where(depth > 0.0, depth, torch.zeros_like(depth))
             gated_depth = torch.where(in_pocket, gated_depth, torch.zeros_like(gated_depth))
             peak_depth = sp.update_peak_depth(gated_depth, peak_depth)
 
-            # THE TILT, signed and against the schedule -- but measured FROM THE
-            # LATCHED START ATTITUDE, not from the pocket axis. `tilt_now` is the
-            # absolute reading and stays printed; `tilt_rel` is what the
-            # controller and the report use, and it is zero at step 1 by
-            # construction. `axis_tilt_angle` next to them is the unsigned
-            # absolute magnitude the other runs report, kept so the two metrics
-            # files compare.
             tilt_now = sp.signed_tilt_angle(ee_quat, pocket_quat, tilt_axis_idx)
             tilt_ref_cs, tilt_latched = sp.latch_tilt_reference(tilt_now, tilt_ref_cs, tilt_latched)
             tilt_rel = sp.tilt_since_reference(tilt_now, tilt_ref_cs)
@@ -705,11 +466,6 @@ def main() -> int:
             peak_axis_tilt = torch.maximum(tilt_abs, peak_axis_tilt)
             peak_force = torch.maximum(force_norm, peak_force)
 
-            # ------------------------------------------------ the instrument
-            # Env internals ENTER HERE and nowhere above: the SAPU pose needs
-            # the fixture pose, which is not an observation channel. Copied
-            # line for line from insertion_env.py:1167-1171, including the
-            # env-local part position -- _entrance_pos lives in that frame.
             if sapu_query is not None:
                 part_pos = robot.data.body_pos_w[:, peg_body_idx] - unwrapped.scene.env_origins
                 body_quat = robot.data.body_quat_w[:, peg_body_idx]
@@ -728,32 +484,14 @@ def main() -> int:
                                    bin_counts, bin_force_max, bin_force_sum)
             sp.bin_values_by_depth(_d, [v * 1000.0 for v in interpen_max.tolist()], _bin_width_m,
                                    bin_ipen_counts, bin_ipen_max, bin_ipen_sum)
-            # THE PROFILE REPORTS THE RELATIVE TILT, the same quantity the
-            # controller regulates. The absolute one would print ~180 deg in
-            # every bin (RT-127) and say nothing about how far the part leans.
             sp.bin_values_by_depth(_d, [abs(math.degrees(v)) for v in tilt_rel.tolist()], _bin_width_m,
                                    bin_tilt_counts, bin_tilt_max, bin_tilt_sum)
-            # Lateral offset from the pocket AXIS, not from the aim: the capture
-            # question is how far the part can still stray, and the aim is zero
-            # in this run anyway.
             sp.bin_values_by_depth(
                 _d,
                 [v * 1000.0 for v in torch.linalg.norm(tip_rel[:, 0:2], dim=-1).tolist()],
                 _bin_width_m, bin_lat_counts, bin_lat_max, bin_lat_sum,
             )
 
-            # THE FIRST STEP, printed. Added 2026-09-01 after RT-124/125/126:
-            # with the tilt controller live every env stopped at 0.000 mm, and
-            # with it silenced (--tilt-gain 0 --tilt-tol-deg 200) the same run
-            # reached 19.07-21.12 mm. That located the cause in the tilt
-            # REFERENCE, and there was no way to read the reference off the log
-            # -- this run printed no step-1 residual at all, so the one number
-            # that decides the question existed only as a guess.
-            #
-            # THE SIGNED TILT IS THE ONE THAT MATTERS and it is printed next to
-            # the unsigned one on purpose: `axis_tilt_angle` cannot tell an
-            # aligned part from an ANTIPARALLEL one at a glance, and the
-            # controller drives on the signed value.
             if first_step is None:
                 first_step = {
                     "lateral_error_m": _percentiles([float(v) for v in lat_err.tolist()]),
@@ -783,18 +521,12 @@ def main() -> int:
                       f"of {num_envs} envs are OUTSIDE the {args_cli.tilt_tol_deg} deg gate and are "
                       "therefore held in ALIGN. All of them means nothing ever descends.")
 
-            # ------------------------------------------------ the phase machine
             new_phase = sp.advance_phase(
                 phase, lat_err, yaw_err, tip_rel[:, 2], force_norm,
                 args_cli.lateral_tol, args_cli.yaw_tol,
                 args_cli.standoff, args_cli.height_tol,
                 float(unwrapped.cfg.force_abort_f_max_n),
             )
-            # THE TILT GATE, held HERE and not inside advance_phase: that
-            # function is shared with the D-108 gate run, and a fourth condition
-            # there would put this run's schedule into that run's contract. An
-            # env that would start descending before it has reached its
-            # commanded tilt stays in ALIGN; everything else passes through.
             hold = (
                 (phase == sp.PHASE_ALIGN)
                 & (new_phase == sp.PHASE_DESCEND)
@@ -812,7 +544,6 @@ def main() -> int:
 
             if control_mode == "osc":
                 # ONE hop: pocket -> env, then the per-step limits. The env's
-                # OSC tracks the delta every physics step; no IK here.
                 actions = sp.osc_action_from_pocket_command(
                     cmd_pocket, pocket_quat,
                     float(unwrapped.cfg.osc_pos_step_limit_m), float(unwrapped.cfg.osc_rot_step_limit_rad),
@@ -833,11 +564,6 @@ def main() -> int:
                     joint_pos_des, unwrapped._joint_targets, float(unwrapped.cfg.action_scale)
                 )
             obs_dict, _, terminated, truncated, _ = env.step(actions)
-            # THE TORQUE READING, after the step so it is the effort of the
-            # last physics substep this action produced. Per-joint peak per
-            # episode, saturation count, and the depth profile per joint --
-            # the depth is the PRE-step depth above, i.e. where the arm was
-            # when the torque was demanded.
             tau = robot.data.applied_torque[:, :n_joints].abs()
             peak_tau = torch.maximum(tau, peak_tau)
             sat_steps = sat_steps + (tau >= 0.99 * tau_max_force.reshape(1, -1)).to(sat_steps.dtype)
@@ -858,11 +584,6 @@ def main() -> int:
         steps += 1
 
         if bool(done.any()):
-            # From the LAST PRE-RESET observation this loop saw. DirectRLEnv
-            # resets inside step() and hands back the post-reset observation, so
-            # the terminal one is not available here -- the same reset-step trap
-            # scripted_insert.py records, and taking the post-reset numbers
-            # would be strictly worse.
             for i in torch.nonzero(done).flatten().tolist():
                 _clean = bool(peak_depth[i] >= success_depth_m) and not bool(aborted[i])
                 episodes.append({
@@ -875,9 +596,6 @@ def main() -> int:
                     "peak_axis_tilt_rad": float(peak_axis_tilt[i]),
                     "final_phase": sp.PHASE_NAMES[float(phase[i])],
                     "force_aborted": bool(aborted[i]),
-                    # THE RULE, not a judgement: the F_max mark's own words --
-                    # a CLEAN insertion reached the success depth inside the
-                    # pocket and did not abort on force.
                     "clean": _clean,
                     "terminated": bool(terminated[i]),
                     "truncated": bool(truncated[i]),
@@ -887,11 +605,6 @@ def main() -> int:
             keep = torch.logical_not(done)
             phase = torch.where(keep, phase, torch.full_like(phase, sp.PHASE_ALIGN))
             latched = latched * keep.reshape(-1, 1).to(latched.dtype)
-            # THE TILT REFERENCE IS RE-LATCHED PER EPISODE, exactly as the yaw
-            # target above is. Without this line episode 2 steers against
-            # episode 1's start attitude, and the reset draws wrist_3 yaw noise
-            # (D-038), so the two are not the same pose. Missed on the first
-            # write of the latch and found while reading RT-128.
             tilt_latched = tilt_latched * keep.reshape(-1, 1).to(tilt_latched.dtype)
             peak_depth = peak_depth * keep.to(peak_depth.dtype)
             peak_force = peak_force * keep.to(peak_force.dtype)
@@ -902,7 +615,6 @@ def main() -> int:
             peak_tau = peak_tau * keep.reshape(-1, 1).to(peak_tau.dtype)
             sat_steps = sat_steps * keep.reshape(-1, 1).to(sat_steps.dtype)
 
-    # -------------------------------------------------------------- the numbers
     force_rows = sp.depth_profile(_bin_width_m, bin_counts, bin_force_max, bin_force_sum, "force", "n")
     ipen_rows = sp.depth_profile(_bin_width_m, bin_ipen_counts, bin_ipen_max, bin_ipen_sum, "interpen", "mm")
     tilt_rows = sp.depth_profile(_bin_width_m, bin_tilt_counts, bin_tilt_max, bin_tilt_sum, "tilt", "deg")
@@ -911,12 +623,6 @@ def main() -> int:
     clean = [e for e in episodes if e["clean"]]
     _abort_n = sum(1 for e in episodes if e["force_aborted"])
 
-    # THE CAPTURE READ-OFF. Half the cross play is the only tolerance used by
-    # default, and it is READ from the config -- it is the distance the walls
-    # leave the part once they hold it. The shallowest depth from which the
-    # lateral offset never again exceeds it is what "captured" means
-    # mechanically. It is offered as an INPUT to the engaged_depth_m decision,
-    # not as the decision.
     capture = [{
         "quantity": "lateral_max_mm",
         "tolerance": play_x_m * 500.0,
@@ -1077,9 +783,6 @@ def main() -> int:
     out = pathlib.Path(args_cli.out)
     out.write_text(json.dumps(metrics, indent=2), encoding="utf-8")
 
-    # PRINTED AS WELL AS WRITTEN (RT-70): a metrics file whose path is printed
-    # but whose contents are not proves nothing in a log, and the log is what
-    # /rt-check reads.
     print(f"[tilt_insert] {len(episodes)} episodes, {len(clean)} clean, {_abort_n} force-aborted")
     print("[tilt_insert] start tilt -> peak depth / peak force / peak interpenetration:")
     for r in by_tilt:
@@ -1143,8 +846,6 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    # D-081: set the exit status BEFORE the shutdown. close() does not return
-    # (RT-22), so anything after it never decides anything.
     _code = 1
     try:
         _code = main()

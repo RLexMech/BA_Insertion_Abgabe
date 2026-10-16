@@ -43,8 +43,6 @@ import sys
 
 SCRIPT_MARKER = "check_episode_log-2026-09-16a"
 
-# The agreed column set (user, 2026-09-15). The check's OWN literal: importing
-# the env's tuple would assert it against itself.
 EXPECTED_COLUMNS = (
     "run", "seed", "iteration", "env_id", "episode", "outcome", "steps",
     "ip_max_mm", "ip_steps_ge_t1", "force_max_filtered_n", "force_max_raw_n",
@@ -53,9 +51,6 @@ EXPECTED_COLUMNS = (
 OUTCOMES = ("success", "force_abort", "timeout", "other")
 META_KEYS = ("method", "body_pair", "rate_hz", "t1_mm", "t1_meaning", "unit")
 
-# The written precision, and nothing else: ip_max_mm is formatted to 6
-# decimals, forces to 4. A value can sit half a last digit off the in-memory
-# number the env compared, so an equality across the two is judged to that.
 TOL_MM = 1e-5
 TOL_N = 2e-4
 
@@ -132,7 +127,6 @@ def judge(header, rows, meta, demo) -> dict:
         last = max(last, it)
     put(10, not bad, f"{len(bad)} bad, first {bad[:1]}")
 
-    # -- the tie to demo_metrics.json --------------------------------------
     n_ep = int((demo or {}).get("episodes", -1))
     istat = (demo or {}).get("interpen_max_mm", {})
     w = int(istat.get("episodes", 0))
@@ -151,11 +145,6 @@ def judge(header, rows, meta, demo) -> dict:
     edge = sum(1 for v in ips if abs(v - thresh) <= TOL_MM)
     put(13, abs(count - int(istat.get("over_thresh", -1))) <= edge,
         f"csv {count} demo {istat.get('over_thresh')} ({edge} within the written precision of t1)")
-    # Counted by FORCE, not by outcome: the env's abort window takes every
-    # episode whose filtered force reached the limit (compute_dones: >=), also
-    # one that succeeded in the same step; the row's outcome says success
-    # there (RT-206s2: 5 of 2000). Rows within the written precision of the
-    # limit may fall either way, like C14.
     f_lim = float(((meta or {}).get("force") or {}).get("abort_limit_n", float("nan")))
     forces = [float(r["force_max_filtered_n"]) for r in win]
     n_abort = sum(1 for f in forces if f >= f_lim - TOL_N)
@@ -214,10 +203,6 @@ def find_run(name: str, root: pathlib.Path) -> pathlib.Path:
     return max(hits, key=lambda p: p.stat().st_mtime)
 
 
-# ---------------------------------------------------------------------------
-# Self-test: the checks against built tables, each broken one way (D-080)
-# ---------------------------------------------------------------------------
-
 def _good():
     """Three envs, four episodes each, one row over t1; demo window = last 8."""
     t1 = 0.293800
@@ -235,8 +220,6 @@ def _good():
                 "bounds_version": "0", "dr_phase": "floor",
             })
         it += 1
-    # RT-206s2: success and abort fire in the SAME step. The row says success
-    # (tested first), the env's abort window counts it as an abort.
     rows[9]["force_max_filtered_n"] = "12.5000"
     meta = {"episode_cap_steps": 256, "force": {"abort_limit_n": 11.5},"interpenetration": {
         "method": "m", "body_pair": "b", "unit": "mm", "rate_hz": 15.0,

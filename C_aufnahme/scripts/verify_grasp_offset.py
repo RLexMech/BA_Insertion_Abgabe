@@ -1,49 +1,7 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-"""Measure whether the welded part can take a per-reset flange offset (D-070).
-
-THE QUESTION, verbatim from D-107's open flag and the P3 gate of the concept
-report: D-070 decided the INTENT (grasp uncertainty enters as a per-reset
-flange-to-part offset, Factory ``held_asset_pos_noise`` pattern), but whether
-Isaac allows that offset AT RUNTIME for OUR construction has never been
-measured. Factory teleports a SEPARATELY SPAWNED rigid body per reset
-(``factory_env.py:763-783``, ``write_root_pose_to_sim``); our part is a welded
-LINK of the articulation (D-076), connected to ``wrist_3_link`` by the fixed
-joint ``tool_weld``. There is no root pose to write.
-
-WHAT THIS PROBES -- one mechanism, named, not a survey: after the scene is
-built, the ``tool_weld`` joint's ``physics:localPos0`` attribute is written on
-the USD stage for env 0, the env is reset and stepped, and the part's pose
-RELATIVE to the flange is measured before and after. Two outcomes, both are
-results:
-
-  MOVED      -- the USD write reaches PhysX at runtime; the D-070 offset can
-                be implemented this way (per-env values need per-env writes).
-  NOT MOVED  -- PhysX consumed the joint frame when the articulation was
-                parsed; a runtime USD write is dead. The offset then needs a
-                different route (re-authoring per rung, or a design decision
-                via the inbox). This does NOT falsify D-070's intent, only
-                this mechanism.
-
-NEGATIVE CONTROL: ``--offset 0`` must leave the relative pose bit-identical to
-the baseline read. If it does not, the measurement itself moves things and no
-conclusion may be drawn from the main run.
-
-Env 1 is never touched: it is the unwritten reference. If env 1 moves in the
-main run, the write leaked across envs (replicate_physics), which would rule
-out per-env offsets via this route even if env 0 moves.
-
-UNVERIFIED -- authored on the dev PC (no Isaac installation). Training PC:
-
-    .\\scripts\\rt_log.ps1 RT-N python scripts/verify_grasp_offset.py `
-        --task Ur5e-Insertion-Direct-v0 --offset 0.002
-    .\\scripts\\rt_log.ps1 RT-N python scripts/verify_grasp_offset.py `
-        --task Ur5e-Insertion-Direct-v0 --offset 0.0
-
-Exit code per D-081: 0 = measurement delivered (either outcome), 1 = the
-measurement itself failed (joint not found, negative control violated).
-"""
+"""Measure whether the welded part can take a per-reset flange offset (D-070)."""
 
 from __future__ import annotations
 
@@ -55,8 +13,6 @@ import traceback
 
 from isaaclab.app import AppLauncher
 
-# Loaded by path because scripts/tools is not a package -- the idiom
-# author_tool_ur5e.py already uses.
 _TOOLS = pathlib.Path(__file__).resolve().parent / "tools"
 _spec = importlib.util.spec_from_file_location("isaac_exit", _TOOLS / "isaac_exit.py")
 _mod = importlib.util.module_from_spec(_spec)
@@ -76,7 +32,7 @@ parser.add_argument("--steps", type=int, default=10, help="Sim steps after the w
 AppLauncher.add_app_launcher_args(parser)
 args_cli = parser.parse_args()
 args_cli.headless = True
-args_cli.num_envs = 2  # env 0 written, env 1 untouched reference
+args_cli.num_envs = 2
 
 app_launcher = AppLauncher(args_cli)
 simulation_app = app_launcher.app
@@ -91,8 +47,6 @@ import insertion.tasks  # noqa: F401, E402
 
 TAG = "verify_grasp_offset"
 MARKER = "verify_grasp_offset-2026-08-27a"
-# The pose read must be finer than any effect worth calling a move. 1e-6 m is
-# two orders under the 2 mm probe offset and one under the finest play (0.29 mm).
 MOVE_TOL_M = 1.0e-6
 
 
@@ -102,12 +56,10 @@ def rel_part_pose(env) -> torch.Tensor:
     flange_idx = robot.find_bodies("wrist_3_link")[0][0]
     part_idx = robot.find_bodies("tool_link")[0][0]
     fl_pos = robot.data.body_pos_w[:, flange_idx]
-    fl_quat = robot.data.body_quat_w[:, flange_idx]  # (w, x, y, z)
+    fl_quat = robot.data.body_quat_w[:, flange_idx]
     pt_pos = robot.data.body_pos_w[:, part_idx]
     d = pt_pos - fl_pos
     w, x, y, z = fl_quat.unbind(-1)
-    # Rotate d by the INVERSE flange quaternion (world -> flange frame).
-    # Written out, matching the report helpers in insertion_env.py.
     cw, cx, cy, cz = w, -x, -y, -z
     t = 2.0 * torch.cross(torch.stack([cx, cy, cz], dim=-1), d, dim=-1)
     return d + cw.unsqueeze(-1) * t + torch.cross(torch.stack([cx, cy, cz], dim=-1), t, dim=-1)
@@ -119,10 +71,6 @@ def main() -> int:
 
     env_cfg = parse_env_cfg(args_cli.task, device=args_cli.device, num_envs=2)
     env = gym.make(args_cli.task, cfg=env_cfg)
-    # Both resets live INSIDE the inference region. env.step() taints the env's
-    # persistent buffers as inference tensors, and a later reset writes them in
-    # place -- which PyTorch rejects outside the region (RT-51). Inside it, the
-    # same write is allowed.
     with torch.inference_mode():
         env.reset()
         zero = torch.zeros(env.action_space.shape, device=env.unwrapped.device)
@@ -134,8 +82,6 @@ def main() -> int:
         print(f"[{TAG}] BEFORE env {i}: part in flange frame "
               f"({before[i, 0]:+.9f}, {before[i, 1]:+.9f}, {before[i, 2]:+.9f}) m")
 
-    # Find the tool_weld joint prim under env 0's robot by NAME (D-067: no
-    # hard-coded prim paths).
     from pxr import Usd, UsdPhysics, Gf  # noqa: PLC0415
     from isaaclab.sim.utils.stage import get_current_stage  # noqa: PLC0415
     stage = get_current_stage()
@@ -173,7 +119,6 @@ def main() -> int:
     moved1 = bool(delta[1] > MOVE_TOL_M)
 
     if args_cli.offset == 0.0:
-        # Negative control: NOTHING may move.
         ok = not moved0 and not moved1
         print(f"[{TAG}] NEGATIVE CONTROL: {'PASS -- both envs bit-still' if ok else 'FAIL -- the measurement itself moves the part'}")
         return 0 if ok else 1
@@ -191,7 +136,6 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    # D-081: exit BEFORE the shutdown; close() does not return (RT-22).
     _code = 1
     try:
         _code = main()

@@ -48,14 +48,12 @@ import tempfile
 
 HEADER_FIXED = ("step", "wall_time")
 
-# One hue per series (dataviz: categorical pair; text wears text tokens).
 RUN = "#3B6FD4"
 REF = "#D97706"
 INK = "#1F2933"
 INK_MUTED = "#6B7280"
 GRID = "#E5E7EB"
 
-# curve -> (candidate tags in order, y label, scale, y limits or None)
 CURVES: dict[str, tuple[tuple[str, ...], str, float, tuple[float, float] | None]] = {
     "reward": (("Train/mean_reward", "Episode_Reward/total"), "Mittlerer Episoden-Reward [–]", 1.0, None),
     "success": (("Episode/success_rate", "success_rate"), "Erfolgsrate [%]", 100.0, (0.0, 100.0)),
@@ -64,10 +62,6 @@ CURVES: dict[str, tuple[tuple[str, ...], str, float, tuple[float, float] | None]
 }
 TITLES = {"reward": "Reward", "success": "Erfolgsrate", "depth": "Fügetiefe", "force_abort": "Kraftabbruch-Rate"}
 
-
-# --------------------------------------------------------------------------
-# CSV + resolver
-# --------------------------------------------------------------------------
 
 def read_csv(path: pathlib.Path) -> tuple[list[str], list[int], dict[str, list[float | None]]]:
     """(tags, steps, {tag: values aligned to steps, None where empty})."""
@@ -112,10 +106,6 @@ def smooth(values: list[float | None], window: int) -> list[float | None]:
         out.append(sum(buf) / len(buf))
     return out
 
-
-# --------------------------------------------------------------------------
-# drawing
-# --------------------------------------------------------------------------
 
 def draw_curve(curve: str, runs: list[tuple[str, list[int], list[float | None]]], out_base: pathlib.Path,
                title: bool = True, tag_note: str = "") -> list[pathlib.Path]:
@@ -188,10 +178,6 @@ def plot_all(scalars: pathlib.Path, run: str, out_dir: pathlib.Path, which: list
     return drawn
 
 
-# --------------------------------------------------------------------------
-# self-test
-# --------------------------------------------------------------------------
-
 def _self_test() -> int:
     rc = 0
 
@@ -240,10 +226,6 @@ def _self_test() -> int:
     print("SELF-TEST PASSED" if rc == 0 else "SELF-TEST FAILED")
     return rc
 
-
-# --------------------------------------------------------------------------
-# main
-# --------------------------------------------------------------------------
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)

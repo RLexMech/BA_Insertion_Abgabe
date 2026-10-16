@@ -57,9 +57,6 @@ import check_autodr  # noqa: E402 - owns the one loader of autodr.py
 DEFAULT_OUT_DIR = SCRIPTS / "eval"
 DEFAULT_ROWS = 1000
 DEFAULT_ROWS_PER_BLOCK = 150
-# Second entry of the seed sequence for the boundary table. numpy documents a
-# sequence of ints as a seed (SeedSequence entropy); [seed, 1] is a stream
-# independent of default_rng(seed).
 BOUNDARY_STREAM = 1
 
 
@@ -209,13 +206,11 @@ def _self_test() -> int:
         good = tmp / "good.csv"
         first = write_new(good, a)
         table = ns["RowTable"].from_csv(good)
-        # MUTATION (D-080, eval_plan.md row A): two header columns swapped.
         head = list(cols)
         head[2], head[3] = head[3], head[2]
         swapped = tmp / "swapped.csv"
         swapped.write_bytes(a.replace(",".join(cols).encode(), ",".join(head).encode(), 1))
         other = table_bytes(draw_rows(20, 50, ns), ns)
-        # MUTATION: a boundary table whose nailing was skipped.
         not_nailed = np.random.default_rng([10, BOUNDARY_STREAM]).random(unit_b.shape)
         checks = [
             ("same seed, same bytes", a == table_bytes(draw_rows(10, 50, ns), ns)),

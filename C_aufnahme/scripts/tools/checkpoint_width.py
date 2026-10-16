@@ -37,11 +37,7 @@ _ACTOR_WEIGHT = re.compile(r"^actor\.(\d+)\.weight$")
 
 
 def actor_input_width(state_dict) -> int | None:
-    """The observation width the actor's first linear layer expects, or
-    ``None`` when the state dict carries no ``actor.<n>.weight`` of rank 2.
-
-    Lowest layer index wins, whatever the dict's insertion order: the
-    first layer is the one that sees the observation."""
+    """The observation width the actor's first linear layer expects, or ``None`` when the state dict carries no ``actor.<n>.weight`` of rank 2."""
     found: list[tuple[int, int]] = []
     for key, value in state_dict.items():
         m = _ACTOR_WEIGHT.match(str(key))
@@ -62,11 +58,7 @@ def width_mismatch_message(
     mode_widths: dict[str, int],
     path: str = "",
 ) -> str | None:
-    """``None`` when the checkpoint fits the env (or its width is unknown);
-    otherwise the one line to print before refusing.
-
-    ``mode_widths`` maps every observation mode to its width, so the message
-    can name the mode that WOULD fit -- or say that none does."""
+    """``None`` when the checkpoint fits the env (or its width is unknown); otherwise the one line to print before refusing."""
     if ckpt_width is None or ckpt_width == env_width:
         return None
     fitting = sorted(m for m, w in mode_widths.items() if w == ckpt_width)
@@ -84,10 +76,7 @@ def width_mismatch_message(
 
 def refusal_for_checkpoint(path: str, env_mode: str, env_width: int,
                            mode_widths: dict[str, int], loader) -> str | None:
-    """The whole guard in one call: load ``path`` with ``loader`` (torch.load
-    bound by the caller), read the actor width out of ``model_state_dict``,
-    compare. ``None`` = load it. A checkpoint without ``model_state_dict``
-    or without an actor weight is NOT refused here -- ``runner.load`` speaks."""
+    """The whole guard in one call: load ``path`` with ``loader`` (torch.load bound by the caller), read the actor width out of ``model_state_dict``, compare."""
     loaded = loader(path)
     state = loaded.get("model_state_dict") if isinstance(loaded, dict) else None
     if not isinstance(state, dict):
@@ -97,7 +86,7 @@ def refusal_for_checkpoint(path: str, env_mode: str, env_width: int,
 
 
 def _self_test() -> int:
-    class _T:  # anything with a .shape
+    class _T:
         def __init__(self, *shape):
             self.shape = shape
 
@@ -125,10 +114,8 @@ def _self_test() -> int:
          "No observation mode builds 25" in (width_mismatch_message(25, 28, "force", modes) or "")),
         ("the path is quoted when given",
          "(model_10.pt)" in (width_mismatch_message(28, 31, "wrench", modes, "model_10.pt") or "")),
-        # MUTATION (D-080): the guard must never pass a mismatch through.
         ("a mismatch never returns None",
          width_mismatch_message(28, 31, "wrench", modes) is not None),
-        # The whole guard, with a fake loader in place of torch.load.
         ("refusal_for_checkpoint refuses a 28 checkpoint in a 31 env",
          refusal_for_checkpoint("m.pt", "wrench", 31, modes,
                                 lambda p: {"model_state_dict": sd28}) is not None),

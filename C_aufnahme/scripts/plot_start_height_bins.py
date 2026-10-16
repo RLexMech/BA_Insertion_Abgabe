@@ -45,7 +45,6 @@ import tempfile
 KEY = "success_by_start_height_bin"
 EXPECTED_BINS = 6
 
-# One hue, one series (dataviz: sequential blue; text wears text tokens).
 BAR = "#3B6FD4"
 INK = "#1F2933"
 INK_MUTED = "#6B7280"
@@ -86,7 +85,6 @@ def draw(table: list[dict], run: str, out: pathlib.Path, window_note: str | None
     import matplotlib.pyplot as plt
 
     labels = [bin_label(r) for r in table]
-    # The env's last bin is open at the top; every fixed +30 mm start lands there.
     labels[-1] = f"≥ {table[-1]['start_mm_to']:+.0f}"
     rates = [0.0 if r["success_rate"] is None else 100.0 * r["success_rate"] for r in table]
     counts = [int(r["episodes"]) for r in table]
@@ -99,7 +97,6 @@ def draw(table: list[dict], run: str, out: pathlib.Path, window_note: str | None
         ax.text(i, rate + 2.0, txt, ha="center", va="bottom", fontsize=9, color=INK)
     ax.set_xticks(list(x))
     ax.set_xticklabels([f"{lab}\nn = {n}" for lab, n in zip(labels, counts)], fontsize=8.5, color=INK)
-    # Head room for the value label of a 100 % bar; the ticks stop at 100.
     ax.set_ylim(0, 108)
     ax.set_yticks([0, 25, 50, 75, 100])
     ax.set_ylabel("Erfolgsrate [%]", color=INK, fontsize=9)
@@ -112,8 +109,6 @@ def draw(table: list[dict], run: str, out: pathlib.Path, window_note: str | None
         ax.spines[side].set_color(GRID)
     ax.tick_params(colors=INK_MUTED, length=0)
     if title:
-        # A thesis figure carries its title in the \caption; --no-title
-        # leaves the frame out so the caption is not said twice.
         text = f"{run}: Erfolgsrate je Starthöhen-Stufe"
         if window_note:
             text += f"  ({window_note})"

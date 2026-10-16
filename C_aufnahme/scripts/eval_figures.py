@@ -67,72 +67,48 @@ def _load_module(name: str, path: pathlib.Path):
 ES = _load_module("eval_stats", REPO / "scripts" / "eval_stats.py")
 KEY = ES.KEY
 
-# House pair (plot_run_curves.py:52-53, plot_autodr_run.py:47-48). Fixed-DR
-# (D-192) takes the dataviz reference palette's third slot, aqua, at its darker
-# step #199e70 (references/palette.md, dark column): the light step #1baf7a
-# gave 2.82:1 on white. Validator 2026-09-23, light, surface #FFFFFF, all
-# pairs: ALL CHECKS PASS; worst CVD #199e70<->#D97706 protan 9.0, tritan 7.4
-# (6-8 band: legal with the legend / axis labels every figure carries).
-# Colour follows the METHOD.
 METHOD_COLOR = {"autodr": "#3B6FD4", "nodr": "#D97706", "fixeddr": "#199e70"}
 METHOD_LABEL = {"autodr": "AutoDR", "nodr": "No-DR", "fixeddr": "Fixed-DR"}
-# The pre-registered pair; every figure needs both. Fixed-DR is optional: it
-# is drawn where its blocks exist (ARM_BLOCK), else the figure keeps two methods.
 METHODS = ("autodr", "nodr")
 ARMS = (*METHODS, "fixeddr")
-# Fixed-DR plays the same tables in its own blocks (eval_plan.md section 3.2).
 ARM_BLOCK = {"T-nominal": "T-nominal-F", "T-final": "T-final-F"}
 INK = "#1F2933"
 INK_MUTED = "#6B7280"
 GRID = "#E5E7EB"
-# dataviz status palette (references/palette.md), in the stack order that
-# passes the validator's adjacent CVD and normal-vision checks (2026-09-23).
 OUTCOMES = (
     ("success", "Erfolg", "#0ca30c"),
     ("success_with_force_violation", "Erfolg mit Kraftverletzung", "#fab219"),
     ("force_abort", "Kraftabbruch", "#d03b3b"),
     ("timeout", "Zeitlimit", "#ec835a"),
 )
-HEAT_CMAP = "Purples"   # one hue, light -> dark; neither method hue
+HEAT_CMAP = "Purples"
 
-# The ten frozen policies (eval_plan.md "Kontext"; scripts/run_eval.ps1).
 TRAINING_RUNS = {(m, s): f"RT-{206 if m == 'autodr' else 207}s{s}" for m in METHODS for s in range(1, 6)}
-# The five Fixed-DR training runs (D-192, rt_logs/RT-231_expectation.md): F7
-# only, extracted when all five folders exist, refused when some do.
 FIXED_RUNS = {("fixeddr", s): f"RT-231s{s}" for s in range(1, 6)}
 TRAINING_TAGS = ("Episode/success_rate", "dr/lat_r_hi", "dr/yaw_lo", "dr/yaw_hi", "dr/tilt_hi",
                  "dr/start_height_hi", "dr/start_height_floor", "dr/friction_lo", "dr/friction_hi")
-# No-DR's training values of the F3 axes: env.yaml keys (RT-207s<N>_env.yaml).
 NODR_ENV_KEYS = ("dr_mode", "start_lateral_offset", "fixture_yaw_rad", "fixture_yaw_noise_rad",
                  "fixture_tilt_rad", "fixture_tilt_noise_rad")
 
-# F3 panels: episodes_all column, axis label, factor to the axis unit.
 F3_PANELS = (
     ("lat_r_mm", "Seitlicher Versatz in mm", 1.0),
     ("yaw_abs_deg", "Gierwinkel (Betrag) in °", 1.0),
     ("tilt_deg", "Kippung in °", 1.0),
     ("start_height_m", "Starthöhe in mm", 1000.0),
 )
-# F4: the seven T-grenze keys (eval_table_boundary_seed10.json order).
 K3_ORDER = ("lat_r_hi", "yaw_lo", "yaw_hi", "tilt_hi", "start_height_hi", "friction_lo", "friction_hi")
 K3_LABEL = {"lat_r_hi": "Versatz\nmax", "yaw_lo": "Gier\nmin", "yaw_hi": "Gier\nmax",
             "tilt_hi": "Kippung\nmax", "start_height_hi": "Starthöhe\nmax",
             "friction_lo": "Reibung\nmin", "friction_hi": "Reibung\nmax"}
 F8_PANELS = (("start_height_floor", "Startboden"), ("lat_r", "Seitlicher Versatz"), ("yaw", "Gierwinkel"),
              ("tilt", "Kippung"), ("start_height", "Starthöhe (Decke)"), ("friction", "Reibung"))
-FIG_W = 6.3   # inches, ~16 cm text width
-# The thesis body is Helvetica (thesis/includes/preamble.tex: helvet + \sfdefault);
-# Arial has Helvetica's metrics and is on the laptop (user 2026-09-23).
+FIG_W = 6.3
 FONT = "Arial"
 
 
 class FigError(RuntimeError):
     """The input cannot draw what the plan asks."""
 
-
-# ---------------------------------------------------------------------------
-# helpers
-# ---------------------------------------------------------------------------
 
 def _policies(summary: dict, block: str) -> list:
     return sorted((p for p in summary["policies"] if p["block"] == block and p["tag"] == ""),
@@ -171,10 +147,6 @@ def _de_formatter():
     return _DeScalarFormatter()
 
 
-# ---------------------------------------------------------------------------
-# DATA functions -- pure, one per figure
-# ---------------------------------------------------------------------------
-
 def arms_present(summary: dict) -> tuple:
     return _arms_of({p["block"] for p in summary["policies"] if p["method"] == "fixeddr"})
 
@@ -185,9 +157,7 @@ def arms_in(df: pd.DataFrame) -> tuple:
 
 
 def _arms_of(blocks: set) -> tuple:
-    """METHODS, plus Fixed-DR when BOTH of its blocks hold runs (D-192).
-    ``blocks``: the blocks Fixed-DR runs sit in. One block without the other
-    is refused, never drawn half."""
+    """METHODS, plus Fixed-DR when BOTH of its blocks hold runs (D-192)."""
     if not blocks:
         return METHODS
     if blocks == set(ARM_BLOCK.values()):
@@ -226,8 +196,6 @@ def data_f2(summary: dict) -> list:
             raise FigError(f"F2: {kname} is not about {block}")
         rows.append({"block": block, "key": kname, "diff": k["diff"], "label": "AutoDR − No-DR",
                      "welch": list(k["welch_ci"]), "boot": list(k["bootstrap_percentile_ci"])})
-    # K5 (D-192), only when the Fixed-DR blocks exist; eval_stats writes
-    # {"missing": ...} otherwise, and an "error" is not drawn over.
     if arms_present(summary) == ARMS:
         for kname, block in (("K5_nominal", "T-nominal"), ("K5", "T-final")):
             k = summary[kname]
@@ -254,7 +222,6 @@ def data_f3(summary: dict) -> dict:
                     ns = n_k
                 elif n_k != ns:
                     raise FigError(f"F3: {k} {col} holds other bin counts than the first policy")
-        # Same table rows for every policy -> the same bins are empty for all.
         keep = [i for i, n in enumerate(ns) if n > 0]
         per = {}
         for m, keys in keys_of.items():
@@ -284,7 +251,7 @@ def data_f4(summary: dict) -> dict:
 
 def data_f5(summary: dict) -> list:
     rows = []
-    arms_present(summary)   # one Fixed-DR block without the other is refused
+    arms_present(summary)
     for p in _arm_policies(summary, "T-final"):
         counts = [p["outcomes"][k] for k, _l, _c in OUTCOMES]
         if p["outcomes"].get("other", 0):
@@ -333,7 +300,7 @@ def data_f7(curves: pd.DataFrame) -> dict:
                 raise FigError(f"F7: {m} s{s} logs other iterations than the first seed")
             seeds[int(s)] = gs["Episode/success_rate"].to_numpy(dtype=float)
         if not seeds and m == "fixeddr":
-            continue   # optional arm: extract_training took all five runs or none
+            continue
         if not seeds:
             raise FigError(f"F7: no {m} curves")
         out[m] = {"it": its, "seeds": seeds, "mean": np.mean(list(seeds.values()), axis=0)}
@@ -341,8 +308,7 @@ def data_f7(curves: pd.DataFrame) -> dict:
 
 
 def data_f8(curves: pd.DataFrame, sidecars: dict) -> dict:
-    """Same normalisation as plot_autodr_run.fig_stufen: (v - centre)/(max - centre)
-    per side; the floor (v - f0)/(top - f0). Read from each run's sidecar."""
+    """Same normalisation as plot_autodr_run.fig_stufen: (v - centre)/(max - centre) per side; the floor (v - f0)/(top - f0)."""
     out = {}
     g = curves[curves["method"] == "autodr"]
     for s, gs in g.groupby("seed", sort=True):
@@ -390,7 +356,6 @@ def data_f9(df: pd.DataFrame) -> dict:
 
 def data_f10(df: pd.DataFrame, t1_mm: float) -> dict:
     fin = _final(df)
-    # Beyond the largest reading of a SUCCESS no curve moves any more.
     top = float(fin.loc[fin[KEY] == 1, "ip_max_mm"].max())
     taus =np.unique(np.concatenate([np.linspace(0.0, max(top, t1_mm) * 1.05, 400), [t1_mm]]))
     out = {"tau": taus, "t1": t1_mm, "methods": {}}
@@ -401,10 +366,6 @@ def data_f10(df: pd.DataFrame, t1_mm: float) -> dict:
         out["methods"][m] = np.array([(ok & (ip < t)).sum() for t in taus]) / len(g)
     return out
 
-
-# ---------------------------------------------------------------------------
-# training data: extraction (reads git-ignored rt_logs) and loading
-# ---------------------------------------------------------------------------
 
 def _env_value(path: pathlib.Path, key: str) -> str:
     for line in path.read_text(encoding="utf-8").splitlines():
@@ -436,7 +397,6 @@ def extract_training(src: pathlib.Path, out: pathlib.Path) -> dict:
         shutil.copyfile(d / f"{run}_autodr_1499.json", out / f"{m}_s{s}_autodr_1499.json")
         if m == "nodr":
             nodr_env[s] = {k: _env_value(d / f"{run}_env.yaml", k) for k in NODR_ENV_KEYS}
-    # After the pair, so the pair's rows keep their place in curves.csv.
     for (m, s), run in sorted(FIXED_RUNS.items()) if have else ():
         _curve(m, s, run)
     first = next(iter(nodr_env.values()))
@@ -449,7 +409,6 @@ def extract_training(src: pathlib.Path, out: pathlib.Path) -> dict:
         w = csv.DictWriter(fh, fieldnames=["method", "seed", "iteration", *TRAINING_TAGS], lineterminator="\n")
         w.writeheader()
         w.writerows(rows)
-    # Start height of No-DR: the range its own provider held at the end.
     last = {}
     for r in rows:
         if r["method"] == "nodr" and (r["seed"] not in last or r["iteration"] > last[r["seed"]]["iteration"]):
@@ -478,13 +437,8 @@ def load_training(folder: pathlib.Path):
     return curves, sidecars, nodr
 
 
-# ---------------------------------------------------------------------------
-# DRAW functions
-# ---------------------------------------------------------------------------
-
 def _style(ax, ylabel: str = "", xlabel: str = ""):
     from matplotlib.ticker import ScalarFormatter
-    # Numeric axes only; an axis with text ticks (set_xticks with labels) keeps them.
     for axis in (ax.xaxis, ax.yaxis):
         if type(axis.get_major_formatter()) is ScalarFormatter:
             axis.set_major_formatter(_de_formatter())
@@ -502,8 +456,7 @@ def _style(ax, ylabel: str = "", xlabel: str = ""):
 
 
 def _legend_methods(fig, loc="lower center", extra=(), marker=True, methods=METHODS):
-    """``marker=False`` for figures that draw lines only: the legend shows what
-    the plot shows. ``methods``: the arms the figure draws, in ARMS order."""
+    """``marker=False`` for figures that draw lines only: the legend shows what the plot shows."""
     from matplotlib.lines import Line2D
     h = [Line2D([], [], color=METHOD_COLOR[m], marker="o" if marker else None, linewidth=2, markersize=5,
                 label=METHOD_LABEL[m])
@@ -536,8 +489,6 @@ def draw_f1(plt, d):
 
 
 def draw_f2(plt, rows):
-    # Two rows = the pre-registered K1/K2 figure, unchanged. With K5 each row
-    # names its own comparison, and the axis label turns general.
     pair_only = len(rows) == 2
     fig, axes = plt.subplots(len(rows), 1, figsize=(FIG_W, 1.2 * len(rows)))
     for ax, r in zip(axes, rows):
@@ -597,8 +548,6 @@ def draw_f4(plt, d):
     lo, hi = d["overall_wilson"]
     ax.axhspan(100 * lo, 100 * hi, color=GRID, linewidth=0)
     ax.axhline(100 * d["overall"], color=INK_MUTED, linewidth=1.0, linestyle="--")
-    # Label above the band where no interval reaches above it; looked for in the
-    # data, not fixed at a position (RT-225: between tilt_hi and start_height_hi).
     tops = [w[1] for w in d["wilson"]]
     gaps = [i for i in range(len(tops) - 1) if max(tops[i], tops[i + 1]) < hi]
     ax.text((gaps[0] + 0.5) if gaps else (len(x) - 1) / 2, 100 * hi + 0.1, f"T-final gesamt {_num(100 * d['overall'], '.1f')} % (Wilson-Band)", fontsize=7,
@@ -616,10 +565,7 @@ def draw_f4(plt, d):
 
 
 def draw_f5(plt, rows):
-    # 3.4 in holds the ten pair bars; each further bar (Fixed-DR) adds its pitch.
     fig, ax = plt.subplots(figsize=(FIG_W, 3.4 + 0.25 * max(0, len(rows) - 10)))
-    # Top to bottom in list order, with a gap of 0.6 bar pitches where the
-    # method changes, so the two groups read as two groups.
     pos, p = [], 0.0
     for i, r in enumerate(rows):
         if i > 0 and r["method"] != rows[i - 1]["method"]:
@@ -669,8 +615,6 @@ def draw_f6(plt, d):
 
 def draw_f7(plt, d):
     fig, ax = plt.subplots(figsize=(FIG_W, 2.8))
-    # All thin seed lines first, then both means: no method's seeds may cover
-    # the other method's mean.
     for m in d:
         c = d[m]
         for v in c["seeds"].values():
@@ -726,8 +670,6 @@ def draw_f9(plt, d):
                         color="white" if (not np.isnan(v) and v > 0.6) else INK)
                 ax.text(b, a - 0.25, f"n={r['rows'][a, b]}", ha="center", va="center", fontsize=6.5,
                         color="white" if (not np.isnan(v) and v > 0.6) else INK_MUTED)
-        # Three panels leave ~0.35 in per cell: 7 pt labels run into each other,
-        # so they stand at 45 deg there (6.5 pt, the n= size the user set).
         three = len(arms) > 2
         ax.set_xticks(range(len(le)), xl, fontsize=6.5 if three else 7, rotation=45 if three else 0,
                       ha="right" if three else "center", rotation_mode="anchor")
@@ -813,20 +755,16 @@ def draw_all(results: pathlib.Path, training: pathlib.Path, out: pathlib.Path, o
     return written
 
 
-# ---------------------------------------------------------------------------
 # Self-test (D-080): checks on built data; each mutation of THIS file's source
-# must flip exactly its declared checks.
-# ---------------------------------------------------------------------------
 
 def _synthetic():
-    """Two seeds per method, 20 rows per policy and block; T-grenze 7 x 4 rows
-    for autodr s1. Known answers are written next to the checks."""
+    """Two seeds per method, 20 rows per policy and block; T-grenze 7 x 4 rows for autodr s1."""
     rows = []
     n = 20
     k_by = {("autodr", 1): 18, ("autodr", 2): 16, ("nodr", 1): 6, ("nodr", 2): 4}
     for (m, s), k in k_by.items():
         for block in ("T-final", "T-nominal", "T-auswahl"):
-            kk = k if block != "T-nominal" else 20 - s   # 19 / 18: K2 has a variance
+            kk = k if block != "T-nominal" else 20 - s
             for i in range(n):
                 ok = int(i < kk)
                 abort = int((not ok) and i == n - 1)
@@ -835,10 +773,8 @@ def _synthetic():
                              "success_train": ok, "success_strict": ok, "force_abort": abort,
                              "steps": 10 + i if ok else 256, "force_max_filtered_n": 5.0 + i,
                              "force_max_raw_n": 5.0 + i, "ip_max_mm": 0.01 * i, "force_limit_n": 30.0,
-                             # lat 0..28.5 mm, tilt 0..9.5 deg; start height only in 0.04..0.12
                              "lat_r_mm": 1.5 * i, "yaw_abs_deg": 0.25 * i, "tilt_deg": 0.5 * i,
                              "start_height_m": 0.03 + 0.004 * i, "friction": 0.14})
-    # Fixed-DR (D-192) in its own blocks: T-final-F 12/20 and 10/20, T-nominal-F 17/20 and 16/20.
     for s, k in ((1, 12), (2, 10)):
         for block, kk in (("T-final-F", k), ("T-nominal-F", 18 - s)):
             for i in range(n):
@@ -864,7 +800,7 @@ def _synthetic():
 
 def _synthetic_curves():
     rows = []
-    for m in ARMS:   # Fixed-DR curves too (D-192); F8 reads autodr only
+    for m in ARMS:
         for s in (1, 2):
             for it in range(3):
                 rows.append({"method": m, "seed": s, "iteration": it,
@@ -891,7 +827,7 @@ def _write_rt_logs(root: pathlib.Path, bad_seed: int | None = None, runs=None):
             w.writerow(["step", "wall_time", *TRAINING_TAGS])
             for it in range(2):
                 w.writerow([it, 0, 0.5, "", "", "", "", 0.12, 0.02, "", ""])
-            w.writerow([1, 0, "", "", "", "", "", "", "", "", ""])   # a */time row
+            w.writerow([1, 0, "", "", "", "", "", "", "", "", ""])
         (d / f"{run}_autodr_1499.json").write_text("{}", encoding="utf-8")
         tilt = "0.01" if (m == "nodr" and s == bad_seed) else "0.0"
         (d / f"{run}_env.yaml").write_text(
@@ -934,7 +870,6 @@ def _run_checks(ns) -> dict:
     curves, side = _synthetic_curves()
 
     def _check(i, fn):
-        # A mutation that makes a data function RAISE counts as a red check.
         try:
             res[CHECKS[i]] = bool(fn())
         except Exception:   # noqa: BLE001
@@ -954,7 +889,6 @@ def _run_checks(ns) -> dict:
         return len(sh["x"]) == 5 and all(v > 0 for v in sh["n"])
 
     def c3():
-        # lat 24..28.5 mm = rows 16..19: s1 succeeds on 16, 17 (0.5), s2 on none (0.0)
         return abs(ns["data_f3"](s)["lat_r_mm"]["methods"]["autodr"]["mean"][-1] - 0.25) < 1e-12
 
     def c4():
@@ -974,7 +908,6 @@ def _run_checks(ns) -> dict:
                 and abs(p["yaw"]["hi"][-1] - 1.0) < 0.01 and abs(p["start_height_floor"]["hi"][-1] - 1.0) < 1e-9)
 
     def c9():
-        # lat 1.5*i < 6 -> i 0..3; tilt 0.5*i < 2 -> i 0..3: 4 rows, all successes for both seeds
         a = ns["data_f9"](df)["methods"]["autodr"]
         return a["rows"][0, 0] == 4 and abs(a["rate"][0, 0] - 1.0) < 1e-12
 
@@ -1033,7 +966,6 @@ def _run_checks(ns) -> dict:
                 and len(ns["data_f2"](ES.summarize(no_f))) == 2)
 
     _check(17, c17)
-    # lat 12..16.5 mm = rows 8..11: Fixed-DR s1 (12 successes) all, s2 (10) rows 8, 9.
     _check(18, lambda: abs(ns["data_f3"](s)["lat_r_mm"]["methods"]["fixeddr"]["mean"][2] - 0.75) < 1e-12)
 
     def c19():
@@ -1083,7 +1015,6 @@ def _run_checks(ns) -> dict:
             res[CHECKS[12]] = res[CHECKS[12]] and got["rows"] == 2 * len(TRAINING_RUNS)
         except Exception:   # noqa: BLE001
             res[CHECKS[12]] = False
-        # Fixed-DR training runs (D-192): all five -> extracted; four -> refused.
         _write_rt_logs(t / "rt_f", runs={**TRAINING_RUNS, **FIXED_RUNS})
         try:
             got = ns["extract_training"](t / "rt_f", t / "out_f")
@@ -1104,8 +1035,6 @@ MUTATIONS = (
      (CHECKS[0], CHECKS[14])),
     ("f2-blocks-swapped", '(("K2", "T-nominal"), ("K1", "T-final"))', '(("K1", "T-nominal"), ("K2", "T-final"))',
      (CHECKS[1], CHECKS[17])),
-    # An empty bin has rate None: the mean over it raises, so the whole of
-    # data_f3 goes red -- both F3 checks.
     ("f3-keeps-empty-bins", "keep = [i for i, n in enumerate(ns) if n > 0]",
      "keep = list(range(len(ns)))", (CHECKS[2], CHECKS[3], CHECKS[18])),
     ("f3-mean-is-first-seed", "np.mean([seeds[k][j] for k in keys]))",
@@ -1129,8 +1058,6 @@ MUTATIONS = (
     ("figure-numbers-keep-the-point", 'return s.replace(".", ",")', "return s", (CHECKS[13],)),
     ("style-keeps-the-default-tick-formatter", "            axis.set_major_formatter(_de_formatter())\n",
      "            pass\n", (CHECKS[13],)),
-    # Fixed-DR (D-192): its own blocks, optional, both or none.
-    # data_f1 then finds no Fixed-DR run and raises: both F1 checks go red.
     ("f1-reads-fixed-dr-from-the-pair-block", "_policies(summary, ARM_BLOCK[block])", "_policies(summary, block)",
      (CHECKS[0], CHECKS[14], CHECKS[19])),
     ("fixed-dr-always-required", "    if not blocks:\n        return METHODS", "    if False:\n        return METHODS",

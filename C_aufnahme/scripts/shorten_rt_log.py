@@ -52,15 +52,6 @@ RT_LINE_RE = re.compile(r"^\[rt_log\] ")
 TRACEBACK_RE = re.compile(r"^Traceback \(most recent call last\)")
 USER_CONFIG_RE = re.compile(r"^Loading user config located at")
 STEP_RE = re.compile(r"^step (\d+) of")
-# THE LINES A REPEATED STARTUP REPORT MUST STILL HAND OVER (2026-09-12).
-# Until af45f94 a repeat really was an "identical instrument" and dropping it
-# whole was right. It is not any more: since then the report prints the noise
-# model's per-episode bias and the grasp belief error, and those carry
-# DIFFERENT numbers at every count. `report_at_steps` gained a fourth count
-# past the episode cap for exactly one purpose -- so a reader can hold the
-# late printout against the early one and see whether the bias is re-drawn or
-# accumulating. Dropping the repeat deletes the only evidence for that.
-# The step line rides along so the kept numbers can be told apart.
 REPORT_KEEP_RE = re.compile(
     r"^(step \d+ of|observation bias |grasp belief error )"
 )
@@ -68,13 +59,7 @@ ANSI = "\x1b["
 
 
 def report_blocks(lines: list[str]) -> dict[int, int]:
-    """{start: end} (0-based, end-exclusive) of every startup report.
-
-    A block starts at the divider before `REPORT_MARKER` (or at the marker)
-    and ends after the NEXT divider, or before the next `[rt_log]` line,
-    whichever comes first. No line cap: the real report is ~185 lines and
-    `filter_rt_log.MAX_BLOCK_LINES` (150) would cut it mid-way.
-    """
+    """{start: end} (0-based, end-exclusive) of every startup report."""
     blocks: dict[int, int] = {}
     i = 0
     while i < len(lines):
@@ -120,7 +105,7 @@ def shorten(lines: list[str]) -> tuple[list[str], dict]:
         line = lines[i]
         if RT_LINE_RE.match(line):
             if frl.RT_CMD_RE.match(line):
-                seen_report = False          # a new run: its first report is kept
+                seen_report = False
             if frl.RT_EXIT_RE.match(line):
                 in_traceback = False
             out.append(line)
@@ -226,20 +211,12 @@ def build(lines: list[str], json_path: pathlib.Path | None, full_path: str) -> l
     return out
 
 
-# --------------------------------------------------------------------------
-# self-test (D-080: each rule has a mutation that must break it)
-# --------------------------------------------------------------------------
-
-
 def _synthetic_log() -> list[str]:
     report = lambda step: [  # noqa: E731
         "=" * 72,
         "INSERTION STARTUP REPORT -- REAL geometry",
         f"step {step} of (2, 60, 180, 258), t = 0.1 s after reset",
         "kp:           pos 100.0 N/m",
-        # The two lines that are NOT the same at every count. Their values
-        # differ per step on purpose, so a test that lets the repeat be
-        # dropped cannot pass by accident.
         f"observation bias env0..3 (D-182, tip_rel 12:15): [[0.00{step:03d}]]",
         f"grasp belief error env0..3 (D-183): [0.00{step:03d}]",
         "[INFO]: noise inside the report",
@@ -261,7 +238,7 @@ def _synthetic_log() -> list[str]:
         + report(2)
         + ["[check_seated_success] curve  h +30.0 mm | y +0.00 mm | kernel_sum 2.235000e-01"]
         + report(60)
-        + ["Mean reward: 12.3",              # an unprefixed rsl_rl-style line: must stay
+        + ["Mean reward: 12.3",
            "2026-09-05T12:23:02Z [7,810ms] [Error] [omni.physx.plugin] bad joint",
            "[check_seated_success] VERDICT: REWARD_CURVE_MEASURED",
            "[rt_log] exit code: 0"]
@@ -284,9 +261,6 @@ def _self_test() -> int:
         ("report noise dropped", "[INFO]: noise inside the report" not in text),
         ("second report cut, not dropped whole",
          "startup report repeat (step 60) cut to 3 of 8 lines" in text),
-        # THE POINT OF THE CUT (2026-09-12): the lines that carry different
-        # numbers at every count must survive, or the late printout -- the
-        # only one past the episode cap -- reaches nobody.
         ("the repeat keeps its observation bias line",
          "observation bias env0..3 (D-182, tip_rel 12:15): [[0.00060]]" in text),
         ("the repeat keeps its grasp belief line",
@@ -304,7 +278,6 @@ def _self_test() -> int:
         ("blank lines dropped", "" not in out),
         ("count: one report repeat", stats["reports_dropped"] == 1),
     ]
-    # Mutation 1: a Traceback buried in noise -- everything after it survives.
     tb = log[:-1] + ["Traceback (most recent call last):",
                      "\tFile x, line 1",
                      "2026-09-05T12:23:02Z [1ms] [Warning] [x] after the traceback",
@@ -318,17 +291,14 @@ def _self_test() -> int:
         ("traceback: error line kept", "RuntimeError: boom" in t2),
         ("traceback: exit 1 kept", "[rt_log] exit code: 1" in t2),
     ]
-    # Mutation 2: a second run in the same file -- ITS first report is kept.
     two = log + log
     out_two, st2 = shorten(two)
     checks += [
         ("two runs: two first reports kept", "\n".join(out_two).count("step 2 of") == 2),
         ("two runs: two repeats dropped", st2["reports_dropped"] == 2),
     ]
-    # Mutation 3: the rule order -- a [rt_log] line that LOOKS like noise stays.
     out3, _ = shorten(["[rt_log] cmd: python x", "[rt_log] exit code: 0"])
     checks.append(("rt_log lines never drop", len(out3) == 2))
-    # Mutation 4: compact JSON -- scalar lists inline, rows expanded, size cap.
     obj = {"marker": "m", "curve_heights_mm": [30.0, 5.0],
            "curve": [{"h": 30.0, "kernel_sum": [0.1, 0.1]}], "verdict_ok": True}
     cj = compact_json(obj)

@@ -36,10 +36,7 @@ import tempfile
 
 SCRIPT_MARKER = "eval_report-2026-09-23b"
 REPO = pathlib.Path(__file__).resolve().parents[1]
-# eval_plan.md section 3.2, the four evaluation blocks. `technik` is NOT one.
 BLOCKS = ("T-nominal", "T-auswahl", "T-final", "T-grenze")
-# Fixed-DR arm (D-192, eval_plan.md section 3.2, added afterwards): staged when
-# BOTH are there, refused when only one is (K5 and K5_nominal belong together).
 FIXED_BLOCKS = ("T-nominal-F", "T-final-F")
 COPY_BACK = ("episodes_all.csv", "collect_report.json", "summary.json", "summary_tables.csv")
 
@@ -57,8 +54,7 @@ def sha256(path: pathlib.Path) -> str:
 
 
 def stage(results: pathlib.Path, tmp: pathlib.Path) -> list:
-    """Copy exactly BLOCKS (+ both FIXED_BLOCKS when there) into ``tmp``. A
-    missing block, or one Fixed-DR block without the other, stops the report."""
+    """Copy exactly BLOCKS (+ both FIXED_BLOCKS when there) into ``tmp``."""
     missing = [b for b in BLOCKS if not (results / b).is_dir()]
     if missing:
         raise ReportError(f"blocks missing under {results}: {missing}")
@@ -117,10 +113,7 @@ def build(results: pathlib.Path, training: pathlib.Path, figures: pathlib.Path) 
     return manifest
 
 
-# ---------------------------------------------------------------------------
 # Self-test (D-080): checks on built data; each mutation of THIS file's source
-# must flip exactly its declared checks.
-# ---------------------------------------------------------------------------
 
 CHECKS = (
     "stage copies exactly the four blocks, never technik",
@@ -152,13 +145,10 @@ def _run_checks(ns) -> dict:
             ns["stage"](src, dst2)
             res[CHECKS[1]] = False
         except Exception as exc:   # noqa: BLE001 - ReportError of the executed copy
-            # The guard's OWN refusal, before any copy -- not copytree's
-            # FileNotFoundError, which also names the folder.
             res[CHECKS[1]] = "blocks missing" in str(exc) and not (dst2 / "T-nominal").exists()
         got = ns["hash_tree"](src / "T-final", t)
         want = {"results/T-final/autodr_s1/x.txt": hashlib.sha256(b"T-final").hexdigest()}
         res[CHECKS[2]] = got == want
-        # Fixed-DR blocks (D-192): both -> staged; one alone -> refused.
         full = t / "full"
         for b in (*BLOCKS, "T-nominal-F", "T-final-F", "technik"):
             (full / b / "x").mkdir(parents=True)

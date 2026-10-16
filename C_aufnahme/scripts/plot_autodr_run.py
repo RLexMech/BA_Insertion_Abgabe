@@ -44,8 +44,8 @@ import pathlib
 import sys
 import tempfile
 
-RUN = "#3B6FD4"   # series 1 (plot_run_curves.py precedent, validated with REF)
-REF = "#D97706"   # series 2
+RUN = "#3B6FD4"
+REF = "#D97706"
 INK = "#1F2933"
 INK_MUTED = "#6B7280"
 GRID = "#E5E7EB"
@@ -311,7 +311,7 @@ def _synthetic(tmp: pathlib.Path, drop_tag: str | None = None):
         w.writerow(["step", "wall_time"] + tags)
         for i in range(40):
             w.writerow([i, 0.0] + [min(1.0, i / 20) if "/" in t else 0 for t in tags])
-            w.writerow([i, 0.0] + ["" for _ in tags])  # a */time-only row
+            w.writerow([i, 0.0] + ["" for _ in tags])
     b = lambda k0, k1, rk: [{k0: 0.0, k1: 1.0, "episodes": 0, rk: None}, {k0: 1.0, k1: 2.0, "episodes": 5, rk: 0.8}]
     m = {"force_norm_n": {"f_max_n": 30.0}, "below_fixture_rate": {"underside_depth_mm": 46.0},
          "success_by_start_height_bin": b("start_mm_from", "start_mm_to", "success_rate"),
@@ -339,7 +339,6 @@ def self_test() -> int:
         ok = len(written) == 12 and all(p.stat().st_size > 0 for p in written)
         print(f"[{'PASS' if ok else 'FAIL'}] T3 six figures x two formats written")
         fails += not ok
-        # MUTATION: one required tag missing must stop the script, not draw a blank panel.
         mut = tmp / "mut"
         mut.mkdir()
         _synthetic(mut, drop_tag="dr/yaw_lo")

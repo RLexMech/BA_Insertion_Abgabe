@@ -2,6 +2,39 @@
 
 Bachelor thesis project. Goal: contact-rich insertion with a Universal Robots UR5e.
 
+## Abgabefassung: bestätigter Endstand C
+
+Grundlage ist `153b8b4` aus `Ur5e_ContactRich_Insertion`. Lange Codekommentare
+wurden gekürzt und veraltete Testkonfigurationen berichtigt. Die gemeinsamen
+Einstellungen der Studienläufe sind direkt voreingestellt:
+
+- 256 parallele Umgebungen, 1500 PPO-Iterationen.
+- `start_floor_m=-0.030`, `autodr_stall_buffers=3`.
+- Standard-Seed 1; für die Studie jeweils Seeds 1 bis 5 verwenden.
+- `dr_mode=off` bleibt der Standard für No-DR; Auto-DR und Fixed-DR werden
+  ausdrücklich gewählt. Auch No-DR verwendet die Starthöhen-Anpassung.
+
+Aus `C_aufnahme` mit eingerichteter Isaac-Lab-Umgebung und den Szenen-Assets:
+
+```powershell
+python scripts/rsl_rl/train.py --task Ur5e-Insertion-Direct-v0 --headless --seed 1 env.dr_mode=off
+python scripts/rsl_rl/train.py --task Ur5e-Insertion-Direct-v0 --headless --seed 1 env.dr_mode=autodr
+python scripts/rsl_rl/train.py --task Ur5e-Insertion-Direct-v0 --headless --seed 1 env.dr_mode=fixed_dr
+```
+
+Die Befehle stehen für RT-207, RT-206 und RT-231; jeden mit Seeds 1–5 ausführen.
+Die übrigen Einstellungen bleiben erhalten: OSC, 28 Beobachtungswerte,
+MLP 128/128, Aktionsänderungsstrafe 0,0034 und Kraftabbruch bei 30 N.
+
+Für tabellenbasierte Auswertung mit `play.py --eval-table` zusätzlich
+`env.start_floor_m=0.020` angeben: Die Auswertung verwendet keine Trainings-
+Starthöhen-Anpassung. Bei geänderter `start_tip_above_entrance` müssen beide
+Werte gleich sein. `run_eval.ps1` setzt die 0,020 m bereits ausdrücklich.
+Die historischen Auswertungen liefen auf `8299485d`; diese Abgabefassung
+ist durch die beschriebenen Anpassungen kein unveränderter Original-Commit.
+
+Die folgenden Abschnitte beschreiben den historischen Entwicklungsstand.
+
 ## Branch `p5-kraftsensor` — what was reached (2026-09-23)
 
 Numbers from `rt_logs/VERDICTS.md` and `results/eval/summary.json`.

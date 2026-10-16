@@ -1,56 +1,7 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-"""Convert a millimetre-authored CAD import into a metre stage (D-016 invariant 1).
-
-Symptom this fixes: the Isaac Sim CAD import leaves the stage at
-``metersPerUnit = 0.001`` with geometry authored in millimetre numbers. The
-physical size is then correct only if a reader honours ``metersPerUnit`` --
-Isaac Lab does not, so the asset spawns 1000x too large.
-
-The fix is two coupled edits, never one alone:
-  1. ``metersPerUnit`` -> 1.0 on the stage, and
-  2. a uniform scale of the OLD ``metersPerUnit`` (0.001) on the default prim,
-     placed FIRST in ``xformOpOrder`` so it scales any existing translation too.
-Setting only (1) would resize the table to 500 m.
-
-UNVERIFIED -- authored on the dev PC (no Isaac installation). Copy to the
-training machine before running (CLAUDE.md two-repo sync workflow):
-
-    cd C:\\Isaaclab
-    conda activate env_isaaclab
-    .\\isaaclab.bat -p <repo>\\scripts\\fix_stage_units.py --usd <path>\\Tisch.usd
-
-THE DEFAULTS DESCRIBE THE TABLE, NOT EVERY ASSET. ``--expect-extents`` and
-``--expect-z-range`` default to 0.500/0.600/0.755 m and -0.700..0.055 m, which
-is the square table's contract. Run this on any other asset without setting
-them and the unit fix will succeed while the verdict reports CONTRACT FAIL on
-``extent_*`` and ``z_*_upright`` -- and because the original is only replaced
-on a pass, the correct metre file is left sitting next to it as
-``<name>.fixed.usd`` while the millimetre original stays in place. That
-happened on 2026-08-22 with the gripper/part assembly (D-075). For a tool asset
-authored to the D-068 origin, the flange face is z = 0 and the part bottom is
-FLANGE_TO_PART_BOTTOM below it, so:
-
-    .\\scripts\\rt_log.ps1 RT-10 python scripts/fix_stage_units.py \\
-        --usd <...>\\assets\\Werkzeug\\greifer_bauteil_asm.usd \\
-        --expect-extents 0.09641 0.14350 0.15200 --expect-z-range 0.0 0.15200
-
-The z range there is an independent check, not a restatement of the file: it
-comes from the origin convention plus the cell measurement.
-
-Safety model, because each run on the training machine costs a manual round
-trip: the input file is never edited in place. The script writes a backup, then
-exports a flattened candidate, then re-opens that candidate in a fresh stage and
-checks it against the asset contract (docs/asset_contract_tisch.md). The
-original is replaced only if that check passes. Every intermediate number is
-printed, so a failed run still explains itself instead of needing a second trip.
-
-Exit codes (D-081): 0 replaced, nothing to do, or --dry-run; 1 CONTRACT FAIL;
-2 the replace itself failed, in which case the line above it names the
-exception. The old `finally: simulation_app.close()` is gone -- close() does
-not return (RT-22), so it ate both the traceback and the code.
-"""
+"""Convert a millimetre-authored CAD import into a metre stage (D-016 invariant 1)."""
 
 from __future__ import annotations
 
@@ -64,9 +15,6 @@ import traceback
 
 from isaaclab.app import AppLauncher
 
-# Loaded by path because scripts/tools is not a package -- the idiom
-# author_tool_ur5e.py already uses. Stdlib only, so it loads before the
-# simulator does.
 _TOOLS = pathlib.Path(__file__).resolve().parent / "tools"
 
 
@@ -83,15 +31,6 @@ exit_with = _load_tool("isaac_exit").exit_with
 
 parser = argparse.ArgumentParser(description="Fix stage units of a CAD import (D-016).")
 parser.add_argument("--usd", type=str, required=True, help="Path to the USD file to fix.")
-# PROVENANCE. The docstring above pays for these three numbers as a
-# measurement of this asset. The SAME three also stand in
-# insertion_tasks_cfg.py as the PROXY plate: PLATE_HALF_EXTENTS (0.250,
-# 0.300) doubled is 0.500 x 0.600, and PLATE_TOP_Z is 0.755. Whether that is
-# one fact or two facts that happen to agree is NOT established here.
-# Unlike the tools/ scripts, this file already runs inside an isaaclab
-# environment, so importing the constant is possible -- nobody has wired it,
-# and it cannot be tested on the dev laptop. Until then: change one, check
-# the other.
 parser.add_argument(
     "--expect-extents",
     type=float,
@@ -121,7 +60,6 @@ args_cli.headless = True
 app_launcher = AppLauncher(args_cli)
 simulation_app = app_launcher.app
 
-# pxr is importable only after the app is up.
 from pxr import Gf, Usd, UsdGeom  # noqa: E402
 
 
@@ -140,8 +78,6 @@ def measure(stage: Usd.Stage) -> dict:
         "bbox_empty": False,
         "bbox_min_stage_units": lo,
         "bbox_max_stage_units": hi,
-        # The physical size is the stage-unit number times metersPerUnit. Reporting
-        # only stage units is what made an earlier run look correct when it was not.
         "bbox_min_m": [v * mpu for v in lo],
         "bbox_max_m": [v * mpu for v in hi],
         "extents_m": [(hi[i] - lo[i]) * mpu for i in range(3)],
@@ -188,8 +124,6 @@ def apply_unit_scale(prim: Usd.Prim, factor: float) -> None:
 
     scale_op = xf.AddScaleOp(opSuffix="unitsResolve")
     scale_op.Set(Gf.Vec3f(factor, factor, factor))
-    # Outermost: first entry in xformOpOrder is applied last to the point, i.e. it
-    # wraps everything below it, so any translate authored in millimetres is scaled too.
     xf.SetXformOpOrder([scale_op] + list(existing), xf.GetResetXformStack())
     print(f"[fix_stage_units] added {scale_op.GetOpName()} = {factor}, placed first in xformOpOrder")
 
@@ -216,7 +150,6 @@ def main() -> int:
     usd_path = pathlib.Path(args_cli.usd).resolve()
     if not usd_path.is_file():
         raise FileNotFoundError(f"No such USD file: {usd_path}")
-    # resolve() reports the on-disk casing on Windows; a mismatch matters on Linux.
     print(f"[fix_stage_units] resolved input: {usd_path}")
 
     stage = Usd.Stage.Open(str(usd_path))
@@ -268,8 +201,6 @@ def main() -> int:
     UsdGeom.SetStageMetersPerUnit(stage, 1.0)
     print(f"[fix_stage_units] xformOps after: {describe_xform_ops(target)}")
 
-    # Flatten so the result cannot depend on a sibling payload file, the failure
-    # mode that produced an invisible fixture on 2026-07-26.
     candidate = usd_path.with_name(usd_path.stem + ".fixed" + usd_path.suffix)
     stage.Flatten().Export(str(candidate))
     print(f"[fix_stage_units] candidate exported: {candidate}")
@@ -306,36 +237,6 @@ def main() -> int:
         print(f"[fix_stage_units] original left untouched; inspect {candidate} and the report.")
         return 1
 
-    # WHY THE REPLACE IS NOT A BARE shutil.copy2 ANY MORE.
-    #
-    # THE SYMPTOM (2026-08-22): the report said `"pass": true`, the process
-    # exited 0, the two lines below never printed, and the original was NOT
-    # replaced. Three runs later it is reproduced three times and named once.
-    #
-    # RT-23 and RT-24 (2026-08-24): the defect reproduces on a fresh copy,
-    # deterministically, with bit-identical numbers. Not a one-off.
-    #
-    # RT-25, the run that named it -- MEASURED, not deduced:
-    #
-    #     REPLACE FAILED: OSError: [Errno 22] Invalid argument: <usd_path>
-    #     shutil.py:258, in copyfile -> with open(dst, 'wb') as fdst:
-    #
-    # So the failure is in OPENING THE DESTINATION for writing. It is NOT
-    # PermissionError and NOT WinError 32 -- the hypothesis that stood here
-    # predicted exactly those and is REFUTED. It is EINVAL.
-    #
-    # Why the silence, and only this: D-081. The old
-    # `finally: simulation_app.close()` swallowed the traceback and the code,
-    # because close() does not return (RT-22). That half is settled.
-    #
-    # NEW HYPOTHESIS, and it is UNTESTED -- do not quote it as the cause:
-    # `stage` was opened FROM usd_path and `check_stage` from candidate, USD
-    # memory-maps crate files, and a mapped file cannot be opened for writing.
-    # The step below is what discriminates: the two stage references are
-    # dropped first, and the copy is retried. If it then succeeds, the mapping
-    # is the mechanism and the log says so in one run. If EINVAL comes back
-    # with the stages gone, the mapping is ruled out and something else holds
-    # that handle -- also an answer, and a different one.
     print("[fix_stage_units] releasing both stage references before the replace "
           "(discriminating step, RT-25 follow-up)")
     target = None
@@ -360,14 +261,10 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    # D-081. What stood here was `try: main() finally: simulation_app.close()`,
-    # and close() does not return (measured, RT-22) -- so a raised exception
-    # died in the finally without a traceback and the run reported exit 0.
-    # That is the mechanism behind the 2026-08-22 entry in HANDOFF-SZENE.md.
     _code = 1
     try:
         _code = main() or 0
-    except SystemExit as _exc:            # argparse
+    except SystemExit as _exc:
         _code = int(_exc.code or 0)
     except BaseException:                 # noqa: BLE001 -- print it, then exit non-zero
         traceback.print_exc()

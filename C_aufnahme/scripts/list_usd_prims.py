@@ -1,16 +1,7 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-"""List every prim in a USD stage with its type and world-space translation.
-
-Use this to check whether a coordinate system / Xform authored in the source
-CAD tool (e.g. a bore-entrance frame for D-017) actually survived the STEP to
-USD import, and where it ended up.
-
-    cd C:\\Isaaclab
-    conda activate env_isaaclab
-    .\\isaaclab.bat -p <repo>\\scripts\\list_usd_prims.py --usd <path\\to\\Tisch.usd>
-"""
+"""List every prim in a USD stage with its type and world-space translation."""
 
 from __future__ import annotations
 
@@ -38,13 +29,8 @@ simulation_app = app_launcher.app
 
 from pxr import Usd, UsdGeom  # noqa: E402
 
-# These constants read a carb setting, so importing them before AppLauncher
-# raises ModuleNotFoundError. That is why the expansion lives here and not in
-# the argument parser above.
 from isaaclab.utils import assets as _assets  # noqa: E402
 
-# Which of these names the installed Isaac Lab actually carries is not known
-# from the laptop, so a missing one is skipped instead of killing the run.
 NUCLEUS_PREFIXES = {
     name: getattr(_assets, name)
     for name in ("ISAACLAB_NUCLEUS_DIR", "ISAAC_NUCLEUS_DIR", "NUCLEUS_ASSET_ROOT_DIR")
@@ -70,9 +56,6 @@ def expand_nucleus(raw: str) -> str:
 
 
 def main() -> None:
-    # A Nucleus/omniverse URL must not go through pathlib -- resolve() mangles
-    # the scheme. Needed for reading shipped reference assets, e.g. Factory's
-    # franka_mimic.usd (the FORGE force_sensor link, D-114 groundwork).
     raw_usd = expand_nucleus(args_cli.usd)
     if "://" in raw_usd:
         usd_path = raw_usd
@@ -91,17 +74,11 @@ def main() -> None:
         translation = world_xf.ExtractTranslation()
         pos = f"({translation[0]:.4f}, {translation[1]:.4f}, {translation[2]:.4f})"
         line = f"{indent}{prim.GetName()}  [{prim.GetTypeName()}]  world_pos={pos}  path={prim.GetPath()}"
-        # Authored mass properties, printed only where they exist: the point of
-        # reading a reference robot is what its links CARRY, not just where
-        # they sit (e.g. the force_sensor link's mass/inertia, D-114).
         mass_bits = []
         for attr_name, label in (
             ("physics:mass", "mass"),
             ("physics:diagonalInertia", "diagInertia"),
             ("physics:centerOfMass", "com"),
-            # Solver iteration counts AS AUTHORED IN THE FILE, i.e. before any
-            # ArticulationRootPropertiesCfg override at spawn. The env's startup
-            # report reads the stage after that override and cannot show this.
             ("physxArticulation:solverPositionIterationCount", "artPosIters"),
             ("physxArticulation:solverVelocityIterationCount", "artVelIters"),
             ("physxRigidBody:solverPositionIterationCount", "rbPosIters"),

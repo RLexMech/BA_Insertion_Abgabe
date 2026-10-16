@@ -1,52 +1,7 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-"""Weld the imported gripper+part assembly into a copy of the UR5e USD.
-
-The real counterpart of the proxy's ``author_peg_ur10e.py``, which welded a
-generated BOX peg into the UR10e. That script was DELETED on 2026-08-28 with
-the rest of the dead proxy code (S6); read it in git history if the origin of
-a line here is in question. Everything structural is ported from it rather
-than reinvented: source asset never written to, flatten -> author -> re-open a fresh
-stage -> verify -> replace only on a pass, sidecar report, marker line first.
-
-WHY A WELDED LINK AT ALL (D-018/D-019, carried over): a runtime fixed joint
-fails with "no bodies defined at body0/body1", and the Robot Assembler strips
-the ArticulationRoot API. A link inside the asset makes the tool's mass part of
-the articulation and gives a contact sensor a stable target.
-
-THREE DECISIONS THIS SCRIPT ENCODES, all settled with the user 2026-08-23:
-
-  1. ONE link, two meshes. ``tool_link`` carries the whole tool. The gripper is
-     rigid by decision (CLAUDE.md), so a second body joined by a second fixed
-     joint would model a degree of freedom that does not exist. It also makes
-     the CAD's 24.5 mm overlap between gripper adapter and part a non-issue
-     structurally, instead of needing a FilteredPairs the repo uses nowhere.
-  2. Collision on the PART only, as SDF. Not convexHull: a convex hull bridges
-     the gap between the part's two lugs and turns it into a solid 96.41 mm
-     block, which cannot enter a 90.588 mm pocket at all (D-075, D-062). The
-     gripper gets NO collider -- it never touches the fixture, the cups sit
-     inside the part, and the missing collider is what makes decision 1 safe.
-  3. Yaw = 0 by definition. The gripper's real mounting angle on the flange is
-     a statement about the cell and is in no CAD file; fixing the zero point
-     here moves it into the wrist_3 home angle, where it is one measurable
-     number. ``--tool-yaw-deg`` exists to correct it later without re-deriving
-     anything.
-
-MASSES ARE REQUIRED ARGUMENTS WITH NO DEFAULT. The suction cups are missing
-from the CAD, so no density times volume can stand in for a weighing. Mass and
-centre of mass are authored (the COM from the two body centroids the assembly
-STEP states, weighted by these masses); ``diagonalInertia`` deliberately is
-NOT, so PhysX derives it from the collision geometry -- which is the part
-alone. That approximation is named in TOOL_CHAIN_PENDING, not hidden.
-
-UNVERIFIED -- authored on the dev PC (no Isaac installation). On the training
-machine:
-
-    conda activate env_isaaclab
-    python scripts\\author_tool_ur5e.py --part-mass <kg> --gripper-mass <kg> --dry-run
-    python scripts\\author_tool_ur5e.py --part-mass <kg> --gripper-mass <kg>
-"""
+"""Weld the imported gripper+part assembly into a copy of the UR5e USD."""
 
 from __future__ import annotations
 
@@ -60,9 +15,6 @@ import traceback
 
 from isaaclab.app import AppLauncher
 
-# The harness is stdlib only, so it loads before the simulator does. Loaded by
-# path because scripts/tools is not a package -- the same idiom
-# check_demo_reward_math.py uses for torch_shim.py.
 _TOOLS = pathlib.Path(__file__).resolve().parent / "tools"
 
 
@@ -89,9 +41,6 @@ parser = argparse.ArgumentParser(description="Weld gripper + part into a copy of
 parser.add_argument("--src", type=str, default=None, help="Source UR5e USD; default is the shipped UR5E cfg path.")
 parser.add_argument("--tool-usd", type=str, default=None, help="Imported gripper+part assembly; default from the resolver.")
 parser.add_argument("--out", type=str, default=None, help="Output USD; default is the package assets/Robot path.")
-# D-079 stands: authoring without both masses is refused. The requirement moved
-# from argparse into main() so that --counter-proof, which reads them back out
-# of the sidecar of a finished asset, does not have to restate a weighing.
 parser.add_argument("--part-mass", type=float, default=None, help="Mass of the part in kg. No default: it is a weighing, not a derivation. Required unless --counter-proof.")
 parser.add_argument("--gripper-mass", type=float, default=None, help="Mass of the gripper incl. the cups missing from the CAD, in kg. Required unless --counter-proof.")
 parser.add_argument("--tool-yaw-deg", type=float, default=None, help="Rotation of the tool about the tool axis at the weld. Default: TOOL_WELD_YAW_RAD (zero by definition).")
@@ -108,7 +57,6 @@ print(f"[author_tool] marker: {SCRIPT_MARKER}; sections: describe, author, verif
 app_launcher = AppLauncher(args_cli)
 simulation_app = app_launcher.app
 
-# pxr and the insertion modules are importable only after the app is up.
 from pxr import Gf, PhysxSchema, Sdf, Usd, UsdGeom, UsdPhysics  # noqa: E402
 
 from insertion.tasks.direct.insertion.insertion_tasks_cfg import (  # noqa: E402
@@ -131,14 +79,12 @@ FLANGE_BODY = "wrist_3_link"
 (probed, recorded in ur5e_cfg.py)."""
 
 
-# --- stage description, ported unchanged from the proxy's author_peg_ur10e.py
 def rigid_body_prims(stage: Usd.Stage) -> list[Usd.Prim]:
     return [p for p in stage.Traverse() if p.HasAPI(UsdPhysics.RigidBodyAPI)]
 
 
 def joint_prims(stage: Usd.Stage) -> list[Usd.Prim]:
-    """Every physics joint prim; three tests because one of them may match
-    nothing silently and a zero-vs-zero count would pass a broken asset."""
+    """Every physics joint prim; three tests because one of them may match nothing silently and a zero-vs-zero count would pass a broken asset."""
     return [
         p
         for p in stage.Traverse()
@@ -159,22 +105,7 @@ def find_prim_by_name(root: Usd.Prim | Usd.Stage, name: str) -> Usd.Prim | None:
 
 
 def external_arcs(stage: Usd.Stage) -> list[str]:
-    """Composition arcs pointing at another FILE.
-
-    An external arc to a file the training machine does not have resolves to
-    nothing and spawns an invisible asset -- the 2026-07-26 failure recorded in
-    the fixture scripts. After the final flatten there must be none.
-
-    EMPTY paths are dropped, and that is not a relaxation. A flattened layer
-    reports exactly one dependency whose path is the empty string, with no
-    sublayer, reference or payload anywhere in the stage to account for it.
-    MEASURED, run RT-15 on 2026-08-23: the SHIPPED UR5e produces the very same
-    single empty entry after a plain flatten, with no tool involved
-    (scripts/diagnose_tool_candidate.py, question Q3). An empty asset path is
-    not a file name, so it cannot fail to resolve on the training machine --
-    which is the entire risk this function exists to catch. Counting it made
-    the check unpassable by any flattened asset, including a perfect one.
-    """
+    """Composition arcs pointing at another FILE."""
     return predicates.external_arcs(stage)
 
 
@@ -208,18 +139,11 @@ def author_tool(
     """Author tool_link + its reference + physics + the weld. Returns what was written."""
     tool_path = parent.GetPath().AppendChild(TOOL_LINK_NAME)
 
-    # tool_link must reproduce the flange's world transform. Copying the
-    # flange's *local* transform would only be correct if the two shared a
-    # parent, which is not guaranteed, so it is derived from the two world
-    # transforms instead.
     cache = UsdGeom.XformCache(Usd.TimeCode.Default())
     flange_world = cache.GetLocalToWorldTransform(flange)
     parent_world = cache.GetLocalToWorldTransform(parent)
     tool_local = flange_world * parent_world.GetInverse()
     if yaw_rad != 0.0:
-        # Rotation about the tool axis, applied in the flange frame, i.e.
-        # BEFORE the flange placement. Zero by definition today; the path
-        # exists so a measured mounting angle needs no re-derivation.
         spin = Gf.Matrix4d().SetRotate(Gf.Rotation(Gf.Vec3d(0.0, 0.0, 1.0), math.degrees(yaw_rad)))
         tool_local = spin * tool_local
 
@@ -227,16 +151,6 @@ def author_tool(
     tool_xform.AddTransformOp().Set(tool_local)
     tool_prim = tool_xform.GetPrim()
 
-    # The geometry arrives as ONE reference to the WHOLE assembly, on an
-    # op-free child. Two reasons, both measured rather than assumed:
-    #   * referencing the two mesh prims individually would leave behind the
-    #     unitsResolve scale of 0.001 that fix_stage_units.py wrote on the
-    #     assembly's DEFAULT PRIM (RT-12) -- an ancestor of both meshes -- and
-    #     the tool would come in 1000x too large.
-    #   * the child stays op-free because xform ops authored on a referencing
-    #     prim REPLACE the referenced prim's xformOpOrder (the bug
-    #     fix_fixture_asset.py exists for). The placement therefore lives one
-    #     level up, on tool_link.
     ref_prim = UsdGeom.Xform.Define(stage, tool_path.AppendChild(TOOL_REF_NAME)).GetPrim()
     ref_prim.GetReferences().AddReference(str(tool_usd))
 
@@ -247,13 +161,10 @@ def author_tool(
             f"The reference to {tool_usd} does not expose both bodies: "
             f"{TOOL_PART_PRIM_NAME}={part_mesh}, {TOOL_GRIPPER_PRIM_NAME}={gripper_mesh}."
         )
-    # The named prims are Xforms; the collider belongs on the Mesh below them.
     part_geom = part_mesh if part_mesh.IsA(UsdGeom.Mesh) else find_prim_by_name(part_mesh, "Mesh")
     if part_geom is None or not part_geom.IsA(UsdGeom.Mesh):
         raise RuntimeError(f"No mesh below {part_mesh.GetPath()}; cannot author collision.")
 
-    # Physics on the link. Mass and COM are written; the inertia tensor is
-    # left to PhysX on purpose -- see TOOL_CHAIN_PENDING.
     UsdPhysics.RigidBodyAPI.Apply(tool_prim)
     mass_api = UsdPhysics.MassAPI.Apply(tool_prim)
     total_mass = float(part_mass) + float(gripper_mass)
@@ -261,17 +172,12 @@ def author_tool(
     mass_api.CreateMassAttr().Set(total_mass)
     mass_api.CreateCenterOfMassAttr().Set(Gf.Vec3f(*[float(v) for v in com]))
 
-    # Collision on the PART mesh only, as SDF. PhysX accepts exact triangle
-    # meshes for static colliders only; for a dynamic body the choice is
-    # convex or SDF, and convex is ruled out by the lugs (D-075).
     UsdPhysics.CollisionAPI.Apply(part_geom)
     mesh_collision = UsdPhysics.MeshCollisionAPI.Apply(part_geom)
     mesh_collision.CreateApproximationAttr().Set("sdf")
     sdf_api = PhysxSchema.PhysxSDFMeshCollisionAPI.Apply(part_geom)
     sdf_api.CreateSdfResolutionAttr().Set(int(sdf_resolution))
 
-    # The weld, last. Both local frames are identity because tool_link was
-    # placed at the flange's world transform above.
     joint_path = parent.GetPath().AppendChild(TOOL_JOINT_NAME)
     joint = UsdPhysics.FixedJoint.Define(stage, joint_path)
     joint.CreateBody0Rel().SetTargets([flange.GetPath()])
@@ -293,19 +199,6 @@ def author_tool(
         "yaw_rad": float(yaw_rad),
         "sdf_resolution": int(sdf_resolution),
     }
-
-
-
-# ===========================================================================
-#  Mutations -- the counter-proof (D-080)
-# ===========================================================================
-# Each one breaks the FINISHED asset in exactly one way. They are DECLARED
-# beside the check they must break and are never applied by an authoring run;
-# only `--counter-proof` calls them, on an anonymous copy that cannot be saved.
-#
-# Every ``flips`` set below was DERIVED BY READING describe()/verify(), before
-# any of them ran. That is the point: if a derivation is wrong, the run says so,
-# and what comes back is a fact about the checks rather than a confirmation.
 
 
 def _tool_of(stage: Usd.Stage) -> Usd.Prim:
@@ -377,19 +270,6 @@ def _mut_strip_collision_api(stage: Usd.Stage) -> str:
     return "CollisionAPI removed from the part mesh"
 
 
-# MEASURED, run RT-17 (2026-08-23): ``ComputeRelativeBound(tool, tool)`` does
-# NOT include tool_link's own xform ops. Both mutations below used to be applied
-# to tool_link and flipped NOTHING -- declared as an open question beforehand,
-# answered by the run. Two consequences, and the second one is the real find:
-#
-#   * a size mutation has to act strictly BELOW tool_link to be seen at all.
-#     FUEGETEIL sits between the measured mesh and tool_link, so a transform
-#     there is unambiguously inside both bounds.
-#   * the two size checks could NOT see a defect introduced at the link level.
-#     A tool_link rotated 180 degrees would hang the tool the wrong way in the
-#     world and ``tool_spans_flange_to_part_bottom`` -- the wrong-side test --
-#     would still have said PASS. That hole is closed by the new check
-#     ``tool_link_pose_matches_flange`` below, which the flip now targets.
 def _part_xform_of(stage: Usd.Stage) -> Usd.Prim:
     return find_prim_by_name(_tool_of(stage), TOOL_PART_PRIM_NAME)
 
@@ -400,21 +280,6 @@ def _mut_scale_part_xform(stage: Usd.Stage) -> str:
 
 
 def _mut_flip_tool_ref(stage: Usd.Stage) -> str:
-    # MEASURED, run RT-21: rotating FUEGETEIL 180 deg about its OWN X flipped
-    # nothing. An axis-aligned bounding box is blind to that rotation, because
-    # the part's box is symmetric about the part's own origin -- the box before
-    # and after is the same box. The mutation was blunt, not the check.
-    #
-    # A flip that the wrong-side test MUST see has to act at the FLANGE origin,
-    # which is where the reference child sits. There the z range moves from
-    # [0, +0.152] to [-0.152, 0], which is precisely the defect the check names.
-    #
-    # Adding an op on a referencing prim REPLACES the referenced prim's
-    # xformOpOrder -- the hazard fix_fixture_asset.py exists for, and the reason
-    # this child is deliberately op-free in the authoring path. For a mutation
-    # that is acceptable and is itself informative: if this flips MORE than the
-    # one declared check, the referenced assembly carries ops of its own that
-    # the weld silently depends on, and that is worth knowing.
     ref = find_prim_by_name(_tool_of(stage), TOOL_REF_NAME)
     UsdGeom.Xformable(ref).AddRotateXOp().Set(180.0)
     return f"the referenced assembly ({TOOL_REF_NAME}) rotated 180 deg about the flange X axis"
@@ -453,8 +318,6 @@ def _mut_add_articulation_root(stage: Usd.Stage) -> str:
     return "a second articulation root added"
 
 
-# The probes that paid for the api-shape claims. Both come from run RT-15,
-# whose whole purpose was to MEASURE what these APIs return rather than assume.
 _PROBE_FALLBACK = harness.Probe(
     run="RT-15",
     script="scripts/diagnose_tool_candidate.py",
@@ -489,11 +352,6 @@ def verify(stage: Usd.Stage, before: dict, part_mass: float, gripper_mass: float
 
     measured: dict = {}
     if tool is not None:
-        # Sizes are measured RELATIVE TO tool_link, never in world space. The
-        # link carries the flange's rest transform, which permutes the axes; a
-        # world box compared against local nominals rejects a correct asset,
-        # and that mistake already cost the proxy a round trip (its
-        # PROBLEMS.md carries it as its own row).
         cache = UsdGeom.BBoxCache(Usd.TimeCode.Default(), [UsdGeom.Tokens.default_, UsdGeom.Tokens.render])
         whole = cache.ComputeRelativeBound(tool, tool).ComputeAlignedRange()
         if not whole.IsEmpty():
@@ -510,13 +368,6 @@ def verify(stage: Usd.Stage, before: dict, part_mass: float, gripper_mass: float
             measured["mass_kg"] = float(mass_api.GetMassAttr().Get() or 0.0)
             com = mass_api.GetCenterOfMassAttr().Get()
             measured["centre_of_mass_m"] = [float(v) for v in com] if com is not None else None
-            # Read whether the tensor is AUTHORED, not what it reads back.
-            # ``Get()`` on an unauthored attribute returns the schema fallback,
-            # and UsdPhysics gives diagonalInertia a fallback of (0,0,0) -- the
-            # sentinel that asks PhysX to compute the tensor. MEASURED, run
-            # RT-15 on 2026-08-23: HasAuthoredValue=False while the resolve
-            # info reads Usd.ResolveInfoSourceFallback, and the two attributes
-            # this script does write report HasAuthoredValue=True as a control.
             inertia_attr = mass_api.GetDiagonalInertiaAttr()
             measured["diagonal_inertia_authored"] = bool(inertia_attr.HasAuthoredValue())
             inertia = inertia_attr.Get()
@@ -529,10 +380,6 @@ def verify(stage: Usd.Stage, before: dict, part_mass: float, gripper_mass: float
             else None
         )
 
-    # The link's OWN placement, which no bound measurement sees (RT-17). The
-    # authoring sets tool_link's local transform so that its WORLD transform
-    # reproduces the flange's, spun by the weld yaw (zero by definition, D-078).
-    # Recomputing that here is what makes a link-level defect visible at all.
     flange_prim = find_prim_by_name(stage, FLANGE_BODY)
     if tool is not None and flange_prim is not None:
         xf = UsdGeom.XformCache(Usd.TimeCode.Default())
@@ -553,10 +400,7 @@ def verify(stage: Usd.Stage, before: dict, part_mass: float, gripper_mass: float
     measured["joint_targets"] = targets
 
     def close(got: float | None, want: float) -> bool:
-        """Relative comparison. USD ``physics:mass`` and ``physics:centerOfMass``
-        are float attributes, so every value written comes back rounded to
-        float32; an absolute tolerance here rejected a correct asset once
-        already in the proxy repo."""
+        """Relative comparison."""
         return got is not None and math.isclose(got, want, rel_tol=1e-6, abs_tol=1e-12)
 
     total_mass = float(part_mass) + float(gripper_mass)
@@ -565,9 +409,6 @@ def verify(stage: Usd.Stage, before: dict, part_mass: float, gripper_mass: float
     z_range = measured.get("tool_local_z_range_m") or [0.0, 0.0]
     part_size = measured.get("part_local_size_m") or [0.0, 0.0, 0.0]
 
-    # Collision on the gripper would be a defect, not an omission: the adapter
-    # overlaps the part by 24.5 mm, so a collider there fights the part inside
-    # the same body.
     gripper_colliders = []
     if gripper_mesh is not None:
         gripper_colliders = [
@@ -575,11 +416,6 @@ def verify(stage: Usd.Stage, before: dict, part_mass: float, gripper_mass: float
         ]
     measured["gripper_collider_prims"] = gripper_colliders
 
-    # Every EXPRESSION below is unchanged from the plain dict this replaced --
-    # scripts/selftest_checks.py --diff-predicates proves that against git,
-    # offline. What is new is the bookkeeping each check now has to carry: what
-    # KIND of claim it makes, what it must report BEFORE the weld, which probe
-    # run paid for it, and the one mutation that must break it (D-080).
     suite = harness.Suite("author_tool", str(stage.GetRootLayer().identifier))
 
     suite.add("units_are_metres", abs(after["meters_per_unit"] - 1.0) < 1e-9,
@@ -612,9 +448,6 @@ def verify(stage: Usd.Stage, before: dict, part_mass: float, gripper_mass: float
               why="Mass-weighted from the two CAD centroids (D-079); same float32 read-back.",
               mutation=harness.Mutation("shift_centre_of_mass", _mut_shift_centre_of_mass,
                                         ("tool_com_correct",)))
-    # Named, not forgotten: PhysX derives the tensor from the collision
-    # geometry. The check asserts the omission is real, so the PENDING
-    # entry cannot quietly stop being true.
     suite.add("diagonal_inertia_left_to_physx", measured.get("diagonal_inertia_authored") is False,
               kind=harness.API_SHAPE, probe=_PROBE_FALLBACK,
               why="D-079 leaves the tensor to PhysX. This is the check that was WRONG in RT-13: "
@@ -652,8 +485,6 @@ def verify(stage: Usd.Stage, before: dict, part_mass: float, gripper_mass: float
               why="The imported part must still measure what the CAD says (D-073/D-075).",
               mutation=harness.Mutation("scale_part_xform", _mut_scale_part_xform,
                                         ("part_size_matches_cad", "tool_spans_flange_to_part_bottom")))
-    # The wrong-side test. Welded upside down the tool would span
-    # -0.152 .. 0 and every size check above would still call it correct.
     suite.add("tool_spans_flange_to_part_bottom", (
                   abs(z_range[0] - TOOL_SPAN_LOCAL_Z_M[0]) < tol and abs(z_range[1] - TOOL_SPAN_LOCAL_Z_M[1]) < tol
               ),
@@ -667,12 +498,6 @@ def verify(stage: Usd.Stage, before: dict, part_mass: float, gripper_mass: float
                   "PART_FLIPPED_IN_PLACE in TOOL_CHAIN_PENDING.",
               mutation=harness.Mutation("flip_tool_ref", _mut_flip_tool_ref,
                                         ("tool_spans_flange_to_part_bottom",)))
-    # Added 2026-08-23 because the counter-proof PROVED a hole, not because a
-    # run failed: RT-17 showed that neither size check reacts to a transform on
-    # tool_link itself, so a tool welded on the wrong way round at the LINK
-    # level passed all twenty checks. This is the check that sees it, and
-    # flip_tool_link -- the mutation that flipped nothing before -- is now its
-    # counter-proof.
     suite.add("tool_link_pose_matches_flange",
               measured.get("tool_pose_delta_max") is not None and measured["tool_pose_delta_max"] < tol,
               kind=harness.ARITHMETIC,
@@ -720,20 +545,8 @@ def verify(stage: Usd.Stage, before: dict, part_mass: float, gripper_mass: float
     return {**after, "measured": measured}, suite
 
 
-
 def counter_proof_mode(out_path: pathlib.Path) -> int:
-    """Break the FINISHED asset one way per declared mutation (D-080).
-
-    Nothing here writes. Every mutation is applied to an ANONYMOUS layer, which
-    has no file behind it, so an accidental Save() is impossible -- and the
-    subject's size and modification time are compared before and after anyway,
-    because this is the one mode that opens the production asset in order to
-    damage it.
-
-    ``before`` and the two masses come out of the sidecar rather than being
-    restated on the command line: the sidecar is the record of what the
-    authoring run actually did, and reading it back cross-checks it for free.
-    """
+    """Break the FINISHED asset one way per declared mutation (D-080)."""
     if not out_path.is_file():
         print(f"[author_tool] no asset at {out_path}; author it first.")
         return 1
@@ -800,7 +613,6 @@ def main() -> int:
     if args_cli.counter_proof:
         return counter_proof_mode(out_for_mode)
 
-    # D-079 unchanged, only moved: authoring without both weighings is refused.
     if args_cli.part_mass is None or args_cli.gripper_mass is None:
         raise SystemExit("[author_tool] --part-mass and --gripper-mass are required for authoring. "
                          "They are weighings, not derivations (D-079).")
@@ -835,10 +647,6 @@ def main() -> int:
     tool_mpu = float(UsdGeom.GetStageMetersPerUnit(tool_stage))
     robot_mpu = float(before["meters_per_unit"])
     print(f"[author_tool] metersPerUnit -- robot {robot_mpu}, tool {tool_mpu}")
-    # USD does NOT rescale a reference across a units mismatch: the referencing
-    # stage's metersPerUnit wins and the geometry keeps its numbers. A mm tool
-    # referenced into a metre robot would be 1000x too large and every pose
-    # check downstream would be measuring a different asset than intended.
     if abs(tool_mpu - robot_mpu) > 1e-12:
         raise RuntimeError(
             f"Unit mismatch: robot stage {robot_mpu}, tool stage {tool_mpu}. A reference does not "
@@ -846,18 +654,9 @@ def main() -> int:
         )
     del tool_stage
 
-    # Leg C of D-080: run the SAME checks on the UNMODIFIED robot and compare
-    # against what each one declared it must report there. A check that already
-    # passes here is certifying the input, not the weld -- which is exactly how
-    # the RT-13 inertia assertion looked. REPORT, never a gate: a new code path
-    # that can abort a working authoring run would be a new way to burn the
-    # round trip this whole exercise exists to save.
     before_table = "UNAVAILABLE"
     try:
         _, before_suite = verify(src_stage, before, args_cli.part_mass, args_cli.gripper_mass, args_cli.tol)
-        # Both arguments are the same suite on purpose: the DECLARATIONS live on
-        # the check, so the builder run against the source stage carries both the
-        # expectation and the result it actually produced there.
         mismatches = harness.compare_before(before_suite, before_suite)
         before_table = {n: before_suite.result(n) for n in before_suite.names()}
     except Exception as exc:  # noqa: BLE001 -- a report must not stop the work
@@ -890,9 +689,6 @@ def main() -> int:
         shutil.copy2(out_path, backup)
         print(f"[author_tool] previous output backed up: {backup}")
 
-    # Flatten the shipped asset into an in-memory layer and author on that: the
-    # shipped UR5e references other layers (possibly on Nucleus) and the result
-    # has to stand alone on the training machine.
     work = Usd.Stage.Open(src_stage.Flatten())
     del src_stage
     work_flange = find_prim_by_name(work, FLANGE_BODY)
@@ -907,8 +703,6 @@ def main() -> int:
     print("[author_tool] authored:")
     print(json.dumps(authored, indent=2))
 
-    # Second flatten, at export: it absorbs the reference to the tool assembly,
-    # so the written robot USD does not depend on a second file at run time.
     candidate = out_path.with_name(out_path.stem + ".candidate" + out_path.suffix)
     work.Flatten().Export(str(candidate))
     print(f"[author_tool] candidate exported: {candidate}")
@@ -966,20 +760,10 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    # D-081, and the shutdown that used to swallow it.
-    #
-    # MEASURED, run RT-22: neither of the two lines that used to stand here --
-    # one inside `except SystemExit` around close(), one after the finally --
-    # ever printed, on a run that PASSED. simulation_app.close() does not
-    # return, so `raise SystemExit(n)` after it was dead code and every failing
-    # run reported `[rt_log] exit code: 0` to the line /rt-check reads.
-    #
-    # Ruled out first, in order: RT-20 showed the wrapper reports a non-zero
-    # code correctly, so it was not the messenger.
     _code = 1
     try:
         _code = main() or 0
-    except SystemExit as _exc:          # argparse and the D-079 refusal
+    except SystemExit as _exc:
         _code = int(_exc.code or 0)
     except BaseException:
         traceback.print_exc()

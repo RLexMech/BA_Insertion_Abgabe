@@ -1,57 +1,4 @@
-"""Retrieval layer over a rt_logs/*.txt training-PC console dump.
-
-/rt-check writes its expectation FIRST, then asks this script for the few
-original log lines that bear on it. The caller reads that evidence -- never
-the raw log. Output size is capped and does NOT grow with the log: a
-50 000-line dump yields the same handful of lines as a 150-line one.
-
-Usage:
-    python scripts/filter_rt_log.py <log> --head
-    python scripts/filter_rt_log.py <log> --expect "..." --expect "..."
-    python scripts/filter_rt_log.py <log>
-    python scripts/filter_rt_log.py <log> --full [--max-lines N]
-    python scripts/filter_rt_log.py <log> --series "Mean reward" [--series ...] [--points N]
-    python scripts/filter_rt_log.py <log> --events "[autodr]"
-    python scripts/filter_rt_log.py --self-test
-
---head    only timestamp, cmd and git of the first run block. That is the
-          duplicate key /rt-check needs, with no log text at all.
---series  a TREND: the value of one iteration-block label ("Mean reward",
-          "dr/bounds_version", ...) over the whole run, sampled to --points
-          rows (default 12) plus min, max and the non-finite count. Blocks are
-          counted in LOG ORDER, because the stop-rule block loop repeats an
-          iteration index at every block boundary (D-037). Added 2026-09-11:
-          --expect returns only the first matches, so a 1500-iteration run
-          showed its first blocks and never its end.
---events  lines that START with a prefix: total count, count per key (the
-          token before the first ':') and per outcome (the word after '->'),
-          plus the first and last line.
---expect  one occurrence per numbered expectation point, verbatim. The
-          script pulls search terms out of THAT TEXT ONLY -- never out of
-          the log -- and returns the original lines that hit them.
---full    the old whole-digest mode. For a human reading by hand; agents use
-          the evidence mode.
-
-Evidence output, every section capped:
-
-    RUN 1: <ts> | git <hash> | exit <code> | cmd: <cmd>
-    === BEFUND ===          mechanical facts only, no interpretation
-    === STATUS ===          exit-code lines, abort point, unclosed block
-    === ANOMALIEN (n) ===   Traceback / FAIL / Error / *** PENDING|MISSING
-    === MARKER ===          SCRIPT_MARKER lines
-    === E1: <expect text> ===   the lines that hit that expectation
-    === ENDE: n Evidenzzeilen von m Logzeilen ===
-
-Numbers are matched with tolerance, not as text: an expectation of 0.09641
-has to find 0.09640874557648531, and 0.0 has to find 3.7e-18. Plain
-substring search would miss exactly the evidence that decides the run.
-
-Every content line keeps its 1-based source line number as "L<nr>: " and its
-byte-exact original text. Nothing is summarised, nothing is shortened --
-not even long paths, because an expectation may be about a path.
-
-Stdlib only: runs under a bare laptop Python, no Isaac, no torch.
-"""
+"""Retrieval layer over a rt_logs/*.txt training-PC console dump."""
 
 from __future__ import annotations
 
@@ -66,23 +13,17 @@ MAX_ANOMALY_LINES = 8
 MAX_MARKER_LINES = 4
 MAX_EXPECTS = 12
 
-# --series / --events
 SERIES_POINTS = 12
 MAX_SERIES = 16
 MAX_EVENT_KEYS = 24
 ITER_RE = re.compile(r"Learning iteration (\d+)/(\d+)")
 
-# --full mode only
 MAX_JSON_LINES = 40
 MAX_BLOCK_LINES = 150
 TAIL_LINES = 80
 
-# Own-script tag at line start. Isaac/Kit/omni noise never matches: it writes
-# [INFO], [Warning] (capitalized) or a timestamp, never a bare lowercase tag.
 OWN_SCRIPT_RE = re.compile(r"^\[[a-z][a-z0-9_]*\]")
-# Isaac/Kit/omni boot noise: capitalized tags, ISO timestamps, GPU table rows.
 NOISE_RE = re.compile(r"^\[(INFO|Info|Warning|Error)\]|^\d{4}-\d{2}-\d{2}T|^\|")
-# Bounds both divider styles: the startup report's (72x '=') and rt_log.ps1's (62x '=').
 DIVIDER_RE = re.compile(r"^=+\s*$")
 REPORT_MARKER = "INSERTION STARTUP REPORT"
 ANOMALY_RE = re.compile(r"FAIL|Traceback|\*\*\*\s+(PENDING|MISSING)|Error|error:")
@@ -92,14 +33,11 @@ RT_TS_RE = re.compile(r"^\[rt_log\] (\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\s")
 RT_CMD_RE = re.compile(r"^\[rt_log\] cmd: (.*)$")
 RT_GIT_RE = re.compile(r"^\[rt_log\] git: (.*)$")
 RT_EXIT_RE = re.compile(r"^\[rt_log\] exit code: (.*)$")
-# Quoted JSON strings are blanked before counting braces, so a brace inside a
-# path or a message cannot unbalance the block.
 STR_RE = re.compile(r'"(?:[^"\\]|\\.)*"')
 
 NUM_RE = re.compile(r"[-+]?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?")
 WORD_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]{2,}")
 QUOTED_RE = re.compile(r'"([^"]+)"')
-# Words that carry no retrieval value. German first, then English.
 STOPWORDS = {
     "der", "die", "das", "den", "dem", "des", "ein", "eine", "einer", "eines",
     "und", "oder", "mit", "ohne", "nach", "vor", "auf", "aus", "bei", "von",
@@ -114,11 +52,6 @@ NUM_RTOL = 1e-3
 NUM_ATOL = 1e-9
 STRONG_SIG_DIGITS = 3
 STRONG_WORD_LEN = 4
-
-
-# --------------------------------------------------------------------------
-# reading the file
-# --------------------------------------------------------------------------
 
 
 def load_lines(path: Path) -> list[str]:
@@ -186,7 +119,6 @@ def own_script_blocks(lines: list[str]) -> list[list[int]]:
                 continue
             if line.strip() == "":
                 break
-            # an unindented '{' or '[' right after the tag line opens the block
             if line[:1].isspace() or line.strip() in ("{", "["):
                 block.append(j)
                 depth += brace_delta(line)
@@ -204,11 +136,6 @@ def unclosed_block_start(lines: list[str]) -> int | None:
         if sum(brace_delta(lines[i]) for i in block) > 0:
             return block[0]
     return None
-
-
-# --------------------------------------------------------------------------
-# expectation terms -- derived from the --expect text ONLY, never from the log
-# --------------------------------------------------------------------------
 
 
 def sig_digits(token: str) -> int:
@@ -305,11 +232,6 @@ def rank_hits(lines, searchable, terms, per_expect):
     return sorted(i for _, _, i in weak_hits[:MAX_WEAK_PER_EXPECT]), True
 
 
-# --------------------------------------------------------------------------
-# evidence mode
-# --------------------------------------------------------------------------
-
-
 def build_evidence(lines: list[str], expects: list[str], per_expect: int):
     total = len(lines)
     runs = find_runs(lines)
@@ -327,7 +249,6 @@ def build_evidence(lines: list[str], expects: list[str], per_expect: int):
 
     hits = [rank_hits(lines, searchable, parse_terms(e), per_expect) for e in expects]
 
-    # ---- BEFUND: only facts the script can prove, no interpretation ----
     befund: list[str] = []
     if not runs:
         befund.append("- kein [rt_log]-Kopf, Herkunft des Textes unbekannt")
@@ -397,8 +318,7 @@ def build_evidence(lines: list[str], expects: list[str], per_expect: int):
 
 
 def evidence(lines: list[str], expects: list[str]) -> list[str]:
-    """Build the evidence, shrinking per-expectation depth if the global cap
-    would be blown. Every cap that bites is reported, never silent."""
+    """Build the evidence, shrinking per-expectation depth if the global cap would be blown."""
     if len(expects) > MAX_EXPECTS:
         dropped = len(expects) - MAX_EXPECTS
         expects = expects[:MAX_EXPECTS]
@@ -415,11 +335,6 @@ def evidence(lines: list[str], expects: list[str]) -> list[str]:
                 ]
             return head + out
     return head + out
-
-
-# --------------------------------------------------------------------------
-# --full mode: the whole digest, for a human reading by hand
-# --------------------------------------------------------------------------
 
 
 def find_report_blocks(lines: list[str]) -> list[tuple[int, int]]:
@@ -518,12 +433,7 @@ def iteration_blocks(lines: list[str]) -> list[tuple[int, int, int]]:
 
 
 def series(lines: list[str], label: str) -> list[tuple[int, int, int, str]]:
-    """``(block_no, iteration, line_index, value_text)`` for each block carrying ``label``.
-
-    The label must match the text before the colon EXACTLY (after stripping), so
-    ``Mean episode success_rate`` does not also collect
-    ``Mean episode success_rate_cumulative``. The first hit inside a block wins.
-    """
+    """``(block_no, iteration, line_index, value_text)`` for each block carrying ``label``."""
     pat = re.compile(r"^\s*" + re.escape(label.strip()) + r":\s+(\S+)\s*$")
     blocks = iteration_blocks(lines)
     out = []
@@ -626,10 +536,6 @@ def print_head(lines: list[str]) -> None:
         print(f"({len(runs)} Laeufe in der Datei; das ist der erste)")
 
 
-# --------------------------------------------------------------------------
-# self-test: the regression cases /rt-check depends on. Stdlib, no file system.
-# --------------------------------------------------------------------------
-
 HEADER = [
     "==============================================================",
     "[rt_log] 2026-08-24 14:17:55  cwd: C:\\x",
@@ -671,7 +577,6 @@ def _self_test() -> int:
         "[rt_log] exit code: 0",
     ]
 
-    # --- A: PASS, every expectation backed by at least one line ---
     out = ev(good, [
         "meters_per_unit ist 1.0",
         "extents 0.09641 0.14350 0.15200",
@@ -683,39 +588,33 @@ def _self_test() -> int:
     check("A: kein 'ohne Beleg'", "ohne Beleg" not in out)
     check("A: exit 0 im BEFUND", "- exit 0" in out)
 
-    # --- B: FAIL, the refuting line is delivered ---
     bad = [l.replace("1.0,", "0.001,") if '"meters_per_unit"' in l else l for l in good]
     out = ev(bad, ["meters_per_unit ist 1.0"])
     check("B: widerlegende Zeile da", '"meters_per_unit": 0.001,' in out)
     check("B: mit L<nr>", re.search(r"L\d+: +\"meters_per_unit\": 0\.001,", out) is not None)
 
-    # --- C: UNKLAR, the value is simply absent and nothing is substituted ---
     out = ev(good, ['die Zeile "contract PASS" erscheint'])
     e1 = out.split("=== E1")[1]
     check("C: keine Zeile gefunden", "(keine Zeile gefunden)" in e1)
     check("C: kein Ersatzwert", "meters_per_unit" not in e1)
     check("C: BEFUND meldet es", "- Erwartung 1 ohne Beleg" in out)
 
-    # --- Zahlentoleranz: text search would miss all three of these ---
     out = ev(good, ["extents 0.09641"])
     check("Toleranz 0.09641 -> 0.096408745", "0.09640874557648531" in out)
     out = ev(good, ["z_min ist 0.0"])
     check("Toleranz 0.0 -> 3.7e-18", "3.7e-18" in out)
 
-    # --- exit != 0 ---
     fail_run = good[:-1] + ["[fix_stage_units] REPLACE FAILED: OSError", "[rt_log] exit code: 2"]
     out = ev(fail_run, [])
     check("exit 2 in RUN", "exit 2 |" in out.splitlines()[0])
     check("exit 2 im BEFUND", "- exit 2" in out)
     check("exit 2 in STATUS", re.search(r"L\d+: \[rt_log\] exit code: 2", out) is not None)
 
-    # --- exit-Zeile fehlt ---
     aborted = HEADER + BOOT + ["[fix_stage_units] resolved input: probe.usd"]
     out = ev(aborted, [])
     check("exit FEHLT gemeldet", "exit FEHLT" in out)
     check("Abbruchstelle geliefert", "resolved input" in out)
 
-    # --- Traceback, und kein Isaac-Rauschen ---
     crash = HEADER + BOOT + ["Traceback (most recent call last):", "  File x, line 1",
                              "RuntimeError: boom", "[rt_log] exit code: 1"]
     out = ev(crash, [])
@@ -724,18 +623,15 @@ def _self_test() -> int:
     check("Isaac [Error] draussen", "Error in plugin" not in out)
     check("GPU-Tabelle draussen", "| GPU |" not in out)
 
-    # --- offener Block ---
     open_block = HEADER + ["[fix_stage_units] AFTER:", "{", '  "meters_per_unit": 1.0,']
     out = ev(open_block, [])
     check("offener Block gemeldet", "mitten in einem Block" in out)
 
-    # --- mehrere Befehle in einer Datei ---
     two = good + HEADER + ["[fix_stage_units] second run", "[rt_log] exit code: 3"]
     out = ev(two, [])
     check("zwei RUN-Zeilen", out.count("\nRUN 2:") == 1 or out.startswith("RUN 1:") and "RUN 2:" in out)
     check("beide exits im BEFUND", "- Lauf 1: exit 0" in out and "- Lauf 2: exit 3" in out)
 
-    # --- grosser Log: Groesse haengt nicht an der Log-Laenge ---
     big = HEADER + [f"2026-01-01T00:00:0{i%10}Z [Warning] [carb] chatter {i}" for i in range(3000)]
     big += [f"[zero_agent] step {i} reward 0.5" for i in range(300)]
     big += ["Traceback (most recent call last):", "RuntimeError: boom", "[rt_log] exit code: 1"]
@@ -745,11 +641,9 @@ def _self_test() -> int:
     check("grosser Log: <= 40 Ausgabezeilen", len(out_lines) <= 40, str(len(out_lines)))
     check("grosser Log: Traceback trotzdem da", any("Traceback" in l for l in out_lines))
 
-    # --- head liefert den Doppelt-Schluessel ---
     check("head: Zeitstempel", find_runs(good)[0]["ts"] == "2026-08-24 14:17:55")
     check("head: git", find_runs(good)[0]["git"] == "61a8b89")
 
-    # --- Begriffe kommen nur aus dem --expect-Text ---
     terms = parse_terms('meters_per_unit ist 1.0 und "contract PASS"')
     kinds = {(k, v) for k, v, _ in terms}
     check("Terme: Zitat erkannt", ("str", "contract PASS") in kinds)
@@ -757,7 +651,6 @@ def _self_test() -> int:
     check("Terme: Stoppwort raus", ("word", "und") not in kinds)
     check("Terme: 1.0 ist schwach", all(not s for k, v, s in terms if k == "num" and v == 1.0))
 
-    # --- --series: trend over the whole run, in LOG ORDER (2026-09-11) ---
     def block(it, total, reward, extra=None):
         rows = [f"Learning iteration {it}/{total}", f"   Mean reward: {reward}",
                 f"   Mean episode success_rate: 0.0000", f"   Mean episode success_rate_cumulative: 0.5000"]
@@ -782,7 +675,6 @@ def _self_test() -> int:
           rows_out[0].strip().startswith("Block     1 it     0") and "it  1499" in rows_out[-1], rows_out[-1])
     check("sample_positions: Rand immer drin", sample_positions(7, 3) == [0, 3, 6])
 
-    # --- --events: count per key and outcome, first and last line ---
     evlog = HEADER + block(0, 2, "1.0") + [
         "[autodr] tilt_hi: rate 0.0000 over 240 -> clamped_zero 0 -> 0",
         "[autodr] lat_x_lo: rate 0.0000 over 240 -> clamped_zero 0 -> 0",
@@ -798,9 +690,6 @@ def _self_test() -> int:
 
     print(f"\nself-test: {len(failures)} FAIL von {len(ran)} Faellen")
     return 1 if failures else 0
-
-
-# --------------------------------------------------------------------------
 
 
 def main() -> None:

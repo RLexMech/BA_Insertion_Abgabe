@@ -63,13 +63,9 @@ def summarize(trace: dict, episode_steps: int = 256) -> list[str]:
     dt = float(trace.get("step_dt_s", float("nan")))
     lines = [f"[summarize_trace] marker: {SCRIPT_MARKER}",
              f"[summarize_trace] steps {n_steps} envs {n_env} step_dt_s {dt}"]
-    # done steps (1-based step index at which done was True)
     for e in range(n_env):
         ds = [i + 1 for i, d in enumerate(done) if bool(d[e])]
         lines.append(f"env {e} done_at_steps {ds}")
-    # first episode only: the row AFTER a done is already the reset observation
-    # of the next episode (RT-149: done at index 254, reset row at 255), so the
-    # episode ends at the first done, not at the nominal step count.
     first_done = [i for i, d in enumerate(done) if any(bool(v) for v in d)]
     T = min(first_done[0] + 1 if first_done else episode_steps, n_steps)
     lines.append(f"[summarize_trace] episode_1_steps {T}")
@@ -82,7 +78,6 @@ def summarize(trace: dict, episode_steps: int = 256) -> list[str]:
         phi = _unwrap([math.atan2(s, c) for s, c in zip(sn, cs)])
         fx, fy, fz = _col(frc, e, 0)[:T], _col(frc, e, 1)[:T], _col(frc, e, 2)[:T]
         fn = [math.sqrt(a * a + b * b + c * c) for a, b, c in zip(fx, fy, fz)]
-        # action delta per step, max over channels, steps 20..T-1
         dmax = 0.0
         for i in range(max(21, 1), T):
             d = max(abs(float(act[i][e][k]) - float(act[i - 1][e][k])) for k in range(len(act[i][e])))
@@ -112,8 +107,6 @@ def summarize(trace: dict, episode_steps: int = 256) -> list[str]:
 
 
 def _self_test() -> int:
-    # synthetic: 2 envs, 300 steps; env 0 drifts to y=51 mm, z=15 mm, yaw 1 deg/step,
-    # force 1.0 N when resting; env 1 stays put.
     T, E = 300, 2
     tip, yaw, frc, act, done = [], [], [], [], []
     for i in range(T):
@@ -146,7 +139,6 @@ def _self_test() -> int:
         ("action delta 0", "action_delta_max_20on 0.0000" in text),
         ("env1 flat", "env 1 ep1 tip_x_mm min 0.00 max 0.00" in text),
     ]
-    # mutation: unwrap must handle the pi wrap -- a 350-step 1 deg/step yaw crosses +-180
     bad = [c for c, ok in checks if not ok]
     n = len(checks)
     if bad:

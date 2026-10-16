@@ -25,7 +25,7 @@ Jeder Stufen-Ordner ist eine Kopie des Original-Repos an einem Commit (`git arch
 - A/B: Ergebnis-Dokumente (`docs/*.md`)
 - C/D: Laufprotokolle (`rt_logs/`, nur die Erwartungs- und Urteilsdateien), Plan der Evaluation (`eval_plan.md`), Belege der Streuwerte, CAD der Aufnahme (`CAD/*.stp`)
 
-Bei B sind abweichend vom Original-Tag die drei Streuwerte der Taschenlage direkt auf den dokumentierten Endstand gesetzt; siehe [B_quader/README.md](B_quader/README.md).
+Bei B sind abweichend vom Original-Tag die drei Streuwerte der Taschenlage direkt auf den dokumentierten Endstand gesetzt; siehe [B_quader/README.md](B_quader/README.md). Bei C sind die gemeinsamen Studienwerte (256 Envs, untere Starthöhengrenze −30 mm, drei Stall-Puffer und Standard-Seed 1) voreingestellt; die drei Trainingsbedingungen und Seeds 1–5 sind in [C_aufnahme/README.md](C_aufnahme/README.md) beschrieben.
 
 Welcher Commit das ist, steht in [STAENDE.md](STAENDE.md) („Ordner hier“). Bei C und D ist das der **Endstand**: der letzte Commit, auf dem alle in der Arbeit genannten Läufe der Stufe laufen (Training und Tests). Einzelne Erwartungsdateien kommen aus einem späteren Commit. Sie stehen in der Karte der Stufe.
 

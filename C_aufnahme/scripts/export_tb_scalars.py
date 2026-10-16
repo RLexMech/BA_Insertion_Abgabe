@@ -57,10 +57,6 @@ HEADER_FIXED = ("step", "wall_time")
 EVENT_GLOB = "events.out.tfevents*"
 
 
-# --------------------------------------------------------------------------
-# folder resolution
-# --------------------------------------------------------------------------
-
 def resolve_run_dir(log_root: pathlib.Path, load_run: str) -> pathlib.Path:
     """The ONE folder under ``log_root`` whose name starts with ``load_run``."""
     if not log_root.is_dir():
@@ -71,10 +67,6 @@ def resolve_run_dir(log_root: pathlib.Path, load_run: str) -> pathlib.Path:
         raise ValueError(f"--load-run {load_run!r} must match exactly one folder under {log_root}; matches: {names}")
     return hits[0]
 
-
-# --------------------------------------------------------------------------
-# reading (training PC only; tensorboard imported here, not at module top)
-# --------------------------------------------------------------------------
 
 def read_scalars(run_dir: pathlib.Path) -> tuple[list[str], dict[int, dict]]:
     """All scalar tags of ``run_dir`` -> (sorted tags, {step: {tag: value, "wall_time": t}})."""
@@ -101,10 +93,6 @@ def filter_tags(tags: list[str], keep: list[str] | None) -> list[str]:
         return list(tags)
     return [t for t in tags if any(k in t for k in keep)]
 
-
-# --------------------------------------------------------------------------
-# CSV
-# --------------------------------------------------------------------------
 
 def write_csv(path: pathlib.Path, tags: list[str], rows: dict[int, dict]) -> int:
     """Write the wide table; returns the number of data rows."""
@@ -145,10 +133,6 @@ def read_csv(path: pathlib.Path) -> tuple[list[str], dict[int, dict]]:
     return tags, rows
 
 
-# --------------------------------------------------------------------------
-# self-test (offline, no tensorboard)
-# --------------------------------------------------------------------------
-
 def _self_test() -> int:
     rc = 0
 
@@ -161,7 +145,7 @@ def _self_test() -> int:
     rows = {}
     for step in range(0, 30, 5):
         rows[step] = {"wall_time": 1.7e9 + step, tags[0]: step / 30.0, tags[2]: 10.0 * step}
-        if step != 10:  # one hole: a tag missing at one step stays empty
+        if step != 10:
             rows[step][tags[1]] = 0.5 / (step + 1)
 
     with tempfile.TemporaryDirectory() as d:
@@ -212,10 +196,6 @@ def _self_test() -> int:
     print("SELF-TEST PASSED" if rc == 0 else "SELF-TEST FAILED")
     return rc
 
-
-# --------------------------------------------------------------------------
-# main
-# --------------------------------------------------------------------------
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
