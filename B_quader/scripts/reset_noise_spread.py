@@ -40,20 +40,11 @@ import numpy as np
 HERE = pathlib.Path(__file__).resolve().parent
 HOME_POSE_TOOL = HERE / "tools" / "compute_home_pose.py"
 
-# Home pose, branch 3, from source/.../ur10e_cfg.py. Repeated here rather than
-# imported because that module pulls in isaaclab, which the dev PC lacks.
 HOME_Q = np.array([2.003843, -1.911842, -2.265118, 2.606164, -1.570796, 0.433047])
 PEG_LENGTH = 0.050
-# Env-local pocket entrance and robot base (D-022/D-023), to express the tip
-# in the same frame the startup report and the reward use. The square
-# re-import moved the asset origin to this very point, so entrance ==
-# fixture position now.
 ENTRANCE = np.array([0.0, -0.225, 0.755])
 ROBOT_BASE = np.array([0.0, 0.190, 0.755])
-# Free-yaw window of the 30 mm peg in the 32 mm pocket (D-029): the p95 yaw
-# column below is read against this.
 YAW_WINDOW_DEG = 3.96
-# wrist_3, the tool-axis yaw joint, is the last entry of HOME_Q.
 YAW_JOINT = 5
 
 
@@ -82,8 +73,7 @@ def tip_positions(q: np.ndarray, fk, dh) -> tuple[np.ndarray, np.ndarray, np.nda
 
 
 def folded_yaw_deg(xaxes: np.ndarray, nominal_x: np.ndarray) -> np.ndarray:
-    """Yaw of each tool x-axis about world z, relative to the nominal one,
-    folded into (-45, 45] deg -- the same C4 fold _peg_geometry applies."""
+    """Yaw of each tool x-axis about world z, relative to the nominal one, folded into (-45, 45] deg -- the same C4 fold _peg_geometry applies."""
     phi = np.arctan2(xaxes[:, 1], xaxes[:, 0]) - np.arctan2(nominal_x[1], nominal_x[0])
     phi = phi - np.round(phi / (np.pi / 2.0)) * (np.pi / 2.0)
     return np.degrees(np.abs(phi))
@@ -107,14 +97,6 @@ def main() -> int:
 
     nominal_tip, nominal_axis, nominal_x = tip_positions(HOME_Q.reshape(1, 6), fk, dh)
     nominal_tip, nominal_axis, nominal_x = nominal_tip[0], nominal_axis[0], nominal_x[0]
-    # The DH base frame is rotated by pi about z against the USD base_link
-    # frame -- the caveat D-025 recorded and HANDOFF still lists as open. It
-    # is confirmed here: without the rotation the tip lands at y = +0.415
-    # relative to the base, mirrored through the base, and the offset to the
-    # bore comes out 830 mm instead of 0. Applying it reproduces the
-    # training-machine report exactly (0.000 mm lateral, 100 mm above the
-    # plate). Lengths are unaffected, so every spread below is valid either
-    # way; only this reference line depends on it.
     tip_env = ROBOT_BASE + np.array([-nominal_tip[0], -nominal_tip[1], nominal_tip[2]])
     print(f"home pose tip, base frame : {np.round(nominal_tip, 6).tolist()} m")
     print(f"home pose tip, env-local  : {np.round(tip_env, 6).tolist()} m")
@@ -134,15 +116,12 @@ def main() -> int:
         if noise == 0.0 and yaw_noise == 0.0:
             q = HOME_Q.reshape(1, 6)
         else:
-            # Per-joint noise, mirroring _reset_idx: five joints at `noise`,
-            # wrist_3 at `yaw_noise`.
             scale = np.full(6, noise)
             scale[YAW_JOINT] = yaw_noise
             q = HOME_Q + rng.uniform(-1.0, 1.0, size=(args.samples, 6)) * scale
         tips, axes, xaxes = tip_positions(q, fk, dh)
         lateral = np.linalg.norm(tips[:, :2] - nominal_tip[:2], axis=1) * 1000.0
         vertical = np.abs(tips[:, 2] - nominal_tip[2]) * 1000.0
-        # Angle between the perturbed tool axis and the nominal one.
         cos = np.clip(axes @ nominal_axis, -1.0, 1.0)
         tilt = np.degrees(np.arccos(cos))
         yaw = folded_yaw_deg(xaxes, nominal_x)

@@ -1,54 +1,7 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-"""Make the fixture asset survive being referenced: unit scale and instancing.
-
-Two defects, one root cause -- the asset's structure -- measured on the training
-machine 2026-07-26 by `verify_fixture_spawn.py`:
-
-1. **Unit scale dropped.** The 0.001 unit compensation lives in the root prim's
-   ``xformOpOrder``. Isaac Lab's spawner authors ``[translate, orient, scale]``
-   on the *referencing* prim, and in USD composition that replaces the
-   referenced ``xformOpOrder`` rather than merging with it. The scale op is
-   silently lost and the table spawns 1000x oversized. Measured: variant B and
-   the real spawner D both gave 500 x 600 x 755; the asset opened directly (A)
-   gave the correct 0.500 x 0.600 x 0.755.
-
-2. **Collision properties not applied.** The CAD converter left the geometry
-   behind an *instanceable* prim. Isaac Lab reported
-   ``Could not perform 'modify_collision_properties' ... exists on an instanced
-   prim ... ['/World/Fixture/tisch']``. The fixture would have had no collision
-   at all -- invisible in increment 1, and a mystery one increment later when
-   the peg refuses to touch anything.
-
-The repair, and why this shape:
-
-* Wrap the geometry in a **clean parent Xform** that carries no xformOps and is
-  the default prim. A referencing context then overwrites an *empty* op order,
-  and the unit scale one level down survives. This is variant C of the
-  measurement, which was verified to give 0.500 x 0.600 x 0.755 with the legs
-  at z = -3.3e-08 and the plate top at 0.755. It is not a guess.
-* **De-instance** every instanceable prim so schema edits reach the geometry.
-* **Flatten** on export, so the result carries no external arc (the 2026-07-26
-  invisible-fixture failure).
-
-The unit scale is deliberately NOT baked into point data. Moving it one level
-down is the smaller edit, and it is the one that was measured.
-
-Verification, and this is the part that was missing before: the candidate is
-checked **in the referenced context**, mimicking what the spawner authors, not
-only by opening it directly. `verify_fixture_usd.py` passed this asset while it
-was broken precisely because it only ever tested the direct-open case, which is
-the one usage that never occurs in practice.
-
-UNVERIFIED -- authored on the dev PC (no Isaac installation). On the training
-machine:
-
-    conda activate env_isaaclab
-    python scripts\\fix_fixture_asset.py --usd <path>\\tisch.usd
-
-Add --dry-run to measure and print the plan without writing anything.
-"""
+"""Correct fixture units and instancing for use as a referenced USD asset."""
 
 from __future__ import annotations
 
@@ -94,7 +47,6 @@ args_cli.headless = True
 app_launcher = AppLauncher(args_cli)
 simulation_app = app_launcher.app
 
-# pxr is importable only after the app is up.
 from pxr import Gf, Usd, UsdGeom  # noqa: E402
 
 WRAPPER_PATH = "/tisch"
@@ -119,11 +71,7 @@ def instanceable_prims(stage: Usd.Stage) -> list[str]:
 
 
 def deinstance_all(stage: Usd.Stage) -> list[str]:
-    """Clear the instanceable flag everywhere, repeating for nested cases.
-
-    Traverse() does not descend into instance prototypes, so a prim hidden below
-    an instanced one only becomes visible after its parent is de-instanced.
-    """
+    """Clear the instanceable flag everywhere, repeating for nested cases."""
     cleared: list[str] = []
     for _ in range(10):
         found = [p for p in stage.Traverse() if p.IsInstanceable()]
@@ -136,12 +84,7 @@ def deinstance_all(stage: Usd.Stage) -> list[str]:
 
 
 def referenced_context_measure(usd_path: pathlib.Path, spawn_pos) -> dict:
-    """Measure the asset the way Isaac Lab actually uses it.
-
-    Authors translate/orient/scale on the referencing prim -- exactly the op set
-    the spawner was measured to write -- so a unit scale that cannot survive
-    that will show up here rather than three steps later in a training run.
-    """
+    """Measure the asset the way Isaac Lab actually uses it."""
     stage = Usd.Stage.CreateInMemory()
     UsdGeom.SetStageMetersPerUnit(stage, 1.0)
     UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.z)
@@ -185,7 +128,6 @@ def check_candidate(candidate: pathlib.Path) -> dict:
         "default_prim_set": direct["default_prim"] is not None,
         "no_payloads": not direct["external_arcs"],
         "no_instanceable_prims_direct": not direct["instanceable_prims"],
-        # The two that the old pipeline never tested:
         "no_instanceable_prims_referenced": not ref["instanceable_prims"],
     }
     dbox, rbox = direct["bbox"], ref["bbox"]
@@ -199,8 +141,6 @@ def check_candidate(candidate: pathlib.Path) -> dict:
     if "size" in rbox:
         for i, axis in enumerate("xyz"):
             checks[f"referenced_extent_{axis}"] = abs(rbox["size"][i] - args_cli.expect_extents[i]) < tol
-        # With the D-022 spawn offset the legs must land on the ground plane and
-        # the plate top at 0.755 m.
         checks["referenced_legs_on_ground"] = abs(rbox["min"][2] - 0.0) < tol
         checks["referenced_plate_top"] = abs(rbox["max"][2] - (args_cli.spawn_pos[2] + args_cli.expect_z_range[1])) < tol
     else:
@@ -239,7 +179,6 @@ def main() -> None:
         print("[fix_fixture_asset] --dry-run: nothing written.")
         return
 
-    # Build the wrapper: an op-free default prim whose child carries the asset.
     out = Usd.Stage.CreateInMemory()
     UsdGeom.SetStageMetersPerUnit(out, 1.0)
     UsdGeom.SetStageUpAxis(out, UsdGeom.Tokens.z)
@@ -259,7 +198,6 @@ def main() -> None:
     out.Flatten().Export(str(candidate))
     print(f"[fix_fixture_asset] candidate exported: {candidate}")
 
-    # De-instancing may need repeating once the reference is flattened in.
     cand_stage = Usd.Stage.Open(str(candidate))
     again = deinstance_all(cand_stage)
     if again:

@@ -57,9 +57,6 @@ import torch
 OLD_OBS_DEFAULT = 21
 NEW_OBS_DEFAULT = 25
 
-# Normaliser buffers, by the suffix of their key, and the value the new entries
-# get. mean 0 and var/std 1 make the appended channels pass through unchanged,
-# which is what the zero weight columns then rely on.
 NORM_FILL = {
     "mean": 0.0,
     "var": 1.0,
@@ -70,25 +67,13 @@ NORM_FILL = {
 
 
 def _fill_for(key: str) -> float | None:
-    """Neutral fill value for a normaliser buffer, or None if the key is not one.
-
-    The leading underscore is stripped: rsl_rl's EmpiricalNormalization
-    registers its buffers as ``_mean``, ``_var``, ``_std`` and ``_count``
-    (observed in model_3950.pt on the training machine, 2026-08-16), while
-    other implementations use the bare names.
-    """
+    """Neutral fill value for a normaliser buffer, or None if the key is not one."""
     leaf = key.rsplit(".", 1)[-1].lstrip("_")
     return NORM_FILL.get(leaf)
 
 
 def expand_state_dict(state: dict, old_obs: int, new_obs: int, label: str) -> list[str]:
-    """Widen every observation-width tensor in ``state`` in place.
-
-    Returns the report lines describing what was changed. Raises ValueError on
-    anything ambiguous rather than guessing: a silently wrong widening produces
-    a policy that runs and is subtly wrong, which is the failure mode this
-    whole project logs problems about.
-    """
+    """Widen every observation-width tensor in ``state`` in place."""
     pad = new_obs - old_obs
     report: list[str] = []
     for key in list(state.keys()):
@@ -98,11 +83,6 @@ def expand_state_dict(state: dict, old_obs: int, new_obs: int, label: str) -> li
         if old_obs not in tuple(value.shape):
             continue
 
-        # Decide by NAME, not by shape. rsl_rl stores the normaliser mean and
-        # variance as (1, obs), which is shape-indistinguishable from a weight
-        # matrix with one output; sorting them by shape alone would zero-fill a
-        # normaliser mean, which rescales every channel rather than only the
-        # new ones. Observed on model_3950.pt, 2026-08-16.
         fill = _fill_for(key)
         if fill is not None:
             if value.shape[-1] != old_obs:
@@ -121,7 +101,6 @@ def expand_state_dict(state: dict, old_obs: int, new_obs: int, label: str) -> li
             )
             continue
 
-        # First-layer weights: (out_features, obs).
         if value.dim() == 2 and value.shape[1] == old_obs and "weight" in key:
             widened = torch.zeros(value.shape[0], new_obs, dtype=value.dtype)
             widened[:, :old_obs] = value
@@ -176,12 +155,6 @@ def _self_test() -> None:
     """Round-trip a synthetic checkpoint and assert every invariant."""
     old, new = 21, 25
     torch.manual_seed(0)
-    # Mirrors the layout actually found in model_3950.pt on the training
-    # machine (2026-08-16): rsl_rl's EmpiricalNormalization registers _mean,
-    # _var and _std with a leading underscore and shape (1, obs) -- the same
-    # shape as a one-output weight matrix, which is why the transform sorts
-    # tensors by name rather than by shape. The bare-name, 1-D variants are
-    # kept alongside so the script stays usable if a future rsl_rl renames them.
     ckpt = {
         "model_state_dict": {
             "actor.0.weight": torch.randn(128, old),
@@ -238,10 +211,6 @@ def _self_test() -> None:
     assert ckpt["iter"] == 3950, "iteration counter must survive"
     checks += 4
 
-    # The refusal path is the one that matters most: it is what stopped a
-    # (1, 21) normaliser mean from being zero-filled as if it were a weight
-    # matrix on 2026-08-16. A transform that silently handles the unknown case
-    # is worse than one that stops.
     hostile = {"model_state_dict": {"mystery.tensor": torch.randn(7, old)}}
     try:
         expand_checkpoint(hostile, old, new)

@@ -1,38 +1,7 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-"""Generate the square-pocket table USD from code (D-033) -- no CAD import.
-
-The table is COMPOSED, not carved: nine axis-aligned cuboids (four plate
-pieces around the pocket, the pocket floor, four legs), each a
-``UsdGeom.Cube`` carrying its own ``UsdPhysics.CollisionAPI``. Boxes are
-native PhysX primitive colliders, so there is no mesh approximation step at
-all -- the sealed-pocket failure mode of a convex hull over a non-convex
-blind pocket (D-029 risk 1) is impossible by construction, not merely
-checked. Each pocket wall face is a single flat box face, so the peg slides
-on plane geometry with seams only in the four corners, where a real pocket
-has corners anyway.
-
-The asset origin sits ON the opening plane AT the pocket centre, exactly the
-convention `proxytask_tasks_cfg.py` derives from (D-029): spawned at
-(0, -0.225, 0.755) the plate top lands at z = 0.755 and the legs on the
-ground. The world-space expectations of `verify_fixture_usd.py` (bbox
-0.500 x 0.600 x 0.755, z range -0.755 .. 0.000) and `verify_fixture_spawn.py`
-are unchanged.
-
-The pocket side length is the curriculum variable now (D-033): one welded
-30 mm peg, one generated table per rung. The output filename carries the
-size (``tisch_square_b45.usd``), so rungs cannot overwrite each other and
-the resolver's name-is-contract rule keeps a stale table impossible to load
-silently.
-
-UNVERIFIED -- authored on the dev PC (no Isaac installation). On the training
-machine:
-
-    conda activate env_isaaclab
-    python scripts\\author_tisch_square.py                     # target rung, 32 mm
-    python scripts\\author_tisch_square.py --pocket-side-mm 45  # stage 0
-"""
+"""Generate a table USD with a square pocket and primitive box colliders."""
 
 from __future__ import annotations
 
@@ -42,9 +11,6 @@ import pathlib
 
 from isaaclab.app import AppLauncher
 
-# Bumped whenever this file changes. The two-machine workflow copies scripts by
-# hand, and a stale copy has already cost two "it does not work" detours; the
-# first line of output makes the copy's identity visible before anything else.
 SCRIPT_MARKER = "author_tisch_square-2026-08-05b"
 
 parser = argparse.ArgumentParser(description="Generate the square-pocket table USD (D-033).")
@@ -63,35 +29,23 @@ print(f"[author_tisch] marker: {SCRIPT_MARKER}; sections: plan, author, verify, 
 app_launcher = AppLauncher(args_cli)
 simulation_app = app_launcher.app
 
-# pxr and the proxytask modules are importable only after the app is up.
 from pxr import Gf, Usd, UsdGeom, UsdPhysics  # noqa: E402
 
 from proxytask.tasks.direct.proxytask import proxytask_tasks_cfg as geom  # noqa: E402
 
 DEFAULT_PRIM = "tisch_square"
 
-# Plate footprint in the asset frame (origin = opening plane at the pocket
-# centre; the plate centre sits at +OPENING_OFFSET_Y from it, i.e. +0.225).
-PLATE_X = (-geom.PLATE_HALF_EXTENTS[0], geom.PLATE_HALF_EXTENTS[0])          # -0.250 .. 0.250
-# The pocket sits at plate-local y = OPENING_OFFSET_Y = -0.225; with the
-# asset origin ON the pocket centre, the plate centre lands at the negated
-# offset and the plate spans -0.075 .. +0.525.
+PLATE_X = (-geom.PLATE_HALF_EXTENTS[0], geom.PLATE_HALF_EXTENTS[0])
 _PLATE_CENTRE_Y = -geom.OPENING_OFFSET_Y
 PLATE_Y = (_PLATE_CENTRE_Y - geom.PLATE_HALF_EXTENTS[1], _PLATE_CENTRE_Y + geom.PLATE_HALF_EXTENTS[1])
-PLATE_Z = (-geom.PLATE_THICKNESS, 0.0)                                       # -0.055 .. 0.000
+PLATE_Z = (-geom.PLATE_THICKNESS, 0.0)
 TABLE_HEIGHT = 0.755
 LEG_SECTION = 0.050
-LEG_INSET = 0.025  # legs sit fully inside the plate footprint
+LEG_INSET = 0.025
 
 
 def box_specs(pocket_side: float, pocket_depth: float) -> list[dict]:
-    """The nine cuboids as {name, min, max} axis-aligned boxes, asset-local.
-
-    The four plate pieces tile the plate exactly (no overlaps, no gaps): the
-    south/north pieces span the full x width, the west/east pieces fill the
-    remaining band beside the pocket. Each pocket wall face therefore belongs
-    to exactly ONE box and is a single plane.
-    """
+    """The nine cuboids as {name, min, max} axis-aligned boxes, asset-local."""
     h = pocket_side / 2.0
     x0, x1 = PLATE_X
     y0, y1 = PLATE_Y
@@ -118,13 +72,7 @@ def box_specs(pocket_side: float, pocket_depth: float) -> list[dict]:
 
 
 def author(stage: Usd.Stage, boxes: list[dict]) -> None:
-    """One scaled UsdGeom.Cube per box, each with a primitive box collider.
-
-    The default prim stays op-free (asset contract): Isaac Lab's spawner
-    authors [translate, orient, scale] on the referencing prim, which REPLACES
-    the referenced xformOpOrder -- any op here would be silently dropped, the
-    2026-07-26 failure. All placement lives one level down, on the cubes.
-    """
+    """One scaled UsdGeom.Cube per box, each with a primitive box collider."""
     root = UsdGeom.Xform.Define(stage, f"/{DEFAULT_PRIM}")
     stage.SetDefaultPrim(root.GetPrim())
     for box in boxes:
@@ -132,12 +80,7 @@ def author(stage: Usd.Stage, boxes: list[dict]) -> None:
         centre = [(lo[i] + hi[i]) / 2.0 for i in range(3)]
         size = [hi[i] - lo[i] for i in range(3)]
         cube = UsdGeom.Cube.Define(stage, f"/{DEFAULT_PRIM}/{box['name']}")
-        # A unit cube (size 1 spans -0.5..0.5) scaled per axis: the scale IS
-        # the edge length, which keeps the sidecar trivially readable.
         cube.CreateSizeAttr().Set(1.0)
-        # Authored via the schema accessor rather than GetAttribute("extent"):
-        # extent is the unit cube's, pre-transform, and CreateExtentAttr is the
-        # form that is guaranteed to author rather than silently no-op.
         cube.CreateExtentAttr().Set(
             [Gf.Vec3f(-0.5, -0.5, -0.5), Gf.Vec3f(0.5, 0.5, 0.5)]
         )
@@ -148,9 +91,7 @@ def author(stage: Usd.Stage, boxes: list[dict]) -> None:
 
 
 def verify(stage: Usd.Stage, pocket_side: float, pocket_depth: float) -> tuple[dict, dict]:
-    """Measure the authored stage back and judge it. Checks mirror the asset
-    contract plus the pocket dimensions, read from the prims rather than from
-    the inputs, so a coding slip in author() cannot self-certify."""
+    """Measure the authored USD geometry and check it against the asset dimensions."""
     cache = UsdGeom.BBoxCache(Usd.TimeCode.Default(), [UsdGeom.Tokens.default_, UsdGeom.Tokens.render])
 
     def bbox(prim_path: str):
@@ -159,7 +100,6 @@ def verify(stage: Usd.Stage, pocket_side: float, pocket_depth: float) -> tuple[d
 
     whole = bbox(f"/{DEFAULT_PRIM}")
     size = [whole[1][i] - whole[0][i] for i in range(3)]
-    # Opening measured between the INNER faces of the four plate pieces.
     east = bbox(f"/{DEFAULT_PRIM}/plate_east")
     west = bbox(f"/{DEFAULT_PRIM}/plate_west")
     north = bbox(f"/{DEFAULT_PRIM}/plate_north")
@@ -205,8 +145,6 @@ def verify(stage: Usd.Stage, pocket_side: float, pocket_depth: float) -> tuple[d
         "opening_is_square_and_right": abs(opening_x - pocket_side) < tol and abs(opening_y - pocket_side) < tol,
         "pocket_depth_right": abs(measured_depth - pocket_depth) < tol,
         "all_nine_boxes_collide": collision_count == 9,
-        # Box primitives need no approximation; a MeshCollisionAPI here would
-        # mean something was authored as a mesh after all.
         "no_mesh_collision_api": mesh_collision_count == 0,
         "no_instanceable_prims": not instanceable,
     }

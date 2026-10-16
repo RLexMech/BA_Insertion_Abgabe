@@ -1,15 +1,4 @@
-"""Screen all UR10e IK branches for clearance against the table plate.
-
-Convention, established by matching the measured simulator pose rather than
-assumed: the DH chain is driven by the USD joint angles directly, and its
-output sits in a frame rotated by pi about z relative to the env frame:
-
-    p_env = BASE + Rz(pi) . p_DH(q_USD)
-
-The first version of this script applied both the point rotation and a q1
-shift; those cancel exactly, which is why both variants gave the same wrong
-answer. It is one or the other.
-"""
+"""Check UR10e inverse-kinematics solutions for table clearance."""
 import importlib.util
 import pathlib
 
@@ -26,10 +15,9 @@ BORE = np.array([0.0, -0.225, 0.755])
 STANDOFF = 0.150
 RZ_PI = np.diag([-1.0, -1.0, 1.0])
 
-HX, HY = 0.250, 0.300          # plate half extents, env-local
+HX, HY = 0.250, 0.300
 PLATE_TOP, PLATE_BOTTOM = 0.755, 0.700
 
-# Measured in the simulator at t = 3.0 s (startup report, marker ...-26c).
 MEASURED_Q = np.array([-1.8887712955, 0.9098067284, -2.3225746155,
                        2.9370598793, 1.5707978010, -0.4330468476])
 MEASURED_BODIES = {
@@ -39,9 +27,6 @@ MEASURED_BODIES = {
     "wrist_2_link": np.array([0.0571, -0.1934, 1.0109]),
     "wrist_3_link": np.array([0.0554, -0.1986, 0.8945]),
 }
-# Established by matching, not assumed: the USD link frames do not map 1:1 onto
-# the DH frames. shoulder and upper_arm share the shoulder origin, and the three
-# wrist links line up with DH frames 4, 5, 6 -- DH frame 3 has no USD counterpart.
 FRAME_OF = {"shoulder_link": 1, "forearm_link": 2, "wrist_1_link": 4,
             "wrist_2_link": 5, "wrist_3_link": 6}
 
@@ -79,9 +64,8 @@ print("=" * 74)
 print("STEP 2 - screen every IK branch for plate clearance")
 print("=" * 74)
 
-# Target expressed in the DH frame: rotate the env-frame target by Rz(pi).
-p_env_rel = np.array([0.0, BORE[1] - BASE[1], STANDOFF])      # (0, -0.415, +0.150)
-R_env = np.diag([1.0, -1.0, -1.0])                            # tool axis down
+p_env_rel = np.array([0.0, BORE[1] - BASE[1], STANDOFF])
+R_env = np.diag([1.0, -1.0, -1.0])
 target = np.eye(4)
 target[:3, 3] = RZ_PI.T @ p_env_rel
 target[:3, :3] = RZ_PI.T @ R_env
@@ -95,15 +79,12 @@ rows = []
 for idx, q in enumerate(solutions):
     q = chp.wrap_to_pi(np.asarray(q))
     pts = to_env(chain_origins(q))
-    # Skip the base->shoulder segment: it runs vertically up from the mounting
-    # point, which sits exactly on the plate top by design.
     min_clear = float("inf")
     for a, b in zip(pts[1:-1], pts[2:]):
         for s in np.linspace(0.0, 1.0, 120):
             p = a + s * (b - a)
             if abs(p[0]) <= HX and abs(p[1]) <= HY:
                 min_clear = min(min_clear, p[2] - PLATE_TOP)
-    # Verify the branch actually reaches the commanded pose.
     fk = chp.forward_kinematics(q, DH)
     pos_err = float(np.linalg.norm(fk[:3, 3] - target[:3, 3]))
     ee_env = to_env(chain_origins(q))[6]

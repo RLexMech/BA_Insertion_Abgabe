@@ -1,41 +1,7 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-"""Apply the USD Physics collision schema to the fixture meshes.
-
-Measured on the training machine 2026-07-26. After de-instancing, Isaac Lab
-still warns:
-
-    Could not perform 'modify_collision_properties' on any prims under:
-    '/World/envs/env_0/Fixture' ... (1) The desired attribute does not exist on
-    any of the prims. ... Discovered list of instanced prim paths: []
-
-The instanced-prim list is now empty, so the instancing defect is gone and only
-reason (1) remains: `modify_collision_properties` **modifies** existing collision
-attributes, it does not **apply** the schema. A CAD import carries no
-`UsdPhysics.CollisionAPI`, so `collision_props` in the spawn cfg silently reaches
-nothing and the fixture has no collision at all.
-
-This applies the schema in the asset, where it belongs -- every consumer of the
-file then gets a collider, not just our env.
-
-Approximation is set to ``none``, i.e. the exact triangle mesh. That is the value
-the blind bore needs, and PhysX permits it precisely because the fixture is a
-static collider with no rigid-body dynamics (D-018). Doing it here also settles
-the question that was deferred to the peg increment because `UsdFileCfg` has no
-`mesh_collision_props` field (D-020 addendum 2): a convex hull would have sealed
-the bore, and now none is used.
-
-Idempotent: applying an API that is already present is a no-op, so re-running is
-safe. The input is never edited in place -- backup, candidate, verify, replace
-only on pass, matching `fix_stage_units.py`.
-
-UNVERIFIED -- authored on the dev PC (no Isaac installation). On the training
-machine:
-
-    conda activate env_isaaclab
-    python scripts\\add_fixture_collision.py --usd <path>\\tisch.usd
-"""
+"""Apply USD Physics collision schemas to the fixture meshes."""
 
 from __future__ import annotations
 
@@ -63,7 +29,6 @@ args_cli.headless = True
 app_launcher = AppLauncher(args_cli)
 simulation_app = app_launcher.app
 
-# pxr is importable only after the app is up.
 from pxr import Usd, UsdGeom, UsdPhysics  # noqa: E402
 
 
@@ -164,9 +129,6 @@ def main() -> None:
         print("[add_fixture_collision] FAIL; original left untouched.")
         return
 
-    # The stage above still has the input open, and on Windows that can block the
-    # overwrite. Drop it before copying, and report the failure instead of dying
-    # silently -- the previous repair run lost its replace step exactly here.
     del stage, check_stage
     try:
         shutil.copy2(candidate, usd_path)

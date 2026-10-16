@@ -1,31 +1,7 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-"""Offline geometry check of the generated table (D-033). No Isaac required.
-
-``author_tisch_square.py`` verifies the USD it wrote by measuring the authored
-prims back. That check is the stronger one, but it runs only on the training
-machine, which means a geometry slip made on the dev PC is invisible until the
-next transfer. This script attacks the same arithmetic one stage earlier --
-``box_specs`` alone, before any USD exists -- so the box layout is falsifiable
-here, in the same spirit as ``check_demo_reward_math.py`` for the reward.
-
-What it asserts, per pocket size across the whole curriculum:
-
-- the nine boxes union to the contract bbox, 0.500 x 0.600 x 0.755, z -0.755..0
-- no two boxes overlap (overlapping static colliders are a PhysX contact-noise
-  source, and they would also make the tiling check pass by accident)
-- the four plate pieces plus the floor fill the plate slab EXACTLY, minus the
-  pocket void: a gap here is a hole in the table that no visual would reveal
-- the pocket mouth is empty down to the floor -- the sealed-pocket failure mode
-  (D-029 risk 1) restated as a measurement rather than an argument
-- the walls are full-thickness, the floor leaves 20 mm of material, the legs
-  stay inside the footprint and reach the ground
-
-Run:
-
-    python scripts\\check_tisch_geometry.py
-"""
+"""Check the generated table geometry offline without Isaac Lab."""
 
 from __future__ import annotations
 
@@ -42,9 +18,6 @@ TASKS_CFG = (
     / "proxytask_tasks_cfg.py"
 )
 
-# The curriculum, plus the bounds of the accepted range. 60 mm is the widest
-# pocket _pocket_from_env admits and the case where the plate pieces around the
-# pocket are thinnest, so it is the one most likely to degenerate.
 POCKET_SIDES_MM = (32.0, 34.0, 36.0, 40.0, 45.0, 60.0)
 TOL = 1e-12
 
@@ -58,14 +31,7 @@ def check(label: str, ok: bool, detail: str = "") -> None:
 
 
 def stub_isaac() -> None:
-    """Make ``author_tisch_square`` importable without Isaac.
-
-    Only ``box_specs`` is exercised, and it is pure arithmetic: the pxr and
-    AppLauncher names it imports at module scope are never called here. The
-    real ``proxytask_tasks_cfg`` IS loaded, by path, because the plate figures
-    under test come from it -- stubbing that too would leave this script
-    checking its own assumptions.
-    """
+    """Make ``author_tisch_square`` importable without Isaac."""
     app = types.ModuleType("isaaclab.app")
 
     class AppLauncher:  # noqa: D401 - stub
@@ -90,9 +56,6 @@ def stub_isaac() -> None:
         sys.modules[f"pxr.{name}"] = sub
     sys.modules["pxr"] = pxr
 
-    # Graft the real tasks_cfg into the package hierarchy. Importing the
-    # proxytask package normally would run its __init__, which needs
-    # isaaclab_tasks; this leaf is all the generator reads.
     cfg_spec = importlib.util.spec_from_file_location(
         "proxytask.tasks.direct.proxytask.proxytask_tasks_cfg", TASKS_CFG
     )
@@ -224,8 +187,6 @@ def main() -> None:
             f"{material * 1000:.1f} mm",
         )
 
-        # The sealed-pocket failure mode, as a measurement: a thin probe filling
-        # the mouth from the floor to the opening plane must hit nothing.
         mouth = {"min": (-h, -h, -depth + 1e-9), "max": (h, h, -1e-9)}
         blockers = [x["name"] for x in boxes if overlap_volume(mouth, x) > 0.0]
         check("pocket mouth is open, not sealed", not blockers, ", ".join(blockers))

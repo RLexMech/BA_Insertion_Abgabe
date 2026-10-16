@@ -1,3 +1,23 @@
+# Experiment B – Quader in Tasche
+
+Grundlage: `stufe-B-quader` (`97df8bf3`) aus `RLexMech/ur10e-peg-insertion-rl`.
+
+Die dokumentierten Endeinstellungen sind in dieser Abgabefassung direkt als Standardwerte in `source/proxytask/proxytask/tasks/direct/proxytask/proxytask_env_cfg.py` gesetzt:
+
+| Einstellung pro Episode | Standardwert |
+|---|---|
+| Versatz der Tasche in x und y | jeweils ±20 mm (`fixture_pos_noise_xy = 0.02`) |
+| Neigung der Tasche | 0–10°, zufällige Richtung (`fixture_tilt_noise_rad = 0.1745`) |
+| Drehung der Tasche um die senkrechte Achse | ±45° (`fixture_yaw_noise_rad = 0.7854`) |
+
+Dafür sind keine zusätzlichen Startparameter und kein separates Startskript erforderlich. Explizite Parameter beim Start können diese Standardwerte weiterhin überschreiben.
+
+Im ursprünglichen Tag waren diese drei Werte `0.0`; die Endeinstellungen wurden beim Trainingsstart übergeben. In der Abgabefassung wurden ausschließlich diese drei Standardwerte angepasst. Andere Konfigurationswerte und die Programmlogik bleiben unverändert.
+
+Die Einstellungen legen die Endkonfiguration der Taschenstreuung fest. Der vollständige historische Trainingsaufruf ist rekonstruiert; das damalige Training setzte auf einem vorhandenen Modell auf. USD-Szenendateien und trainierte Modelle sind nicht enthalten. Details stehen in [STAENDE.md](../STAENDE.md).
+
+---
+
 # Template for Isaac Lab Projects
 
 ## Overview

@@ -7,10 +7,6 @@ import gymnasium as gym
 
 from . import agents
 
-##
-# Register Gym environments.
-##
-
 
 gym.register(
     id="Template-Proxytask-Direct-v0",

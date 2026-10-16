@@ -1,46 +1,7 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-"""Measure where the fixture actually lands when spawned, and why.
-
-Closes a hole in the increment-1 acceptance criteria: the startup report in
-`proxytask_env.py` measures the end-effector against `opening_entrance_pos`, a
-*cfg constant* rather than a measured point on the object. A fixture spawned at
-the wrong height or scale passes all seven criteria while the scene is
-physically wrong.
-
-SQUARE RE-IMPORT (D-029): the asset origin moved onto the opening plane at
-the pocket centre, and the spawn translation moved with it (fixture_pos z is
-now 0.755, the plate top). The world-space acceptance below is deliberately
-unchanged -- plate top at plate_top_z, legs on the ground plane -- because it
-measures the ASSEMBLED scene, which the origin convention must not alter. If
-the old round tisch.usd is fed in (via --usd), the same checks fail by 55 mm,
-which is exactly the stale-asset signal wanted.
-
-The risk is specific. `fix_stage_units.py` left a compensating 0.001 scale as
-the first entry in the asset's root `xformOpOrder`. In USD composition an
-`xformOpOrder` authored on the *referencing* prim does not merge with the
-referenced one -- it replaces it, and the scale op is silently dropped. The
-first version of this script hit exactly that and reported a 1000x oversized
-table (2026-07-26).
-
-So this runs four measurements in one pass, because a round trip to the
-training machine is expensive:
-
-  A. the asset stage opened directly     -- is the asset itself still correct?
-  B. reference and translate on the SAME prim -- reproduces the dropped-scale bug
-  C. translate on a PARENT, reference on a child -- the composition-safe variant
-  D. Isaac Lab's own spawner via cfg.func -- the only one that decides anything
-
-D is the verdict. A/B/C explain it. If D matches C the pipeline is sound; if D
-matches B the fixture must be spawned under a wrapper Xform (or the asset
-re-saved with the units baked in rather than carried as an xformOp).
-
-UNVERIFIED beyond the run it is written for. On the training machine:
-
-    conda activate env_isaaclab
-    python scripts\\verify_fixture_spawn.py
-"""
+"""Measure the spawned fixture position and dimensions."""
 
 from __future__ import annotations
 
@@ -69,7 +30,6 @@ args_cli.headless = True
 app_launcher = AppLauncher(args_cli)
 simulation_app = app_launcher.app
 
-# pxr and the isaaclab modules are importable only after the app is up.
 from pxr import Gf, Usd, UsdGeom  # noqa: E402
 
 from proxytask.tasks.direct.proxytask.proxytask_env_cfg import (  # noqa: E402
@@ -125,7 +85,6 @@ def main() -> None:
         "expected_size_m": list(EXPECTED_SIZE_M),
     }
 
-    # --- A. the asset stage opened directly -------------------------------
     asset_stage = Usd.Stage.Open(str(usd_path))
     default_prim = asset_stage.GetDefaultPrim()
     a = {
@@ -137,7 +96,6 @@ def main() -> None:
     a["verdict"] = size_verdict(a["bbox"].get("size"))
     result["A_asset_direct"] = a
 
-    # --- B. reference and translate on the SAME prim ----------------------
     sb = Usd.Stage.CreateInMemory()
     UsdGeom.SetStageMetersPerUnit(sb, 1.0)
     UsdGeom.SetStageUpAxis(sb, UsdGeom.Tokens.z)
@@ -148,7 +106,6 @@ def main() -> None:
     b["verdict"] = size_verdict(b["bbox"].get("size"))
     result["B_translate_on_referencing_prim"] = b
 
-    # --- C. translate on a PARENT, reference on a child -------------------
     sc = Usd.Stage.CreateInMemory()
     UsdGeom.SetStageMetersPerUnit(sc, 1.0)
     UsdGeom.SetStageUpAxis(sc, UsdGeom.Tokens.z)
@@ -163,7 +120,6 @@ def main() -> None:
     c["verdict"] = size_verdict(c["bbox"].get("size"))
     result["C_translate_on_parent"] = c
 
-    # --- D. Isaac Lab's own spawner: the measurement that decides ---------
     d: dict = {}
     try:
         stage = None
@@ -201,7 +157,6 @@ def main() -> None:
         d["verdict"] = "unknown"
     result["D_isaaclab_spawner"] = d
 
-    # --- acceptance, judged on D ------------------------------------------
     dbox = d.get("bbox") or {}
     checks = {}
     if "max" in dbox:

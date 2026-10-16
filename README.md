@@ -25,6 +25,8 @@ Jeder Stufen-Ordner ist eine Kopie des Original-Repos an einem Commit (`git arch
 - A/B: Ergebnis-Dokumente (`docs/*.md`)
 - C/D: Laufprotokolle (`rt_logs/`, nur die Erwartungs- und Urteilsdateien), Plan der Evaluation (`eval_plan.md`), Belege der Streuwerte, CAD der Aufnahme (`CAD/*.stp`)
 
+Bei B sind abweichend vom Original-Tag die drei Streuwerte der Taschenlage direkt auf den dokumentierten Endstand gesetzt; siehe [B_quader/README.md](B_quader/README.md).
+
 Welcher Commit das ist, steht in [STAENDE.md](STAENDE.md) („Ordner hier“). Bei C und D ist das der **Endstand**: der letzte Commit, auf dem alle in der Arbeit genannten Läufe der Stufe laufen (Training und Tests). Einzelne Erwartungsdateien kommen aus einem späteren Commit. Sie stehen in der Karte der Stufe.
 
 `auswertung/` enthält Kopien aus Commits und aus den gitignorierten Laufordnern. Jede Datei steht mit Quelle und sha256 in [auswertung/HERKUNFT.csv](auswertung/HERKUNFT.csv).
@@ -40,6 +42,6 @@ Die volle Geschichte liegt in den Original-Repos. Die Tags zeigen dort auf die S
 ## Hinweise zum Lesen
 
 - A und B sind die Vorstudie (D-043 im Repo `Ur5e_ContactRich_Insertion`). C und D sind die eigentliche Aufgabe.
-- Viele Streuwerte sind im Code `0` oder `off`. Sie wurden erst beim Lauf über die Befehlszeile gesetzt (`env.…=…`). Die Befehle stehen in STAENDE.md.
+- Viele Streuwerte wurden ursprünglich erst beim Lauf über die Befehlszeile gesetzt (`env.…=…`). Die Befehle stehen in STAENDE.md. Bei B sind die drei Endeinstellungen der Taschenlage in dieser Abgabefassung bereits im Code aktiviert.
 - Verweise wie `D-177` zeigen auf Einträge in `DECISIONS.md` des jeweiligen Ordners, `RT-206` auf Dateien in `rt_logs/`.
 - Entscheidungen nach dem Endstand D (D-207 bis D-230, zum Beispiel D-225: keine finale Policy) stehen nur im Original-Repo (`DECISIONS.md` auf `ff2aadd8`).

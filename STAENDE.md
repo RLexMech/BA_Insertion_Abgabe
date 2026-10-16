@@ -46,14 +46,14 @@ Erwartet: `a7c7ebb1bd7fe27d9c391cbd5b181c69fe5a6a9d`. Die USD-Dateien sind nicht
 | | |
 |---|---|
 | Repo / Tag | `ur10e-peg-insertion-rl` / `stufe-B-quader` = `97df8bf` (Linie `square-peg-insertion` → `generalisation-probe` → `generalisation-angle-probe`) |
-| Ordner hier | [B_quader/](B_quader/) |
+| Ordner hier | [B_quader/](B_quader/): Grundlage `97df8bf3`; die drei Streuwerte der Taschenlage sind in dieser Abgabefassung direkt als Endeinstellungen voreingestellt. |
 | Ergebnis | Endstand D-038: 99,19 % (Trainingsfenster 5461 Episoden, 4096 Envs, Stopp bei 99 %), Replay 99,57 % (703 Episoden) (`DECISIONS.md:1727-1740`). Zwischenstände in [CHECKPOINTS.md](CHECKPOINTS.md). |
 | Trainingsbefehl | nicht gespeichert. Rekonstruiert: `--num_envs 4096 --resume --stop-at-success-rate 0.99 env.fixture_pos_noise_xy=0.02 env.fixture_tilt_noise_rad=0.1745 env.fixture_yaw_noise_rad=0.7854`, `PROXYTASK_POCKET_SIDE_MM=32`. |
 | Roboter / Regler / Aktion | wie A (UR10e, Gelenk-Deltas, 6-D, 0,02 rad, kein EMA). |
 | Beobachtung | 25: A-Kanäle + cos/sin 4φ 19:21 + Taschen-Quaternion 21:25. Kein Rauschen. |
 | Reward | wie A + Gier −2,0. Erfolg: Tiefe ≥ 25 mm UND alle 4 Ecken in der Tasche UND Ausrichtung ≥ 0,99. |
 | Geometrie | Stift 30×30×50 mm, Tasche 32×32×35 mm → 1,0 mm Spiel je Achse. |
-| Streuung (pro Episode) | Gelenke ±0,01 rad, Handgelenk 3 ±45°. Befehlszeile: Aufnahme xy ±0,02 m (Endstand) bzw. ±0,05 m (D-034), Neigung 0–10°, Gier ±45°. Im Code alle `0.0`. |
+| Streuung (pro Episode) | Gelenke ±0,01 rad, Handgelenk 3 ±45°. Abgabefassung: Aufnahme xy ±0,02 m, Neigung 0–10°, Gier ±45° direkt als Standardwerte im Code. Im Original-Tag alle `0.0`, dort über die Befehlszeile gesetzt. ±0,05 m gehört zur früheren Stufe D-034. |
 | PPO | wie A (keine Änderung zwischen `a7c7ebb` und `97df8bf`). |
 | Nicht zitieren | Lauf `2026-08-06_18-43-17_s30b32rxy50` (verworfen). |
 

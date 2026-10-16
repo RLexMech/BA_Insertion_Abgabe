@@ -10,11 +10,6 @@ from isaaclab_rl.rsl_rl import RslRlOnPolicyRunnerCfg, RslRlPpoActorCriticCfg, R
 
 @configclass
 class PPORunnerCfg(RslRlOnPolicyRunnerCfg):
-    # Demo sprint (branch demo-insertion-sprint, 2026-07-26): hidden dims
-    # widened from the Cartpole-sized [32, 32] and observation normalization
-    # switched on, because the 19-dim observation now mixes radians (joint
-    # pos/vel) with metres (peg-tip-to-bore) and a quaternion -- unlike the
-    # template's original single-modality Cartpole observation.
     num_steps_per_env = 16
     max_iterations = 1500
     save_interval = 50
