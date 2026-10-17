@@ -61,7 +61,7 @@ parser.add_argument(
         "Set env_cfg.start_tip_above_entrance = None, i.e. start at the bare "
         "home pose (165 mm above the opening) instead of the cfg's rung-0 "
         "height. This is the pose RT-46 measured the droop at, so a droop "
-        "reading under a new controller (inbox entry 'Audit 2026-09-03 (a)') "
+        "reading under a new controller "
         "is comparable only with it. --start-tip-above-entrance-mm cannot "
         "express None, hence a flag."
     ),

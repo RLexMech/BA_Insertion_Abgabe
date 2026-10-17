@@ -68,9 +68,8 @@ ctrl.add_argument(
     default=None,
     choices=["osc", "joint_pd"],
     help=(
-        "Override env cfg control_mode FOR THIS RUN (inbox entry 'Audit 2026-09-03 (a)'). "
-        "Default None = the cfg default (osc). 'joint_pd' is the D-108 chain, the PD half "
-        "of that entry's discriminating measurement."
+        "Override control_mode for this run. None uses the configured mode (osc); "
+        "joint_pd selects joint-space PD control for comparison."
     ),
 )
 ctrl.add_argument(
@@ -189,7 +188,7 @@ prof.add_argument(
         "OPTIONAL extra capture read-offs: for each angle, the shallowest depth "
         "from which the measured tilt stays below it. EMPTY BY DEFAULT on "
         "purpose -- D-106 (2)'s bounds (2.821 / 1.905 / 0.935 deg) are "
-        "documentation of what the walls enforce, carried in DECISIONS.md and "
+        "geometric wall constraints and are "
         "deliberately given no constant, so they are passed in or not used. The "
         "capture read-off against half the cross play always runs and needs no "
         "argument."
@@ -365,9 +364,8 @@ def main() -> int:
           f"below it the downward rate is zero and the arm holds its last target.")
     print("[tilt_insert] NOTE: this run sets NO threshold. F_max, the capture depth and the abort "
           "payment are DECISIONS; what follows is the distribution they need.")
-    print("[tilt_insert] NOTE: this script is SPENT (2026-09-01). The F_max and capture-depth rules "
-          "it was written for are withdrawn and the datasheet anchor with them; see the inbox entry "
-          "'The tilted scripted insertion is SPENT ...'. The numbers below describe THIS controller.")
+    print("[tilt_insert] NOTE: these measurements describe this scripted controller only. "
+          "They do not establish a force limit or capture-depth threshold for the learned policy.")
 
     sapu_query = None
     sapu_note = "disabled by --no-interpen"
@@ -733,8 +731,7 @@ def main() -> int:
             "f_max_lower_bound_n": max([e["peak_force_n"] for e in clean], default=None),
             "f_max_upper_anchor_n": None,
             "f_max_upper_anchor_source": (
-                "WITHDRAWN 2026-09-01 -- the suction cup is not modelled (rigid chain, no sim-to-real); "
-                "see the inbox entry 'The tilted scripted insertion is SPENT ...'."
+                "WITHDRAWN: the suction cup is not modelled; the rigid chain provides no real-world force limit."
             ),
         },
         "abort_truncated": {

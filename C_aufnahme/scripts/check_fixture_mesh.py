@@ -21,8 +21,7 @@ other.
 
 WHAT IS ALREADY MEASURED, AND WHAT IS NOT
 ------------------------------------------
-RT-61 answered this for the **USD** (``HANDOFF-SZENE.md``, "THE 9 EDGES HAVE AN
-ADDRESS"): after a position weld, nine survivors, all at ``y = 90.450 mm`` and
+The USD measurement in RT-61 found nine open edges after a position weld, all at ``y = 90.450 mm`` and
 ``z = +15.000 mm``, spanning x from ``-84.794`` to ``+65.206`` -- the outer top
 rim where the tab meets the body at +Y, 17.90 mm outside ``POCKET_WALL_Y`` and
 above the opening plane.
@@ -40,9 +39,8 @@ ADDRESS and a DISTANCE to the two volumes the part actually sweeps.
 
 WHAT IT DECIDES: NOTHING
 ------------------------
-No task number is written by this file. It reports a location and a clearance;
-whether that clearance is enough is a decision, and decisions live in
-``DECISIONS.md``.
+This script reports edge locations and clearances without changing task
+parameters. These measurements alone do not establish sufficient clearance.
 
 THE THREE NUMBERS IT USES, AND WHERE EACH LIVES
 ------------------------------------------------

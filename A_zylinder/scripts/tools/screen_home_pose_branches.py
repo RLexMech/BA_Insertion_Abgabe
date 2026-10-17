@@ -4,7 +4,7 @@ import pathlib
 
 import numpy as np
 
-MOD = pathlib.Path(r"C:\Users\alexp\OneDrive\Desktop\Claude\Keine 2\scripts\tools\compute_home_pose.py")
+MOD = pathlib.Path(__file__).resolve().with_name("compute_home_pose.py")
 spec = importlib.util.spec_from_file_location("chp", MOD)
 chp = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(chp)

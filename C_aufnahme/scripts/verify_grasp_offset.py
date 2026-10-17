@@ -131,7 +131,7 @@ def main() -> int:
               "offset can use this route (per-env values need per-env writes).")
     else:
         print(f"[{TAG}] => the joint frame was consumed at articulation parse time; this "
-              "route is dead. Result goes to the inbox, the offset needs another route.")
+              "route cannot apply a runtime offset; a different mechanism is required.")
     return 0
 
 

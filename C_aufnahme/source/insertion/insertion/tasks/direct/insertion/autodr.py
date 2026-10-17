@@ -237,7 +237,7 @@ class BoundEvent:
         return self.action in ("expand", "shrink") and self.after != self.before
 
     def line(self) -> str:
-        """The marked log line. `/rt-check` greps for the `[autodr]` prefix."""
+        """Emit a diagnostic log line with the searchable `[autodr]` prefix."""
         return (
             f"[autodr] {self.key}: rate {self.rate:.4f} over {self.buffer_m} "
             f"-> {self.action} {self.before:.6g} -> {self.after:.6g}" + self.note

@@ -23,7 +23,7 @@ Wilson intervals and the bin rule are imported from ``eval_stats.py`` (one home)
   F9  heat map lateral offset x tilt, T-final, seeds pooled, rate + row count
   F10 success counted only below an interpenetration threshold (IndustReal Fig. 3)
 F7-F10 were added AFTER the results were known: descriptive, no criterion.
-Fixed-DR (D-192, added afterwards; user 2026-09-23 "B"): F1, F2 (two K5
+Fixed-DR (added after the initial two-method analysis): F1, F2 (two K5
 rows), F3, F5, F6, F7, F9, F10 draw it as a third arm when T-nominal-F AND
 T-final-F exist (F7: when RT-231s1..s5 were extracted); otherwise every
 figure is the two-method one. F4 (final policy) and F8 (AutoDR growth) have

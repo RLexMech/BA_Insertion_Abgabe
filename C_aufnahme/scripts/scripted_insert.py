@@ -150,9 +150,8 @@ tune.add_argument(
     default=None,
     choices=["osc", "joint_pd"],
     help=(
-        "Override env cfg control_mode FOR THIS RUN (inbox entry 'Audit 2026-09-03 (a)'). "
-        "Default None = the cfg default (osc). 'joint_pd' is the D-108 chain, the PD half "
-        "of that entry's discriminating measurement."
+        "Override control_mode for this run. None uses the configured mode (osc); "
+        "joint_pd selects joint-space PD control for comparison."
     ),
 )
 tune.add_argument(

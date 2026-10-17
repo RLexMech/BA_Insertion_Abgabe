@@ -1,13 +1,7 @@
-"""Summarise a ``play.py --trace-obs`` JSON into a few console lines.
+"""Summarise a play.py --trace-obs JSON using the standard library.
 
-Stdlib only, no Isaac. Reads the per-step trace (RT-149 form: lists of
-``[step][env][channel]``) and prints, per env, the numbers the RT-149
-expectation asks for -- so the answer fits into ``rt_logs/inbox.txt``
-instead of a multi-megabyte JSON that cannot travel by clipboard.
-
-Every printed value is a plain reduction of the file: min, max, mean, slope.
-No threshold is judged here; judging is ``/rt-check``'s job against the
-expectation file.
+Reads arrays indexed by step, environment and channel. Prints per-environment
+minima, maxima, means and slopes without applying acceptance thresholds.
 
     python scripts/summarize_trace.py rt_logs/RT-149_trace.json
     python scripts/summarize_trace.py --self-test

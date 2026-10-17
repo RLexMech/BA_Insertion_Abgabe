@@ -2375,7 +2375,7 @@ class InsertionEnv(DirectRLEnv):
     def _print_controller_report(self) -> None:
         """Report controller settings, measured joint drives, task-space inertia and Jacobian conditioning."""
         cfg = self.cfg
-        print("--- controller (inbox entry 'Audit 2026-09-03 (a)') ---")
+        print("--- controller ---")
         _rate = 1.0 / (cfg.sim.dt * cfg.decimation)
         if self._control_mode == "osc":
             print(f"control_mode:   osc -- 6-D pose delta, Isaac Lab OperationalSpaceController, "
@@ -2601,7 +2601,7 @@ class InsertionEnv(DirectRLEnv):
         print(f"obs mode {insertion_math.obs_version(self._obs_mode)}: "
               f"{'torque 28:31 IN the policy observation' if self._obs_mode == 'wrench' else 'torque read and logged, NOT in the policy observation'}; "
               f"torque_obs_noise_std_nm {cfg.torque_obs_noise_std_nm} (0 = off, OPEN per D-188); "
-              f"the wrench EMA skips the reset step and advances once per step (inbox 2026-09-13).")
+              f"the wrench EMA skips the reset step and advances once per step.")
         spawn_cfg = cfg.robot_cfg.spawn
         declared = (
             "activate_contact_sensors" in {f.name for f in dataclasses.fields(spawn_cfg)}

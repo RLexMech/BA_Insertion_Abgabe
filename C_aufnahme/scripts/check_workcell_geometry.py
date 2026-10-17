@@ -119,7 +119,7 @@ def main() -> int:
     r.check("left overhang: derived  vs  measured",
             (c.T2_SIZE_Y - c.T2_OVERHANG_RIGHT - c.T1_SIZE_Y) * MM,
             c.T2_OVERHANG_LEFT * MM, 20.0,
-            "right overhang LEADS (user 2026-08-18)")
+            "right overhang is the reference measurement")
     r.value("=> WORKCELL_Y_RESIDUAL", c.WORKCELL_Y_RESIDUAL * MM,
             "table 1 shifts by half of this if both were averaged")
     r.check("plate drop: absolute pair  vs  direct reading",
@@ -148,7 +148,7 @@ def main() -> int:
     r.require("block is to the robot's RIGHT (-Y)",
               c.BLOCK_CENTRE_Y < 0.0,
               f"y = {c.BLOCK_CENTRE_Y * MM:+.1f} mm (must be < 0; "
-              "user call 2026-08-18: fixture to the robot's right)")
+              "fixture is to the robot's right)")
     r.check("block centre x  vs  pre-rotation y", c.BLOCK_CENTRE_X * MM, 451.2, 0.1)
     r.check("block centre y  vs  -(pre-rotation x)", c.BLOCK_CENTRE_Y * MM, -133.0, 0.1)
     r.check("block top z unchanged by the rotation", c.BLOCK_TOP_Z * MM, 77.5, 0.1)

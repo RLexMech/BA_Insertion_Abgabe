@@ -256,7 +256,7 @@ def summarize(df: pd.DataFrame) -> dict:
         f"{m}_s{s}": {c: bin_rates(g, c, e) for c, e in BIN_EDGES.items()}
         for (m, s), g in fin.groupby(["method", "seed"], sort=True)
     }
-    out["bins_not_computed"] = {"friction": "no bin edges exist (Belege_Streuwerte.md section D)"}
+    out["bins_not_computed"] = {"friction": "no friction bin edges are defined"}
     return out
 
 

@@ -1,10 +1,9 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-r"""Draw an evaluation table ONCE, on the laptop, and never overwrite it.
+r"""Generate a fixed evaluation table without overwriting an existing file.
 
-WHY (`eval_plan.md` step A, inbox 2026-09-21 "the table is committed"). The
-table IS the identity of the test cases: every policy plays row ``i`` in env
+The committed table defines the test cases: every policy plays row ``i`` in env
 ``i``. Whether numpy ``default_rng`` returns the same values on two numpy
 versions is UNKNOWN, so the training PC never redraws -- it reads the
 committed file, and ``RowTable.from_csv`` hashes its RAW BYTES

@@ -104,6 +104,6 @@ if (Test-Path $runRoot) {
 Write-Host "[rt_log] Log (voll): $logFile"
 Write-Host "[rt_log] Log (kurz): $clipSource"
 Write-Host "[rt_log] $clip"
-Write-Host "[rt_log] Am Laptop in rt_logs\inbox.txt einfuegen, dann /rt-check"
+Write-Host "[rt_log] Pruefung: Abschlussmeldung und Exitcode im vollstaendigen Log kontrollieren."
 
 exit $code

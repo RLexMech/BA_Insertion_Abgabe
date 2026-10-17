@@ -6,8 +6,7 @@ r"""Check a run folder's episode record (``episodes.csv``) -- stdlib only.
 WHAT IT READS
 -------------
 ``insertion_env._append_episode_rows`` writes one row per finished episode to
-``<run folder>/episodes.csv`` and, once, ``episodes_meta.json`` beside it
-(user scope 2026-09-15: the interpenetration analysis of the thesis). This
+``<run folder>/episodes.csv`` and, once, ``episodes_meta.json`` beside it. This
 script reads a run folder and answers "is the record complete and
 self-consistent", so no run of the seed study has to be repeated for a column
 that was empty or wrong.

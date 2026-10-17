@@ -17,7 +17,7 @@ how many episodes each percentage stands on.
 INPUT
 -----
 ``--metrics FILE`` is either a ``demo_metrics.json`` itself or any text file
-that CONTAINS the table (an ``rt_logs`` dump, ``rt_logs/inbox.txt``). The
+that CONTAINS the table (for example, an ``rt_logs`` dump). The
 table is located by its key and decoded with ``json``; if the file holds it
 more than once the LAST occurrence is used (a run's dump ends with its final
 window). A table with a bin count other than six is refused: the bins are the
@@ -25,7 +25,7 @@ env's, not this script's, and a different count means a different env.
 
 Offline, no Isaac: ``json`` + ``matplotlib``.
 
-    python scripts/plot_start_height_bins.py --metrics rt_logs/inbox.txt --run RT-138 \
+    python scripts/plot_start_height_bins.py --metrics rt_logs/RT-138.txt --run RT-138 \
         --out docs/figures/RT-138_success_by_start_height.png
     python scripts/plot_start_height_bins.py --self-test
 

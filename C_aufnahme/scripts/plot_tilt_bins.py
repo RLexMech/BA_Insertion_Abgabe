@@ -15,7 +15,7 @@ table -- no height, no overlay -- because the mean success rate cannot
 show whether the LARGE angles were learned or only the small ones, and the
 reader must see how many episodes each percentage stands on.
 
-THE EDGES ARE THE ENV'S, AND THEY MOVED (2026-09-12, user). They were
+The bin edges follow the environment. Earlier runs used
 3/6/9/12/15 deg, D-037's superseded ladder; the last edge is now the AutoDR
 tilt ceiling of 10 deg (``autodr.DR_DIMS``), the rule D-178 (7) states and
 ``scripts/check_autodr.py`` holds. THE BIN COUNT DID NOT MOVE -- five then,
@@ -32,7 +32,7 @@ refuses it non-zero and the `tilt` boundary draws the angle instead.)
 INPUT
 -----
 ``--metrics FILE`` is either a ``demo_metrics.json`` itself or any text file
-that CONTAINS the table (an ``rt_logs`` dump, ``rt_logs/inbox.txt``). The
+that CONTAINS the table (for example, an ``rt_logs`` dump). The
 table is located by its key and decoded with ``json``; if the file holds it
 more than once the LAST occurrence is used (a run's dump ends with its final
 window). A table with a bin count other than five is refused: the bins are

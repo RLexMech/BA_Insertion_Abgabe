@@ -831,7 +831,7 @@ parser.add_argument(
         "the reward the env actually pays. It answers ONE question -- how far "
         "from the seat does the D-109 shaping signal still have a magnitude a "
         "policy could follow? Nothing here judges the task; the verdict is "
-        "made by /rt-check against an expectation written BEFORE the run."
+        "made against acceptance criteria defined before the run."
     ),
 )
 probe = parser.add_argument_group("probe (measurement settings, not task decisions)")

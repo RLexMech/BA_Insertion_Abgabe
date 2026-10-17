@@ -1,38 +1,13 @@
 #!/usr/bin/env python3
-"""shorten_rt_log.py -- cut a training-PC log down to what /rt-check reads.
+"""Produce a compact diagnostic log while retaining the original log separately.
 
-WHY (2026-09-05, user request after RT-150). One rt_log run is ~680 lines,
-and ~600 of them are Isaac/Kit boot noise plus the INSERTION STARTUP REPORT
-printed three times (steps 2, 60, 180). The user pastes the whole thing into
-`rt_logs/inbox.txt` by hand, and the JSON the script wrote (`--out`) has to
-be pasted separately -- RT-135's JSONs went missing that way and three
-expectation points could not be judged. This script produces ONE short file
-that carries everything `/rt-check` needs, so one paste is the whole handover.
+Preserves run identity, exit codes, tracebacks, anomalies, the first startup
+report and changing observation-bias values. Removes known Isaac/Kit startup
+noise and repeated report lines using rules from filter_rt_log.py.
 
-WHAT IT KEEPS, in order of precedence:
-  1. every `[rt_log]` line (header, cmd, git, exit code) -- the run identity;
-  2. everything from the first `Traceback` to the run's exit line;
-  3. any line `filter_rt_log.ANOMALY_RE` matches (FAIL, Error, error:, ...);
-  4. the FIRST startup report of each run in full; a later repeat becomes one
-     line naming the step, PLUS the lines that genuinely differ between
-     printouts -- the observation bias and the grasp belief error. Those are
-     the whole reason `report_at_steps` has a count past the episode cap;
-  5. every other line that is not known noise.
-WHAT IT DROPS: `filter_rt_log.NOISE_RE` (capitalised Kit tags, ISO
-timestamps, GPU table rows), the Kit user-config line, ANSI-coloured banner
-lines, tab-indented Isaac sub-lines, blank lines.
-
-`--json PATH` appends the script's own metrics file in a compact rendering
-(scalar lists on one line) when it is at most MAX_JSON_LINES long; a larger
-file is named with its size and NOT appended (the printing script is
-expected to carry a SUMMARY block of its own -- `check_seated_success.py`
-reward curve does since 2026-09-05).
-
-Stdlib only; runs on the laptop. `--self-test` builds a synthetic log and
-applies the D-080 mutations (a repeat report that must vanish, a Traceback
-inside noise that must survive, a `[rt_log]` line that must never drop).
-The noise/anomaly/divider rules are IMPORTED from `filter_rt_log.py`, the
-one home for them -- this file adds only the keep/drop precedence.
+--json PATH appends compact metrics up to MAX_JSON_LINES; larger files are
+referenced by path and size. --self-test checks retention and filtering with
+synthetic logs. Requires only the standard library.
 """
 from __future__ import annotations
 

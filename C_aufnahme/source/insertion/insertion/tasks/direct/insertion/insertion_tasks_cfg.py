@@ -600,29 +600,14 @@ ENGAGED_DEPTH = ENGAGED_DEPTH_FRACTION * POCKET_SEAT_DEPTH
 TOOL_SPAN_LOCAL_Z_M = (0.0, 0.152004)
 
 TOOL_CHAIN_PENDING: tuple[str, ...] = ("GRASP_POS_NOISE", "TOOL_DIAGONAL_INERTIA")
-"""Named unknowns of the tool chain, same contract as WORKCELL_PENDING: the
-chain is internally consistent without them, but the grasp is deterministic
-until GRASP_POS_NOISE is filled in. The startup report prints this tuple.
+"""Unresolved tool-chain assumptions reported at startup.
 
-TOOL_DIAGONAL_INERTIA, added 2026-08-23: the weld writes mass and centre of
-mass but leaves ``physics:diagonalInertia`` unauthored, so PhysX derives the
-inertia from the collision geometry -- which is the PART only, since the
-gripper deliberately carries no collider. The gripper's mass is therefore
-distributed over the part's shape. Mass and COM are right; the inertia tensor
-is an approximation, and it is named here rather than left to be discovered
-from behaviour during training.
+The grasp remains deterministic while GRASP_POS_NOISE is unspecified.
+Mass and centre of mass are authored, but diagonal inertia is derived by
+PhysX from the part collider alone: the gripper has no collider. The inertia
+tensor therefore approximates the combined tool assembly.
 
-PART_FLIPPED_IN_PLACE was here from 2026-08-23 and is CLOSED 2026-08-28
-(user): the part is welded the right way round -- the flange was turned by
-180 degrees and the code has carried that correctly for some time. The blind
-spot it named was real (RT-21 rotated the part about its own centre and none
-of the twenty-one authoring checks moved, because an axis-aligned bounding
-box is the same box either way), so the lesson stays even though the entry
-goes: a wrong orientation is caught by a geometric FEATURE, never by another
-bound.
-
-PART_LUG_SPAN_VS_BBOX was here from 2026-08-28 and is CLOSED 2026-08-29
-(user): the USD and the part STEP never disagreed. The lug is a cylinder, so
-its outermost point lies mid-arc and no vertex or point-cloud query returns
-it; read from the surface the span is 96.410 mm against the USD's 96.409 mm.
-The note above PART_BBOX_M carries the numbers and the lesson."""
+Check part orientation using a geometric feature; a 180-degree reversal can
+leave its axis-aligned bounding box unchanged. For the cylindrical lug,
+measure the curved surface rather than vertices to obtain its full span.
+"""

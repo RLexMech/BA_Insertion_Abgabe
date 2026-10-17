@@ -46,7 +46,7 @@ parser.add_argument(
     type=int,
     default=None,
     help="SDF resolution. REQUIRED with --approximation sdf, refused otherwise. "
-         "Chosen for the fixture: 2048 (user, 2026-08-27). The D-109 (10b) floor is being re-derived "
+         "Fixture setting: 2048. The minimum required resolution needs reassessment "
          "after the 2026-08-28 cross-play correction. No default on purpose.",
 )
 parser.add_argument("--dry-run", action="store_true", help="Report what would change, write nothing.")

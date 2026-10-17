@@ -100,7 +100,7 @@ fixture's open edges sit against the volume the part sweeps.
     .\scripts\rt_log.ps1 RT-208 python -u scripts\check_insertion_sdf.py --pose-ladder --seed 0
     .\scripts\rt_log.ps1 RT-208m python -u scripts\check_insertion_sdf.py --pose-ladder --seed 0 --mutate-sign
 
-THE POSE LADDER (``--pose-ladder``, 2026-09-15, user)
+THE POSE LADDER (``--pose-ladder``)
 ----------------------------------------------------
 The sign probe above asserts only where every point is outside BY
 CONSTRUCTION, far from any surface; RT-184 added separated poses at the rim

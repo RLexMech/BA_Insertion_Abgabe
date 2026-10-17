@@ -227,130 +227,72 @@ CURRICULUM_PENDING: tuple[str, ...] = (
 
 RL_PLACEHOLDERS: dict = {
     "force_abort_f_max_n": (
-        "[placeholder] no longer INVENTED -- that was 2026-08-28..2026-09-01 "
-        "(user, no source). D-169 on 2026-09-06 set it off RT-157: across "
-        "every SUCCESSFUL first episode of the two probed start heights that "
-        "limit aborted none, while the search force of D-166 would abort about "
-        "half of them. On 2026-09-15 the user LOWERED it for the restarted "
-        "seed study, below the force p95 the RT-201 family measured, so the "
-        "abort now also ends a share of episodes that would have succeeded "
-        "(inbox entry 'Seed study restart'). NOT a measurement. Still only an "
-        "upper bound on OUR OWN simulation, not a "
-        "damage limit of the real part, and it describes ONE policy at TWO "
-        "heights. In the simulation this limit is only the brake against "
-        "ramming (D-114) and must sit ABOVE the force a clean insertion "
-        "needs, or it forbids the solution. The suction-cup datasheet anchor "
-        "is WITHDRAWN (rigid chain, no sim-to-real). D-167's condition for "
-        "lowering did NOT hold: it asked for p95 far under the D-166 search "
-        "force, and RT-157 read above it. Read force_norm_n p95 and "
-        "force_abort_rate off every run. Home: DECISIONS.md, D-169."
+        "[placeholder] Chosen simulation force-abort threshold, not a measured damage limit. "
+        "Lowering it can abort otherwise successful insertions. Inspect force p95 and abort "
+        "rate; the rigid tool chain cannot establish a real suction-cup force limit."
     ),
     "engaged_depth_m": (
-        "[placeholder] the fraction of the seat depth behind it is AD HOC "
-        "(user, 2026-08-30) and was downgraded again on 2026-09-01. The rule "
-        "'measured capture depth of the tilted scripted insertion' (inbox "
-        "entry Reward-Ueberarbeitung) was WITHDRAWN the same day: RT-129 "
-        "showed that depth to be the controller's own tilt ramp. Proposed "
-        "replacement, not decided: read the depth at which the lateral offset "
-        "stays inside half the cross play off the TRAINED policy's "
-        "trajectories (D-071: the tilt is learned). Only consumer: the engaged "
-        "display bonus. Factory's own fraction was rejected: at this pocket it "
-        "lands inside the success band. Home: docs/decisions_inbox.md, entry "
-        "'The tilted scripted insertion is SPENT ...' (2026-09-01)."
+        "[placeholder] Ad hoc fraction of seat depth used only by the engaged display bonus. "
+        "Scripted-controller capture depth is not a validated threshold for a learned "
+        "policy."
     ),
     "abort_payment": (
-        "[placeholder] the FORM is Beltran-Hernandez via D-114 (a fixed "
-        "negative on abort) and the MAGNITUDE was decided 2026-09-01 (grill; "
-        "inbox entry Reward-Ueberarbeitung, the abort-payment point), which "
-        "closes D-114's [open] and un-couples it from the F_max measurement: "
-        "one kernel peak, i.e. the per-step maximum of the shaping term. That "
-        "is a SCALE ANCHOR, our own choice, openly labelled, with an optional "
-        "decade sensitivity row per the D-109 width template. It stays in this "
-        "table because it is still a magnitude nobody measured; the dominant "
-        "abort price is anyway the forfeited remaining return."
+        "[placeholder] Fixed negative reward on abort, scaled to one shaping-kernel peak. "
+        "This magnitude is a design choice, not a measured quantity; abort also forfeits the "
+        "remaining episode return."
     ),
     "osc_kp_pos": (
-        "[placeholder] task-space position stiffness, N/m. NOT adopted: "
-        "Decision (four) of the inbox entry 'Audit 2026-09-03 (a)' DERIVES it "
-        "as kp <= F_search / (Lambda_max * step_limit), with F_search the "
-        "literature search-band force and Lambda_max the task-space inertia "
-        "the startup report prints at the reset pose. Until that is done the "
-        "measurement runs two values (the OSC cfg default and five times it). "
-        "The OSC cfg default and the reach example are contact-free and are "
-        "NOT a source."
+        "[placeholder] Task-space position stiffness in N/m. Candidate bound: kp <= F_search "
+        "/ (Lambda_max * step_limit), using task-space inertia at reset. Contact-free "
+        "default gains do not validate a contact-force limit."
     ),
     "osc_kp_rot": (
-        "[placeholder] task-space rotation stiffness, Nm/rad. No source of "
-        "ours; Factory's default_task_prop_gains rotation value "
-        "(factory_env_cfg.py, CtrlCfg). Decision (four) of the same entry."
+        "[placeholder] Task-space rotation stiffness in Nm/rad, inherited from Factory "
+        "CtrlCfg. Not independently validated for this task."
     ),
     "osc_pos_step_limit_m": (
-        "[placeholder] metres of tool travel one action step may command. "
-        "Decision (four): policy rate x allowed tool speed, and the tool-speed "
-        "source is MISSING. Factory's pos_action_threshold (factory_env_cfg.py, "
-        "CtrlCfg) until then."
+        "[placeholder] Maximum tool translation per action in metres, inherited from Factory "
+        "pos_action_threshold. A task-specific allowed tool speed has not been established."
     ),
     "osc_rot_step_limit_rad": (
-        "[placeholder] radians of tool rotation one action step may command. "
-        "Same gap as osc_pos_step_limit_m; Factory's rot_action_threshold."
+        "[placeholder] Maximum tool rotation per action in radians, inherited from Factory "
+        "rot_action_threshold. A task-specific allowed angular speed has not been "
+        "established."
     ),
     "osc_pos_clamp_m": (
-        "[placeholder] half-width of the box around the pocket entrance the "
-        "leading tool point may not leave, along x and y. SET by D-180 from "
-        "the disk reach (the lateral radius plus the tip's swing at maximum "
-        "tilt, from autodr.bounds_max()) plus one action step plus set air; "
-        "no longer Factory's pos_action_bounds. check_env_wiring pins it from "
-        "both sides: at least that requirement, at most the set air above it."
+        "[placeholder] Horizontal workspace half-width: lateral radius plus tool-tip swing "
+        "at maximum tilt, one action step and clearance. check_env_wiring checks the lower "
+        "bound and excess clearance."
     ),
     "osc_pos_clamp_z_m": (
-        "[placeholder] half-width of the same box along z, SET by D-180 from "
-        "the disk reach (the highest legal start at maximum tilt plus the "
-        "lateral radius tipped up, from autodr.bounds_max()) plus one action "
-        "step plus set air. check_env_wiring proves sufficiency in the WORLD "
-        "frame the box is aligned to, and a second rule keeps it below the "
-        "home tip standoff. Factory offers no rule to borrow: its "
-        "pos_action_bounds does not contain the reset band of peg_insert, and "
-        "its own clamp is not per-axis."
+        "[placeholder] Vertical workspace half-width: maximum start-height reach including "
+        "tilt and lateral offset, one action step and clearance. check_env_wiring checks "
+        "world-frame coverage and the home-tip standoff."
     ),
     "osc_decimation": (
-        "[placeholder] physics steps per policy step under OSC (policy rate = "
-        "physics rate / this). No source of ours; Factory's decimation "
-        "(factory_env_cfg.py, FactoryEnvCfg). D-024's rate is the controller "
-        "rate now. The episode is kept as a STEP count (D-113) and its seconds "
-        "follow; re-deriving the length is owed (audit, section six)."
+        "[placeholder] Physics steps per policy step, inherited from Factory. Policy rate is "
+        "physics rate divided by decimation; the fixed episode step count determines the "
+        "duration."
     ),
     "obs_noise_pocket_pos_std_m": (
-        "[placeholder] the HALF WIDTH of the per-episode uniform bias on the "
-        "pocket-position channels, in metres (the name still says std; user "
-        "2026-09-15). TacSL's Appendix C Table V names a uniform socket "
-        "observation noise and that is the source; reading it as THIS env's "
-        "per-episode bias is our own step, because TacSL does not state when "
-        "it is drawn. NAMED TENSION: the uniform's sigma lies above the one "
-        "at which FORGE reports unstable training. Home: p1-thesis "
-        "docs/decisions_inbox.md 2026-09-15, replacing D-182's value."
+        "[placeholder] Half-width in metres of a per-episode uniform pocket-position "
+        "observation bias, despite the std suffix. TacSL reports uniform observation noise; "
+        "drawing it once per episode is a modelling assumption."
     ),
     "force_obs_noise_std_n": (
-        "[placeholder] the per-step Gaussian on the force channels, in "
-        "newtons. The UR5e datasheet gives a force-sensing PRECISION for the "
-        "tool flange; reading that figure as a standard deviation is an "
-        "ASSUMPTION, because the datasheet does not define it as one. FORGE "
-        "uses a smaller per-timestep sigma. Home: DECISIONS.md, D-182."
+        "[placeholder] Per-step Gaussian force-observation noise in newtons. Interpreting "
+        "the UR5e datasheet precision as a standard deviation is an assumption; the "
+        "datasheet does not define it that way."
     ),
     "torque_obs_noise_std_nm": (
-        "[placeholder] the per-step Gaussian on the torque channels "
-        "(obs_wrench_mode='wrench' only), in newton metres. OFF and OPEN "
-        "(user decision, observation noise is a parking suspect); the UR5e "
-        "datasheet's torque precision is the candidate when it is widened, "
-        "read as a sigma by the same assumption as the force. Home: "
-        "DECISIONS.md, the wrench-mode entry; Belege_Streuwerte.md, row B-four-c."
+        "[placeholder] Per-step Gaussian torque-observation noise in Nm, used only in wrench "
+        "mode. Disabled by default. Interpreting torque-sensor precision as a standard "
+        "deviation would require the same assumption as for force."
     ),
     "grasp_obs_offset_x_m": (
-        "[placeholder] the half width of the uniform grasp offset along the "
-        "part's short axis, in metres, seen ONLY by the observation. "
-        "Factory's held-asset position noise and FORGE's Table II carry the "
-        "same magnitude for their peg; that the gripper on THIS part slips "
-        "by as much is the user's estimate from a CAD side view, not a "
-        "measurement. Home: DECISIONS.md, D-183."
+        "[placeholder] Half-width in metres of uniform observation-only grasp offset along "
+        "the short part axis. Factory and FORGE use a comparable magnitude; its "
+        "applicability to this gripper is an estimate, not a measurement."
     ),
 }
 
@@ -463,8 +405,7 @@ def resolve_control_mode(cfg) -> str:
     mode = str(cfg.control_mode)
     if mode not in CONTROL_MODES:
         raise RlConfigIncomplete(
-            f"control_mode is {mode!r}; the only modes are {CONTROL_MODES} "
-            "(inbox entry 'Audit 2026-09-03 (a)', Decision (2))."
+            f"control_mode is {mode!r}; the only modes are {CONTROL_MODES}."
         )
     if mode == "osc":
         dec = int(cfg.osc_decimation)

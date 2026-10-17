@@ -6,8 +6,8 @@ collect -> stats -> figures, plus ``report_manifest.json``. Laptop only, in
 ``.venv-analysis`` (D-189).
 
 The collector compares ``code_commit`` over EVERY run it finds, and
-``results/eval/technik/`` holds foreign folders and older commits
-(HANDOFF-RL.md NEXT: the `technik` decision is open). So the chain runs on a
+``results/eval/technik/`` can contain runs from different code versions.
+The chain therefore runs on a
 temporary COPY of exactly the four evaluation blocks, plus the two Fixed-DR
 blocks ``T-nominal-F`` / ``T-final-F`` (D-192) when BOTH exist -- one without
 the other is refused; nothing in ``technik/`` is read, moved or changed. Its outputs are copied back into ``--results``:

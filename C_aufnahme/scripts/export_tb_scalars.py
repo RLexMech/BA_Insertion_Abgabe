@@ -37,7 +37,7 @@ RUN ON THE TRAINING PC (conda env active, repo root):
 
 ``--load-run`` matches the START of a folder name under ``--log-root``
 (default ``logs/rsl_rl/ur5e_insertion``) and refuses anything but exactly
-one match -- the same trap as ``play.py --load_run`` (PROBLEMS.md, regex).
+one match; ``play.py --load_run`` likewise interprets the name as a regex.
 ``--tags SUBSTR ...`` keeps only tags containing one of the substrings.
 
 ``--self-test`` runs WITHOUT tensorboard (the import is lazy): it writes a

@@ -8,8 +8,8 @@ THE QUESTION
 RT-158 measured that a failing part is TILTED (``rot_beyond_yaw`` median
 15.34 deg for the mouth mode against 2.17 deg for a success). A tilted
 part has a DEEP side -- the side its tool axis leans towards, where the
-opening still has room -- and a HIGH side resting on the rim. The user's
-hypothesis, from watching the replay: the rescue is to move sideways
+opening still has room -- and a HIGH side resting on the rim. The
+hypothesis suggested by replay observations: the rescue is to move sideways
 towards the deep side while straightening up, and the policy does not do
 it.
 
