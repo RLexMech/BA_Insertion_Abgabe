@@ -1,0 +1,13 @@
+ENGERE AUFNAHME - ZUSAETZLICHE CAD-DATEI
+
+Datei: aufnahme_enger.prt.6
+Format: native Creo-Part-Datei; Dateiinhalt nennt Creo 12.4.0.0.
+
+Diese Datei wird als engere Aufnahme zur Begutachtung beigelegt.
+Sie wird NICHT von der abgegebenen Simulation geladen.
+Die Simulation verwendet weiterhin die bisherige Aufnahme.
+
+Ein aelterer STEP-Export aus demselben Archiv weist auf Innenmasse von
+ungefaehr 90,4 x 144,4 mm hin. Die Millimetereinheit und die genaue
+Uebereinstimmung mit dieser nativen Datei sind noch nicht abschliessend
+bestaetigt. Die Originaldatei wurde unveraendert uebernommen.

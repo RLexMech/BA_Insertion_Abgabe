@@ -6,3 +6,6 @@
 # core.autocrlf is true on the laptop. -text = git never touches a line
 # ending, so the SHA-256 is the same on both machines (eval_plan.md step A).
 scripts/eval/*.csv -text
+
+# Preserve the tested assets byte-for-byte, including their SHA256 checksums.
+source/insertion/insertion/tasks/direct/insertion/assets/** -text
