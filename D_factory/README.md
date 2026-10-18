@@ -71,20 +71,82 @@ CSV mit zugehöriger JSON-Metadatendatei.
 | Grenzfälle | [eval_table_boundary_seed10_c18.csv](scripts/eval/eval_table_boundary_seed10_c18.csv) |
 | OOD | [eval_table_ood_seed10_c18.csv](scripts/eval/eval_table_ood_seed10_c18.csv) |
 
-Ein Modell auf der finalen Tabelle auswerten (Modellpfad ersetzen):
+## Evaluation starten und auswerten
+
+Für die Serien müssen die 15 Epoche-100-Modelle der Läufe RT-242s1–5,
+RT-243s1–5 und RT-244s1–5 unter `logs/rl_games/ur5e_insertion/` liegen.
+Mit `-RunRoot "<Ordner mit den 15 Trainingsläufen>"` lässt sich ein anderer
+Speicherort verwenden. Git muss sauber und [eval_plan.md](eval_plan.md)
+committet sein. Jeder Aufruf benötigt eine noch unbenutzte RT-Nummer.
 
 ```powershell
-python scripts/rl_games/play.py --task Ur5e-Insertion-Direct-v0 --headless --seed 100 --checkpoint "C:\Pfad\zum\modell.pth" --eval-table scripts/eval/eval_table_seed10_c18.csv --eval-width target env.start_floor_m=0.020 env.pocket_obs_yaw_rad=0.0223402
+# Haupttests: alle drei Methoden, je fünf Seeds.
+.\scripts\rl_games\run_eval.ps1 -Block T-final -Rt RT-801
+if ($LASTEXITCODE -ne 0) { throw "Evaluation abgebrochen" }
+.\scripts\rl_games\run_eval.ps1 -Block T-final-F -Rt RT-802
+if ($LASTEXITCODE -ne 0) { throw "Evaluation abgebrochen" }
+.\scripts\rl_games\run_eval.ps1 -Block T-nominal -Rt RT-803
+if ($LASTEXITCODE -ne 0) { throw "Evaluation abgebrochen" }
+.\scripts\rl_games\run_eval.ps1 -Block T-nominal-F -Rt RT-804
+if ($LASTEXITCODE -ne 0) { throw "Evaluation abgebrochen" }
+# OOD: Auto-DR und Fixed-DR.
+.\scripts\rl_games\run_eval.ps1 -Block T-ood -Rt RT-805
+if ($LASTEXITCODE -ne 0) { throw "Evaluation abgebrochen" }
+# Verdoppelte Beobachtungsfehler: beide Methoden, jeweils pn2, gx2, py2.
+$rt = 806
+foreach ($block in @('T-final', 'T-final-F')) {
+    foreach ($noise in @('pn2', 'gx2', 'py2')) {
+        .\scripts\rl_games\run_eval.ps1 -Block $block -Noise $noise -Rt "RT-$rt"
+        if ($LASTEXITCODE -ne 0) { throw "Evaluation abgebrochen: RT-$rt" }
+        $rt++
+    }
+}
 ```
 
-Die protokollierte Evaluation benötigt ein Git-Repository mit sauberem
-Arbeitsstand und einem Commit einschließlich [eval_plan.md](eval_plan.md).
-Diese Datei bleibt als Grundlage des Evaluationsnachweises enthalten.
-Der Serienstarter [run_eval.ps1](scripts/rl_games/run_eval.ps1) erwartet die
-historischen Laufnamen RT-242/243/244 und die Checkpoints der Epoche 100.
-[eval_collect.py](scripts/eval_collect.py) sammelt die Ergebnisse,
-[eval_stats.py](scripts/eval_stats.py) berechnet die Statistik
-(zusätzlich benötigt: NumPy, pandas, SciPy und statsmodels).
+`-DryRun` prüft Tabellen, Git-Stand und Modellpfade ohne Simulation.
+Vorhandene Evaluations- und Ergebnisordner werden nicht überschrieben.
+Geprüfte Läufe werden nach `results/eval/<Block>/<Methode>_s<Seed>[_<Tag>]/`
+kopiert; `-ResultsRoot` ändert dieses Sammelverzeichnis.
+
+Ergänzende Prüfungen: `-Block technik` (Wiederholung), `-Block T-auswahl`
+(alle 15 Policies), `-Block T-grenze -Final fixeddr_s4` (Beispiel: die in den
+archivierten Daten ausgewählte Policy). Jeweils eine eigene `-Rt` angeben.
+
+Für die Statistik eine separate Python-Umgebung anlegen:
+
+```powershell
+python -m venv "..\..\insertion-auswertung-env"
+$evalPython = "..\..\insertion-auswertung-env\Scripts\python.exe"
+& $evalPython -m pip install -r scripts/eval/requirements.txt
+python scripts/eval_collect.py --results results/eval
+if ($LASTEXITCODE -ne 0) { throw "Evaluationsdaten nicht konsistent" }
+& $evalPython scripts/eval_stats.py --results results/eval
+```
+
+Erzeugt `episodes_all.csv`, `collect_report.json`, `summary.json` und
+`summary_tables.csv`. Kraft und Durchdringung werden über alle Versuche
+ausgegeben, die Dauer über erfolgreiche Versuche. Die zusätzliche
+Einzelpolicy-Auswahl benötigt `T-auswahl` und den anschließenden Grenztest;
+ohne diese Blöcke entfällt dieser Teil der Ausgabe.
+
+Archivierte Ergebnisse ohne Simulation erneut auswerten (einmalig kopieren):
+
+```powershell
+$ziel = ".\results\archiv_pruefung"
+if (Test-Path -LiteralPath $ziel) { throw "Ziel existiert bereits" }
+New-Item -ItemType Directory -Path ".\results" -Force | Out-Null
+Copy-Item -LiteralPath "..\auswertung\daten\endstudie_rl_games\evaluation" -Destination $ziel -Recurse
+python scripts/eval_collect.py --results "$ziel"
+if ($LASTEXITCODE -ne 0) { throw "Evaluationsdaten nicht konsistent" }
+& $evalPython scripts/eval_stats.py --results "$ziel"
+```
+
+Für Beobachtungs-/Kontaktanalysen den obigen Modellaufruf um
+`--trace-obs results/trace.json --trace-steps 300` ergänzen und zuvor
+`New-Item -ItemType Directory -Path results -Force` ausführen.
+`python scripts/trace_first_episode.py results/trace.json`,
+`python scripts/trace_outcome_split.py results/trace.json` und
+`python scripts/summarize_trace.py results/trace.json` werten die Aufzeichnung aus.
 
 ## Grundlegende Fügeprüfungen
 

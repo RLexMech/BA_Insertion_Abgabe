@@ -6,11 +6,12 @@ param(
     [string]$Final = '',
     [ValidateSet('', 'pn2', 'gx2', 'py2')][string]$Noise = '',
     [string]$RunRoot = '',
+    [string]$ResultsRoot = '',
     [switch]$DryRun
 )
 
 
-$ErrorActionPreference = 'Continue'
+$ErrorActionPreference = 'Stop'
 
 
 $PlaySeed = 100
@@ -33,10 +34,13 @@ $NoiseOverride = @{
 $scriptsDir = Split-Path -Parent $PSScriptRoot
 $repoRoot = Split-Path -Parent $scriptsDir
 if (-not $RunRoot) { $RunRoot = Join-Path $repoRoot 'logs\rl_games\ur5e_insertion' }
+if (-not $ResultsRoot) { $ResultsRoot = Join-Path $repoRoot 'results\eval' }
+# Resolve relative input paths before changing the working directory.
+$RunRoot = [System.IO.Path]::GetFullPath($ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($RunRoot))
+$ResultsRoot = [System.IO.Path]::GetFullPath($ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($ResultsRoot))
 
 function Stop-Block([string[]]$Lines, [int]$Code = 1) {
     foreach ($l in $Lines) { Write-Host "[run_eval] STOP: $l" }
-    Pop-Location
     exit $Code
 }
 
@@ -44,12 +48,13 @@ function Get-Head { (git -C $repoRoot rev-parse HEAD 2>$null) }
 function Get-Tracked { @(git -C $repoRoot status --porcelain --untracked-files=no 2>$null) }
 
 Push-Location $repoRoot
+try {
 
 
 if ($Rt -notmatch '^RT-[0-9]+$') { Stop-Block @("-Rt '$Rt' is not RT-<number>") }
 if (($Block -eq 'T-grenze') -ne [bool]$Final) { Stop-Block @("-Final is given with -Block T-grenze and only there") }
 if ($Final -and $Final -notmatch '^(autodr|nodr|fixeddr)_s[1-5]$') { Stop-Block @("-Final '$Final' is not <autodr|nodr|fixeddr>_s<1-5>") }
-if ($Noise -and $Block -ne 'T-final') { Stop-Block @("-Noise runs only on the T-final table (-Block T-final)") }
+if ($Noise -and $Block -notin @('T-final', 'T-final-F')) { Stop-Block @("-Noise requires T-final (Auto-DR) or T-final-F (Fixed-DR)") }
 
 
 function New-Run([string]$Method, [int]$Seed, [string]$Width, [string]$Tag) {
@@ -66,10 +71,13 @@ switch ($Block) {
         $runs += New-Run ($Final -replace '_s[1-5]$', '') ([int]($Final -replace '^.*_s', '')) '' ''
     }
     { $_ -in @('T-final-F', 'T-nominal-F') } {
-        foreach ($s in 1..5) { $runs += New-Run 'fixeddr' $s '' '' }
+        foreach ($s in 1..5) { $runs += New-Run 'fixeddr' $s '' $Noise }
     }
     'T-ood' {
-        foreach ($s in 1..5) { $runs += New-Run 'autodr' $s '' '' }
+        foreach ($m in @('autodr', 'fixeddr')) { foreach ($s in 1..5) { $runs += New-Run $m $s '' '' } }
+    }
+    'T-auswahl' {
+        foreach ($m in @('autodr', 'fixeddr', 'nodr')) { foreach ($s in 1..5) { $runs += New-Run $m $s '' '' } }
     }
     default {
         if ($Noise) {
@@ -106,6 +114,10 @@ foreach ($r in $runs) {
     if ($r.Tag) { $r.Name += "_$($r.Tag)" }
     $r.Log = Join-Path $repoRoot "rt_logs\$($r.Name).txt"
     $r.ShortLog = Join-Path $repoRoot "rt_logs\$($r.Name).short.txt"
+    $leaf = "$($r.Method)_s$($r.Seed)"
+    if ($r.Tag) { $leaf += "_$($r.Tag)" }
+    $r.ResultDir = Join-Path (Join-Path $ResultsRoot $Block) $leaf
+    if (Test-Path -LiteralPath $r.ResultDir) { $problems += "result folder exists already: $($r.ResultDir)" }
     $filter = "*__$($ArmPrefix[$r.Method])s$($r.Seed)_*"
     $dirs = @(Get-ChildItem -LiteralPath $RunRoot -Directory -Filter $filter -ErrorAction SilentlyContinue)
     if ($dirs.Count -ne 1) { $problems += "$($dirs.Count) run folders match $RunRoot\$filter (want exactly 1)"; continue }
@@ -142,7 +154,7 @@ foreach ($r in $runs) {
     if ($tracked.Count -ne 0) { Stop-Block @("tracked changes before run $i ($($r.Name)): $($tracked -join '; ')") }
 
     $cmd = @('python', '-u', 'scripts/rl_games/play.py', '--task', 'Ur5e-Insertion-Direct-v0', '--headless',
-             '--seed', "$PlaySeed", '--checkpoint', $r.Ckpt,
+             '--kit_args=--/app/vulkan=false', '--seed', "$PlaySeed", '--checkpoint', $r.Ckpt,
              '--eval-table', $tableRel, '--eval-width', $r.Width)
     if ($r.Tag) { $cmd += @('--eval-tag', $r.Tag) }
     if ($Block -eq 'T-ood') { $cmd += '--eval-ood' }
@@ -154,6 +166,7 @@ foreach ($r in $runs) {
     if ($DryRun) {
         Write-Host "[run_eval]   DRY RUN: .\scripts\rt_log.ps1 $($r.Name) $($cmd -join ' ')"
         Write-Host "[run_eval]   DRY RUN: eval folder $($r.EvalDir)"
+        Write-Host "[run_eval]   DRY RUN: collect into $($r.ResultDir)"
         continue
     }
 
@@ -172,18 +185,30 @@ foreach ($r in $runs) {
         Stop-Block @("run $i ($($r.Name)) exit $code and no eval folder at $($r.EvalDir)") ([Math]::Max($code, 1))
     }
     if ($code -ne 0) { Stop-Block @("run $i ($($r.Name)) exit $code") $code }
+    if ((Get-Head) -ne $head -or @(Get-Tracked).Count -ne 0) { Stop-Block @("code changed during run $i") }
+    if ((Get-FileHash -Algorithm SHA256 -LiteralPath $tableAbs).Hash.ToLower() -ne $tableHash) {
+        Stop-Block @("table changed during run $i")
+    }
+    foreach ($file in @('episodes.csv', 'episodes_meta.json', 'applied.csv', 'applied_meta.json', 'eval_manifest.json')) {
+        if (-not (Test-Path -LiteralPath (Join-Path $r.EvalDir $file) -PathType Leaf)) {
+            Stop-Block @("incomplete evaluation: $($r.EvalDir) lacks $file")
+        }
+    }
+    & python (Join-Path $scriptsDir 'check_eval_conditions.py') --run-dir $r.EvalDir --table $tableAbs --log $r.Log --filehash $tableHash
+    if ($LASTEXITCODE -ne 0) { Stop-Block @("evaluation conditions failed for $($r.Name)") }
+    if (Test-Path -LiteralPath $r.ResultDir) { Stop-Block @("result folder exists already: $($r.ResultDir)") }
+    New-Item -ItemType Directory -Path (Split-Path -Parent $r.ResultDir) -Force | Out-Null
+    Copy-Item -LiteralPath $r.EvalDir -Destination $r.ResultDir -Recurse
+    Write-Host "[run_eval]   verified results -> $($r.ResultDir)"
 }
 
 if ($DryRun) {
     Write-Host "[run_eval] DRY RUN done: checks passed, nothing ran."
-    Pop-Location
     exit 0
 }
 Write-Host "[run_eval] block $Block done: $($runs.Count) of $($runs.Count) runs, exit 0 each. Eval folders:"
-foreach ($r in $runs) {
-    $leaf = "$($r.Method)_s$($r.Seed)"
-    if ($r.Tag) { $leaf += "_$($r.Tag)" }
-    Write-Host "  $($r.EvalDir)  ->  results\eval\$Block\$leaf"
-}
-Pop-Location
+foreach ($r in $runs) { Write-Host "  $($r.ResultDir)" }
 exit 0
+} finally {
+    Pop-Location
+}

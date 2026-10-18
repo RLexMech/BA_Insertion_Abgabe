@@ -1,35 +1,7 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-r"""Collect every evaluation run into ONE long table (eval_plan.md section 8b, step 1).
-
-Input layout (copied from the training PC, one folder per play.py run):
-
-    results/eval/<block>/<method>_s<seed>[_<tag>]/
-        episodes.csv  episodes_meta.json  applied.csv  applied_meta.json  eval_manifest.json
-
-``<block>`` is one of ``BLOCKS``; ``<method>`` is ``autodr``, ``nodr`` or
-``fixeddr``. The folder name is a CLAIM and is held against the manifest's
-checkpoint path, whose run folder train.py names ``..._autodr_..._seed<N>`` or
-``..._fixed_dr_..._seed<N>`` (``dr_mode`` tag; 'off' has none,
-train.py:339-340; seed tag train.py:449). Fixed-DR (D-192) plays only in
-``T-nominal-F`` / ``T-final-F``, and those blocks hold nothing else.
-
-Refuses with exit 1 -- equality, never "not empty" -- when:
-  * a run fails G1a / G2 / G3 of ``check_eval_conditions.judge`` (reused, not copied);
-  * a manifest names another table or width than its block, or a dirty clone;
-  * the runs disagree on ``code_commit`` or ``plan_commit``, or a plan commit is missing;
-  * the folder name and the checkpoint path disagree on method or seed;
-  * a Fixed-DR folder sits outside the ``-F`` blocks, or another one inside;
-  * two folders of one block are the same policy without a tag.
-
-Output: ``<results>/episodes_all.csv`` (only ``episode == 0`` rows -- the
-window is episodes.csv's own column, no second window rule, L-15) and
-``<results>/collect_report.json`` (per run, plus G4 and G6 as reported shares).
-
-    .venv-analysis/Scripts/python.exe scripts/eval_collect.py --results results/eval
-    .venv-analysis/Scripts/python.exe scripts/eval_collect.py --self-test
-"""
+'Collect and validate evaluation runs into episodes_all.csv.'
 
 from __future__ import annotations
 
@@ -44,24 +16,41 @@ import re
 import sys
 import tempfile
 
-SCRIPT_MARKER = "eval_collect-2026-09-26a"
+SCRIPT_MARKER = "eval_collect-2026-09-30b"
 REPO = pathlib.Path(__file__).resolve().parents[1]
 TABLE_DIR = REPO / "scripts" / "eval"
+
 
 BLOCKS = {
     "T-nominal": ("eval_table_seed10_c18.csv", "nominal"),
     "T-auswahl": ("eval_table_seed30_c18.csv", "target"),
     "T-final": ("eval_table_seed10_c18.csv", "target"),
     "T-grenze": ("eval_table_boundary_seed10_c18.csv", "target"),
+
+
     "T-ood": ("eval_table_ood_seed10_c18.csv", "target"),
+
+
+
+
     "technik": ("eval_table_seed20_c18.csv", None),
+
+
     "T-nominal-F": ("eval_table_seed10_c18.csv", "nominal"),
     "T-final-F": ("eval_table_seed10_c18.csv", "target"),
 }
-METHODS = ("autodr", "nodr", "fixeddr")
+METHODS = ("autodr", "nodr", "fixeddr", "autodr_nf")
+
+OUTSIDE_BLOCKS = ("T-ood",)
 FIXED_BLOCKS = ("T-nominal-F", "T-final-F")
+
+NO_FIXED_BLOCKS = ("T-nominal", "T-final")
+
 _MODE_TAG = {"_autodr_": "autodr", "_fixed_dr_": "fixeddr"}
-_FOLDER = re.compile(r"^(autodr|nodr|fixeddr)_s(\d+)(?:_([A-Za-z0-9-]+))?$")
+
+
+_RUN_TAG_METHOD = {"autodr": (re.compile(r"__RT-261s\d+_"), "autodr_nf")}
+_FOLDER = re.compile(r"^(autodr_nf|autodr|nodr|fixeddr)_s(\d+)(?:_([A-Za-z0-9-]+))?$")
 _CKPT_SEED = re.compile(r"_seed(\d+)$")
 
 OUT_COLUMNS = (
@@ -83,33 +72,40 @@ CEC = _load_module("check_eval_conditions", REPO / "scripts" / "check_eval_condi
 
 
 def identity_from_checkpoint(path: str) -> tuple[str, int] | None:
-    """``(method, seed)`` out of the training run folder that holds the checkpoint."""
-    run = pathlib.PureWindowsPath(str(path)).parent.name
+    '``(method, seed)`` out of the training run folder that holds the checkpoint.'
+    folder = pathlib.PureWindowsPath(str(path)).parent
+    if folder.name == "nn":
+        folder = folder.parent
+    run = folder.name
     m = _CKPT_SEED.search(run)
     if m is None:
         return None
     hits = [method for tag, method in _MODE_TAG.items() if tag in run]
     if len(hits) > 1:
         return None
-    return (hits[0] if hits else "nodr"), int(m.group(1))
+    method = hits[0] if hits else "nodr"
+    if method in _RUN_TAG_METHOD and _RUN_TAG_METHOD[method][0].search(run):
+        method = _RUN_TAG_METHOD[method][1]
+    return method, int(m.group(1))
 
 
 def tilt_deg(qx: float, qy: float) -> float:
-    """Polar angle of the pocket z axis -- the env's own tilt reading (`_log_finished_episodes`, acos of r22), not the quaternion's total angle."""
+    "Polar angle of the pocket z axis -- the env's own tilt reading"
     r22 = 1.0 - 2.0 * (qx * qx + qy * qy)
     return math.degrees(math.acos(max(-1.0, min(1.0, r22))))
 
 
 def collect_run(block: str, folder: str, run: dict, table: dict) -> tuple[list, list, dict]:
-    """``(rows, problems, info)`` for one run. ``run`` holds the parsed files."""
+    '``(rows, problems, info)`` for one run. ``run`` holds the parsed files.'
     problems: list[str] = []
     m = _FOLDER.match(folder)
     if m is None:
-        return [], [f"{block}/{folder}: folder name is not <autodr|nodr|fixeddr>_s<seed>[_<tag>]"], {}
+        return [], [f"{block}/{folder}: folder name is not <autodr|nodr|fixeddr|autodr_nf>_s<seed>[_<tag>]"], {}
     method, seed, tag = m.group(1), int(m.group(2)), m.group(3) or ""
-    if (method == "fixeddr") != (block in FIXED_BLOCKS):
-        want = "fixeddr" if block in FIXED_BLOCKS else "autodr/nodr"
-        problems.append(f"block {block} takes only {want}, folder is {method}")
+    if block in FIXED_BLOCKS and method != "fixeddr":
+        problems.append(f"block {block} takes only fixeddr, folder is {method}")
+    if block in NO_FIXED_BLOCKS and method == "fixeddr":
+        problems.append(f"block {block} takes only autodr/nodr (Fixed-DR plays {block}-F), folder is {method}")
     man = run["manifest"]
     want_width = BLOCKS[block][1]
     width = str(man.get("width"))
@@ -122,6 +118,10 @@ def collect_run(block: str, folder: str, run: dict, table: dict) -> tuple[list, 
     ident = identity_from_checkpoint(man.get("checkpoint_path", ""))
     if ident != (method, seed):
         problems.append(f"folder says {(method, seed)}, checkpoint path says {ident}")
+
+
+    if (man.get("tag") or "") != tag:
+        problems.append(f"folder tag {tag!r}, manifest tag {man.get('tag')!r}")
 
     verdict = CEC.judge(table["rows"], table["sidecar"], table["sha"], None, None,
                         run["ep_header"], run["ep_rows"], run["ap_header"], run["ap_rows"],
@@ -150,7 +150,11 @@ def collect_run(block: str, folder: str, run: dict, table: dict) -> tuple[list, 
             "boundary_key": keys[rid // per_block] if per_block else "",
             "outcome": r["outcome"],
             "success_train": int(ok),
+
+
             "success_strict": int(ok and f_filt < limit),
+
+
             "force_abort": int(f_filt >= limit),
             "steps": int(r["steps"]),
             "force_max_filtered_n": f_filt,
@@ -163,6 +167,7 @@ def collect_run(block: str, folder: str, run: dict, table: dict) -> tuple[list, 
             "start_height_m": float(a["start_height_m"]),
             "friction": float(a["friction_cmd"]),
         })
+
     first = {r["env_id"]: r["outcome"] for r in run["ep_rows"] if r.get("episode") == "0"}
     second = {r["env_id"]: r["outcome"] for r in run["ep_rows"] if r.get("episode") == "1"}
     same = sum(1 for k, v in second.items() if first.get(k) == v)
@@ -175,7 +180,7 @@ def collect_run(block: str, folder: str, run: dict, table: dict) -> tuple[list, 
 
 
 def g6_report(rows: list) -> list:
-    """G6: the same policy on the same table twice (technik, two tags) -- share of rows whose outcome differs."""
+    'G6: the same policy on the same table twice (technik, two tags) -- share of'
     by = {}
     for r in rows:
         if r["block"] != "technik":
@@ -196,7 +201,7 @@ def g6_report(rows: list) -> list:
 
 
 def collect(runs: dict, tables: dict) -> tuple[list, list, dict]:
-    """``runs``: {(block, folder): parsed files}. Returns (rows, problems, report)."""
+    '``runs``: {(block, folder): parsed files}. Returns (rows, problems, report).'
     rows, problems, infos = [], [], []
     for (block, folder) in sorted(runs):
         r, p, info = collect_run(block, folder, runs[(block, folder)], tables[block])
@@ -287,7 +292,9 @@ def _fake_run(table: dict, method: str, seed: int, width: str, outcomes: list) -
                         "force_max_filtered_n": f"{force:.4f}", "force_max_raw_n": f"{force + 1:.4f}",
                         "ip_max_mm": "0.1"})
     ep_rows.append(dict(ep_rows[0], episode="1"))
-    tag = {"autodr": "_autodr_", "fixeddr": "_fixed_dr_"}.get(method, "_")
+    tag = {"autodr": "_autodr_", "fixeddr": "_fixed_dr_", "autodr_nf": "_autodr_"}.get(method, "_")
+
+    prefix = {"autodr": "RT-242", "fixeddr": "RT-243", "autodr_nf": "RT-261"}.get(method, "RT-244")
     return {
         "ep_header": ["env_id", "episode", "outcome", "steps", "force_max_filtered_n",
                       "force_max_raw_n", "ip_max_mm"],
@@ -301,14 +308,20 @@ def _fake_run(table: dict, method: str, seed: int, width: str, outcomes: list) -
         "episodes_meta": {"force": {"abort_limit_n": 30.0}},
         "manifest": {"width": width, "table_sha256": table["sha"], "num_envs": n, "table_rows": n,
                      "envs_finished_first_episode": n, "code_commit": CODE, "plan_commit": PLAN,
-                     "code_dirty": False,
-                     "checkpoint_path": f"C:\\logs\\rsl_rl\\x\\09-15_13-50-36__RT-9s{seed}{tag}start_seed{seed}\\model_1499.pt"},
+                     "code_dirty": False, "tag": "",
+                     "noise": {"grasp_obs_offset_x_m": CEC.GRASP_OBS_X_M,
+                               "pocket_obs_yaw_rad": CEC.POCKET_OBS_YAW_RAD,
+                               "obs_noise_pocket_pos_std_m": CEC.POCKET_OBS_NOISE_M},
+                     "checkpoint_path": f"C:\\logs\\rl_games\\ur5e_insertion\\09-28_10-45-20__{prefix}s{seed}"
+                                        f"{tag}offset50mm_start+20mm_seed{seed}\\nn\\"
+                                        "last_ur5e_insertion_ep_100_rew_576.7869.pth"},
     }
 
 
 def _good():
     tables = {"T-final": _fake_table(SHA_A), "T-nominal": _fake_table(SHA_A),
-              "T-grenze": _fake_table(SHA_B, boundary=True), "T-final-F": _fake_table(SHA_A)}
+              "T-grenze": _fake_table(SHA_B, boundary=True), "T-final-F": _fake_table(SHA_A),
+              "T-auswahl": _fake_table(SHA_A)}
     outs = [("success", 12.0), ("success", 31.0), ("timeout", 5.0), ("force_abort", 30.0)]
     runs = {
         ("T-final", "autodr_s1"): _fake_run(tables["T-final"], "autodr", 1, "target", outs),
@@ -316,6 +329,8 @@ def _good():
         ("T-nominal", "nodr_s1"): _fake_run(tables["T-nominal"], "nodr", 1, "nominal", outs),
         ("T-grenze", "autodr_s1"): _fake_run(tables["T-grenze"], "autodr", 1, "target", outs),
         ("T-final-F", "fixeddr_s1"): _fake_run(tables["T-final-F"], "fixeddr", 1, "target", outs),
+
+        ("T-auswahl", "fixeddr_s1"): _fake_run(tables["T-auswahl"], "fixeddr", 1, "target", outs),
     }
     return runs, tables
 
@@ -340,9 +355,12 @@ CASES = (
     ("unreadable-folder-name",
      lambda runs, tables: runs.__setitem__(("T-final", "ppo_1"), runs.pop(("T-final", "nodr_s1"))),
      "folder name"),
+
+
     ("folder-says-nodr-checkpoint-says-fixed-dr",
      lambda runs, tables: runs.__setitem__(("T-final-F", "nodr_s1"), runs.pop(("T-final-F", "fixeddr_s1"))),
      "checkpoint path says"),
+
     ("fixed-dr-run-in-T-final",
      lambda runs, tables: runs.__setitem__(("T-final", "fixeddr_s1"), runs.pop(("T-final-F", "fixeddr_s1"))),
      "takes only"),
@@ -350,16 +368,47 @@ CASES = (
      lambda runs, tables: runs.__setitem__(("T-final-F", "autodr_s2"), _fake_run(
          tables["T-final-F"], "autodr", 2, "target", [("success", 1.0)] * 4)),
      "takes only"),
+
+    ("py2-run-staged-as-the-reference",
+     lambda runs, tables: runs.__setitem__(("T-final", "autodr_s2"), _noise(
+         _fake_run(tables["T-final"], "autodr", 2, "target", [("success", 1.0)] * 4), "py2")),
+     "manifest tag"),
+    ("gx2-tag-but-the-run-used-d183",
+     lambda runs, tables: runs.__setitem__(
+         ("T-final", "autodr_s1_gx2"),
+         dict(copy.deepcopy(runs[("T-final", "autodr_s1")]),
+              manifest=dict(runs[("T-final", "autodr_s1")]["manifest"], tag="gx2"))),
+     "G3b"),
+
+    ("rt-261-checkpoint-in-folder-autodr_s3",
+     lambda runs, tables: runs.__setitem__(("T-final", "autodr_s3"), _fake_run(
+         tables["T-final"], "autodr_nf", 3, "target", [("success", 1.0)] * 4)),
+     "checkpoint path says"),
 )
 
 
+def _noise(run: dict, tag: str) -> dict:
+    '``run`` as the x2 block ``tag`` ((3), (3)): the manifest tag,'
+    r = copy.deepcopy(run)
+    (key, w), = CEC.NOISE_TAGS[tag].items()
+    col = {"grasp_obs_offset_x_m": ("grasp_obs_x_m", CEC.GRASP_OBS_X_M),
+           "pocket_obs_yaw_rad": ("pocket_obs_yaw_rad", CEC.POCKET_OBS_YAW_RAD)}.get(key)
+    if col is not None:
+        for a in r["ap_rows"]:
+            a[col[0]] = f"{float(a[col[0]]) / col[1] * w:.9g}"
+        r["applied_meta"][key] = w
+    r["manifest"]["noise"][key] = w
+    r["manifest"]["tag"] = tag
+    return r
+
+
 def _tables_the_env_refuses() -> list:
-    """BLOCKS tables that THIS code's env cannot play: ``autodr.RowTable.from_csv``, the reader ``play.py --eval-table`` goes through, refuses them (a 16-column table since D-194, `autodr.py` ``from_csv``)."""
+    "BLOCKS tables that THIS code's env cannot play: ``autodr.RowTable.from_csv``,"
     autodr = _load_module("check_autodr", REPO / "scripts" / "check_autodr.py").load_autodr()
     out = []
     for block, (fname, _) in BLOCKS.items():
         try:
-            autodr["RowTable"].from_csv(TABLE_DIR / fname, allow_outside=(block == "T-ood"))
+            autodr["RowTable"].from_csv(TABLE_DIR / fname, allow_outside=(block in OUTSIDE_BLOCKS))
         except autodr["AutoDRError"]:
             out.append(f"{block} ({fname})")
     return out
@@ -378,19 +427,22 @@ def self_test() -> int:
     fin = [r for r in rows if r["block"] == "T-final" and r["method"] == "autodr"]
     checks = [
         ("baseline has no problem", problems == []),
-        ("episode-0 rows only: 4 per run, 5 runs", len(rows) == 20),
+        ("episode-0 rows only: 4 per run, 6 runs", len(rows) == 24),
         ("success_train counts the success in the abort step",
          [r["success_train"] for r in fin] == [1, 1, 0, 0]),
         ("success_strict drops it (force 31 >= 30)", [r["success_strict"] for r in fin] == [1, 0, 0, 0]),
         ("force_abort reads the force, >= limit (30.0 counts)", [r["force_abort"] for r in fin] == [0, 1, 0, 1]),
         ("identity from the checkpoint path", identity_from_checkpoint(
             runs[("T-final", "nodr_s1")]["manifest"]["checkpoint_path"]) == ("nodr", 1)),
+
         ("identity of the real RT-206s1 folder", identity_from_checkpoint(
             r"logs\rsl_rl\ur5e_insertion\09-15_13-50-36__RT-206s1_autodr_offset5mm_currOFF"
             r"_start+20mm_floor-30mm_seed1\model_1499.pt") == ("autodr", 1)),
         ("identity of the real RT-207s1 folder", identity_from_checkpoint(
             r"logs\rsl_rl\ur5e_insertion\09-17_09-58-45__RT-207s1_offset5mm_currOFF"
             r"_start+20mm_floor-30mm_seed1\model_1499.pt") == ("nodr", 1)),
+
+
         ("identity of a Fixed-DR folder (RT-231 name, constructed)", identity_from_checkpoint(
             r"logs\rsl_rl\ur5e_insertion\09-24_10-00-00__RT-231s1_fixed_dr_offset5mm_currOFF"
             r"_start+20mm_floor-30mm_seed1\model_1499.pt") == ("fixeddr", 1)),
@@ -401,7 +453,38 @@ def self_test() -> int:
          abs(tilt_deg(math.sin(math.radians(5.0)), 0.0) - 10.0) < 1e-9),
         ("G4: the repeat episode is counted", all(i["g4_repeats"] == 1 and i["g4_same_outcome"] == 1
                                                  for i in report["runs"])),
+
+
+        ("identity of the real RT-242s1 rl_games path (nn)", identity_from_checkpoint(
+            r"C:\example\logs\rl_games"
+            r"\ur5e_insertion\09-28_10-45-20__RT-242s1_autodr_offset50mm_currOFF_start+20mm_floor-30mm_seed1"
+            r"\nn\last_ur5e_insertion_ep_100_rew_576.7869.pth") == ("autodr", 1)),
+        ("identity of the real RT-243s2 rl_games path (nn)", identity_from_checkpoint(
+            r"logs\rl_games\ur5e_insertion\09-29_01-00-19__RT-243s2_fixed_dr_offset50mm_currOFF"
+            r"_start+20mm_floor-30mm_seed2\nn\last_ur5e_insertion_ep_100_rew_47.91025.pth") == ("fixeddr", 2)),
+        ("a rl_games path is not read as the folder 'nn'", identity_from_checkpoint(
+            r"logs\rl_games\x\nn\last.pth") is None),
+
+
+        ("identity of the real RT-261s1 rl_games path (run tag, not mode word)", identity_from_checkpoint(
+            r"logs\rl_games\ur5e_insertion\10-03_15-55-01__RT-261s1_autodr_offset50mm_currOFF"
+            r"_start+20mm_floor-30mm_seed1\nn\last_ur5e_insertion_ep_100_rew_562.1343.pth") == ("autodr_nf", 1)),
     ]
+    runs_k = copy.deepcopy(runs)
+    for s in (1, 2):
+        runs_k[("T-final", f"autodr_nf_s{s}")] = _fake_run(tables["T-final"], "autodr_nf", s, "target",
+                                                         [("success", 1.0)] * 3 + [("timeout", 1.0)])
+        runs_k[("T-final", f"autodr_nf_s{s}_pn2")] = _noise(runs_k[("T-final", f"autodr_nf_s{s}")], "pn2")
+    rows_k, problems_k, _ = collect(runs_k, tables)
+    checks.append(("D-216: autodr_nf s1, s2 (untagged + pn2) are collected beside autodr in one root",
+                   problems_k == [] and sum(r["method"] == "autodr_nf" for r in rows_k) == 16
+                   and {r["tag"] for r in rows_k if r["method"] == "autodr_nf"} == {"", "pn2"}))
+    for tag in CEC.NOISE_TAGS:
+        runs_n = copy.deepcopy(runs)
+        runs_n[("T-final", f"autodr_s1_{tag}")] = _noise(runs[("T-final", "autodr_s1")], tag)
+        rows_n, problems_n, _ = collect(runs_n, tables)
+        checks.append((f"a {tag} run (tag {tag}, doubled width everywhere) is collected beside its reference",
+                       problems_n == [] and sum(r["tag"] == tag for r in rows_n) == 4))
     for name, ok in checks:
         print(f"[eval_collect]   {'PASS' if ok else 'FAIL'}  {name}")
         bad += not ok
@@ -409,7 +492,7 @@ def self_test() -> int:
         write_outputs(pathlib.Path(tmp), rows, report)
         with open(pathlib.Path(tmp) / "episodes_all.csv", newline="", encoding="utf-8") as fh:
             back = list(csv.DictReader(fh))
-        ok = len(back) == 20 and tuple(back[0]) == OUT_COLUMNS
+        ok = len(back) == 24 and tuple(back[0]) == OUT_COLUMNS
         print(f"[eval_collect]   {'PASS' if ok else 'FAIL'}  episodes_all.csv round-trips with OUT_COLUMNS")
         bad += not ok
     for name, fn, needle in CASES:

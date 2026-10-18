@@ -1,35 +1,7 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-r"""G1-G3 of eval_plan.md: did the evaluation run play THE table, every row once,
-under the conditions the table says?
-
-Reads one evaluation folder (``play.py --eval-table`` writes it):
-``applied.csv``, ``applied_meta.json``, ``episodes.csv``, ``eval_manifest.json``
--- and the committed table CSV with its ``.json`` sidecar.
-
-  G1  ONE hash everywhere: the table file's bytes, its sidecar, the manifest,
-      ``applied_meta.json``, EVERY ``[eval-table]`` line of the run log (--log;
-      one per startup report, at least one)
-      and the training PC's ``Get-FileHash`` (--filehash). The last two are
-      EVIDENCE FROM OUTSIDE; without both G1 is INCOMPLETE, never PASS.
-  G2  ``episodes.csv`` holds exactly one ``episode == 0`` row per env id
-      0..N-1, N = table rows = manifest ``num_envs``, and the manifest says
-      every env finished its first episode.
-  G3  ``applied.csv`` = the table row mapped by THIS script, tolerance 1e-6.
-
-THE MAPPING IS THE CHECK'S OWN (float64, stdlib ``math``), not an import of
-``autodr`` / ``insertion_math``: a check that maps with the env's functions
-holds the env against itself. The bands are own literals from eval_plan.md
-section 1.1 and are FIRST held against the bands the env wrote into
-``applied_meta.json``.
-
-Stdlib only; runs on either machine.
-
-    python scripts/check_eval_conditions.py --self-test
-    python scripts/check_eval_conditions.py --run-dir <eval folder> ^
-        --table scripts/eval/eval_table_seed20_c18.csv --log rt_logs/RT-N/RT-N.txt --filehash <HEX>
-"""
+'Check evaluation tables, manifests and applied simulation conditions.'
 
 from __future__ import annotations
 
@@ -44,7 +16,8 @@ import pathlib
 import re
 import sys
 
-SCRIPT_MARKER = "check_eval_conditions-2026-09-26a"
+SCRIPT_MARKER = "check_eval_conditions-2026-09-30a"
+
 
 TABLE_COLUMNS = (
     "lat_r", "lat_phi", "yaw", "tilt", "tilt_azimuth", "start_height", "friction",
@@ -53,6 +26,8 @@ TABLE_COLUMNS = (
     "joint_noise_4", "joint_noise_5", "grasp_obs_x", "pocket_obs_yaw",
     "fixture_noise_z",
 )
+
+
 APPLIED_COLUMNS = (
     "row_id", "lat_x_m", "lat_y_m", "start_height_m", "yaw_rad",
     "pocket_qw", "pocket_qx", "pocket_qy", "pocket_qz",
@@ -61,6 +36,7 @@ APPLIED_COLUMNS = (
     "friction_fixture_min", "friction_fixture_max",
 )
 FRICTION_READBACKS = APPLIED_COLUMNS[15:]
+
 
 BANDS = {
     "target": {
@@ -82,8 +58,24 @@ FIXTURE_NOISE_XY_M = 0.05
 FIXTURE_NOISE_Z_M = 0.05
 GRASP_OBS_X_M = 0.003
 POCKET_OBS_YAW_RAD = 0.0223402
+POCKET_OBS_NOISE_M = 0.005
+
+
+NOISE_TAGS = {
+    "pn2": {"obs_noise_pocket_pos_std_m": 2.0 * POCKET_OBS_NOISE_M},
+    "gx2": {"grasp_obs_offset_x_m": 2.0 * GRASP_OBS_X_M},
+    "py2": {"pocket_obs_yaw_rad": 2.0 * POCKET_OBS_YAW_RAD},
+}
 TOL = 1e-6
 TOL_BAND = 1e-9
+
+
+def expected_noise(tag) -> dict:
+    'The three observation-noise widths a run with this tag must have used.'
+    out = {"obs_noise_pocket_pos_std_m": POCKET_OBS_NOISE_M, "grasp_obs_offset_x_m": GRASP_OBS_X_M,
+           "pocket_obs_yaw_rad": POCKET_OBS_YAW_RAD}
+    out.update(NOISE_TAGS.get(tag or "", {}))
+    return out
 
 CHECK_NAMES = (
     "G1a table bytes = sidecar = manifest = applied_meta",
@@ -95,15 +87,31 @@ CHECK_NAMES = (
     "G3b the env's bands are the plan's bands for this width",
     "G3c every applied value = the table row mapped, within 1e-6",
     "G3d friction read back from PhysX = commanded, on both assets",
+
+
+    "G3e values outside [0, 1] only in the cells an OOD sidecar nails, and the run's switch matches",
 )
+
+
+def ood_cells(sidecar: dict) -> dict:
+    '``{(row, column): unit}`` an OOD sidecar nails; {} for any other kind.'
+    if sidecar.get("kind") != "ood":
+        return {}
+    per = int(sidecar.get("rows_per_block") or 0)
+    out = {}
+    for b in sidecar.get("blocks", []):
+        for r in range(int(b["block"]) * per, (int(b["block"]) + 1) * per):
+            out[(r, int(b["column"]))] = float(b["nailed_to"])
+    return out
 
 
 def _lerp(u: float, lo: float, hi: float) -> float:
     return lo + u * (hi - lo)
 
 
-def map_row(u: dict, width: str) -> dict:
-    """One table row (unit values by column name) -> the applied.csv values."""
+def map_row(u: dict, width: str, grasp_x_m: float = GRASP_OBS_X_M,
+            pocket_yaw_rad: float = POCKET_OBS_YAW_RAD) -> dict:
+    'One table row (unit values by column name) -> the applied.csv values.'
     b = BANDS[width]
     r = b["lat_r"][1] * math.sqrt(u["lat_r"])
     phi = 2.0 * math.pi * u["lat_phi"]
@@ -112,6 +120,7 @@ def map_row(u: dict, width: str) -> dict:
     az = 2.0 * math.pi * u["tilt_azimuth"]
     c, s = math.cos(0.5 * yaw), math.sin(0.5 * yaw)
     a, bx, by = math.cos(half), math.cos(az) * math.sin(half), math.sin(az) * math.sin(half)
+
     q = [c * a, c * bx - s * by, c * by + s * bx, s * a]
     if q[0] < 0.0:
         q = [-v for v in q]
@@ -124,8 +133,8 @@ def map_row(u: dict, width: str) -> dict:
         "pocket_dx_m": (2.0 * u["fixture_noise_x"] - 1.0) * FIXTURE_NOISE_XY_M,
         "pocket_dy_m": (2.0 * u["fixture_noise_y"] - 1.0) * FIXTURE_NOISE_XY_M,
         "pocket_dz_m": (2.0 * u["fixture_noise_z"] - 1.0) * FIXTURE_NOISE_Z_M,
-        "grasp_obs_x_m": (2.0 * u["grasp_obs_x"] - 1.0) * GRASP_OBS_X_M,
-        "pocket_obs_yaw_rad": (2.0 * u["pocket_obs_yaw"] - 1.0) * POCKET_OBS_YAW_RAD,
+        "grasp_obs_x_m": (2.0 * u["grasp_obs_x"] - 1.0) * grasp_x_m,
+        "pocket_obs_yaw_rad": (2.0 * u["pocket_obs_yaw"] - 1.0) * pocket_yaw_rad,
         "friction_cmd": mu,
     }
     return out
@@ -133,7 +142,10 @@ def map_row(u: dict, width: str) -> dict:
 
 def judge(table, sidecar, table_sha, log_shas, filehash, ep_header, ep_rows,
           ap_header, ap_rows, meta, manifest) -> dict:
-    """``{check name: (ok, detail)}`` over CHECK_NAMES."""
+    '``{check name: (ok, detail)}`` over CHECK_NAMES. ``ok`` is None for a'
+    want_noise = expected_noise(manifest.get("tag"))
+    grasp_x_m = want_noise["grasp_obs_offset_x_m"]
+    yaw_rad = want_noise["pocket_obs_yaw_rad"]
     out: dict = {}
     n = len(table)
     width = str(manifest.get("width"))
@@ -148,6 +160,8 @@ def judge(table, sidecar, table_sha, log_shas, filehash, ep_header, ep_rows,
     if log_shas is None:
         out[CHECK_NAMES[1]] = (None, "no --log given")
     else:
+
+
         out[CHECK_NAMES[1]] = (bool(log_shas) and all(h == table_sha for h in log_shas),
                                f"{len(log_shas)} [eval-table] line(s): {[h[:12] for h in log_shas]}")
     if filehash is None:
@@ -172,17 +186,24 @@ def judge(table, sidecar, table_sha, log_shas, filehash, ep_header, ep_rows,
     got_b = meta.get("bounds") or {}
     band_ok = want_b is not None and set(got_b) == set(want_b) and all(
         abs(got_b[k][i] - want_b[k][i]) <= TOL_BAND for k in want_b for i in (0, 1))
+    noise = manifest.get("noise") or {}
+    run_noise = [("applied_meta grasp", meta.get("grasp_obs_offset_x_m"), grasp_x_m),
+                 ("applied_meta yaw", meta.get("pocket_obs_yaw_rad"), yaw_rad),
+                 ("manifest grasp", noise.get("grasp_obs_offset_x_m"), grasp_x_m),
+                 ("manifest yaw", noise.get("pocket_obs_yaw_rad"), yaw_rad),
+                 ("manifest pocket", noise.get("obs_noise_pocket_pos_std_m"),
+                  want_noise["obs_noise_pocket_pos_std_m"])]
     band_ok = band_ok and abs(float(meta.get("fixture_pos_noise_xy_m", -1)) - FIXTURE_NOISE_XY_M) <= TOL_BAND \
         and abs(float(meta.get("fixture_pos_noise_z_m", -1)) - FIXTURE_NOISE_Z_M) <= TOL_BAND \
-        and abs(float(meta.get("grasp_obs_offset_x_m", -1)) - GRASP_OBS_X_M) <= TOL_BAND \
-        and abs(float(meta.get("pocket_obs_yaw_rad", -1)) - POCKET_OBS_YAW_RAD) <= TOL_BAND
-    out[CHECK_NAMES[6]] = (band_ok, f"width {width!r}: {got_b}")
+        and all(v is not None and abs(float(v) - w) <= TOL_BAND for _, v, w in run_noise)
+    out[CHECK_NAMES[6]] = (band_ok, f"width {width!r}, tag {manifest.get('tag')!r}, noise (name, run, expected) "
+                                    f"{run_noise}: {got_b}")
 
     worst, worst_at, bad = 0.0, "", 0
     fr_worst, fr_at, fr_bad = 0.0, "", 0
     if shape_ok and want_b is not None:
         for i, (u_row, a) in enumerate(zip(table, ap_rows)):
-            want = map_row(dict(zip(TABLE_COLUMNS, u_row)), width)
+            want = map_row(dict(zip(TABLE_COLUMNS, u_row)), width, grasp_x_m, yaw_rad)
             for k, w in want.items():
                 d = abs(float(a[k]) - w)
                 if d > worst:
@@ -198,6 +219,16 @@ def judge(table, sidecar, table_sha, log_shas, filehash, ep_header, ep_rows,
                            f"{bad} value(s) over {TOL:g}; worst {worst:.3g} at {worst_at}")
     out[CHECK_NAMES[8]] = (mapped and fr_bad == 0,
                            f"{fr_bad} read-back(s) over {TOL:g}; worst {fr_worst:.3g} at {fr_at}")
+
+
+    nailed = ood_cells(sidecar)
+    stray = [(i, j, v) for i, row in enumerate(table) for j, v in enumerate(row)
+             if not 0.0 <= v <= 1.0 and nailed.get((i, j)) != v]
+    unheld = [k for k, v in nailed.items() if k[0] >= n or table[k[0]][k[1]] != v]
+    switch = bool((meta.get("table") or {}).get("allow_outside", False))
+    out[CHECK_NAMES[9]] = (not stray and not unheld and switch == bool(nailed),
+                           f"kind {sidecar.get('kind')!r}, {len(nailed)} nailed cells, "
+                           f"{len(stray)} stray, {len(unheld)} not held, switch {switch}")
     return out
 
 
@@ -225,6 +256,7 @@ def log_hashes(path: pathlib.Path) -> list:
 
 def _good(width: str = "target"):
     n = 6
+
     table = [[((7 * i + 3 * j) % 11) / 10.0 for j in range(len(TABLE_COLUMNS))] for i in range(n)]
     sha = "c3" * 32
     sidecar = {"sha256": sha, "n_rows": n}
@@ -242,7 +274,10 @@ def _good(width: str = "target"):
             "grasp_obs_offset_x_m": GRASP_OBS_X_M,
             "pocket_obs_yaw_rad": POCKET_OBS_YAW_RAD}
     manifest = {"width": width, "table_sha256": sha, "num_envs": n, "table_rows": n,
-                "envs_finished_first_episode": n}
+                "envs_finished_first_episode": n, "tag": "",
+                "noise": {"grasp_obs_offset_x_m": GRASP_OBS_X_M, "pocket_obs_yaw_rad": POCKET_OBS_YAW_RAD,
+                          "obs_noise_pocket_pos_std_m": POCKET_OBS_NOISE_M}}
+    meta["table"]["allow_outside"] = False
     return dict(table=table, sidecar=sidecar, table_sha=sha, log_shas=[sha], filehash=sha.upper(),
                 ep_header=["env_id", "episode"], ep_rows=ep_rows,
                 ap_header=list(APPLIED_COLUMNS), ap_rows=ap_rows, meta=meta, manifest=manifest)
@@ -255,14 +290,107 @@ def _bump(row: int, key: str, delta: float):
 
 
 def _shift_rows(g):
-    """The plan's row mutation on the file side: env i carries row i+1's values."""
+    "The plan's row mutation on the file side: env i carries row i+1's values."
     vals = [dict(r) for r in g["ap_rows"]]
     for i, r in enumerate(g["ap_rows"]):
         nxt = vals[(i + 1) % len(vals)]
         r.update({k: v for k, v in nxt.items() if k != "row_id"})
 
 
+def _rebuild_applied(g, width: str = "target", grasp_x_m: float = GRASP_OBS_X_M,
+                     yaw_rad: float = POCKET_OBS_YAW_RAD):
+    'applied.csv as the env would write it for the CURRENT table -- so a'
+    for i, u_row in enumerate(g["table"]):
+        want = map_row(dict(zip(TABLE_COLUMNS, u_row)), width, grasp_x_m, yaw_rad)
+        g["ap_rows"][i].update({k: f"{v:.9g}" for k, v in want.items()})
+        g["ap_rows"][i].update({k: f"{want['friction_cmd']:.9g}" for k in FRICTION_READBACKS})
+
+
+def _make_ood(g):
+    'A legal OOD run: two blocks of three rows, lat_r nailed to 2.25 (x1.5'
+    g["sidecar"].update(kind="ood", rows_per_block=3, blocks=[
+        {"block": 0, "key": "lat_r_hi", "column": 0, "nailed_to": 2.25},
+        {"block": 1, "key": "yaw_lo", "column": 2, "nailed_to": -0.25}])
+    for i in range(3):
+        g["table"][i][0] = 2.25
+        g["table"][3 + i][2] = -0.25
+    _rebuild_applied(g)
+    g["meta"]["table"]["allow_outside"] = True
+
+
+def _ood_then(fn):
+    def both(g):
+        _make_ood(g)
+        fn(g)
+    return both
+
+
+def _stray_cell(g):
+    g["table"][0][3] = 1.3
+    _rebuild_applied(g)
+
+
+def _grasp_run(width_m: float, applied_m: float | None = None):
+    'A run whose env used grasp half width ``width_m`` (both records say so);'
+    def fn(g):
+        g["meta"]["grasp_obs_offset_x_m"] = width_m
+        g["manifest"]["noise"]["grasp_obs_offset_x_m"] = width_m
+        _rebuild_applied(g, grasp_x_m=width_m if applied_m is None else applied_m)
+    return fn
+
+
+def _yaw_run(width_rad: float, applied_rad: float | None = None):
+    'The py2 twin of ``_grasp_run``: pocket-yaw belief half width ``width_rad``.'
+    def fn(g):
+        g["meta"]["pocket_obs_yaw_rad"] = width_rad
+        g["manifest"]["noise"]["pocket_obs_yaw_rad"] = width_rad
+        _rebuild_applied(g, yaw_rad=width_rad if applied_rad is None else applied_rad)
+    return fn
+
+
+def _tag(fn, tag: str):
+    'The same run with the manifest tag ``tag``.'
+    def both(g):
+        fn(g)
+        g["manifest"]["tag"] = tag
+    return both
+
+
+def _pocket(width_m: float):
+    return lambda g: g["manifest"]["noise"].update(obs_noise_pocket_pos_std_m=width_m)
+
+
 CASES = (
+
+    ("ood-table-with-its-sidecar-and-switch", _make_ood, ()),
+    ("ood-value-in-a-cell-the-sidecar-does-not-nail", _ood_then(_stray_cell), ("G3e",)),
+    ("ood-run-without-the-switch",
+     _ood_then(lambda g: g["meta"]["table"].update(allow_outside=False)), ("G3e",)),
+    ("ood-nailed-cell-not-held",
+     _ood_then(lambda g: (g["table"][1].__setitem__(0, 1.0), _rebuild_applied(g))), ("G3e",)),
+    ("plain-table-with-the-switch-on", lambda g: g["meta"]["table"].update(allow_outside=True), ("G3e",)),
+    ("plain-table-with-a-value-outside", _stray_cell, ("G3e",)),
+
+
+    ("gx2-run-tagged-gx2", _tag(_grasp_run(2.0 * GRASP_OBS_X_M), "gx2"), ()),
+    ("gx2-width-without-the-gx2-tag", _grasp_run(2.0 * GRASP_OBS_X_M), ("G3b", "G3c")),
+    ("gx2-tag-but-the-run-used-d183", _tag(lambda g: None, "gx2"), ("G3b", "G3c")),
+    ("manifest-records-another-grasp-width",
+     lambda g: g["manifest"]["noise"].update(grasp_obs_offset_x_m=2.0 * GRASP_OBS_X_M), ("G3b",)),
+    ("manifest-has-no-noise-record", lambda g: g["manifest"].pop("noise"), ("G3b",)),
+    ("gx2-records-but-applied-scaled-by-d183",
+     _tag(_grasp_run(2.0 * GRASP_OBS_X_M, GRASP_OBS_X_M), "gx2"), ("G3c",)),
+    ("pn2-run-tagged-pn2", _tag(_pocket(2.0 * POCKET_OBS_NOISE_M), "pn2"), ()),
+    ("pn2-tag-but-pocket-noise-not-doubled", _tag(lambda g: None, "pn2"), ("G3b",)),
+    ("doubled-pocket-noise-without-the-pn2-tag", _pocket(2.0 * POCKET_OBS_NOISE_M), ("G3b",)),
+    ("py2-run-tagged-py2", _tag(_yaw_run(2.0 * POCKET_OBS_YAW_RAD), "py2"), ()),
+    ("py2-width-without-the-py2-tag", _yaw_run(2.0 * POCKET_OBS_YAW_RAD), ("G3b", "G3c")),
+    ("py2-tag-but-the-run-used-d194", _tag(lambda g: None, "py2"), ("G3b", "G3c")),
+    ("manifest-records-another-yaw-width",
+     lambda g: g["manifest"]["noise"].update(pocket_obs_yaw_rad=2.0 * POCKET_OBS_YAW_RAD), ("G3b",)),
+    ("py2-records-but-applied-scaled-by-d194",
+     _tag(_yaw_run(2.0 * POCKET_OBS_YAW_RAD, POCKET_OBS_YAW_RAD), "py2"), ("G3c",)),
+
     ("one-value-plus-1e-3", _bump(3, "start_height_m", 1e-3), ("G3c",)),
     ("a-quaternion-component-moves", _bump(1, "pocket_qx", 1e-4), ("G3c",)),
     ("every-env-plays-the-next-row", _shift_rows, ("G3c", "G3d")),
@@ -274,6 +402,8 @@ CASES = (
     ("manifest-names-another-table", lambda g: g["manifest"].update(table_sha256="00" * 32), ("G1a",)),
     ("log-line-carries-another-hash", lambda g: g.update(log_shas=["00" * 32]), ("G1b",)),
     ("log-has-no-eval-table-line", lambda g: g.update(log_shas=[]), ("G1b",)),
+
+
     ("report-prints-four-times", lambda g: g.update(log_shas=[g["table_sha"]] * 4), ()),
     ("one-of-four-lines-carries-another-hash",
      lambda g: g.update(log_shas=[g["table_sha"]] * 2 + ["00" * 32, g["table_sha"]]), ("G1b",)),
@@ -281,14 +411,16 @@ CASES = (
     ("an-env-has-no-first-episode", lambda g: g["ep_rows"].pop(0), ("G2a",)),
     ("an-env-id-twice", lambda g: g["ep_rows"][1].update(env_id="0"), ("G2a",)),
     ("one-env-never-finished", lambda g: g["manifest"].update(envs_finished_first_episode=5), ("G2b",)),
+
     ("yaw-belief-error-was-off",
      lambda g: [r.update(pocket_obs_yaw_rad="0") for r in g["ap_rows"]], ("G3c",)),
+
     ("env-says-yaw-belief-error-off", lambda g: g["meta"].update(pocket_obs_yaw_rad=0.0), ("G3b",)),
 )
 
 
 def _applied_columns_vs_env() -> tuple[bool, str]:
-    """``APPLIED_COLUMNS`` against the tuple the env WRITES, ``insertion_env.APPLIED_LOG_COLUMNS``, read as AST (the env needs Isaac)."""
+    '``APPLIED_COLUMNS`` against the tuple the env WRITES,'
     env_py = (pathlib.Path(__file__).resolve().parents[1] / "source" / "insertion" / "insertion"
               / "tasks" / "direct" / "insertion" / "insertion_env.py")
     for node in ast.parse(env_py.read_text(encoding="utf-8")).body:
@@ -300,7 +432,7 @@ def _applied_columns_vs_env() -> tuple[bool, str]:
 
 
 def _yaw_belief_example() -> tuple[bool, str]:
-    """D-194 worked example, not recomputed: Belege_Streuwerte B6 says uniform in +-0.0223402 rad, and the env maps the column like ``grasp_obs_x`` (``insertion_env._reset_idx``)."""
+    'worked example, not recomputed: Belege_Streuwerte B6 says uniform in'
     base = {k: 0.5 for k in TABLE_COLUMNS}
     want = [-0.0223402, 0.0, 0.0223402] * len(BANDS)
     got = [map_row(dict(base, pocket_obs_yaw=u), w).get("pocket_obs_yaw_rad")
@@ -309,8 +441,23 @@ def _yaw_belief_example() -> tuple[bool, str]:
     return ok, f"got {got}"
 
 
-def _oracle_vs_production() -> tuple[bool, str]:
-    """``map_row`` against the functions the env really calls, on the committed seed-20 table with the shape the env hands over, (1000, 18) (L-14)."""
+def _noise_tags_vs_run_eval() -> tuple[bool, str]:
+    '``NOISE_TAGS`` against the Hydra overrides ``scripts/rl_games/run_eval.ps1``'
+    ps1 = pathlib.Path(__file__).resolve().parent / "rl_games" / "run_eval.ps1"
+    got = {t: {k: float(v)} for t, k, v in re.findall(
+        r"^\s*(\w+)\s*=\s*'env\.(\w+)=([-+0-9.eE]+)'\s*$", ps1.read_text(encoding="utf-8"), re.M)}
+    ok = set(got) == set(NOISE_TAGS) and all(
+        set(got[t]) == set(NOISE_TAGS[t]) and all(abs(got[t][k] - NOISE_TAGS[t][k]) <= TOL_BAND
+                                                  for k in got[t]) for t in got)
+    return ok, f"run_eval.ps1 {got}"
+
+
+_ORACLE_CACHE: dict = {}
+
+
+def _oracle_vs_production(table_name: str = "eval_table_seed20_c18.csv",
+                          n_rows: int = 1000) -> tuple[bool, str]:
+    '``map_row`` against the functions the env really calls, on the committed'
     import importlib.util
 
     repo = pathlib.Path(__file__).resolve().parents[1]
@@ -323,13 +470,18 @@ def _oracle_vs_production() -> tuple[bool, str]:
         spec.loader.exec_module(mod)
         return mod
 
-    torch, _ = _load("torch_shim", repo / "scripts" / "tools" / "torch_shim.py").load()
-    sys.modules.setdefault("torch", torch)
-    autodr = _load("check_autodr", repo / "scripts" / "check_autodr.py").load_autodr()
-    ns: dict = {"torch": torch, "math": math, "__name__": "insertion_math"}
-    exec(compile((pkg / "insertion_math.py").read_text(encoding="utf-8"), "insertion_math.py", "exec"), ns)  # noqa: S102
 
-    table, _, _ = load_table(repo / "scripts" / "eval" / "eval_table_seed20_c18.csv")
+    if "production" not in _ORACLE_CACHE:
+        torch, _ = _load("torch_shim", repo / "scripts" / "tools" / "torch_shim.py").load()
+        sys.modules.setdefault("torch", torch)
+
+        autodr = _load("check_autodr", repo / "scripts" / "check_autodr.py").load_autodr()
+        ns: dict = {"torch": torch, "math": math, "__name__": "insertion_math"}
+        exec(compile((pkg / "insertion_math.py").read_text(encoding="utf-8"), "insertion_math.py", "exec"), ns)
+        _ORACLE_CACHE["production"] = (torch, autodr, ns)
+    torch, autodr, ns = _ORACLE_CACHE["production"]
+
+    table, _, _ = load_table(repo / "scripts" / "eval" / table_name)
     if tuple(autodr["TABLE_COLUMNS"]) != TABLE_COLUMNS:
         return False, "TABLE_COLUMNS differs from autodr.TABLE_COLUMNS"
     col = {k: [row[i] for row in table] for i, k in enumerate(TABLE_COLUMNS)}
@@ -353,7 +505,7 @@ def _oracle_vs_production() -> tuple[bool, str]:
         for k, v in got.items():
             if abs(v - want[k]) > worst:
                 worst, at = abs(v - want[k]), f"row {i} {k}"
-    return len(table) == 1000 and worst <= TOL, f"{len(table)} rows, worst {worst:.3g} at {at}"
+    return len(table) == n_rows and worst <= TOL, f"{len(table)} rows, worst {worst:.3g} at {at}"
 
 
 def self_test() -> int:
@@ -361,6 +513,15 @@ def self_test() -> int:
     bad = 0
     ok, detail = _oracle_vs_production()
     print(f"[check_eval_conditions]   oracle = production math on the seed-20 table: "
+          f"{'PASS' if ok else 'FAIL'} ({detail})")
+    bad += not ok
+
+    ok, detail = _oracle_vs_production("eval_table_ood_seed10_c18.csv", 1050)
+    print(f"[check_eval_conditions]   oracle = production math on the OOD table: "
+          f"{'PASS' if ok else 'FAIL'} ({detail})")
+    bad += not ok
+    ok, detail = _noise_tags_vs_run_eval()
+    print(f"[check_eval_conditions]   NOISE_TAGS = rl_games/run_eval.ps1 $NoiseOverride: "
           f"{'PASS' if ok else 'FAIL'} ({detail})")
     bad += not ok
     ok, detail = _yaw_belief_example()
@@ -396,7 +557,7 @@ def self_test() -> int:
     print(f"[check_eval_conditions]   every check is flipped by some case: "
           f"{'PASS' if not undefended else 'FAIL ' + str(undefended)}")
     bad += bool(undefended)
-    total = len(BANDS) + 5 + len(CASES)
+    total = len(BANDS) + 7 + len(CASES)
     print(f"[check_eval_conditions] self-test: {total - bad}/{total}")
     return 1 if bad else 0
 
@@ -425,6 +586,7 @@ def main() -> int:
     result = judge(table, sidecar, table_sha,
                    log_hashes(pathlib.Path(args.log)) if args.log else None, args.filehash,
                    ep_header, ep_rows, ap_header, ap_rows, meta, manifest)
+    print(f"[check_eval_conditions] tag {manifest.get('tag')!r}: expected noise {expected_noise(manifest.get('tag'))}")
     word = {True: "PASS", False: "FAIL", None: "INCOMPLETE"}
     for name, (ok, detail) in result.items():
         print(f"[check_eval_conditions]   {word[ok]:<10s}  {name}  -- {detail[:220]}")
