@@ -32,21 +32,20 @@ Trainingskennzahlen als `scalars.csv` sowie Konfigurationen unter `params/`.
 
 ## Auto-DR-Modell aus Epoche 100 aufrufen
 
-`<AutoDR-Laufordner>` durch den gewünschten Laufordner ersetzen.
-Der Befehl wählt dessen Checkpoint aus Epoche 100 und lädt den gespeicherten
-Auto-DR-Zustand. Die Wiedergabe endet nach 300 Schritten.
+Das geprüfte Modell RT-242s5 (Auto-DR, Trainingsseed 5, Epoche 100) liegt
+separat auf dem Trainings-PC unter dem unten angegebenen Pfad.
+Die `.pth`-Checkpoints sind nicht Bestandteil des Git-Repositories.
+Der Aufruf lädt den gespeicherten Auto-DR-Zustand und endet nach 300 Schritten.
 
 ```powershell
-$lauf = ".\logs\rl_games\ur5e_insertion\<AutoDR-Laufordner>"
-$modelle = @(Get-ChildItem -LiteralPath "$lauf\nn" -File | Where-Object { $_.Name -match '^last_ur5e_insertion_ep_100_rew_[-+0-9.eE]+\.pth$' })
-if ($modelle.Count -ne 1) { throw "Es muss genau ein Checkpoint aus Epoche 100 vorhanden sein." }
-$modell = $modelle[0].FullName
+$modell = "C:\Users\Simon\Desktop\Alexander_Pett\view\RT-242s5_ep100\nn\ep100_view.pth"
+if (-not (Test-Path -LiteralPath $modell -PathType Leaf)) { throw "Modell nicht gefunden: $modell" }
 python scripts/rl_games/play.py --task Ur5e-Insertion-Direct-v0 --kit_args=--/app/vulkan=false --num_envs 4 --seed 1 --max-steps 300 --autodr-state --checkpoint "$modell" env.dr_mode=autodr env.start_floor_m=-0.030 env.autodr_stall_buffers=3 env.obs_wrench_mode=force_prevact env.pocket_obs_yaw_rad=0.0223402
 ```
 
-Die historischen `.pth`-Modelle sind nicht im Git-Repository enthalten.
-Für dieses Beispiel einen eigenen 100-Epochen-Lauf oder einen separat
-bereitgestellten Auto-DR-Checkpoint verwenden.
+Auf einem anderen Rechner die Checkpoint-Datei separat übertragen und
+`$modell` auf ihren dortigen Pfad setzen. Eigene Trainingsläufe speichern
+Checkpoints unter `logs/rl_games/ur5e_insertion/<Lauf>/nn/`.
 
 ## Vorhandene Logs und Ergebnisse
 
