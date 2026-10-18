@@ -1,8 +1,11 @@
 # Experiment D
 
-Alle Blöcke nacheinander in die Anaconda PowerShell einfügen.
+Jeden grauen Block **komplett** kopieren und in die Anaconda PowerShell einfügen.
+Alle Blöcke im **selben Fenster** ausführen, denn spätere Blöcke nutzen das in Schritt 2 gewählte Modell.
 
 ## 1. Starten
+
+Block unverändert einfügen.
 
 ```powershell
 conda activate env_isaaclab
@@ -13,8 +16,8 @@ git lfs pull
 
 ## 2. Modell wählen
 
-In der ersten Zeile den Lauf eintragen: `RT-242s1` bis `s5` (Auto-DR),
-`RT-243s1` bis `s5` (Fixed-DR), `RT-244s1` bis `s5` (No-DR).
+Vor dem Einfügen nur `RT-242s2` in der ersten Zeile ändern, dann den ganzen Block einfügen.
+Möglich sind `RT-242s1` bis `s5` (Auto-DR), `RT-243s1` bis `s5` (Fixed-DR), `RT-244s1` bis `s5` (No-DR).
 
 ```powershell
 $lauf = "RT-242s2"
@@ -26,18 +29,22 @@ python -B scripts/prepare_view.py checkpoint "$original" "$modell"
 
 ## 3. Ansehen wie im Training
 
+Block unverändert einfügen. Ein Fenster mit vier Robotern öffnet sich.
+
 ```powershell
 python -u scripts/rl_games/play.py --task Ur5e-Insertion-Direct-v0 --kit_args=--/app/vulkan=false --num_envs 4 --seed 1 --max-steps 1500 --autodr-state --checkpoint "$modell" "env.dr_mode=$modus" env.start_floor_m=-0.030 env.autodr_stall_buffers=3 env.obs_wrench_mode=force_prevact env.pocket_obs_yaw_rad=0.0223402
 ```
 
 ## 4. Ansehen im Haupttest der Arbeit
 
+Block unverändert einfügen. Jeder der vier Roboter bekommt einen festen Testfall aus der Arbeit.
+
 ```powershell
 python -B scripts/prepare_view.py table scripts/eval/eval_table_seed10_c18.csv results/view_tables/haupttest.csv --count 4
 python -u scripts/rl_games/play.py --task Ur5e-Insertion-Direct-v0 --kit_args=--/app/vulkan=false --seed 100 --max-steps 1500 --checkpoint "$modell" --dr-table results/view_tables/haupttest.csv env.obs_wrench_mode=force_prevact env.start_floor_m=0.020 env.pocket_obs_yaw_rad=0.0223402
 ```
 
-Verdoppelte Beobachtungsfehler: im zweiten Befehl ändern.
+Verdoppelte Beobachtungsfehler: nur den zweiten Befehl des Blocks so ändern und erneut einfügen.
 
 | Test | Änderung |
 |---|---|
@@ -47,7 +54,7 @@ Verdoppelte Beobachtungsfehler: im zweiten Befehl ändern.
 
 ## 5. Selbst trainieren
 
-Dauer etwa 2 h 15 min.
+Block unverändert einfügen. Dauer etwa 2 h 15 min.
 
 ```powershell
 $env:RT_NAME = "RT-242s1"
@@ -59,7 +66,7 @@ Ansehen: in Schritt 2 `.\models\` durch `.\logs\rl_games\ur5e_insertion\` ersetz
 
 ## 6. Evaluation der Arbeit wiederholen
 
-Haupttest von Auto-DR und No-DR (10 Modelle), ohne Fenster:
+Block unverändert einfügen. Das ist der Haupttest von Auto-DR und No-DR (10 Modelle), ohne Fenster.
 
 ```powershell
 .\scripts\rl_games\run_eval.ps1 -Block T-final -Rt RT-801
