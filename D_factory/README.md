@@ -1,163 +1,202 @@
 # Experiment D
 
-Die Befehle in PowerShell im Ordner `D_factory` mit aktivem
-`env_isaaclab` und installiertem Paket `source/insertion` ausführen.
-Die Trainingsbefehle entsprechen den Endstand-Läufen RT-242/243/244:
-256 Umgebungen, 100 Epochen, hier jeweils Seed 1. Für die fünf Seeds
-`--seed` und die Endziffer in `RT_NAME` gemeinsam auf 1 bis 5 setzen.
+Alle Befehle sind PowerShell (Anaconda PowerShell) auf dem Trainings-PC.
+Jeder Abschnitt setzt den Block **0** voraus. Ein Fenster beendet sich nach
+`--max-steps` selbst; vorher abbrechen mit Strg + C.
 
-## Auto-DR: 100 Epochen
+## 0. Umgebung und Ordner (einmal pro Fenster)
 
 ```powershell
+conda activate env_isaaclab
+cd "C:\Users\Simon\Desktop\Alexander_Pett\Abgabe\BA_Insertion_Abgabe\D_factory"
+python -m pip install -e source/insertion
+git lfs pull
+```
+
+Auf einem anderen Rechner den Pfad im `cd`-Befehl anpassen. Bei einer
+ZIP-Abgabe mit vollständigen Modelldateien entfällt `git lfs pull`.
+
+Regeln für jede Wiedergabe mit Fenster:
+
+- `--kit_args=--/app/vulkan=false` immer mitgeben. Mit Vulkan stürzt auf dem
+  Trainings-PC jedes Isaac-Fenster beim Start ab (Treiber 610.88,
+  `simulation_app.py:602 _prepare_ui`, Zugriffsverletzung).
+- Kein `--headless` (sonst kein Fenster) und kein `--real-time` (das Fenster ruckelt).
+- Läuft gleichzeitig ein Training: nur eine Umgebung (siehe Hinweise unten).
+
+## 1. Modell wählen und GUI-Kopie anlegen
+
+Die 15 Modelle aus Epoche 100 liegen unter `models/<Trainingslauf>/nn/`:
+
+| Methode | Trainingslauf (`$lauf`) | `$modus` |
+|---|---|---|
+| Auto-DR | `RT-242s1` bis `RT-242s5` | `autodr` |
+| Fixed-DR | `RT-243s1` bis `RT-243s5` | `fixed_dr` |
+| No-DR | `RT-244s1` bis `RT-244s5` | `off` |
+
+Nur `$lauf` ändern; `$modus` folgt daraus. Das Beispiel wählt Auto-DR, Seed 2.
+
+```powershell
+$lauf = "RT-242s2"
+$modus = @{ "RT-242" = "autodr"; "RT-243" = "fixed_dr"; "RT-244" = "off" }[$lauf.Substring(0, 6)]
+$original = @(Get-ChildItem ".\models\*__${lauf}_*\nn\last_ur5e_insertion_ep_100_rew_*.pth" -File)
+if ($original.Count -ne 1) { throw "Erwartet genau ein Modell fuer $lauf, gefunden: $($original.Count)" }
+$modell = ".\models_view\$lauf\nn\ep100_view.pth"
+python -B scripts/prepare_view.py checkpoint "$($original[0].FullName)" "$modell"
+if ($LASTEXITCODE -ne 0) { throw "View-Vorbereitung fehlgeschlagen" }
+```
+
+Warum eine Kopie: Das Isaac-Fenster lädt ein älteres NumPy. Die Originale
+enthalten NumPy-2-Objekte und scheitern dort mit `No module named 'numpy._core'`.
+[prepare_view.py](scripts/prepare_view.py) wandelt nur diese Objekte in
+Tensoren um, vergleicht danach alle Tensoren bytegenau mit dem Original und
+lässt das Original unverändert. Eine vorhandene Kopie wird geprüft und weiterverwendet.
+
+## 2. Ansehen wie im Training
+
+Die Wiedergabe zieht jede Episode aus den Grenzen, die der Lauf bis Epoche 100
+erreicht hat (`--autodr-state`), mit den Trainingsflags des Laufs.
+
+```powershell
+python -u scripts/rl_games/play.py --task Ur5e-Insertion-Direct-v0 --kit_args=--/app/vulkan=false --num_envs 4 --seed 1 --max-steps 1500 --autodr-state --checkpoint "$modell" "env.dr_mode=$modus" env.start_floor_m=-0.030 env.autodr_stall_buffers=3 env.obs_wrench_mode=force_prevact env.pocket_obs_yaw_rad=0.0223402
+```
+
+Erwartet im Fenster: `[rl_games] insertion package imported from: ...\D_factory\source\insertion\insertion`
+und `[rl_games-play] AutoDR state loaded (...)`. Eine Episode dauert höchstens 256 Schritte.
+
+## 3. Ansehen unter den Testbedingungen der Arbeit
+
+Die Tests der Arbeit nutzen feste Falltabellen mit 1000 Fällen. Zum Ansehen
+schneidet der erste Block die ersten vier Fälle heraus (Umgebung i = Fall i).
+Die Originaltabellen bleiben unverändert.
+
+```powershell
+python -B scripts/prepare_view.py table scripts/eval/eval_table_seed10_c18.csv results/view_tables/final_r0_n4.csv --first-row 0 --count 4
+if ($LASTEXITCODE -ne 0) { throw "Tabellenvorbereitung fehlgeschlagen" }
+python -B scripts/prepare_view.py table scripts/eval/eval_table_ood_seed10_c18.csv results/view_tables/ood_r0_n4.csv --first-row 0 --count 4
+if ($LASTEXITCODE -ne 0) { throw "Tabellenvorbereitung fehlgeschlagen" }
+$test = @("-u", "scripts/rl_games/play.py", "--task", "Ur5e-Insertion-Direct-v0", "--kit_args=--/app/vulkan=false", "--num_envs", "4", "--seed", "100", "--max-steps", "1500", "--checkpoint", "$modell", "env.dr_mode=table", "env.obs_wrench_mode=force_prevact", "env.start_floor_m=0.020")
+```
+
+Dann **genau einen** der folgenden Aufrufe ausführen. Die Werte stammen aus
+[run_eval.ps1](scripts/rl_games/run_eval.ps1) (Basis Zeile 24–25, Fehler Zeile 29–31).
+
+```powershell
+# T-final: Prüfbereich (Zielbreite).
+python @test "env.dr_table_path=results/view_tables/final_r0_n4.csv" env.dr_table_width=target env.pocket_obs_yaw_rad=0.0223402
+
+# T-nominal: dieselben Fälle auf die Nennbreite abgebildet.
+python @test "env.dr_table_path=results/view_tables/final_r0_n4.csv" env.dr_table_width=nominal env.pocket_obs_yaw_rad=0.0223402
+
+# pn2: Positionsrauschen der Aufnahme verdoppelt (10 statt 5 mm).
+python @test "env.dr_table_path=results/view_tables/final_r0_n4.csv" env.dr_table_width=target env.pocket_obs_yaw_rad=0.0223402 env.obs_noise_pocket_pos_std_m=0.01
+
+# gx2: beobachteter Greifversatz verdoppelt (6 statt 3 mm).
+python @test "env.dr_table_path=results/view_tables/final_r0_n4.csv" env.dr_table_width=target env.pocket_obs_yaw_rad=0.0223402 env.grasp_obs_offset_x_m=0.006
+
+# py2: beobachteter Gierfehler der Aufnahme verdoppelt (0.0446804 statt 0.0223402 rad).
+python @test "env.dr_table_path=results/view_tables/final_r0_n4.csv" env.dr_table_width=target env.pocket_obs_yaw_rad=0.0446804
+
+# T-ood: Fälle außerhalb des Prüfbereichs (die ersten vier: größerer seitlicher Versatz).
+python @test "env.dr_table_path=results/view_tables/ood_r0_n4.csv" env.dr_table_width=target env.dr_table_allow_outside=True env.pocket_obs_yaw_rad=0.0223402
+```
+
+Andere Fälle: `--first-row` zählt ab 0 ohne Kopfzeile. In der OOD-Tabelle
+beginnen die sieben Gruppen zu je 150 Fällen bei 0 (seitlicher Versatz),
+150 (Gierwinkel negativ), 300 (Gierwinkel positiv), 450 (Verkippung),
+600 (Starthöhe), 750 (Reibung niedrig) und 900 (Reibung hoch). Für jede
+Auswahl einen neuen Dateinamen unter `results/view_tables/` wählen.
+
+Das ist eine Ansicht, keine Messung: Eine Umgebung wiederholt ihren Fall nach
+jedem Reset, und 1500 Schritte ergeben keine Erfolgsquote. Die Zahlen der
+Arbeit kommen aus den [Evaluationsläufen](#evaluationsläufe).
+
+## 4. Training selbst starten
+
+Die Befehle entsprechen den Läufen RT-242/243/244 der Arbeit: 256 Umgebungen,
+100 Epochen, ohne Fenster. Ein Lauf dauert etwa **2 h 15 min** (RT-242s1
+startete 10:45, RT-242s2 direkt danach 13:01). Für die Seeds 1 bis 5 `--seed`
+und die Endziffer in `RT_NAME` gemeinsam ändern. Je Lauf einen Befehl ausführen.
+
+```powershell
+# Auto-DR
 $env:RT_NAME = "RT-242s1"
 python scripts/rl_games/train.py --task Ur5e-Insertion-Direct-v0 --headless --num_envs 256 --seed 1 --max_iterations 100 env.dr_mode=autodr env.start_floor_m=-0.030 env.autodr_stall_buffers=3 env.obs_wrench_mode=force_prevact env.pocket_obs_yaw_rad=0.0223402
-```
 
-## Fixed-DR: 100 Epochen
-
-```powershell
+# Fixed-DR
 $env:RT_NAME = "RT-243s1"
 python scripts/rl_games/train.py --task Ur5e-Insertion-Direct-v0 --headless --num_envs 256 --seed 1 --max_iterations 100 env.dr_mode=fixed_dr env.start_floor_m=-0.030 env.autodr_stall_buffers=3 env.obs_wrench_mode=force_prevact env.pocket_obs_yaw_rad=0.0223402
-```
 
-## No-DR: 100 Epochen
-
-```powershell
+# No-DR
 $env:RT_NAME = "RT-244s1"
 python scripts/rl_games/train.py --task Ur5e-Insertion-Direct-v0 --headless --num_envs 256 --seed 1 --max_iterations 100 env.dr_mode=off env.start_floor_m=-0.030 env.autodr_stall_buffers=3 env.obs_wrench_mode=force_prevact env.pocket_obs_yaw_rad=0.0223402
 ```
 
-Neue Läufe speichern Checkpoints unter `logs/rl_games/ur5e_insertion/<Lauf>/nn/`,
-Trainingskennzahlen als `scalars.csv` sowie Konfigurationen unter `params/`.
+Ein neuer Lauf legt `logs/rl_games/ur5e_insertion/<Datum>__<RT_NAME>_.../` an:
+Checkpoints unter `nn/` (alle 25 Epochen, Epoche 100 als
+`last_ur5e_insertion_ep_100_rew_*.pth`), Kennzahlen in `scalars.csv`,
+Konfiguration unter `params/`. Die mitgelieferten Modelle unter `models/`
+bleiben unberührt.
 
-## Auto-DR-Modell aus Epoche 100 aufrufen
-
-Die 15 Endmodelle werden unter `models/<Trainingslauf>/nn/` über Git LFS
-verwaltet. Nach dem Klonen im Repository `git lfs install --local` und
-`git lfs pull` ausführen. Bei einer ZIP-Abgabe die heruntergeladenen `.pth`-Dateien
-mit einpacken; ein Git-LFS-Zeiger allein enthält keine Modellgewichte.
-Das Beispiel lädt RT-242s5 (Auto-DR, Trainingsseed 5, Epoche 100) einschließlich
-Auto-DR-Zustand. Die Wiedergabe endet nach 300 Schritten.
+Den eigenen Lauf ansehen: statt Block 1 diesen Block ausführen, danach
+Abschnitt 2 oder 3 unverändert.
 
 ```powershell
-$modell = ".\models\09-28_20-01-53__RT-242s5_autodr_offset50mm_currOFF_start+20mm_floor-30mm_seed5\nn\last_ur5e_insertion_ep_100_rew_565.5173.pth"
-if (-not (Test-Path -LiteralPath $modell -PathType Leaf)) { throw "Modell nicht gefunden: $modell" }
-python scripts/rl_games/play.py --task Ur5e-Insertion-Direct-v0 --kit_args=--/app/vulkan=false --num_envs 4 --seed 1 --max-steps 300 --autodr-state --checkpoint "$modell" env.dr_mode=autodr env.start_floor_m=-0.030 env.autodr_stall_buffers=3 env.obs_wrench_mode=force_prevact env.pocket_obs_yaw_rad=0.0223402
+$lauf = "RT-242s1"
+$modus = @{ "RT-242" = "autodr"; "RT-243" = "fixed_dr"; "RT-244" = "off" }[$lauf.Substring(0, 6)]
+$original = @(Get-ChildItem ".\logs\rl_games\ur5e_insertion\*__${lauf}_*\nn\last_ur5e_insertion_ep_100_rew_*.pth" -File | Sort-Object LastWriteTime -Descending)
+if ($original.Count -lt 1) { throw "Kein Epoche-100-Checkpoint fuer $lauf unter logs gefunden" }
+$modell = ".\models_view\eigen_$lauf\nn\ep100_view.pth"
+python -B scripts/prepare_view.py checkpoint "$($original[0].FullName)" "$modell"
+if ($LASTEXITCODE -ne 0) { throw "View-Vorbereitung fehlgeschlagen" }
 ```
 
-Die SHA256 jedes Endmodells steht in seinem archivierten `eval_manifest.json`.
-Zur erstmaligen Übernahme auf dem Trainings-PC: `python scripts/import_models.py`.
-Das Skript prüft alle 15 Dateien vor dem Kopieren und behält die Originale.
-`--source-root "<Ordner oder Datei>"` ergänzt einen weiteren Suchort;
-`--check-only` prüft ausschließlich die Verfügbarkeit und Prüfsummen.
+Bei mehreren eigenen Läufen mit demselben `RT_NAME` nimmt der Block den
+neuesten. Für einen zweiten eigenen Lauf denselben Namen nur verwenden,
+wenn die vorige Kopie unter `models_view\eigen_<Lauf>\` vorher gelöscht wird;
+sonst lehnt `prepare_view.py` die abweichende Datei ab.
 
-## Vorhandene Logs und Ergebnisse
+## Hinweise
 
-Die archivierten Daten liegen zentral im Abgabeordner:
+- **Während ein Training läuft:** in Abschnitt 2 `--num_envs 1` setzen; in
+  Abschnitt 3 eine Tabelle mit `--count 1` schneiden und `"--num_envs", "1"` in `$test`.
+- Isaac legt bei der Wiedergabe einen Ordner `replay_h...` neben der Kopie an.
+  `models_view/` und `results/view_tables/` sind lokale Hilfsdateien.
+- **Prüfstand (18.10.2026):** Abschnitt 2 lief auf dem Trainings-PC mit
+  RT-242s2 aus einer gleichwertigen numpy-freien Kopie (mit Fenster) und ohne
+  Fenster bis `success_rate 1.0`. Noch ungeprüft auf dem Trainings-PC:
+  `prepare_view.py`, Abschnitt 2 für Fixed-DR und No-DR, Abschnitt 3 und
+  das Ansehen eines eigenen Laufs.
 
-- [Trainingsdaten](../auswertung/daten/endstudie_rl_games/trainingslaeufe/):
-  RT-242s (Auto-DR), RT-243s (Fixed-DR), RT-244s (No-DR), jeweils Seeds 1–5
-  mit `scalars.csv`, Konfigurationen, Metriken und vollständigen Konsolenlogs.
-  Die verwendeten Zusatzläufe RT-253s (Fortsetzung) und RT-260s (MLP) liegen dort ebenfalls.
-- [Evaluationsergebnisse und Logs](../auswertung/daten/endstudie_rl_games/evaluation/):
-  Episodentabellen, Manifeste, Prüfsummen und Konsolenlogs.
+## Evaluationsläufe
 
-## Evaluationstabellen
-
-Alle Tabellen liegen einmalig in [scripts/eval/](scripts/eval/), jeweils als
-CSV mit zugehöriger JSON-Metadatendatei.
-
-| Verwendung | Tabelle |
-|---|---|
-| Nominal / final, einschließlich Fixed-DR | [eval_table_seed10_c18.csv](scripts/eval/eval_table_seed10_c18.csv) |
-| Auswahl | [eval_table_seed30_c18.csv](scripts/eval/eval_table_seed30_c18.csv) |
-| Technikprüfung | [eval_table_seed20_c18.csv](scripts/eval/eval_table_seed20_c18.csv) |
-| Grenzfälle | [eval_table_boundary_seed10_c18.csv](scripts/eval/eval_table_boundary_seed10_c18.csv) |
-| OOD | [eval_table_ood_seed10_c18.csv](scripts/eval/eval_table_ood_seed10_c18.csv) |
-
-## Evaluation starten und auswerten
-
-Für die Serien müssen die 15 Epoche-100-Modelle der Läufe RT-242s1–5,
-RT-243s1–5 und RT-244s1–5 unter `models/` liegen. Ohne diesen Ordner verwendet
-der Starter `logs/rl_games/ur5e_insertion/` für eigene Trainingsläufe.
-Mit `-RunRoot "<Ordner mit den 15 Trainingsläufen>"` lässt sich ein anderer
-Speicherort verwenden. Git muss sauber und [eval_plan.md](eval_plan.md)
-committet sein. Jeder Aufruf benötigt eine noch unbenutzte RT-Nummer.
+Diese Aufrufe führen die vollständigen Tests **ohne Fenster** mit den
+Originalmodellen unter `models/` aus. Einzeln ausführen; erforderlich sind
+ein sauberer Git-Stand und noch unbenutzte RT-Nummern. Ergebnisse:
+`results/eval/<Block>/<Methode>_s<Seed>/` (bei Zusatztests mit entsprechendem Suffix).
 
 ```powershell
-# Haupttests: alle drei Methoden, je fünf Seeds.
+# Prüfbereich: Auto-DR / No-DR und Fixed-DR.
 .\scripts\rl_games\run_eval.ps1 -Block T-final -Rt RT-801
-if ($LASTEXITCODE -ne 0) { throw "Evaluation abgebrochen" }
 .\scripts\rl_games\run_eval.ps1 -Block T-final-F -Rt RT-802
-if ($LASTEXITCODE -ne 0) { throw "Evaluation abgebrochen" }
+
+# Nennbedingungen: Auto-DR / No-DR und Fixed-DR.
 .\scripts\rl_games\run_eval.ps1 -Block T-nominal -Rt RT-803
-if ($LASTEXITCODE -ne 0) { throw "Evaluation abgebrochen" }
 .\scripts\rl_games\run_eval.ps1 -Block T-nominal-F -Rt RT-804
-if ($LASTEXITCODE -ne 0) { throw "Evaluation abgebrochen" }
+
 # OOD: Auto-DR und Fixed-DR.
 .\scripts\rl_games\run_eval.ps1 -Block T-ood -Rt RT-805
-if ($LASTEXITCODE -ne 0) { throw "Evaluation abgebrochen" }
-# Verdoppelte Beobachtungsfehler: beide Methoden, jeweils pn2, gx2, py2.
-$rt = 806
-foreach ($block in @('T-final', 'T-final-F')) {
-    foreach ($noise in @('pn2', 'gx2', 'py2')) {
-        .\scripts\rl_games\run_eval.ps1 -Block $block -Noise $noise -Rt "RT-$rt"
-        if ($LASTEXITCODE -ne 0) { throw "Evaluation abgebrochen: RT-$rt" }
-        $rt++
-    }
-}
+
+# Verdoppelte Beobachtungsfehler: Positionsrauschen, Greifversatz, Gierfehler.
+.\scripts\rl_games\run_eval.ps1 -Block T-final -Noise pn2 -Rt RT-806
+.\scripts\rl_games\run_eval.ps1 -Block T-final -Noise gx2 -Rt RT-807
+.\scripts\rl_games\run_eval.ps1 -Block T-final -Noise py2 -Rt RT-808
+.\scripts\rl_games\run_eval.ps1 -Block T-final-F -Noise pn2 -Rt RT-809
+.\scripts\rl_games\run_eval.ps1 -Block T-final-F -Noise gx2 -Rt RT-810
+.\scripts\rl_games\run_eval.ps1 -Block T-final-F -Noise py2 -Rt RT-811
+
+# Auswahl, Grenzfälle der ausgewählten Policy und Technikprüfung.
+.\scripts\rl_games\run_eval.ps1 -Block T-auswahl -Rt RT-812
+.\scripts\rl_games\run_eval.ps1 -Block T-grenze -Final fixeddr_s4 -Rt RT-813
+.\scripts\rl_games\run_eval.ps1 -Block technik -Rt RT-814
 ```
-
-`-DryRun` prüft Tabellen, Git-Stand und Modellpfade ohne Simulation.
-Vorhandene Evaluations- und Ergebnisordner werden nicht überschrieben.
-Geprüfte Läufe werden nach `results/eval/<Block>/<Methode>_s<Seed>[_<Tag>]/`
-kopiert; `-ResultsRoot` ändert dieses Sammelverzeichnis.
-
-Ergänzende Prüfungen: `-Block technik` (Wiederholung), `-Block T-auswahl`
-(alle 15 Policies), `-Block T-grenze -Final fixeddr_s4` (Beispiel: die in den
-archivierten Daten ausgewählte Policy). Jeweils eine eigene `-Rt` angeben.
-
-Für die Statistik eine separate Python-Umgebung anlegen:
-
-```powershell
-python -m venv "..\..\insertion-auswertung-env"
-$evalPython = "..\..\insertion-auswertung-env\Scripts\python.exe"
-& $evalPython -m pip install -r scripts/eval/requirements.txt
-python scripts/eval_collect.py --results results/eval
-if ($LASTEXITCODE -ne 0) { throw "Evaluationsdaten nicht konsistent" }
-& $evalPython scripts/eval_stats.py --results results/eval
-```
-
-Erzeugt `episodes_all.csv`, `collect_report.json`, `summary.json` und
-`summary_tables.csv`. Kraft und Durchdringung werden über alle Versuche
-ausgegeben, die Dauer über erfolgreiche Versuche. Die zusätzliche
-Einzelpolicy-Auswahl benötigt `T-auswahl` und den anschließenden Grenztest;
-ohne diese Blöcke entfällt dieser Teil der Ausgabe.
-
-Archivierte Ergebnisse ohne Simulation erneut auswerten (einmalig kopieren):
-
-```powershell
-$ziel = ".\results\archiv_pruefung"
-if (Test-Path -LiteralPath $ziel) { throw "Ziel existiert bereits" }
-New-Item -ItemType Directory -Path ".\results" -Force | Out-Null
-Copy-Item -LiteralPath "..\auswertung\daten\endstudie_rl_games\evaluation" -Destination $ziel -Recurse
-python scripts/eval_collect.py --results "$ziel"
-if ($LASTEXITCODE -ne 0) { throw "Evaluationsdaten nicht konsistent" }
-& $evalPython scripts/eval_stats.py --results "$ziel"
-```
-
-Für Beobachtungs-/Kontaktanalysen den obigen Modellaufruf um
-`--trace-obs results/trace.json --trace-steps 300` ergänzen und zuvor
-`New-Item -ItemType Directory -Path results -Force` ausführen.
-`python scripts/trace_first_episode.py results/trace.json`,
-`python scripts/trace_outcome_split.py results/trace.json` und
-`python scripts/summarize_trace.py results/trace.json` werten die Aufzeichnung aus.
-
-## Grundlegende Fügeprüfungen
-
-- [scripted_insert.py](scripts/scripted_insert.py): skriptgesteuerte Fügebewegung.
-- [seat_probe.py](scripts/seat_probe.py): Kontaktprüfung in vorgegebenen Einstecktiefen.
-- [check_seated_success.py](scripts/check_seated_success.py): Erfolgs- und Tiefenprüfung.
-- [check_fixture_mesh.py](scripts/check_fixture_mesh.py) und [check_insertion_sdf.py](scripts/check_insertion_sdf.py): Mesh- und Abstandsprüfung.
-
-Die verfügbaren Testoptionen zeigt jeweils `python scripts/<Dateiname>.py --help`.
