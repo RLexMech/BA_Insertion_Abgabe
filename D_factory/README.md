@@ -34,14 +34,13 @@ python -u scripts/rl_games/play.py --task Ur5e-Insertion-Direct-v0 --kit_args=--
 
 ```powershell
 python -B scripts/prepare_view.py table scripts/eval/eval_table_seed10_c18.csv results/view_tables/haupttest.csv --count 4
-python -u scripts/rl_games/play.py --task Ur5e-Insertion-Direct-v0 --kit_args=--/app/vulkan=false --num_envs 4 --seed 100 --max-steps 1500 --checkpoint "$modell" env.dr_mode=table env.dr_table_path=results/view_tables/haupttest.csv env.dr_table_width=target env.obs_wrench_mode=force_prevact env.start_floor_m=0.020 env.pocket_obs_yaw_rad=0.0223402
+python -u scripts/rl_games/play.py --task Ur5e-Insertion-Direct-v0 --kit_args=--/app/vulkan=false --seed 100 --max-steps 1500 --checkpoint "$modell" --dr-table results/view_tables/haupttest.csv env.obs_wrench_mode=force_prevact env.start_floor_m=0.020 env.pocket_obs_yaw_rad=0.0223402
 ```
 
-Die anderen Tests der Arbeit: im zweiten Befehl ändern.
+Verdoppelte Beobachtungsfehler: im zweiten Befehl ändern.
 
 | Test | Änderung |
 |---|---|
-| Test ohne Streuung | `env.dr_table_width=nominal` |
 | Lagefehler verdoppelt | `env.obs_noise_pocket_pos_std_m=0.01` anhängen |
 | Greifversatz verdoppelt | `env.grasp_obs_offset_x_m=0.006` anhängen |
 | Gierfehler verdoppelt | `env.pocket_obs_yaw_rad=0.0446804` |
