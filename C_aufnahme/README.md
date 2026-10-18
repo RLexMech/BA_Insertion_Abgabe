@@ -38,14 +38,14 @@ Der C-Player lädt den gespeicherten Auto-DR-Zustand nicht automatisch; für die
 
 ## 4. Ansehen im Haupttest der Arbeit
 
-Block unverändert einfügen. Jeder der vier Roboter bekommt einen festen Testfall aus der Arbeit.
+Block unverändert einfügen. Jeder der vier Roboter bekommt einen festen Testfall aus der Arbeit. Das ist eine kurze Vorschau: Sie endet automatisch, sobald alle vier Roboter ihren ersten Versuch beendet haben. Die vollständige Evaluation steht in Schritt 6.
 
 ```powershell
 python -B scripts/view_table.py scripts/eval/eval_table_seed10.csv results/view_tables/haupttest.csv --count 4
-python -u scripts/rsl_rl/play.py --task Ur5e-Insertion-Direct-v0 --kit_args=--/app/vulkan=false --device cuda:0 --num_envs 4 --seed 100 --max-steps 300 --checkpoint "$modell" env.dr_mode=table env.dr_table_path=results/view_tables/haupttest.csv env.dr_table_width=target env.start_floor_m=0.020
+python -u scripts/rsl_rl/play.py --task Ur5e-Insertion-Direct-v0 --kit_args=--/app/vulkan=false --device cuda:0 --num_envs 4 --seed 100 --checkpoint "$modell" --eval-table results/view_tables/haupttest.csv --eval-width target --eval-tag "gui-$(Get-Date -Format yyyyMMdd-HHmmss)" env.start_floor_m=0.020
 ```
 
-Test ohne Streuung: im zweiten Befehl `env.dr_table_width=nominal` setzen.
+Test ohne Streuung: im zweiten Befehl `--eval-width nominal` setzen.
 Andere vier Fälle: im ersten Befehl z. B. `--first-row 4` ergänzen und in beiden Befehlen einen neuen Ausgabedateinamen statt `haupttest.csv` verwenden.
 Eigene Bedingungen: an den Befehl aus Schritt 3 z. B. `--fixture-offset 0.01 0 --fixture-tilt 2 --fixture-yaw 1` anhängen (Versatz in Metern, Winkel in Grad).
 
