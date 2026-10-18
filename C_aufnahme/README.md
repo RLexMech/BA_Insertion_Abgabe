@@ -30,7 +30,7 @@ $modell = (Get-ChildItem ".\models\*__${lauf}_*\model_1499.pt").FullName
 Block unverändert einfügen. Ein Fenster mit vier Robotern öffnet sich; die Wiedergabe läuft auf der GPU für 300 Schritte mit `dr_mode=off`.
 
 ```powershell
-python -u scripts/rsl_rl/play.py --task Ur5e-Insertion-Direct-v0 --device cuda:0 --num_envs 4 --seed 1 --max-steps 300 --checkpoint "$modell" env.dr_mode=off env.start_floor_m=0.020
+python -u scripts/rsl_rl/play.py --task Ur5e-Insertion-Direct-v0 --kit_args=--/app/vulkan=false --device cuda:0 --num_envs 4 --seed 1 --max-steps 300 --checkpoint "$modell" env.dr_mode=off env.start_floor_m=0.020
 ```
 
 Zufällige Bedingungen im vollständigen C-Trainingsbereich: `env.dr_mode=off` durch `env.dr_mode=fixed_dr` ersetzen.
@@ -42,7 +42,7 @@ Block unverändert einfügen. Jeder der vier Roboter bekommt einen festen Testfa
 
 ```powershell
 python -B scripts/view_table.py scripts/eval/eval_table_seed10.csv results/view_tables/haupttest.csv --count 4
-python -u scripts/rsl_rl/play.py --task Ur5e-Insertion-Direct-v0 --device cuda:0 --num_envs 4 --seed 100 --max-steps 300 --checkpoint "$modell" env.dr_mode=table env.dr_table_path=results/view_tables/haupttest.csv env.dr_table_width=target env.start_floor_m=0.020
+python -u scripts/rsl_rl/play.py --task Ur5e-Insertion-Direct-v0 --kit_args=--/app/vulkan=false --device cuda:0 --num_envs 4 --seed 100 --max-steps 300 --checkpoint "$modell" env.dr_mode=table env.dr_table_path=results/view_tables/haupttest.csv env.dr_table_width=target env.start_floor_m=0.020
 ```
 
 Test ohne Streuung: im zweiten Befehl `env.dr_table_width=nominal` setzen.
