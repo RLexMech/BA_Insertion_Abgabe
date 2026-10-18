@@ -54,7 +54,8 @@ Die archivierten Daten liegen zentral im Abgabeordner:
 
 - [Trainingsdaten](../auswertung/daten/endstudie_rl_games/trainingslaeufe/):
   RT-242s (Auto-DR), RT-243s (Fixed-DR), RT-244s (No-DR), jeweils Seeds 1–5
-  mit `scalars.csv`, Konfigurationen und Metriken.
+  mit `scalars.csv`, Konfigurationen, Metriken und vollständigen Konsolenlogs.
+  Die verwendeten Zusatzläufe RT-253s (Fortsetzung) und RT-260s (MLP) liegen dort ebenfalls.
 - [Evaluationsergebnisse und Logs](../auswertung/daten/endstudie_rl_games/evaluation/):
   Episodentabellen, Manifeste, Prüfsummen und Konsolenlogs.
 

@@ -5,9 +5,10 @@ Grundlage ist die Datenauswahl `Abgabe\Abbildungen\Quelldaten\` vom 2026-10-11. 
 
 ## Herkunft
 
-Jede Datei steht mit Quelle und sha256 in [HERKUNFT.csv](HERKUNFT.csv). Es gibt 3 Arten:
+Jede Datei steht mit Quelle und sha256 in [HERKUNFT.csv](HERKUNFT.csv). Es gibt 4 Arten:
 - `commit`: Die Datei ist byte-gleich mit der Datei im Commit (Repo `Ur5e_ContactRich_Insertion`, Arbeitskopie `p5-rlgames`).
 - `gitignoriert`: Die Datei ist in keinem Commit (`rt_logs/` ist gitignoriert). Sie ist byte-gleich kopiert. Die sha256 steht in der Tabelle.
+- `zip`: Vollständige Trainings-Konsolenlogs aus den übertragenen ZIP-Archiven. `repo` nennt die ZIP-Datei, `pfad_im_repo` den Eintrag darin. Die Dateien wurden bytegleich übernommen und den vorhandenen Konfigurationen und Messdaten zugeordnet.
 - `erzeugt`: Nur `daten/endstudie_rl_games/evaluation/episodes_all.csv`. Die Datei war nie committet. Sie entsteht mit `scripts/eval_collect.py` aus den Testdaten hier und ist byte-gleich mit der Datei in `Quelldaten`.
 
 `.gitattributes` im Wurzelordner setzt `auswertung/** -text`. Git ändert hier also keine Zeilenenden, und die sha256 bleibt auf jedem Rechner gleich.
@@ -28,7 +29,7 @@ daten/
   endstudie_rl_games/            Endstudie (Kap. 5.2-5.4), rl_games, 100 Epochen
     evaluation/                  alle Test-Läufe der Endstudie, dazu summary.json und episodes_all.csv
     training_auszug/             aus trainingslaeufe/ abgeleitet (curves.csv, penetration.csv, fortsetzung_RT-253.csv)
-    trainingslaeufe/<Lauf>/      je Trainingslauf: scalars.csv, env.yaml, agent.yaml, AutoDR-Zustand, demo_metrics.json
+    trainingslaeufe/<Lauf>/      je Trainingslauf: scalars.csv, env.yaml, agent.yaml, AutoDR-Zustand, demo_metrics.json, Konsolenlog (*.txt)
     testtabelle/                 Testtabelle des Tests außerhalb des Prüfbereichs (+ Sidecar-JSON)
     spuren/                      RT-271 (Spur des Verklemmens) und D8 (Konsolenlog der Bildfolge Abb. 5-4)
   experiment_C_rsl_rl/           Experiment C (Kap. 5.1.2), rsl_rl, 1500 Iterationen
@@ -123,4 +124,4 @@ daten/
 
 - Experiment C hat keine `agent.yaml`. Den Faktor 4096 Policy-Schritte je Iteration liest `eval_figures._log_factor` aus den Zeilen `Total timesteps` im Konsolenlog jedes Laufs.
 - `episodes_all.csv` fehlt für Experiment C. Die Abbildungen 5-a und 5-c brauchen sie nicht.
-- Nicht enthalten: trainierte Modelle (die sha256 jeder getesteten Policy steht in ihrer `eval_manifest.json`), Videos (`.mkv`), `episodes.csv` je Trainingslauf, volle Konsolenlogs der Endstudie.
+- Nicht enthalten: trainierte Modelle (die sha256 jeder getesteten Policy steht in ihrer `eval_manifest.json`), Videos (`.mkv`), `episodes.csv` je Trainingslauf.
