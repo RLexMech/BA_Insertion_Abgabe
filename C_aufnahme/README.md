@@ -1,8 +1,11 @@
-# Experiment C – RSL-RL
+# Experiment C
+
+Jeden grauen Block **komplett** kopieren und in die Anaconda PowerShell einfügen.
+Alle Blöcke im **selben Fenster** ausführen, denn spätere Blöcke nutzen das in Schritt 2 gewählte Modell.
 
 ## 1. Starten
 
-In der eingerichteten Isaac-Lab-Umgebung ausführen; den Ordner bei Bedarf anpassen.
+Block unverändert einfügen. Den Ordner bei Bedarf an den eigenen Rechner anpassen.
 
 ```powershell
 conda activate env_isaaclab
@@ -11,63 +14,70 @@ python -m pip install -e source/insertion
 git lfs pull
 ```
 
-## 2. Die 15 Endmodelle
+## 2. Modell wählen
 
-Originalgewichte nach 1500 Iterationen: `models/<Trainingsordner>/model_1499.pt`.
-Auto-DR: `RT-206s1` bis `RT-206s5`; No-DR: `RT-207s1` bis `RT-207s5`;
-Fixed-DR: `RT-231s1` bis `RT-231s5`. Für ein anderes Modell nur `$lauf` ändern.
+Für ein anderes Modell nur `RT-206s1` in der ersten Zeile ändern, dann den ganzen Block einfügen.
+Möglich sind `RT-206s1` bis `RT-206s5` (Auto-DR), `RT-231s1` bis `RT-231s5` (Fixed-DR), `RT-207s1` bis `RT-207s5` (No-DR).
+Die 15 Originalmodelle liegen unter `models/<Trainingsordner>/model_1499.pt` und werden direkt geladen.
 
 ```powershell
 $lauf = "RT-206s1"
 $modell = (Get-ChildItem ".\models\*__${lauf}_*\model_1499.pt").FullName
 ```
 
-Vier Umgebungen, 300 Schritte, GUI auf der GPU, C-Grundbedingungen (`dr_mode=off`):
+## 3. Modell ansehen
+
+Block unverändert einfügen. Ein Fenster mit vier Robotern öffnet sich; die Wiedergabe läuft auf der GPU für 300 Schritte mit `dr_mode=off`.
 
 ```powershell
 python -u scripts/rsl_rl/play.py --task Ur5e-Insertion-Direct-v0 --device cuda:0 --num_envs 4 --seed 1 --max-steps 300 --checkpoint "$modell" env.dr_mode=off env.start_floor_m=0.020
 ```
 
-## 3. Ansehen unter den Testbedingungen der Arbeit
+Zufällige Bedingungen im vollständigen C-Trainingsbereich: `env.dr_mode=off` durch `env.dr_mode=fixed_dr` ersetzen.
+Der C-Player lädt den gespeicherten Auto-DR-Zustand nicht automatisch; für die Testbedingungen der Arbeit Schritt 4 verwenden.
 
-Vier Fälle des Haupttests. Die Policy bleibt unverändert; `--first-row` wählt
-andere Zeilen der Tabelle (0–996).
+## 4. Ansehen im Haupttest der Arbeit
+
+Block unverändert einfügen. Jeder der vier Roboter bekommt einen festen Testfall aus der Arbeit.
 
 ```powershell
-python -B scripts/view_table.py scripts/eval/eval_table_seed10.csv results/view_tables/haupttest.csv --first-row 0 --count 4
+python -B scripts/view_table.py scripts/eval/eval_table_seed10.csv results/view_tables/haupttest.csv --count 4
 python -u scripts/rsl_rl/play.py --task Ur5e-Insertion-Direct-v0 --device cuda:0 --num_envs 4 --seed 100 --max-steps 300 --checkpoint "$modell" env.dr_mode=table env.dr_table_path=results/view_tables/haupttest.csv env.dr_table_width=target env.start_floor_m=0.020
 ```
 
-Andere Testfälle: Tabelle und Ausgabedateiname im ersten Befehl sowie
-`env.dr_table_path` im zweiten anpassen. Für den Nominaltest nur
-`env.dr_table_width=nominal` setzen.
+Test ohne Streuung: im zweiten Befehl `env.dr_table_width=nominal` setzen.
+Andere vier Fälle: im ersten Befehl z. B. `--first-row 4` ergänzen und in beiden Befehlen einen neuen Ausgabedateinamen statt `haupttest.csv` verwenden.
+Eigene Bedingungen: an den Befehl aus Schritt 3 z. B. `--fixture-offset 0.01 0 --fixture-tilt 2 --fixture-yaw 1` anhängen (Versatz in Metern, Winkel in Grad).
 
-| Test | Tabelle |
-|---|---|
-| Haupttest / Nominaltest | `scripts/eval/eval_table_seed10.csv` |
-| Auswahltest | `scripts/eval/eval_table_seed30.csv` |
-| Grenztest | `scripts/eval/eval_table_boundary_seed10.csv` |
+## 5. Selbst trainieren
 
-Eigene Bedingungen: im Aufruf aus Abschnitt 2 beispielsweise
-`--fixture-offset 0.01 0 --fixture-tilt 2 --fixture-yaw 1` ergänzen
-(Versatz in Metern, Winkel in Grad). `env.dr_mode=fixed_dr` zieht zufällige
-Bedingungen im vollständigen C-Trainingsbereich. `autodr` allein lädt den
-gespeicherten AutoDR-Endzustand nicht; die Testtabellen sind für Vergleiche vorgesehen.
-
-## 4. Die Evaluationsläufe wiederholen
-
-Alle Befehle ohne GUI; jeder Block verwendet die zugehörigen Modelle automatisch.
+Block unverändert einfügen. Trainiert Auto-DR mit Seed 1 für 1500 Iterationen.
 
 ```powershell
-.\scripts\run_eval.ps1 -Block T-auswahl -Rt RT-901
-.\scripts\run_eval.ps1 -Block T-final -Rt RT-902
-.\scripts\run_eval.ps1 -Block T-final-F -Rt RT-903
-.\scripts\run_eval.ps1 -Block T-nominal -Rt RT-904
-.\scripts\run_eval.ps1 -Block T-nominal-F -Rt RT-905
-.\scripts\run_eval.ps1 -Block T-grenze -Rt RT-906
-python scripts/eval_collect.py --results results/eval
+$env:RT_NAME = "RT-206s1"
+python scripts/rsl_rl/train.py --task Ur5e-Insertion-Direct-v0 --headless --num_envs 256 --seed 1 --max_iterations 1500 env.dr_mode=autodr env.start_floor_m=-0.030 env.autodr_stall_buffers=3
 ```
 
-Ergebnisse: `results/eval/`. Erneute Wiederholung: neue RT-Nummern und
-`-ResultsRoot results/eval_wiederholung` verwenden. Nur Befehle prüfen: `-DryRun`.
-Trainingslogs: `training_logs/<RT>/`; Herkunft und Prüfstand: [BESTAND.md](BESTAND.md).
+Fixed-DR: `RT-231s1` und `env.dr_mode=fixed_dr`. No-DR: `RT-207s1` und `env.dr_mode=off`.
+Ansehen: in Schritt 2 `.\models\` durch `.\logs\rsl_rl\ur5e_insertion\` ersetzen und den gewünschten Trainingsordner wählen, falls mehrere Läufe denselben Namen tragen.
+
+## 6. Evaluation der Arbeit wiederholen
+
+Block unverändert einfügen. Das ist der Haupttest von Auto-DR und No-DR (10 Modelle), ohne Fenster.
+
+```powershell
+.\scripts\run_eval.ps1 -Block T-final -Rt RT-902
+```
+
+Die anderen Tests der Arbeit, ebenfalls direkt kopierbar:
+
+| Test | Aufruf |
+|---|---|
+| Auswahltest | `.\scripts\run_eval.ps1 -Block T-auswahl -Rt RT-901` |
+| Haupttest Fixed-DR | `.\scripts\run_eval.ps1 -Block T-final-F -Rt RT-903` |
+| Test ohne Streuung Auto-DR / No-DR | `.\scripts\run_eval.ps1 -Block T-nominal -Rt RT-904` |
+| Test ohne Streuung Fixed-DR | `.\scripts\run_eval.ps1 -Block T-nominal-F -Rt RT-905` |
+| Grenztest, Auto-DR Seed 1 | `.\scripts\run_eval.ps1 -Block T-grenze -Rt RT-906` |
+
+Ergebnisse: `results/eval/`. Für eine erneute Wiederholung neue `-Rt`-Nummern und `-ResultsRoot results/eval_wiederholung` verwenden.
+Die vollständigen Trainingslogs liegen unter `training_logs/<RT>/`.
