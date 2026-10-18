@@ -1,0 +1,59 @@
+{
+  "autodr": {
+    "advance_at": 0.8,
+    "bounds_version": 15,
+    "buf_n": {
+      "start_height_floor": 86,
+      "start_height_hi": 7
+    },
+    "buf_s": {
+      "start_height_floor": 62,
+      "start_height_hi": 7
+    },
+    "buffer_m": 240,
+    "dims": [
+      {
+        "centre": 0.02,
+        "hi_max": 0.12,
+        "lo_max": 0.02,
+        "n_steps": 10,
+        "name": "start_height",
+        "one_sided": true,
+        "source": "[TESTWERT] hi = Phase-5 ceiling, decided not derived -- D-179 (1); lo = the centre H_min, not yet measured -- D-179 (4)",
+        "unit": "m"
+      }
+    ],
+    "dropped": {
+      "start_height_floor": 5,
+      "start_height_hi": 737
+    },
+    "floor": {
+      "f0": -0.03,
+      "n_steps": 5,
+      "top": 0.02
+    },
+    "format": "autodr-3",
+    "holds": {
+      "start_height_floor": 0,
+      "start_height_hi": 0
+    },
+    "keys": [
+      "start_height_hi",
+      "start_height_floor"
+    ],
+    "last_rate": {
+      "start_height_floor": 0.8416666666666667,
+      "start_height_hi": 0.9875
+    },
+    "p_boundary": 0.5,
+    "retreat_at": 0.1,
+    "stall_buffers": 3,
+    "steps": {
+      "start_height_floor": 5,
+      "start_height_hi": 10
+    }
+  },
+  "format": "autodr-sidecar-1",
+  "run": "09-17_09-58-45__RT-207s1_offset5mm_currOFF_start+20mm_floor-30mm_seed1",
+  "seed": 1
+}

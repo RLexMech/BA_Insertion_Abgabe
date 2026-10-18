@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+*.egg-info/
+logs/
+rt_logs/
+results/
+videos/
+models/**/replay/
+models/**/replay_*/
+models/**/exported/
+models/**/eval_*/

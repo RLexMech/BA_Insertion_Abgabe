@@ -2,3 +2,10 @@
 *.sh text eol=lf
 # Preserve evaluation-table bytes for stable SHA-256 checksums.
 scripts/eval/*.csv -text
+
+# Original checkpoints and large training episode tables.
+models/**/*.pt filter=lfs diff=lfs merge=lfs -text
+training_logs/**/episodes.csv filter=lfs diff=lfs merge=lfs -text
+models/** -text
+training_logs/** -text
+source/insertion/insertion/tasks/direct/insertion/assets/** -text

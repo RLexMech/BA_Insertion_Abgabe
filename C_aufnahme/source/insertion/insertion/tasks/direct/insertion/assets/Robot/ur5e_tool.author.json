@@ -1,0 +1,462 @@
+{
+  "marker": "author_tool_ur5e-2026-08-23b",
+  "source": "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/5.1/Isaac/Robots/UniversalRobots/ur5e/ur5e.usd",
+  "tool_asset": "C:\\Users\\Simon\\Desktop\\Alexander_Pett\\temp\\Contactrich_Insertion\\Phase1_Szenenaufbau_v1\\source\\insertion\\insertion\\tasks\\direct\\insertion\\assets\\Werkzeug\\greifer_bauteil_asm.usd",
+  "output": "C:\\Users\\Simon\\Desktop\\Alexander_Pett\\temp\\Contactrich_Insertion\\Phase1_Szenenaufbau_v1\\source\\insertion\\insertion\\tasks\\direct\\insertion\\assets\\Robot\\ur5e_tool.usd",
+  "candidate": "C:\\Users\\Simon\\Desktop\\Alexander_Pett\\temp\\Contactrich_Insertion\\Phase1_Szenenaufbau_v1\\source\\insertion\\insertion\\tasks\\direct\\insertion\\assets\\Robot\\ur5e_tool.candidate.usd",
+  "backup": "C:\\Users\\Simon\\Desktop\\Alexander_Pett\\temp\\Contactrich_Insertion\\Phase1_Szenenaufbau_v1\\source\\insertion\\insertion\\tasks\\direct\\insertion\\assets\\Robot\\ur5e_tool.usd.bak",
+  "part_mass_kg": 0.539,
+  "gripper_mass_kg": 0.285,
+  "authored": {
+    "tool_link": "/ur5e/tool_link",
+    "reference_prim": "/ur5e/tool_link/tool",
+    "referenced_asset": "C:\\Users\\Simon\\Desktop\\Alexander_Pett\\temp\\Contactrich_Insertion\\Phase1_Szenenaufbau_v1\\source\\insertion\\insertion\\tasks\\direct\\insertion\\assets\\Werkzeug\\greifer_bauteil_asm.usd",
+    "part_geom": "/ur5e/tool_link/tool/greifer_bauteil_asm/FUEGETEIL/Mesh",
+    "gripper_prim": "/ur5e/tool_link/tool/greifer_bauteil_asm/GREIFER_V1",
+    "joint": "/ur5e/tool_weld",
+    "mass_kg": 0.8240000000000001,
+    "centre_of_mass_m": [
+      -0.0008927846832524272,
+      -0.00040469050364077663,
+      0.10320046397451454
+    ],
+    "yaw_rad": 0.0,
+    "sdf_resolution": 1024
+  },
+  "before": {
+    "default_prim": "/ur5e",
+    "meters_per_unit": 1.0,
+    "up_axis": "Z",
+    "rigid_body_count": 7,
+    "rigid_bodies": [
+      "/ur5e/base_link",
+      "/ur5e/shoulder_link",
+      "/ur5e/upper_arm_link",
+      "/ur5e/forearm_link",
+      "/ur5e/wrist_1_link",
+      "/ur5e/wrist_2_link",
+      "/ur5e/wrist_3_link"
+    ],
+    "joint_count": 8,
+    "joints": [
+      "/ur5e/joints/robot_gripper_joint",
+      "/ur5e/joints/shoulder_pan_joint",
+      "/ur5e/joints/shoulder_lift_joint",
+      "/ur5e/joints/elbow_joint",
+      "/ur5e/joints/wrist_1_joint",
+      "/ur5e/joints/wrist_2_joint",
+      "/ur5e/joints/wrist_3_joint",
+      "/ur5e/root_joint"
+    ],
+    "articulation_roots": [
+      "/ur5e/root_joint"
+    ],
+    "external_arcs": [
+      "../../Robotiq/2F-85/Robotiq_2F_85_edit.usd",
+      "configuration/ur5e_base.usd",
+      "configuration/ur5e_physics.usd",
+      "configuration/ur5e_robot_schema.usd",
+      "configuration/ur5e_sensor.usd"
+    ]
+  },
+  "after": {
+    "default_prim": "/ur5e",
+    "meters_per_unit": 1.0,
+    "up_axis": "Z",
+    "rigid_body_count": 8,
+    "rigid_bodies": [
+      "/ur5e/base_link",
+      "/ur5e/shoulder_link",
+      "/ur5e/upper_arm_link",
+      "/ur5e/forearm_link",
+      "/ur5e/wrist_1_link",
+      "/ur5e/wrist_2_link",
+      "/ur5e/wrist_3_link",
+      "/ur5e/tool_link"
+    ],
+    "joint_count": 9,
+    "joints": [
+      "/ur5e/joints/robot_gripper_joint",
+      "/ur5e/joints/shoulder_pan_joint",
+      "/ur5e/joints/shoulder_lift_joint",
+      "/ur5e/joints/elbow_joint",
+      "/ur5e/joints/wrist_1_joint",
+      "/ur5e/joints/wrist_2_joint",
+      "/ur5e/joints/wrist_3_joint",
+      "/ur5e/root_joint",
+      "/ur5e/tool_weld"
+    ],
+    "articulation_roots": [
+      "/ur5e/root_joint"
+    ],
+    "external_arcs": [],
+    "measured": {
+      "tool_local_z_range_m": [
+        -1.1399814317305738e-15,
+        0.15200399261616881
+      ],
+      "tool_local_size_m": [
+        0.0964087706668238,
+        0.14350002367252965,
+        0.15200399261616995
+      ],
+      "part_local_size_m": [
+        0.09640874557648531,
+        0.14350000681588987,
+        0.05051407100282368
+      ],
+      "part_local_z_range_m": [
+        0.10148992161334522,
+        0.1520039926161689
+      ],
+      "mass_kg": 0.8240000009536743,
+      "centre_of_mass_m": [
+        -0.0008927846793085337,
+        -0.00040469050873070955,
+        0.10320046544075012
+      ],
+      "diagonal_inertia_authored": false,
+      "diagonal_inertia": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "part_approximation": "sdf",
+      "tool_pose_delta_max": 0.0,
+      "joint_targets": [
+        "/ur5e/wrist_3_link",
+        "/ur5e/tool_link"
+      ],
+      "gripper_collider_prims": []
+    }
+  },
+  "checks": {
+    "units_are_metres": true,
+    "up_axis_is_z": true,
+    "tool_link_exists": true,
+    "tool_link_is_rigid_body": true,
+    "tool_mass_correct": true,
+    "tool_com_correct": true,
+    "diagonal_inertia_left_to_physx": true,
+    "part_mesh_found": true,
+    "part_has_collision": true,
+    "part_approximation_is_sdf": true,
+    "part_has_sdf_api": true,
+    "gripper_has_no_collision": true,
+    "part_size_matches_cad": true,
+    "tool_spans_flange_to_part_bottom": true,
+    "tool_link_pose_matches_flange": true,
+    "weld_joint_exists": true,
+    "weld_targets_flange_and_tool": true,
+    "one_new_rigid_body": true,
+    "one_new_joint": true,
+    "articulation_roots_unchanged": true,
+    "self_contained": true
+  },
+  "verdict": "PASS",
+  "harness": "checks-2026-08-24c",
+  "claims": {
+    "units_are_metres": {
+      "kind": "preservation",
+      "why": "The weld must not touch the stage unit declaration; a mm robot would be 1000x.",
+      "expect_before": "PASS",
+      "result": "PASS",
+      "mutation": {
+        "name": "stage_units_mm",
+        "flips": [
+          "units_are_metres"
+        ]
+      }
+    },
+    "up_axis_is_z": {
+      "kind": "preservation",
+      "why": "Same: the up axis is the shipped robot's and the weld must leave it alone.",
+      "expect_before": "PASS",
+      "result": "PASS",
+      "mutation": {
+        "name": "up_axis_y",
+        "flips": [
+          "up_axis_is_z"
+        ]
+      }
+    },
+    "tool_link_exists": {
+      "kind": "invariance",
+      "why": "The link the whole weld is about.",
+      "expect_before": "FAIL",
+      "result": "PASS",
+      "mutation": {
+        "unprovable": "every other check in this suite reads THROUGH this prim, so any mutation that removes it flips the entire table and proves nothing about this check in particular. Its failure is covered by the 18 checks that cannot be evaluated without it."
+      }
+    },
+    "tool_link_is_rigid_body": {
+      "kind": "invariance",
+      "why": "A welded link that is not a rigid body is geometry, not a body PhysX simulates.",
+      "expect_before": "FAIL",
+      "result": "PASS",
+      "mutation": {
+        "name": "strip_rigid_body_api",
+        "flips": [
+          "tool_link_is_rigid_body",
+          "one_new_rigid_body"
+        ]
+      }
+    },
+    "tool_mass_correct": {
+      "kind": "api-shape",
+      "why": "The sum of the two weighings, read back through a float32 attribute (D-079).",
+      "expect_before": "FAIL",
+      "result": "PASS",
+      "probe": {
+        "run": "RT-15",
+        "script": "scripts/diagnose_tool_candidate.py",
+        "question": "Q1 control",
+        "found": "physics:mass reads back 0.8240000009536743 for an authored 0.824 -- USD stores it as float32, so the comparison must be relative"
+      },
+      "mutation": {
+        "name": "clear_mass",
+        "flips": [
+          "tool_mass_correct"
+        ]
+      }
+    },
+    "tool_com_correct": {
+      "kind": "api-shape",
+      "why": "Mass-weighted from the two CAD centroids (D-079); same float32 read-back.",
+      "expect_before": "FAIL",
+      "result": "PASS",
+      "probe": {
+        "run": "RT-15",
+        "script": "scripts/diagnose_tool_candidate.py",
+        "question": "Q1 control",
+        "found": "physics:mass reads back 0.8240000009536743 for an authored 0.824 -- USD stores it as float32, so the comparison must be relative"
+      },
+      "mutation": {
+        "name": "shift_centre_of_mass",
+        "flips": [
+          "tool_com_correct"
+        ]
+      }
+    },
+    "diagonal_inertia_left_to_physx": {
+      "kind": "api-shape",
+      "why": "D-079 leaves the tensor to PhysX. This is the check that was WRONG in RT-13: it asserted Get() is None, which USD never returns for an attribute that has a schema fallback.",
+      "expect_before": "FAIL",
+      "result": "PASS",
+      "probe": {
+        "run": "RT-15",
+        "script": "scripts/diagnose_tool_candidate.py",
+        "question": "Q1",
+        "found": "HasAuthoredValue=False with resolve source Usd.ResolveInfoSourceFallback; physics:mass and physics:centerOfMass report True as controls"
+      },
+      "mutation": {
+        "name": "author_diagonal_inertia",
+        "flips": [
+          "diagonal_inertia_left_to_physx"
+        ]
+      }
+    },
+    "part_mesh_found": {
+      "kind": "invariance",
+      "why": "The mesh the collider goes on.",
+      "expect_before": "FAIL",
+      "result": "PASS",
+      "mutation": {
+        "unprovable": "same cascade as tool_link_exists: the five part checks all resolve through this prim, so removing it says nothing about this check alone."
+      }
+    },
+    "part_has_collision": {
+      "kind": "invariance",
+      "why": "Without a collider the part passes straight through the fixture.",
+      "expect_before": "FAIL",
+      "result": "PASS",
+      "mutation": {
+        "name": "strip_collision_api",
+        "flips": [
+          "part_has_collision"
+        ]
+      }
+    },
+    "part_approximation_is_sdf": {
+      "kind": "arithmetic",
+      "why": "D-077: convex hull is ruled out by the lugs, so the approximation must read sdf.",
+      "expect_before": "FAIL",
+      "result": "PASS",
+      "mutation": {
+        "name": "convex_hull",
+        "flips": [
+          "part_approximation_is_sdf"
+        ]
+      }
+    },
+    "part_has_sdf_api": {
+      "kind": "invariance",
+      "why": "The token alone is not the collider; the PhysX schema carries the resolution.",
+      "expect_before": "FAIL",
+      "result": "PASS",
+      "mutation": {
+        "name": "strip_sdf_api",
+        "flips": [
+          "part_has_sdf_api"
+        ]
+      }
+    },
+    "gripper_has_no_collision": {
+      "kind": "invariance",
+      "why": "D-077: the adapter overlaps the part by 24.5 mm, so a collider there would fight the part inside the same body.",
+      "expect_before": "FAIL",
+      "result": "PASS",
+      "mutation": {
+        "name": "collide_the_gripper",
+        "flips": [
+          "gripper_has_no_collision"
+        ]
+      }
+    },
+    "part_size_matches_cad": {
+      "kind": "arithmetic",
+      "why": "The imported part must still measure what the CAD says (D-073/D-075).",
+      "expect_before": "FAIL",
+      "result": "PASS",
+      "mutation": {
+        "name": "scale_part_xform",
+        "flips": [
+          "part_size_matches_cad",
+          "tool_spans_flange_to_part_bottom"
+        ]
+      }
+    },
+    "tool_spans_flange_to_part_bottom": {
+      "kind": "arithmetic",
+      "why": "The wrong-side test: welded upside down, every edge length still measures right. REACH, measured in RT-21 rather than assumed: this sees a flip about the FLANGE origin, which is the weld defect it exists for. It is BLIND to the part being flipped about its OWN centre -- an axis-aligned box is the same box either way. That case would put the lugs and the chamfer on the wrong side and no check here would notice; it needs a geometric feature, not a bound. Named as PART_FLIPPED_IN_PLACE in TOOL_CHAIN_PENDING.",
+      "expect_before": "FAIL",
+      "result": "PASS",
+      "mutation": {
+        "name": "flip_tool_ref",
+        "flips": [
+          "tool_spans_flange_to_part_bottom"
+        ]
+      }
+    },
+    "tool_link_pose_matches_flange": {
+      "kind": "arithmetic",
+      "why": "tool_link must reproduce the flange's world transform, spun by the weld yaw (D-078, zero today). No bound measurement can see this: RT-17 measured that ComputeRelativeBound(tool, tool) ignores the link's own xform ops.",
+      "expect_before": "FAIL",
+      "result": "PASS",
+      "mutation": {
+        "name": "flip_tool_link",
+        "flips": [
+          "tool_link_pose_matches_flange"
+        ]
+      }
+    },
+    "weld_joint_exists": {
+      "kind": "invariance",
+      "why": "D-018/D-019: the joint must exist at AUTHORING time, not at runtime.",
+      "expect_before": "FAIL",
+      "result": "PASS",
+      "mutation": {
+        "name": "remove_weld_joint",
+        "flips": [
+          "weld_joint_exists",
+          "weld_targets_flange_and_tool",
+          "one_new_joint"
+        ]
+      }
+    },
+    "weld_targets_flange_and_tool": {
+      "kind": "invariance",
+      "why": "A joint that exists but joins the wrong two bodies is the D-018 failure again.",
+      "expect_before": "FAIL",
+      "result": "PASS",
+      "mutation": {
+        "name": "retarget_weld_body0",
+        "flips": [
+          "weld_targets_flange_and_tool"
+        ]
+      }
+    },
+    "one_new_rigid_body": {
+      "kind": "invariance",
+      "why": "D-076: the tool is ONE link. Two would be a second body nobody asked for.",
+      "expect_before": "FAIL",
+      "result": "PASS",
+      "mutation": {
+        "name": "add_spare_rigid_body",
+        "flips": [
+          "one_new_rigid_body"
+        ]
+      }
+    },
+    "one_new_joint": {
+      "kind": "invariance",
+      "why": "Exactly the weld, and nothing else.",
+      "expect_before": "FAIL",
+      "result": "PASS",
+      "mutation": {
+        "name": "add_spare_joint",
+        "flips": [
+          "one_new_joint"
+        ]
+      }
+    },
+    "articulation_roots_unchanged": {
+      "kind": "preservation",
+      "why": "D-018/D-019: the Robot Assembler STRIPPED the ArticulationRootAPI. This asserts the weld does not repeat that, so it must hold before AND after -- that is the claim, not a weakness in it.",
+      "expect_before": "PASS",
+      "result": "PASS",
+      "mutation": {
+        "name": "add_articulation_root",
+        "flips": [
+          "articulation_roots_unchanged"
+        ]
+      }
+    },
+    "self_contained": {
+      "kind": "api-shape",
+      "why": "An arc to a file the training machine does not have spawns an INVISIBLE asset (2026-07-26). The other check RT-13 got wrong: it counted the empty path too.",
+      "expect_before": "FAIL",
+      "result": "PASS",
+      "probe": {
+        "run": "RT-15",
+        "script": "scripts/diagnose_tool_candidate.py",
+        "question": "Q2/Q3",
+        "found": "a flattened layer reports exactly one composition dependency and its path is the empty string; the SHIPPED UR5e alone does the same, with no tool involved"
+      },
+      "mutation": {
+        "name": "add_external_reference",
+        "flips": [
+          "self_contained"
+        ]
+      }
+    }
+  },
+  "before_table": {
+    "units_are_metres": "PASS",
+    "up_axis_is_z": "PASS",
+    "tool_link_exists": "FAIL",
+    "tool_link_is_rigid_body": "FAIL",
+    "tool_mass_correct": "FAIL",
+    "tool_com_correct": "FAIL",
+    "diagonal_inertia_left_to_physx": "FAIL",
+    "part_mesh_found": "FAIL",
+    "part_has_collision": "FAIL",
+    "part_approximation_is_sdf": "FAIL",
+    "part_has_sdf_api": "FAIL",
+    "gripper_has_no_collision": "FAIL",
+    "part_size_matches_cad": "FAIL",
+    "tool_spans_flange_to_part_bottom": "FAIL",
+    "tool_link_pose_matches_flange": "FAIL",
+    "weld_joint_exists": "FAIL",
+    "weld_targets_flange_and_tool": "FAIL",
+    "one_new_rigid_body": "FAIL",
+    "one_new_joint": "FAIL",
+    "articulation_roots_unchanged": "PASS",
+    "self_contained": "FAIL"
+  },
+  "claims_audit": [
+    "NOTE: tool_link_exists is declared unprovable -- every other check in this suite reads THROUGH this prim, so any mutation that removes it flips the entire table and proves nothing about this check in particular. Its failure is covered by the 18 checks that cannot be evaluated without it.",
+    "NOTE: part_mesh_found is declared unprovable -- same cascade as tool_link_exists: the five part checks all resolve through this prim, so removing it says nothing about this check alone."
+  ],
+  "measured_values": {}
+}

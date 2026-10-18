@@ -1,0 +1,110 @@
+{
+  "source": "Phase5_Robustheit_v1",
+  "models": [
+    {
+      "run_id": "RT-206s1",
+      "folder": "09-15_13-50-36__RT-206s1_autodr_offset5mm_currOFF_start+20mm_floor-30mm_seed1",
+      "checkpoint": "model_1499.pt",
+      "sha256": "b7e4ca87516d332a2e5ed4aea1e8f0040cc9ba3cf61f26940af8c47523d66394",
+      "method": "autodr"
+    },
+    {
+      "run_id": "RT-206s2",
+      "folder": "09-15_18-05-48__RT-206s2_autodr_offset5mm_currOFF_start+20mm_floor-30mm_seed2",
+      "checkpoint": "model_1499.pt",
+      "sha256": "821794595d73469550d4cdc7ace841165a3aed16f662b69495b0576f4085c537",
+      "method": "autodr"
+    },
+    {
+      "run_id": "RT-206s3",
+      "folder": "09-16_02-12-05__RT-206s3_autodr_offset5mm_currOFF_start+20mm_floor-30mm_seed3",
+      "checkpoint": "model_1499.pt",
+      "sha256": "8a3cf5f9540a0f0c71377e191d3f9b00a436322975b179391e798cb05d48bc3f",
+      "method": "autodr"
+    },
+    {
+      "run_id": "RT-206s4",
+      "folder": "09-16_15-10-35__RT-206s4_autodr_offset5mm_currOFF_start+20mm_floor-30mm_seed4",
+      "checkpoint": "model_1499.pt",
+      "sha256": "ea31716c1e3d55c9358c50828c394230fc00270d40842d3ae8c38cddba15aa0d",
+      "method": "autodr"
+    },
+    {
+      "run_id": "RT-206s5",
+      "folder": "09-17_00-05-01__RT-206s5_autodr_offset5mm_currOFF_start+20mm_floor-30mm_seed5",
+      "checkpoint": "model_1499.pt",
+      "sha256": "92824ddd000b48c8e2e129e2577b333fbb773911ca93369ac6669539135dc403",
+      "method": "autodr"
+    },
+    {
+      "run_id": "RT-207s1",
+      "folder": "09-17_09-58-45__RT-207s1_offset5mm_currOFF_start+20mm_floor-30mm_seed1",
+      "checkpoint": "model_1499.pt",
+      "sha256": "a444c39ca54e498e6d930175961cb0278ecf098467ec20602b20fe44b895143d",
+      "method": "nodr"
+    },
+    {
+      "run_id": "RT-207s2",
+      "folder": "09-17_16-03-29__RT-207s2_offset5mm_currOFF_start+20mm_floor-30mm_seed2",
+      "checkpoint": "model_1499.pt",
+      "sha256": "6a471014f70d96d16f7a6afc7db843eef262a11d87f510d3f1f6fed2b75c4c3b",
+      "method": "nodr"
+    },
+    {
+      "run_id": "RT-207s3",
+      "folder": "09-17_22-41-29__RT-207s3_offset5mm_currOFF_start+20mm_floor-30mm_seed3",
+      "checkpoint": "model_1499.pt",
+      "sha256": "f1e40a3dbeb6f528f1b1869b45ae71cc27d59c6b1fc92a3acbcb54f8cd08d610",
+      "method": "nodr"
+    },
+    {
+      "run_id": "RT-207s4",
+      "folder": "09-18_12-38-12__RT-207s4_offset5mm_currOFF_start+20mm_floor-30mm_seed4",
+      "checkpoint": "model_1499.pt",
+      "sha256": "8e194f8ee0bf4efebd13c5c741b3d40c66488d96d0d4902279ad9e366458ad8a",
+      "method": "nodr"
+    },
+    {
+      "run_id": "RT-207s5",
+      "folder": "09-18_20-38-33__RT-207s5_offset5mm_currOFF_start+20mm_floor-30mm_seed5",
+      "checkpoint": "model_1499.pt",
+      "sha256": "9019d28e1b164f068f0b57146b8c6818c977e0e4e8fd785854d1710eebf2174c",
+      "method": "nodr"
+    },
+    {
+      "run_id": "RT-231s1",
+      "folder": "09-24_02-23-58__RT-231s1_fixed_dr_offset5mm_currOFF_start+20mm_floor-30mm_seed1",
+      "checkpoint": "model_1499.pt",
+      "sha256": "51e9e74dc1e3aaf6302e6615b6c1da317a5f2a818bec8e443ea071ae359fe11d",
+      "method": "fixeddr"
+    },
+    {
+      "run_id": "RT-231s2",
+      "folder": "09-24_05-34-28__RT-231s2_fixed_dr_offset5mm_currOFF_start+20mm_floor-30mm_seed2",
+      "checkpoint": "model_1499.pt",
+      "sha256": "d720cf0c17e41c8006ffe838eba0b8bd96e6cea5899624256694e31b2bb483b7",
+      "method": "fixeddr"
+    },
+    {
+      "run_id": "RT-231s3",
+      "folder": "09-24_08-07-07__RT-231s3_fixed_dr_offset5mm_currOFF_start+20mm_floor-30mm_seed3",
+      "checkpoint": "model_1499.pt",
+      "sha256": "f3136fff1e458a824510c5440bc7af07eda8a909798f093bc80ffc3f2b695067",
+      "method": "fixeddr"
+    },
+    {
+      "run_id": "RT-231s4",
+      "folder": "09-24_11-18-12__RT-231s4_fixed_dr_offset5mm_currOFF_start+20mm_floor-30mm_seed4",
+      "checkpoint": "model_1499.pt",
+      "sha256": "c860a0f895e8ef1ab033c84af4084c2d1cf20bca0dd47624b06baefedcffc7ed",
+      "method": "fixeddr"
+    },
+    {
+      "run_id": "RT-231s5",
+      "folder": "09-24_14-51-40__RT-231s5_fixed_dr_offset5mm_currOFF_start+20mm_floor-30mm_seed5",
+      "checkpoint": "model_1499.pt",
+      "sha256": "441b34d649f3dd33f9d890f4f5dca13f5d659b93076ade32736aad275fd00a50",
+      "method": "fixeddr"
+    }
+  ]
+}

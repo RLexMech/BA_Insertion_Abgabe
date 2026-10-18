@@ -1,0 +1,45 @@
+{
+  "schema": "episodes-v1",
+  "code_marker": "insertion-osc-2026-09-03a",
+  "columns": {
+    "run": "run folder name (timestamp + RT name)",
+    "seed": "cfg.seed of the run",
+    "iteration": "PPO iteration the episode ENDED in: (common_step_counter - 1) // rollout_steps_per_iteration; -1 if train.py did not hand the length over",
+    "env_id": "index of the parallel env",
+    "episode": "0-based count of the episodes THIS env had finished before",
+    "outcome": "success | force_abort | timeout | other, tested in that order",
+    "steps": "episode_length_buf at the end = policy steps (see first_episode_random_length)",
+    "ip_max_mm": "max over the episode's policy steps of (max over the sample points) of the SAPU interpenetration, mm",
+    "ip_steps_ge_t1": "policy steps with that per-step maximum >= t1 (insertion_math.interpen_unclean); divided by steps = time share",
+    "force_max_filtered_n": "max over the episode of |EMA-smoothed tared force|, N; the signal the force abort reads",
+    "force_max_raw_n": "max over the episode of |tared unsmoothed force|, N, before observation noise",
+    "bounds_version": "AutoDR bounds version the episode STARTED under; -1 without a provider",
+    "dr_phase": "AutoDR phase when the episode ENDED (floor | dr); none without a provider"
+  },
+  "interpenetration": {
+    "method": "Warp mesh query, insertion_sdf.SdfDistanceQuery.interpen_distances -> insertion_math.max_interpen_dist (SAPU port, D-109 (10)); not a PhysX reading",
+    "body_pair": "part surface sample points (fuegeteil.obj, tool_link frame) against the fixture mesh (aufnahme.obj, entrance-anchored pocket frame). The gripper has no collider (D-077); the table is not queried.",
+    "sample_points": 64000,
+    "sample_seed": 0,
+    "query_max_dist_m": 1.5,
+    "unit": "mm",
+    "rate_hz": 15.0,
+    "physics_rate_hz": 120.0,
+    "decimation": 8,
+    "sampling_note": "read once per policy step; the physics steps in between are not seen",
+    "t1_mm": 0.2938000000000038,
+    "t1_meaning": "ALGORITHMIC acceptance threshold of this code, INTERPEN_THRESH = 0.5 * PLAY_X (D-106 (3)): at or above it the SAPU scale is zero and no success can fire. NOT a physically admissible penetration.",
+    "mesh_note": "the fixture mesh is not watertight (RT-64); the reading at known separated and overlapping poses is check_insertion_sdf.py --pose-ladder"
+  },
+  "force": {
+    "abort_limit_n": 30.0,
+    "ema_factor": 0.25
+  },
+  "rollout_steps_per_iteration": 16,
+  "episode_cap_steps": 256,
+  "first_episode_random_length": "train.py calls runner.learn(init_at_random_ep_len=True): episode 0 of every env starts at a random step count, so its steps is not its length",
+  "num_envs": 256,
+  "dr_mode": "autodr",
+  "obs_wrench_mode": "force",
+  "spawn_workcell_block": false
+}

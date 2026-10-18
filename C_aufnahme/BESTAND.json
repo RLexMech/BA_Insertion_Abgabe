@@ -1,0 +1,798 @@
+{
+  "archive": "C_Bestand_20261018_222256_056264.zip",
+  "recorded_versions": {
+    "numpy": "2.4.6",
+    "torch": "2.7.0+cu118",
+    "rsl-rl-lib": "3.0.1",
+    "isaaclab": "2.3.2.post1",
+    "isaacsim": "5.1.0.0",
+    "insertion": "0.1.0"
+  },
+  "files": [
+    {
+      "file": "models/09-15_13-50-36__RT-206s1_autodr_offset5mm_currOFF_start+20mm_floor-30mm_seed1/model_1499.pt",
+      "source": "models/09-15_13-50-36__RT-206s1_autodr_offset5mm_currOFF_start+20mm_floor-30mm_seed1/model_1499.pt",
+      "sha256": "b7e4ca87516d332a2e5ed4aea1e8f0040cc9ba3cf61f26940af8c47523d66394"
+    },
+    {
+      "file": "models/09-15_13-50-36__RT-206s1_autodr_offset5mm_currOFF_start+20mm_floor-30mm_seed1/autodr_1499.json",
+      "source": "training/RT-206s1/autodr_1499.json",
+      "sha256": "b6b09728488983d7c92cbdeb9ef522bbe31c482470c3d41210b86beae41d628e"
+    },
+    {
+      "file": "training_logs/RT-206s1/demo_metrics.json",
+      "source": "training/RT-206s1/demo_metrics.json",
+      "sha256": "e3cb0f5b1d51c6e3ecc17b74e5af6fb0ce549bd9ca88fd0c8caeac53427726f8"
+    },
+    {
+      "file": "training_logs/RT-206s1/episodes.csv",
+      "source": "training/RT-206s1/episodes.csv",
+      "sha256": "91536727dd26e7fa9ec4807c1a4ba2b2a100358dd5907ad871af3990e2d57039"
+    },
+    {
+      "file": "training_logs/RT-206s1/episodes_meta.json",
+      "source": "training/RT-206s1/episodes_meta.json",
+      "sha256": "215f2a9c2cc9ef56eebb91be5993fcd25c1806f3a3059167f1dff9c433cb6016"
+    },
+    {
+      "file": "training_logs/RT-206s1/scalars.csv",
+      "source": "training/RT-206s1/scalars.csv",
+      "sha256": "9764edfaf9f480f3e4a7c100c41802ef0968a3986be29f8edf372eb9aab9e8bd"
+    },
+    {
+      "file": "models/09-15_13-50-36__RT-206s1_autodr_offset5mm_currOFF_start+20mm_floor-30mm_seed1/params/agent.yaml",
+      "source": "training/RT-206s1/params/agent.yaml",
+      "sha256": "97cc3191c733766e9d2db1ac2ea162c1bc9c99a7e981cf793698d42e22d20abd"
+    },
+    {
+      "file": "models/09-15_13-50-36__RT-206s1_autodr_offset5mm_currOFF_start+20mm_floor-30mm_seed1/params/env.yaml",
+      "source": "training/RT-206s1/params/env.yaml",
+      "sha256": "1c6bf9518e43def7bfee17a3ab83b102d7bf811b9cf562da5f09764e5b781e1e"
+    },
+    {
+      "file": "training_logs/RT-206s1/RT-206s1.txt",
+      "source": "logs/logs/rsl_rl/ur5e_insertion/09-15_13-50-36__RT-206s1_autodr_offset5mm_currOFF_start+20mm_floor-30mm_seed1/RT-206s1.txt",
+      "source_sha256": "69ee353f695230a1b2090f0cab09f7d8a5440caa66c2bec490196f21b5dd7ac7",
+      "byte_start": 0,
+      "byte_end_exclusive": 6019721,
+      "sha256": "69ee353f695230a1b2090f0cab09f7d8a5440caa66c2bec490196f21b5dd7ac7",
+      "iterations": 1500,
+      "exit_code": 0
+    },
+    {
+      "file": "models/09-15_18-05-48__RT-206s2_autodr_offset5mm_currOFF_start+20mm_floor-30mm_seed2/model_1499.pt",
+      "source": "models/09-15_18-05-48__RT-206s2_autodr_offset5mm_currOFF_start+20mm_floor-30mm_seed2/model_1499.pt",
+      "sha256": "821794595d73469550d4cdc7ace841165a3aed16f662b69495b0576f4085c537"
+    },
+    {
+      "file": "models/09-15_18-05-48__RT-206s2_autodr_offset5mm_currOFF_start+20mm_floor-30mm_seed2/autodr_1499.json",
+      "source": "training/RT-206s2/autodr_1499.json",
+      "sha256": "caabd68ed11aa1a8651fc64c277202183874844b7c0d4d1772985dc8bb151aad"
+    },
+    {
+      "file": "training_logs/RT-206s2/demo_metrics.json",
+      "source": "training/RT-206s2/demo_metrics.json",
+      "sha256": "05e59273a5e3420c1c3cf6a122be590dadb1a44db2fdf35cbff1db70eaa43377"
+    },
+    {
+      "file": "training_logs/RT-206s2/episodes.csv",
+      "source": "training/RT-206s2/episodes.csv",
+      "sha256": "3201cc72712324c951accedbeebd6c615f5f0dcef8fecad5cdcf286ad98b7442"
+    },
+    {
+      "file": "training_logs/RT-206s2/episodes_meta.json",
+      "source": "training/RT-206s2/episodes_meta.json",
+      "sha256": "215f2a9c2cc9ef56eebb91be5993fcd25c1806f3a3059167f1dff9c433cb6016"
+    },
+    {
+      "file": "training_logs/RT-206s2/scalars.csv",
+      "source": "training/RT-206s2/scalars.csv",
+      "sha256": "92011d1becb92e65cb833204d6ce9c20af1e4bb29c82db59db1077f9dd5279c8"
+    },
+    {
+      "file": "models/09-15_18-05-48__RT-206s2_autodr_offset5mm_currOFF_start+20mm_floor-30mm_seed2/params/agent.yaml",
+      "source": "training/RT-206s2/params/agent.yaml",
+      "sha256": "89d7de6303b1ffcc90ab7a658ef3901dbb0c8b4f5ab51b0eb62d98dbe685a00d"
+    },
+    {
+      "file": "models/09-15_18-05-48__RT-206s2_autodr_offset5mm_currOFF_start+20mm_floor-30mm_seed2/params/env.yaml",
+      "source": "training/RT-206s2/params/env.yaml",
+      "sha256": "c971c4f7d261026c2cbe3689d8e70fb2ecfc88080a8b6a0d8526198367bbf667"
+    },
+    {
+      "file": "training_logs/RT-206s2/RT-206s2.txt",
+      "source": "logs/logs/rsl_rl/ur5e_insertion/09-15_18-05-48__RT-206s2_autodr_offset5mm_currOFF_start+20mm_floor-30mm_seed2/RT-206s2.txt",
+      "source_sha256": "5b41c2ed66e35390fdbd622012a9e49fe71a6406790fca986f64833ec945762a",
+      "byte_start": 6019721,
+      "byte_end_exclusive": 12039892,
+      "sha256": "30f6ad3d6a5527d92d0694aa6e320461ebd20bd735cb3731792b17548185a1c0",
+      "iterations": 1500,
+      "exit_code": 0
+    },
+    {
+      "file": "models/09-16_02-12-05__RT-206s3_autodr_offset5mm_currOFF_start+20mm_floor-30mm_seed3/model_1499.pt",
+      "source": "models/09-16_02-12-05__RT-206s3_autodr_offset5mm_currOFF_start+20mm_floor-30mm_seed3/model_1499.pt",
+      "sha256": "8a3cf5f9540a0f0c71377e191d3f9b00a436322975b179391e798cb05d48bc3f"
+    },
+    {
+      "file": "models/09-16_02-12-05__RT-206s3_autodr_offset5mm_currOFF_start+20mm_floor-30mm_seed3/autodr_1499.json",
+      "source": "training/RT-206s3/autodr_1499.json",
+      "sha256": "dbada06c0b1338ec9628542abdba0e678f455a700a4fcbf4a356d1743f4cfb4a"
+    },
+    {
+      "file": "training_logs/RT-206s3/demo_metrics.json",
+      "source": "training/RT-206s3/demo_metrics.json",
+      "sha256": "8dff6fd873b4df26177b196bae69058bca9f30f3998723ec9d3552c0e43019e7"
+    },
+    {
+      "file": "training_logs/RT-206s3/episodes.csv",
+      "source": "training/RT-206s3/episodes.csv",
+      "sha256": "48b62823b25d02855614d2358eb469a2763444fe8ca360a7cd8ca358266374e7"
+    },
+    {
+      "file": "training_logs/RT-206s3/episodes_meta.json",
+      "source": "training/RT-206s3/episodes_meta.json",
+      "sha256": "215f2a9c2cc9ef56eebb91be5993fcd25c1806f3a3059167f1dff9c433cb6016"
+    },
+    {
+      "file": "training_logs/RT-206s3/scalars.csv",
+      "source": "training/RT-206s3/scalars.csv",
+      "sha256": "595ad100398e7fed5df5bfe0b994fe7310e0712587d2d9721df2552b3f5698f1"
+    },
+    {
+      "file": "models/09-16_02-12-05__RT-206s3_autodr_offset5mm_currOFF_start+20mm_floor-30mm_seed3/params/agent.yaml",
+      "source": "training/RT-206s3/params/agent.yaml",
+      "sha256": "28a20359d1020796b85ba1c411cbce09fc81ced33c7ae052dae4237103ed70ed"
+    },
+    {
+      "file": "models/09-16_02-12-05__RT-206s3_autodr_offset5mm_currOFF_start+20mm_floor-30mm_seed3/params/env.yaml",
+      "source": "training/RT-206s3/params/env.yaml",
+      "sha256": "f4b1343cd0ceb39a757c6022f9e4591a78be8cb98989b7795a1662589010f7dc"
+    },
+    {
+      "file": "training_logs/RT-206s3/RT-206s3.txt",
+      "source": "logs/logs/rsl_rl/ur5e_insertion/09-16_02-12-05__RT-206s3_autodr_offset5mm_currOFF_start+20mm_floor-30mm_seed3/RT-206s3.txt",
+      "source_sha256": "3897abd945722769e0a8419642d11e8add4061d2b82795c930196a6a13e54042",
+      "byte_start": 12039892,
+      "byte_end_exclusive": 18057065,
+      "sha256": "486e307bb8081ecf449c9940a02c2f8678fcb1f7803b714f852903be0d39d530",
+      "iterations": 1500,
+      "exit_code": 0
+    },
+    {
+      "file": "models/09-16_15-10-35__RT-206s4_autodr_offset5mm_currOFF_start+20mm_floor-30mm_seed4/model_1499.pt",
+      "source": "models/09-16_15-10-35__RT-206s4_autodr_offset5mm_currOFF_start+20mm_floor-30mm_seed4/model_1499.pt",
+      "sha256": "ea31716c1e3d55c9358c50828c394230fc00270d40842d3ae8c38cddba15aa0d"
+    },
+    {
+      "file": "models/09-16_15-10-35__RT-206s4_autodr_offset5mm_currOFF_start+20mm_floor-30mm_seed4/autodr_1499.json",
+      "source": "training/RT-206s4/autodr_1499.json",
+      "sha256": "ae230388cadbf70d18fc50496c0508324adc04459e40e2a03aed0ac986632cb8"
+    },
+    {
+      "file": "training_logs/RT-206s4/demo_metrics.json",
+      "source": "training/RT-206s4/demo_metrics.json",
+      "sha256": "bd13933aae4b34468e180258ba9ba88235382674270ce4ce8f4011244d86e815"
+    },
+    {
+      "file": "training_logs/RT-206s4/episodes.csv",
+      "source": "training/RT-206s4/episodes.csv",
+      "sha256": "39ab0c850c27bbe915feda78589c9464e3d0a98d868eea292de07d7374fa7421"
+    },
+    {
+      "file": "training_logs/RT-206s4/episodes_meta.json",
+      "source": "training/RT-206s4/episodes_meta.json",
+      "sha256": "215f2a9c2cc9ef56eebb91be5993fcd25c1806f3a3059167f1dff9c433cb6016"
+    },
+    {
+      "file": "training_logs/RT-206s4/scalars.csv",
+      "source": "training/RT-206s4/scalars.csv",
+      "sha256": "31ac6c1f6db75c0e407dd697c82fc528dd77109b0b583cf10d0b35f2392e7db2"
+    },
+    {
+      "file": "models/09-16_15-10-35__RT-206s4_autodr_offset5mm_currOFF_start+20mm_floor-30mm_seed4/params/agent.yaml",
+      "source": "training/RT-206s4/params/agent.yaml",
+      "sha256": "fe82e2d571e4fb0dd6e67f4c10fbf9ea36c14d5746b6f3893200d00671f7fd91"
+    },
+    {
+      "file": "models/09-16_15-10-35__RT-206s4_autodr_offset5mm_currOFF_start+20mm_floor-30mm_seed4/params/env.yaml",
+      "source": "training/RT-206s4/params/env.yaml",
+      "sha256": "b00ee8a476dc96279259b28e3d5cf54a4ec5281187dd7cc91babcb16221da03c"
+    },
+    {
+      "file": "training_logs/RT-206s4/RT-206s4.txt",
+      "source": "logs/logs/rsl_rl/ur5e_insertion/09-16_15-10-35__RT-206s4_autodr_offset5mm_currOFF_start+20mm_floor-30mm_seed4/RT-206s2.txt",
+      "source_sha256": "bda9ba168b5f735863aec2328d3b67940158ba2db53e4a63a6ba5b83f2e169b8",
+      "byte_start": 18057065,
+      "byte_end_exclusive": 24074353,
+      "sha256": "202f8b2e01aed2e658e1fce4a9c4b3a796ccb62557332daa4707db4855547dc7",
+      "iterations": 1500,
+      "exit_code": 0
+    },
+    {
+      "file": "models/09-17_00-05-01__RT-206s5_autodr_offset5mm_currOFF_start+20mm_floor-30mm_seed5/model_1499.pt",
+      "source": "models/09-17_00-05-01__RT-206s5_autodr_offset5mm_currOFF_start+20mm_floor-30mm_seed5/model_1499.pt",
+      "sha256": "92824ddd000b48c8e2e129e2577b333fbb773911ca93369ac6669539135dc403"
+    },
+    {
+      "file": "models/09-17_00-05-01__RT-206s5_autodr_offset5mm_currOFF_start+20mm_floor-30mm_seed5/autodr_1499.json",
+      "source": "training/RT-206s5/autodr_1499.json",
+      "sha256": "bef21e2167b3a80987b5e091fcbb647c8bed5cfa29ae532f9feb441a8899de3c"
+    },
+    {
+      "file": "training_logs/RT-206s5/demo_metrics.json",
+      "source": "training/RT-206s5/demo_metrics.json",
+      "sha256": "d984d7bd0842f4309f81af9b0bb40b2860eabf4eb7951de2cf3858f98299f7f8"
+    },
+    {
+      "file": "training_logs/RT-206s5/episodes.csv",
+      "source": "training/RT-206s5/episodes.csv",
+      "sha256": "9ea0d7cad2f3bc8b0dc6507bf727c06069cd740cc9c5675b4d7a88d7a6ec96b8"
+    },
+    {
+      "file": "training_logs/RT-206s5/episodes_meta.json",
+      "source": "training/RT-206s5/episodes_meta.json",
+      "sha256": "215f2a9c2cc9ef56eebb91be5993fcd25c1806f3a3059167f1dff9c433cb6016"
+    },
+    {
+      "file": "training_logs/RT-206s5/scalars.csv",
+      "source": "training/RT-206s5/scalars.csv",
+      "sha256": "46a1d090252a1700acd60505f714c7df099712a296e792fa8489e4a6d0ef6029"
+    },
+    {
+      "file": "models/09-17_00-05-01__RT-206s5_autodr_offset5mm_currOFF_start+20mm_floor-30mm_seed5/params/agent.yaml",
+      "source": "training/RT-206s5/params/agent.yaml",
+      "sha256": "24341bd9d4edd7ac5640bb60c3eab1d9bf688d4c70aca81fe0647086a9c1bb37"
+    },
+    {
+      "file": "models/09-17_00-05-01__RT-206s5_autodr_offset5mm_currOFF_start+20mm_floor-30mm_seed5/params/env.yaml",
+      "source": "training/RT-206s5/params/env.yaml",
+      "sha256": "31bbcc1506e4f227e3f77c17d54b942e74255c3335511b9457c7ceaa68ea6c9c"
+    },
+    {
+      "file": "training_logs/RT-206s5/RT-206s5.txt",
+      "source": "logs/logs/rsl_rl/ur5e_insertion/09-17_00-05-01__RT-206s5_autodr_offset5mm_currOFF_start+20mm_floor-30mm_seed5/RT-206s5.txt",
+      "source_sha256": "51f570c2e92cae27d2ac40a73b38ea161601f9ba9af928f6de93c6b0c8a5fa5f",
+      "byte_start": 0,
+      "byte_end_exclusive": 6017719,
+      "sha256": "51f570c2e92cae27d2ac40a73b38ea161601f9ba9af928f6de93c6b0c8a5fa5f",
+      "iterations": 1500,
+      "exit_code": 0
+    },
+    {
+      "file": "models/09-17_09-58-45__RT-207s1_offset5mm_currOFF_start+20mm_floor-30mm_seed1/model_1499.pt",
+      "source": "models/09-17_09-58-45__RT-207s1_offset5mm_currOFF_start+20mm_floor-30mm_seed1/model_1499.pt",
+      "sha256": "a444c39ca54e498e6d930175961cb0278ecf098467ec20602b20fe44b895143d"
+    },
+    {
+      "file": "models/09-17_09-58-45__RT-207s1_offset5mm_currOFF_start+20mm_floor-30mm_seed1/autodr_1499.json",
+      "source": "training/RT-207s1/autodr_1499.json",
+      "sha256": "02d3a798319a45f962a62e323539c84f320e73e90cac469d570851341fa71e2a"
+    },
+    {
+      "file": "training_logs/RT-207s1/demo_metrics.json",
+      "source": "training/RT-207s1/demo_metrics.json",
+      "sha256": "cb05087a9be3398888954148fafec97d35a5a0b0861111ccd365640e6127f51c"
+    },
+    {
+      "file": "training_logs/RT-207s1/episodes.csv",
+      "source": "training/RT-207s1/episodes.csv",
+      "sha256": "4405b776e69281a7e65f7283125ce22d49f2ab8daefa4117f77177d3dfbef23c"
+    },
+    {
+      "file": "training_logs/RT-207s1/episodes_meta.json",
+      "source": "training/RT-207s1/episodes_meta.json",
+      "sha256": "02e49a6e95c1430d344d6f709e4882b794d88678e7487d073b003b34ebcff2e3"
+    },
+    {
+      "file": "training_logs/RT-207s1/scalars.csv",
+      "source": "training/RT-207s1/scalars.csv",
+      "sha256": "04bb8b54468522cbc7ae33495e1533a7b34d984a847595b93c75daef7b08dbb3"
+    },
+    {
+      "file": "models/09-17_09-58-45__RT-207s1_offset5mm_currOFF_start+20mm_floor-30mm_seed1/params/agent.yaml",
+      "source": "training/RT-207s1/params/agent.yaml",
+      "sha256": "97cc3191c733766e9d2db1ac2ea162c1bc9c99a7e981cf793698d42e22d20abd"
+    },
+    {
+      "file": "models/09-17_09-58-45__RT-207s1_offset5mm_currOFF_start+20mm_floor-30mm_seed1/params/env.yaml",
+      "source": "training/RT-207s1/params/env.yaml",
+      "sha256": "0f8e547cc1c8b4825a2b8a0cece8196d21014423b475ea75eb10a4bd891cb857"
+    },
+    {
+      "file": "training_logs/RT-207s1/RT-207s1.txt",
+      "source": "logs/logs/rsl_rl/ur5e_insertion/09-17_09-58-45__RT-207s1_offset5mm_currOFF_start+20mm_floor-30mm_seed1/RT-207s1.txt",
+      "source_sha256": "107912bd30afd413219fc88e82d3c6d02c24425b36fc5221fa4fd46ca34763f8",
+      "byte_start": 0,
+      "byte_end_exclusive": 4420278,
+      "sha256": "107912bd30afd413219fc88e82d3c6d02c24425b36fc5221fa4fd46ca34763f8",
+      "iterations": 1500,
+      "exit_code": 0
+    },
+    {
+      "file": "models/09-17_16-03-29__RT-207s2_offset5mm_currOFF_start+20mm_floor-30mm_seed2/model_1499.pt",
+      "source": "models/09-17_16-03-29__RT-207s2_offset5mm_currOFF_start+20mm_floor-30mm_seed2/model_1499.pt",
+      "sha256": "6a471014f70d96d16f7a6afc7db843eef262a11d87f510d3f1f6fed2b75c4c3b"
+    },
+    {
+      "file": "models/09-17_16-03-29__RT-207s2_offset5mm_currOFF_start+20mm_floor-30mm_seed2/autodr_1499.json",
+      "source": "training/RT-207s2/autodr_1499.json",
+      "sha256": "941fa9a50d5020cef91f8f66a0276b3014881988d663900779e97e9467ee40ff"
+    },
+    {
+      "file": "training_logs/RT-207s2/demo_metrics.json",
+      "source": "training/RT-207s2/demo_metrics.json",
+      "sha256": "4508238a42609cde324af9c24ee2212ba625ede270dcab987faed5b0fa23a526"
+    },
+    {
+      "file": "training_logs/RT-207s2/episodes.csv",
+      "source": "training/RT-207s2/episodes.csv",
+      "sha256": "eeea1c783d15154bbe22388efa4f7bfa993b5f7c33c6a80e384c2b8e8a7e2657"
+    },
+    {
+      "file": "training_logs/RT-207s2/episodes_meta.json",
+      "source": "training/RT-207s2/episodes_meta.json",
+      "sha256": "02e49a6e95c1430d344d6f709e4882b794d88678e7487d073b003b34ebcff2e3"
+    },
+    {
+      "file": "training_logs/RT-207s2/scalars.csv",
+      "source": "training/RT-207s2/scalars.csv",
+      "sha256": "d6e62bea14fb3306bf5434a8e1cb076f50baa66f343b26b1867cee20876a5573"
+    },
+    {
+      "file": "models/09-17_16-03-29__RT-207s2_offset5mm_currOFF_start+20mm_floor-30mm_seed2/params/agent.yaml",
+      "source": "training/RT-207s2/params/agent.yaml",
+      "sha256": "89d7de6303b1ffcc90ab7a658ef3901dbb0c8b4f5ab51b0eb62d98dbe685a00d"
+    },
+    {
+      "file": "models/09-17_16-03-29__RT-207s2_offset5mm_currOFF_start+20mm_floor-30mm_seed2/params/env.yaml",
+      "source": "training/RT-207s2/params/env.yaml",
+      "sha256": "927c2a22075eb8cfca1196694944e8d1509d079c9a17dba26a53ff13cb819be5"
+    },
+    {
+      "file": "training_logs/RT-207s2/RT-207s2.txt",
+      "source": "logs/logs/rsl_rl/ur5e_insertion/09-17_16-03-29__RT-207s2_offset5mm_currOFF_start+20mm_floor-30mm_seed2/RT-207s2.txt",
+      "source_sha256": "9f37c7d7c291ba46dd1b78a2013dacb96284ece59e56f3a4c058f25b1079ad12",
+      "byte_start": 0,
+      "byte_end_exclusive": 4423726,
+      "sha256": "9f37c7d7c291ba46dd1b78a2013dacb96284ece59e56f3a4c058f25b1079ad12",
+      "iterations": 1500,
+      "exit_code": 0
+    },
+    {
+      "file": "models/09-17_22-41-29__RT-207s3_offset5mm_currOFF_start+20mm_floor-30mm_seed3/model_1499.pt",
+      "source": "models/09-17_22-41-29__RT-207s3_offset5mm_currOFF_start+20mm_floor-30mm_seed3/model_1499.pt",
+      "sha256": "f1e40a3dbeb6f528f1b1869b45ae71cc27d59c6b1fc92a3acbcb54f8cd08d610"
+    },
+    {
+      "file": "models/09-17_22-41-29__RT-207s3_offset5mm_currOFF_start+20mm_floor-30mm_seed3/autodr_1499.json",
+      "source": "training/RT-207s3/autodr_1499.json",
+      "sha256": "201aab577232f5e397c097f231d24f63b1f166eebbf9f3749c54b48db264c965"
+    },
+    {
+      "file": "training_logs/RT-207s3/demo_metrics.json",
+      "source": "training/RT-207s3/demo_metrics.json",
+      "sha256": "938f763aceca7ddb5cbde68247f201a132f137464af9ba841d7116c42c66fd5b"
+    },
+    {
+      "file": "training_logs/RT-207s3/episodes.csv",
+      "source": "training/RT-207s3/episodes.csv",
+      "sha256": "6150d15ed27746d02f496daf184fe81a391964864f076eed3c1bc28cadfa7ba4"
+    },
+    {
+      "file": "training_logs/RT-207s3/episodes_meta.json",
+      "source": "training/RT-207s3/episodes_meta.json",
+      "sha256": "02e49a6e95c1430d344d6f709e4882b794d88678e7487d073b003b34ebcff2e3"
+    },
+    {
+      "file": "training_logs/RT-207s3/scalars.csv",
+      "source": "training/RT-207s3/scalars.csv",
+      "sha256": "d837ad157393dbf1749d1c1165e546bd52edda946ac3400b2572685426a785bf"
+    },
+    {
+      "file": "models/09-17_22-41-29__RT-207s3_offset5mm_currOFF_start+20mm_floor-30mm_seed3/params/agent.yaml",
+      "source": "training/RT-207s3/params/agent.yaml",
+      "sha256": "28a20359d1020796b85ba1c411cbce09fc81ced33c7ae052dae4237103ed70ed"
+    },
+    {
+      "file": "models/09-17_22-41-29__RT-207s3_offset5mm_currOFF_start+20mm_floor-30mm_seed3/params/env.yaml",
+      "source": "training/RT-207s3/params/env.yaml",
+      "sha256": "9b80737286482b40a9556498753f879bb31fdfd7da389d921349ecf52f8cc011"
+    },
+    {
+      "file": "training_logs/RT-207s3/RT-207s3.txt",
+      "source": "logs/logs/rsl_rl/ur5e_insertion/09-17_22-41-29__RT-207s3_offset5mm_currOFF_start+20mm_floor-30mm_seed3/RT-207s3.txt",
+      "source_sha256": "7793db7010ddee3efec000406082fe61a9d8f629ce50a888b94e2636d213546d",
+      "byte_start": 0,
+      "byte_end_exclusive": 4419696,
+      "sha256": "7793db7010ddee3efec000406082fe61a9d8f629ce50a888b94e2636d213546d",
+      "iterations": 1500,
+      "exit_code": 0
+    },
+    {
+      "file": "models/09-18_12-38-12__RT-207s4_offset5mm_currOFF_start+20mm_floor-30mm_seed4/model_1499.pt",
+      "source": "models/09-18_12-38-12__RT-207s4_offset5mm_currOFF_start+20mm_floor-30mm_seed4/model_1499.pt",
+      "sha256": "8e194f8ee0bf4efebd13c5c741b3d40c66488d96d0d4902279ad9e366458ad8a"
+    },
+    {
+      "file": "models/09-18_12-38-12__RT-207s4_offset5mm_currOFF_start+20mm_floor-30mm_seed4/autodr_1499.json",
+      "source": "training/RT-207s4/autodr_1499.json",
+      "sha256": "b255caf9d2a9f92b1e54767d269d507460034b795ded7493a1fae52899a8651c"
+    },
+    {
+      "file": "training_logs/RT-207s4/demo_metrics.json",
+      "source": "training/RT-207s4/demo_metrics.json",
+      "sha256": "587c7d320db66644630af32f9c07903307d62187c0e47da2d3a3508fe0749d18"
+    },
+    {
+      "file": "training_logs/RT-207s4/episodes.csv",
+      "source": "training/RT-207s4/episodes.csv",
+      "sha256": "f8e6d493c55624b9aca590704b58b40f93e6b84c57c02146bf8e620984e87dd4"
+    },
+    {
+      "file": "training_logs/RT-207s4/episodes_meta.json",
+      "source": "training/RT-207s4/episodes_meta.json",
+      "sha256": "02e49a6e95c1430d344d6f709e4882b794d88678e7487d073b003b34ebcff2e3"
+    },
+    {
+      "file": "training_logs/RT-207s4/scalars.csv",
+      "source": "training/RT-207s4/scalars.csv",
+      "sha256": "b8b523f80f4e7058dce0e126605df67518d92779b36a76fef727714855072db2"
+    },
+    {
+      "file": "models/09-18_12-38-12__RT-207s4_offset5mm_currOFF_start+20mm_floor-30mm_seed4/params/agent.yaml",
+      "source": "training/RT-207s4/params/agent.yaml",
+      "sha256": "fe82e2d571e4fb0dd6e67f4c10fbf9ea36c14d5746b6f3893200d00671f7fd91"
+    },
+    {
+      "file": "models/09-18_12-38-12__RT-207s4_offset5mm_currOFF_start+20mm_floor-30mm_seed4/params/env.yaml",
+      "source": "training/RT-207s4/params/env.yaml",
+      "sha256": "01656768c91b38678760d54f7ff7c38f6e158a6fa853332b41d4c57a1f2b61be"
+    },
+    {
+      "file": "training_logs/RT-207s4/RT-207s4.txt",
+      "source": "logs/logs/rsl_rl/ur5e_insertion/09-18_12-38-12__RT-207s4_offset5mm_currOFF_start+20mm_floor-30mm_seed4/RT-207s4.txt",
+      "source_sha256": "e038cdd74097d19fc1ac86c6bf1b5728c0c6fed4df71aed239079dd21c1250fe",
+      "byte_start": 0,
+      "byte_end_exclusive": 4420540,
+      "sha256": "e038cdd74097d19fc1ac86c6bf1b5728c0c6fed4df71aed239079dd21c1250fe",
+      "iterations": 1500,
+      "exit_code": 0
+    },
+    {
+      "file": "models/09-18_20-38-33__RT-207s5_offset5mm_currOFF_start+20mm_floor-30mm_seed5/model_1499.pt",
+      "source": "models/09-18_20-38-33__RT-207s5_offset5mm_currOFF_start+20mm_floor-30mm_seed5/model_1499.pt",
+      "sha256": "9019d28e1b164f068f0b57146b8c6818c977e0e4e8fd785854d1710eebf2174c"
+    },
+    {
+      "file": "models/09-18_20-38-33__RT-207s5_offset5mm_currOFF_start+20mm_floor-30mm_seed5/autodr_1499.json",
+      "source": "training/RT-207s5/autodr_1499.json",
+      "sha256": "86aefd7ee505593edb6c21a03263f60e9c365e3ad78373e2ffe34f450ec5e333"
+    },
+    {
+      "file": "training_logs/RT-207s5/demo_metrics.json",
+      "source": "training/RT-207s5/demo_metrics.json",
+      "sha256": "67fdfbc66b8110207339a37e30938783934e4fbd3c8f7affad5adad29e13d954"
+    },
+    {
+      "file": "training_logs/RT-207s5/episodes.csv",
+      "source": "training/RT-207s5/episodes.csv",
+      "sha256": "c634d33011ae6ca0e1964b1c57028fe1d07d21ce4a32bc9b1f29a61243576307"
+    },
+    {
+      "file": "training_logs/RT-207s5/episodes_meta.json",
+      "source": "training/RT-207s5/episodes_meta.json",
+      "sha256": "02e49a6e95c1430d344d6f709e4882b794d88678e7487d073b003b34ebcff2e3"
+    },
+    {
+      "file": "training_logs/RT-207s5/scalars.csv",
+      "source": "training/RT-207s5/scalars.csv",
+      "sha256": "3bff930f76f8ae30a545e1a0d4b89d109ff449f8ab762f2f19b4373a17d91290"
+    },
+    {
+      "file": "models/09-18_20-38-33__RT-207s5_offset5mm_currOFF_start+20mm_floor-30mm_seed5/params/agent.yaml",
+      "source": "training/RT-207s5/params/agent.yaml",
+      "sha256": "24341bd9d4edd7ac5640bb60c3eab1d9bf688d4c70aca81fe0647086a9c1bb37"
+    },
+    {
+      "file": "models/09-18_20-38-33__RT-207s5_offset5mm_currOFF_start+20mm_floor-30mm_seed5/params/env.yaml",
+      "source": "training/RT-207s5/params/env.yaml",
+      "sha256": "f8905de0b90622e5ceb5dfd10ec7a2589b1f69e717101670e05ee0d5e252957d"
+    },
+    {
+      "file": "training_logs/RT-207s5/RT-207s5.txt",
+      "source": "logs/logs/rsl_rl/ur5e_insertion/09-18_20-38-33__RT-207s5_offset5mm_currOFF_start+20mm_floor-30mm_seed5/RT-207s5.txt",
+      "source_sha256": "d348df575b202ec8b391a68dc35cff450267700faf6a6179d093f3fa41c35d6f",
+      "byte_start": 0,
+      "byte_end_exclusive": 4422630,
+      "sha256": "d348df575b202ec8b391a68dc35cff450267700faf6a6179d093f3fa41c35d6f",
+      "iterations": 1500,
+      "exit_code": 0
+    },
+    {
+      "file": "models/09-24_02-23-58__RT-231s1_fixed_dr_offset5mm_currOFF_start+20mm_floor-30mm_seed1/model_1499.pt",
+      "source": "models/09-24_02-23-58__RT-231s1_fixed_dr_offset5mm_currOFF_start+20mm_floor-30mm_seed1/model_1499.pt",
+      "sha256": "51e9e74dc1e3aaf6302e6615b6c1da317a5f2a818bec8e443ea071ae359fe11d"
+    },
+    {
+      "file": "models/09-24_02-23-58__RT-231s1_fixed_dr_offset5mm_currOFF_start+20mm_floor-30mm_seed1/autodr_1499.json",
+      "source": "training/RT-231s1/autodr_1499.json",
+      "sha256": "76a90aa1d0a797f73b79ad027309578bb81fd982f8487a51b5d4b2f007957edb"
+    },
+    {
+      "file": "training_logs/RT-231s1/demo_metrics.json",
+      "source": "training/RT-231s1/demo_metrics.json",
+      "sha256": "1541a2e9187d8bab502a36a348e95628b5ed44451ecc582bd3ee2e2138b1b830"
+    },
+    {
+      "file": "training_logs/RT-231s1/episodes.csv",
+      "source": "training/RT-231s1/episodes.csv",
+      "sha256": "3a38856b35f29c386e5ada9751b661ca53564bdad18835bf54dba613c16456aa"
+    },
+    {
+      "file": "training_logs/RT-231s1/episodes_meta.json",
+      "source": "training/RT-231s1/episodes_meta.json",
+      "sha256": "e7cded30e47ea98256ff23499522d62682bf0f3326442a45497de898bfcb9b2d"
+    },
+    {
+      "file": "training_logs/RT-231s1/scalars.csv",
+      "source": "training/RT-231s1/scalars.csv",
+      "sha256": "61ae98dcb3217db513e2c8c72a7b5825208db9dff6f82a194943d69871f4e61c"
+    },
+    {
+      "file": "models/09-24_02-23-58__RT-231s1_fixed_dr_offset5mm_currOFF_start+20mm_floor-30mm_seed1/params/agent.yaml",
+      "source": "training/RT-231s1/params/agent.yaml",
+      "sha256": "97cc3191c733766e9d2db1ac2ea162c1bc9c99a7e981cf793698d42e22d20abd"
+    },
+    {
+      "file": "models/09-24_02-23-58__RT-231s1_fixed_dr_offset5mm_currOFF_start+20mm_floor-30mm_seed1/params/env.yaml",
+      "source": "training/RT-231s1/params/env.yaml",
+      "sha256": "11e07126b9c6a793f4381f05b7af697c0eff8a2134a1678f1ef5d98c8519c7d9"
+    },
+    {
+      "file": "training_logs/RT-231s1/RT-231s1.txt",
+      "source": "logs/logs/rsl_rl/ur5e_insertion/09-24_02-23-58__RT-231s1_fixed_dr_offset5mm_currOFF_start+20mm_floor-30mm_seed1/RT-231s1.txt",
+      "source_sha256": "9eb4cafb5ce494564ab730ceb7e76f20f0d4a6d94cc5ac3a5467434f6baba80e",
+      "byte_start": 0,
+      "byte_end_exclusive": 5984599,
+      "sha256": "9eb4cafb5ce494564ab730ceb7e76f20f0d4a6d94cc5ac3a5467434f6baba80e",
+      "iterations": 1500,
+      "exit_code": 0
+    },
+    {
+      "file": "models/09-24_05-34-28__RT-231s2_fixed_dr_offset5mm_currOFF_start+20mm_floor-30mm_seed2/model_1499.pt",
+      "source": "models/09-24_05-34-28__RT-231s2_fixed_dr_offset5mm_currOFF_start+20mm_floor-30mm_seed2/model_1499.pt",
+      "sha256": "d720cf0c17e41c8006ffe838eba0b8bd96e6cea5899624256694e31b2bb483b7"
+    },
+    {
+      "file": "models/09-24_05-34-28__RT-231s2_fixed_dr_offset5mm_currOFF_start+20mm_floor-30mm_seed2/autodr_1499.json",
+      "source": "training/RT-231s2/autodr_1499.json",
+      "sha256": "56f8731433ae7aac40701840d2e90a969b9a716b9a9d3e1bf4e8f8793d679f93"
+    },
+    {
+      "file": "training_logs/RT-231s2/demo_metrics.json",
+      "source": "training/RT-231s2/demo_metrics.json",
+      "sha256": "e82b081407648e1aa15db53a2bcf7df4d5ae95e235579f9c7db4710c67e27129"
+    },
+    {
+      "file": "training_logs/RT-231s2/episodes.csv",
+      "source": "training/RT-231s2/episodes.csv",
+      "sha256": "20e6a75b1c21a0c90a019df1fea0ef3cfd943307702489156508ec29959273b0"
+    },
+    {
+      "file": "training_logs/RT-231s2/episodes_meta.json",
+      "source": "training/RT-231s2/episodes_meta.json",
+      "sha256": "e7cded30e47ea98256ff23499522d62682bf0f3326442a45497de898bfcb9b2d"
+    },
+    {
+      "file": "training_logs/RT-231s2/scalars.csv",
+      "source": "training/RT-231s2/scalars.csv",
+      "sha256": "eef6e6887889f3cdfe6c6f7ffee87bed4815244c97ce0cd4d19a81c07d4a8bff"
+    },
+    {
+      "file": "models/09-24_05-34-28__RT-231s2_fixed_dr_offset5mm_currOFF_start+20mm_floor-30mm_seed2/params/agent.yaml",
+      "source": "training/RT-231s2/params/agent.yaml",
+      "sha256": "89d7de6303b1ffcc90ab7a658ef3901dbb0c8b4f5ab51b0eb62d98dbe685a00d"
+    },
+    {
+      "file": "models/09-24_05-34-28__RT-231s2_fixed_dr_offset5mm_currOFF_start+20mm_floor-30mm_seed2/params/env.yaml",
+      "source": "training/RT-231s2/params/env.yaml",
+      "sha256": "869d9b423a8e41cb90487921ec2cb9c4eb3a066cef71985705d1b83fb0c29b73"
+    },
+    {
+      "file": "training_logs/RT-231s2/RT-231s2.txt",
+      "source": "logs/logs/rsl_rl/ur5e_insertion/09-24_05-34-28__RT-231s2_fixed_dr_offset5mm_currOFF_start+20mm_floor-30mm_seed2/RT-231s2.txt",
+      "source_sha256": "17341376d1bedf6a9d88d34fb846e13fe436240e1c8b53080607b86734461405",
+      "byte_start": 0,
+      "byte_end_exclusive": 5981657,
+      "sha256": "17341376d1bedf6a9d88d34fb846e13fe436240e1c8b53080607b86734461405",
+      "iterations": 1500,
+      "exit_code": 0
+    },
+    {
+      "file": "models/09-24_08-07-07__RT-231s3_fixed_dr_offset5mm_currOFF_start+20mm_floor-30mm_seed3/model_1499.pt",
+      "source": "models/09-24_08-07-07__RT-231s3_fixed_dr_offset5mm_currOFF_start+20mm_floor-30mm_seed3/model_1499.pt",
+      "sha256": "f3136fff1e458a824510c5440bc7af07eda8a909798f093bc80ffc3f2b695067"
+    },
+    {
+      "file": "models/09-24_08-07-07__RT-231s3_fixed_dr_offset5mm_currOFF_start+20mm_floor-30mm_seed3/autodr_1499.json",
+      "source": "training/RT-231s3/autodr_1499.json",
+      "sha256": "d46c9807dce0a8a6c7f504bddc6fe18f32188a80522d58be62df82df0a3e3b49"
+    },
+    {
+      "file": "training_logs/RT-231s3/demo_metrics.json",
+      "source": "training/RT-231s3/demo_metrics.json",
+      "sha256": "75ef4e03b0333cdbf08e1efb3fcb66f78a8ce406162d13aa93839e8cc836023b"
+    },
+    {
+      "file": "training_logs/RT-231s3/episodes.csv",
+      "source": "training/RT-231s3/episodes.csv",
+      "sha256": "416cc0b99951b37ec76f745a5902e807cba8bba91e72bfde7458e27c25c68f24"
+    },
+    {
+      "file": "training_logs/RT-231s3/episodes_meta.json",
+      "source": "training/RT-231s3/episodes_meta.json",
+      "sha256": "e7cded30e47ea98256ff23499522d62682bf0f3326442a45497de898bfcb9b2d"
+    },
+    {
+      "file": "training_logs/RT-231s3/scalars.csv",
+      "source": "training/RT-231s3/scalars.csv",
+      "sha256": "ecf5bea7e8d04675c8eae98ae63e4fb453311593c9f8911c53c7340912900d7a"
+    },
+    {
+      "file": "models/09-24_08-07-07__RT-231s3_fixed_dr_offset5mm_currOFF_start+20mm_floor-30mm_seed3/params/agent.yaml",
+      "source": "training/RT-231s3/params/agent.yaml",
+      "sha256": "28a20359d1020796b85ba1c411cbce09fc81ced33c7ae052dae4237103ed70ed"
+    },
+    {
+      "file": "models/09-24_08-07-07__RT-231s3_fixed_dr_offset5mm_currOFF_start+20mm_floor-30mm_seed3/params/env.yaml",
+      "source": "training/RT-231s3/params/env.yaml",
+      "sha256": "b00102c30132189366c5d0f67f60bc7a6dd46cb1e517f88343437c857fd52b1c"
+    },
+    {
+      "file": "training_logs/RT-231s3/RT-231s3.txt",
+      "source": "logs/logs/rsl_rl/ur5e_insertion/09-24_08-07-07__RT-231s3_fixed_dr_offset5mm_currOFF_start+20mm_floor-30mm_seed3/RT-231s3.txt",
+      "source_sha256": "cab87ed27a1a730e0a861a23b9cd230e00ac16d1e97409cddd4ee0bad3add686",
+      "byte_start": 0,
+      "byte_end_exclusive": 5987629,
+      "sha256": "cab87ed27a1a730e0a861a23b9cd230e00ac16d1e97409cddd4ee0bad3add686",
+      "iterations": 1500,
+      "exit_code": 0
+    },
+    {
+      "file": "models/09-24_11-18-12__RT-231s4_fixed_dr_offset5mm_currOFF_start+20mm_floor-30mm_seed4/model_1499.pt",
+      "source": "models/09-24_11-18-12__RT-231s4_fixed_dr_offset5mm_currOFF_start+20mm_floor-30mm_seed4/model_1499.pt",
+      "sha256": "c860a0f895e8ef1ab033c84af4084c2d1cf20bca0dd47624b06baefedcffc7ed"
+    },
+    {
+      "file": "models/09-24_11-18-12__RT-231s4_fixed_dr_offset5mm_currOFF_start+20mm_floor-30mm_seed4/autodr_1499.json",
+      "source": "training/RT-231s4/autodr_1499.json",
+      "sha256": "475a8e2d222ca8336017b1447a1a349f7ee20958eac697792a90821828ecd93b"
+    },
+    {
+      "file": "training_logs/RT-231s4/demo_metrics.json",
+      "source": "training/RT-231s4/demo_metrics.json",
+      "sha256": "325ac2b24df23db30c1376ad6f76393ad3a9853c471d616028b898ec5ae990b9"
+    },
+    {
+      "file": "training_logs/RT-231s4/episodes.csv",
+      "source": "training/RT-231s4/episodes.csv",
+      "sha256": "1944e84cdec5d07f66dd15c626ed0998929a0c35419f4b8949fa867fd9d212c4"
+    },
+    {
+      "file": "training_logs/RT-231s4/episodes_meta.json",
+      "source": "training/RT-231s4/episodes_meta.json",
+      "sha256": "e7cded30e47ea98256ff23499522d62682bf0f3326442a45497de898bfcb9b2d"
+    },
+    {
+      "file": "training_logs/RT-231s4/scalars.csv",
+      "source": "training/RT-231s4/scalars.csv",
+      "sha256": "c9d4e335fd8bf76fda43130c6bdef5c475c9e5fa2ccc83fe08ca99aa5464c628"
+    },
+    {
+      "file": "models/09-24_11-18-12__RT-231s4_fixed_dr_offset5mm_currOFF_start+20mm_floor-30mm_seed4/params/agent.yaml",
+      "source": "training/RT-231s4/params/agent.yaml",
+      "sha256": "fe82e2d571e4fb0dd6e67f4c10fbf9ea36c14d5746b6f3893200d00671f7fd91"
+    },
+    {
+      "file": "models/09-24_11-18-12__RT-231s4_fixed_dr_offset5mm_currOFF_start+20mm_floor-30mm_seed4/params/env.yaml",
+      "source": "training/RT-231s4/params/env.yaml",
+      "sha256": "c1ecfd2746efd93451cd1fda60417af2218d3def2bb01a037598052abef4a8e1"
+    },
+    {
+      "file": "training_logs/RT-231s4/RT-231s4.txt",
+      "source": "logs/logs/rsl_rl/ur5e_insertion/09-24_11-18-12__RT-231s4_fixed_dr_offset5mm_currOFF_start+20mm_floor-30mm_seed4/RT-231s4.txt",
+      "source_sha256": "1447a98f7eb614d961e9fc53c5b3e7d5b38edaed8f845312e606f3ce244a8b15",
+      "byte_start": 0,
+      "byte_end_exclusive": 5989024,
+      "sha256": "1447a98f7eb614d961e9fc53c5b3e7d5b38edaed8f845312e606f3ce244a8b15",
+      "iterations": 1500,
+      "exit_code": 0
+    },
+    {
+      "file": "models/09-24_14-51-40__RT-231s5_fixed_dr_offset5mm_currOFF_start+20mm_floor-30mm_seed5/model_1499.pt",
+      "source": "models/09-24_14-51-40__RT-231s5_fixed_dr_offset5mm_currOFF_start+20mm_floor-30mm_seed5/model_1499.pt",
+      "sha256": "441b34d649f3dd33f9d890f4f5dca13f5d659b93076ade32736aad275fd00a50"
+    },
+    {
+      "file": "models/09-24_14-51-40__RT-231s5_fixed_dr_offset5mm_currOFF_start+20mm_floor-30mm_seed5/autodr_1499.json",
+      "source": "training/RT-231s5/autodr_1499.json",
+      "sha256": "323abbeea93a02d24a25b48ee3ea5c028b407f9e21463f3da0f18b1d2d69d31c"
+    },
+    {
+      "file": "training_logs/RT-231s5/demo_metrics.json",
+      "source": "training/RT-231s5/demo_metrics.json",
+      "sha256": "3acdb40f5969e76bc78e328b46ad975ed1974527ffcd89bc5dd497e23dfd838f"
+    },
+    {
+      "file": "training_logs/RT-231s5/episodes.csv",
+      "source": "training/RT-231s5/episodes.csv",
+      "sha256": "8712d0b63bce772ef2437416b07544947f5fb876ec99acb33035b52b4d005495"
+    },
+    {
+      "file": "training_logs/RT-231s5/episodes_meta.json",
+      "source": "training/RT-231s5/episodes_meta.json",
+      "sha256": "e7cded30e47ea98256ff23499522d62682bf0f3326442a45497de898bfcb9b2d"
+    },
+    {
+      "file": "training_logs/RT-231s5/scalars.csv",
+      "source": "training/RT-231s5/scalars.csv",
+      "sha256": "c36d335092868530c0c1169980b37471e856627dcb03eb6a75d6380fd947945f"
+    },
+    {
+      "file": "models/09-24_14-51-40__RT-231s5_fixed_dr_offset5mm_currOFF_start+20mm_floor-30mm_seed5/params/agent.yaml",
+      "source": "training/RT-231s5/params/agent.yaml",
+      "sha256": "24341bd9d4edd7ac5640bb60c3eab1d9bf688d4c70aca81fe0647086a9c1bb37"
+    },
+    {
+      "file": "models/09-24_14-51-40__RT-231s5_fixed_dr_offset5mm_currOFF_start+20mm_floor-30mm_seed5/params/env.yaml",
+      "source": "training/RT-231s5/params/env.yaml",
+      "sha256": "40373eac10dfa99a6a557db4cdf87e56f0f489130f138d7e8d57e2ba2be5b639"
+    },
+    {
+      "file": "training_logs/RT-231s5/RT-231s5.txt",
+      "source": "logs/logs/rsl_rl/ur5e_insertion/09-24_14-51-40__RT-231s5_fixed_dr_offset5mm_currOFF_start+20mm_floor-30mm_seed5/RT-231s5.txt",
+      "source_sha256": "26697717f0e045b89ac1fb86ce930bf4e478d6339f31549d0b628c15d8e51432",
+      "byte_start": 0,
+      "byte_end_exclusive": 5991355,
+      "sha256": "26697717f0e045b89ac1fb86ce930bf4e478d6339f31549d0b628c15d8e51432",
+      "iterations": 1500,
+      "exit_code": 0
+    },
+    {
+      "file": "source/insertion/insertion/tasks/direct/insertion/assets/Arbeitszelle/arbeitszelle_tische_v2.usd",
+      "source": "assets/Arbeitszelle/arbeitszelle_tische_v2.usd",
+      "sha256": "2df81f2489d0350bb24e3dce4c46a7fbeead2d8cb5f925c88a062a6f10a06ca1"
+    },
+    {
+      "file": "source/insertion/insertion/tasks/direct/insertion/assets/Robot/fuegeteil.obj",
+      "source": "assets/Robot/fuegeteil.obj",
+      "sha256": "cb6b6f860c945df63f0aa2f31c0f785e4f9200d5a7d236236f5b9c9a6963df1a"
+    },
+    {
+      "file": "source/insertion/insertion/tasks/direct/insertion/assets/Robot/ur5e_tool.author.json",
+      "source": "assets/Robot/ur5e_tool.author.json",
+      "sha256": "c15f50113c3f1d86d4d33f9fb8167bd2e13ae6c72ef18fdb4f34312bce0c4f78"
+    },
+    {
+      "file": "source/insertion/insertion/tasks/direct/insertion/assets/Robot/ur5e_tool.usd",
+      "source": "assets/Robot/ur5e_tool.usd",
+      "sha256": "94f7094daa539157d76a1834c346108b9d0f2005455eb3b04e7d3ab6b624936c"
+    },
+    {
+      "file": "source/insertion/insertion/tasks/direct/insertion/assets/Werkzeug/aufnahme.obj",
+      "source": "assets/Werkzeug/aufnahme.obj",
+      "sha256": "9ad44691169b45cd2500f8ced84a634350711034862e58ff01631244db37e5f8"
+    },
+    {
+      "file": "source/insertion/insertion/tasks/direct/insertion/assets/Werkzeug/Aufnahme_real_v1_mm.usd",
+      "source": "assets/Werkzeug/Aufnahme_real_v1_mm.usd",
+      "sha256": "4ccff283dd3ee1bf7a00343d977cc2b9340ce3232509a25dec865fe1ecf4702a"
+    },
+    {
+      "file": "source/insertion/insertion/tasks/direct/insertion/assets/Werkzeug/Aufnahme_real_v1_mm.verify.json",
+      "source": "assets/Werkzeug/Aufnahme_real_v1_mm.verify.json",
+      "sha256": "7dcf0d9d3de3c6caa46e9d7c345368c8318b1c997b02a3f0aa6bfc9e1adbbd3b"
+    }
+  ]
+}
