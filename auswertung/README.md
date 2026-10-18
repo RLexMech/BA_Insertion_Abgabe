@@ -124,4 +124,5 @@ daten/
 
 - Experiment C hat keine `agent.yaml`. Den Faktor 4096 Policy-Schritte je Iteration liest `eval_figures._log_factor` aus den Zeilen `Total timesteps` im Konsolenlog jedes Laufs.
 - `episodes_all.csv` fehlt für Experiment C. Die Abbildungen 5-a und 5-c brauchen sie nicht.
-- Nicht enthalten: trainierte Modelle (die sha256 jeder getesteten Policy steht in ihrer `eval_manifest.json`), Videos (`.mkv`), `episodes.csv` je Trainingslauf.
+- Die 15 D-Endmodelle werden unter `D_factory/models/` im übergeordneten Repository über Git LFS verwaltet. Ihre SHA256 steht in den jeweiligen `eval_manifest.json`-Dateien.
+- Nicht enthalten: Videos (`.mkv`), `episodes.csv` je Trainingslauf.

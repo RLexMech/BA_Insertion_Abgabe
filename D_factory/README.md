@@ -32,20 +32,24 @@ Trainingskennzahlen als `scalars.csv` sowie Konfigurationen unter `params/`.
 
 ## Auto-DR-Modell aus Epoche 100 aufrufen
 
-Das geprüfte Modell RT-242s5 (Auto-DR, Trainingsseed 5, Epoche 100) liegt
-separat auf dem Trainings-PC unter dem unten angegebenen Pfad.
-Die `.pth`-Checkpoints sind nicht Bestandteil des Git-Repositories.
-Der Aufruf lädt den gespeicherten Auto-DR-Zustand und endet nach 300 Schritten.
+Die 15 Endmodelle werden unter `models/<Trainingslauf>/nn/` über Git LFS
+verwaltet. Nach dem Klonen im Repository `git lfs install --local` und
+`git lfs pull` ausführen. Bei einer ZIP-Abgabe die heruntergeladenen `.pth`-Dateien
+mit einpacken; ein Git-LFS-Zeiger allein enthält keine Modellgewichte.
+Das Beispiel lädt RT-242s5 (Auto-DR, Trainingsseed 5, Epoche 100) einschließlich
+Auto-DR-Zustand. Die Wiedergabe endet nach 300 Schritten.
 
 ```powershell
-$modell = "C:\Users\Simon\Desktop\Alexander_Pett\view\RT-242s5_ep100\nn\ep100_view.pth"
+$modell = ".\models\09-28_20-01-53__RT-242s5_autodr_offset50mm_currOFF_start+20mm_floor-30mm_seed5\nn\last_ur5e_insertion_ep_100_rew_565.5173.pth"
 if (-not (Test-Path -LiteralPath $modell -PathType Leaf)) { throw "Modell nicht gefunden: $modell" }
 python scripts/rl_games/play.py --task Ur5e-Insertion-Direct-v0 --kit_args=--/app/vulkan=false --num_envs 4 --seed 1 --max-steps 300 --autodr-state --checkpoint "$modell" env.dr_mode=autodr env.start_floor_m=-0.030 env.autodr_stall_buffers=3 env.obs_wrench_mode=force_prevact env.pocket_obs_yaw_rad=0.0223402
 ```
 
-Auf einem anderen Rechner die Checkpoint-Datei separat übertragen und
-`$modell` auf ihren dortigen Pfad setzen. Eigene Trainingsläufe speichern
-Checkpoints unter `logs/rl_games/ur5e_insertion/<Lauf>/nn/`.
+Die SHA256 jedes Endmodells steht in seinem archivierten `eval_manifest.json`.
+Zur erstmaligen Übernahme auf dem Trainings-PC: `python scripts/import_models.py`.
+Das Skript prüft alle 15 Dateien vor dem Kopieren und behält die Originale.
+`--source-root "<Ordner oder Datei>"` ergänzt einen weiteren Suchort;
+`--check-only` prüft ausschließlich die Verfügbarkeit und Prüfsummen.
 
 ## Vorhandene Logs und Ergebnisse
 
@@ -74,7 +78,8 @@ CSV mit zugehöriger JSON-Metadatendatei.
 ## Evaluation starten und auswerten
 
 Für die Serien müssen die 15 Epoche-100-Modelle der Läufe RT-242s1–5,
-RT-243s1–5 und RT-244s1–5 unter `logs/rl_games/ur5e_insertion/` liegen.
+RT-243s1–5 und RT-244s1–5 unter `models/` liegen. Ohne diesen Ordner verwendet
+der Starter `logs/rl_games/ur5e_insertion/` für eigene Trainingsläufe.
 Mit `-RunRoot "<Ordner mit den 15 Trainingsläufen>"` lässt sich ein anderer
 Speicherort verwenden. Git muss sauber und [eval_plan.md](eval_plan.md)
 committet sein. Jeder Aufruf benötigt eine noch unbenutzte RT-Nummer.

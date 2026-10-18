@@ -1,2 +1,4 @@
 # auswertung/: Daten und Skripte byte-genau wie in der Quelle (sha256 in auswertung/HERKUNFT.csv).
 auswertung/** -text
+
+D_factory/models/**/*.pth filter=lfs diff=lfs merge=lfs -text

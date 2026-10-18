@@ -1,0 +1,3 @@
+models/**/eval_*/
+models/**/replay*/
+models/**/.checkpoint-*.partial

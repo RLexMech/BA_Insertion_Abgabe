@@ -33,7 +33,12 @@ $NoiseOverride = @{
 
 $scriptsDir = Split-Path -Parent $PSScriptRoot
 $repoRoot = Split-Path -Parent $scriptsDir
-if (-not $RunRoot) { $RunRoot = Join-Path $repoRoot 'logs\rl_games\ur5e_insertion' }
+if (-not $RunRoot) {
+    $RunRoot = Join-Path $repoRoot 'models'
+    if (-not (Test-Path -LiteralPath $RunRoot -PathType Container)) {
+        $RunRoot = Join-Path $repoRoot 'logs\rl_games\ur5e_insertion'
+    }
+}
 if (-not $ResultsRoot) { $ResultsRoot = Join-Path $repoRoot 'results\eval' }
 # Resolve relative input paths before changing the working directory.
 $RunRoot = [System.IO.Path]::GetFullPath($ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($RunRoot))
