@@ -1,3 +1,6 @@
 models/**/eval_*/
 models/**/replay*/
 models/**/.checkpoint-*.partial
+/logs/
+/rt_logs/
+/results/
