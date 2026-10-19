@@ -15,14 +15,14 @@ the x axis is total env steps for both, one seed each, lines only.
 Two panels side by side on one y axis: training
 success rate and AutoDR opening (bounds_version / 75). A dotted line per run
 marks the first step with all 75 opening steps done; the footer names both
-values (C9). Both runs are the AutoDR arm, so rl_games keeps the Auto-DR blue
-and rsl_rl takes grey, solid (D1, D4, D7). Return and learning rate are read
+values. Both runs are the AutoDR arm, so rl_games keeps the Auto-DR blue
+and rsl_rl takes grey, solid. Return and learning rate are read
 and printed, not drawn (rsl_rl's learning rate sat at its 1e-5 floor, RT-238s1). Axis rules: rsl_rl `tools/run_axis.env_steps`; rl_games
 `run_axis.rl_games_x` with F = 256 x 128 (`--num_envs 256` in the RT-240s1
-command, `horizon_length: 128` in the yaml at `de2c319`), checked against the
+command, `horizon_length: 128` in the configuration), checked against the
 CSV's `info/epochs` rows by `run_axis.check_rl_games_epochs`.
 
-    .venv-analysis/Scripts/python.exe scripts/plot_rslrl_vs_rlgames.py [--pair H10|H16]
+    python scripts/plot_rslrl_vs_rlgames.py [--pair H10|H16]
 
 ``--pair H16`` draws the same two panels for the end state of stage C (RT-206s1)
 against the end state of stage D (RT-242s1), see PAIRS.
@@ -45,15 +45,10 @@ run_axis = EF.run_axis   # the one loaded copy of tools/run_axis.py
 
 SCRIPT_MARKER = "plot_rslrl_vs_rlgames-2026-10-08a"
 ENVS = 256
-BOUNDS_TOTAL = 75.0   # 5 floor rungs + 7 boundaries x 10 steps (RT-240s1 / RT-242s OUTCOME; RT-206s1 max 75)
-# Two pairs, one drawing. Each run brings its own steps per iteration (run_axis
-# factor = steps x ENVS; all four runs used --num_envs 256).
-#  H10: the switch alone, same task (D.3).
-#  H16: the end state of stage C against the end state of stage D, AutoDR seed 1
-# NOT the same task: D spreads the fixture +-50 mm in
-#       x, y, z instead of +-5 mm in x, y, starts higher and adds the yaw belief
-#       error (eval_manifest.json of both studies); the caption must say so.
-#       RT-206s1: rsl_rl num_steps_per_env 16 at git 5a6cc8e (agents/rsl_rl_ppo_cfg.py:30).
+BOUNDS_TOTAL = 75.0   # 5 floor rungs + 7 boundaries x 10 steps (RT-240s1, RT-242s, RT-206s1).
+# Scale each run by its own steps per iteration and 256 environments.
+# H10 compares the same task. H16 compares C and D with different fixture spreads,
+# start heights and yaw observation errors. RT-206s1 uses 16 steps per iteration.
 PAIRS = {
     "H10": {"name": "H10_rsl_rl_gegen_rl_games",
             "rsl_rl": (None, 128,
@@ -148,8 +143,7 @@ def draw(plt, d: dict, pair: dict):
         EF._style(ax, ylabel, EF.XLABEL_TRAINING)
     handles = [Line2D([], [], color=s["colour"], linestyle=s["style"], linewidth=1.6, label=pair[lib][2])
                for lib, s in RUNS.items()]
-    # C9: every dotted line named with its value and unit -- in the legend, the footer
-    # line ran past the figure width at 12 pt (2026-10-11).
+    # Name each dotted line with its value and unit in the legend.
     text = "\n".join(f"{pair[lib][2].split(':')[0]} nach {EF._num(marks[lib] / 1e6, '.1f')} Mio. Policy-Schritten"
                      for lib in ("rl_games", "rsl_rl") if marks[lib] is not None)
     handles.append(Line2D([], [], color=EF.INK_MUTED, linewidth=0.8, linestyle=":",

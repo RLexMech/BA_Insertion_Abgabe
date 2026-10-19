@@ -1,7 +1,7 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-r"""Every number of the evaluation, from ``episodes_all.csv``, generated offline in ``.venv-analysis``.
+r"""Compute evaluation statistics from ``episodes_all.csv``.
 
 Headline key is ``success_train``. Library functions, no own interval code:
 
@@ -14,8 +14,7 @@ Headline key is ``success_train``. Library functions, no own interval code:
   BONFERRONI      the same Welch call at 1 - ALPHA / k over K1, K2, K5, K5_nominal;
                   cross-check beside the pre-registered 95 % reading, no "met"
 
-The unit of the method comparison is the SEED: each policy is one rate
-(literature check 2026-09-21). Percentiles of force, steps and interpenetration
+The unit of the method comparison is the seed: each policy contributes one rate. Percentiles of force, steps and interpenetration
 use the env's nearest-rank rule (`insertion_env._pct`), so a thesis number and a
 training-log number mean the same. The interpenetration threshold t1 is read from
 the runs' ``episodes_meta.json`` (one value over all blocks, else refused).
@@ -23,8 +22,8 @@ the runs' ``episodes_meta.json`` (one value over all blocks, else refused).
 Writes ``summary.json`` (sorted keys; two runs on the same input are byte-equal)
 and ``summary_tables.csv`` (one row per policy and block).
 
-    .venv-analysis/Scripts/python.exe scripts/eval_stats.py --results results/eval
-    .venv-analysis/Scripts/python.exe scripts/eval_stats.py --self-test
+    python scripts/eval_stats.py --results results/eval
+    python scripts/eval_stats.py --self-test
 """
 
 from __future__ import annotations
@@ -46,12 +45,8 @@ BOOT_RESAMPLES = 10000
 BOOT_SEED = 20260921
 KEY = "success_train"
 
-# Bin edges: COPIES of the env's tuples (Belege_Streuwerte.md section D), same
-# rule as `insertion_env._rate_by_bin`: bin i = first edge the value is below;
-# the last bin also takes everything at or above the last edge. Friction has no
-# env tuple: its edges are OWN CONSTRUCTION (Belege_Streuwerte.md D5,
-# 2026-10-02) -- five equal bins over the band 0.08..0.20 (autodr.py DR_DIMS
-# friction), last edge = band top, the rule of the three tuples above.
+# Use the env's bin edges and first-upper-edge rule; the last bin includes larger values.
+# Friction uses five equal bins over 0.08..0.20.
 BIN_EDGES = {
     "lat_r_mm": (6.0, 12.0, 18.0, 24.0, 30.0),
     "yaw_abs_deg": (1.0, 2.0, 3.0, 4.0, 5.0),
@@ -708,7 +703,7 @@ CHECKS = (
     "K4: Fixed-DR's five T-final-F rates beside AutoDR / No-DR",
     # friction bins, own construction.
     "friction bins: five equal bins over 0.08..0.20 (width 0.024), 0.20 lands in the LAST bin",
-    # 2026-10-02: interpenetration over the episode, successes only (thesis Tab. 4.3).
+    # Episode interpenetration for successful trials only (thesis Table 4.3).
     "successes_ip_max_mm: nodr s1 T-final (40/100, ip 0.00..0.39 on the successes) -> median 0.195, "
     "p95 0.37, max 0.39, n_ge_t1 10; t1_mm in the summary",
     # the force-sensor ablation (autodr - autodr_nf, T-final and pn2).

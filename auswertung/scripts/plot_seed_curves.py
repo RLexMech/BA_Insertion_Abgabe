@@ -3,7 +3,7 @@
 
 r"""F7 of ``eval_figures.py`` (training success over total env steps, mean line,
 95 % bootstrap interval of the mean as band, each seed as a thin line) for rl_games seed chains,
-BEFORE any evaluation exists. Laptop only, in ``.venv-analysis``.
+BEFORE any evaluation exists.
 
 A thin caller: the band numbers (``_mean_std``, ``_boot_ci``), the drawing (``draw_f7``),
 the font setup, the arm colours and the per-run reading
@@ -13,7 +13,7 @@ the font setup, the arm colours and the per-run reading
 ``eval_figures.py --extract-training rt_logs --arm ...``; this caller draws
 one F7 beside a run report without an extraction.
 
-    .venv-analysis/Scripts/python.exe scripts/plot_seed_curves.py --arm autodr=RT-242s --out rt_logs/RT-242s
+    python scripts/plot_seed_curves.py --arm autodr=RT-242s --out rt_logs/RT-242s
     ... --arm autodr=RT-242s --arm fixeddr=RT-243s --arm nodr=RT-244s   (all three arms)
 """
 

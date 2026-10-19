@@ -22,10 +22,10 @@ counts are held against summary.json (``NOISE`` / ``OOD`` and ``policies``); a
 mismatch stops the figure.
 
 Input: ``daten/endstudie_rl_games/evaluation/`` (summary.json, episodes_all.csv, T-ood manifests).
-Reuses ``eval_figures`` / ``eval_stats`` and changes nothing there. ``.venv-analysis``:
+Uses ``eval_figures`` and ``eval_stats``:
 
-    .venv-analysis/Scripts/python.exe scripts/plot_kraft_durchdringung.py [--only H23|H24]
-    .venv-analysis/Scripts/python.exe scripts/plot_kraft_durchdringung.py --self-test
+    python scripts/plot_kraft_durchdringung.py [--only H23|H24]
+    python scripts/plot_kraft_durchdringung.py --self-test
 
 Writes ``docs/figures/eval_rlgames/H23_beobachtungsfehler_kraft_durchdringung.*`` and
 ``H24_ausserhalb_kraft_durchdringung.*`` (pdf, svg, png).

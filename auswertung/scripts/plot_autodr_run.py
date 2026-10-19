@@ -47,7 +47,7 @@ _spec.loader.exec_module(run_axis)
 XLABEL = "Policy-Schritte in Mio."   # CURVE AXIS
 # fig_stufen: plot-area height per panel in inches (RT-201_stufen).
 STUFEN_AXES_H = 1.51
-RUN = "#3B6FD4"   # series 1 (plot_run_curves.py precedent, validated with REF)
+RUN = "#3B6FD4"   # Training series.
 REF = "#D97706"   # series 2
 INK = "#1F2933"
 INK_MUTED = "#6B7280"
@@ -215,7 +215,7 @@ def fig_stufen(plt, c, sidecar, ev):
                 ax.plot(lx, [100 * (y - d["centre"]) / (d["lo_max"] - d["centre"]) for y in ly], color=INK_MUTED,
                         linewidth=1.2, marker="^", markersize=3.5, markerfacecolor="none", markeredgewidth=0.9,
                         markevery=(0.05, 0.1), label="untere Grenze")
-        # 12 pt (2026-10-11): a title with a comma breaks there, else it is wider than its panel.
+        # Split long titles at commas.
         ax.set_title(label.replace(", ", ",\n"), fontsize=EF.FONT_PT, color=INK)
         ax.set_ylim(-5, 108)
         style(ax, "", xlabel=False)
@@ -226,9 +226,8 @@ def fig_stufen(plt, c, sidecar, ev):
     for ax in axes[1]:
         env_axis(ax)
         ax.set_xlabel("")
-        ax.xaxis.set_major_locator(MultipleLocator(1e6))   # at 12 pt the default showed only 0 and 2 Mio.
-    # One x title under the middle panel and the y title in two lines: at 12 pt they are
-    # wider / taller than one panel (2026-10-11).
+        ax.xaxis.set_major_locator(MultipleLocator(1e6))   # Ticks at integer millions of environment steps.
+    # Use a shared x-axis title and two-line y-axis titles.
     axes[1][1].set_xlabel(XLABEL, color=INK, fontsize=EF.FONT_PT)
     for ax in axes[:, 0]:
         ax.set_ylabel(EF.YLABEL_OPENING.replace(" Grenzen", "\nGrenzen"), color=INK, fontsize=EF.FONT_PT)
@@ -418,7 +417,7 @@ def events(c: dict) -> list:
 def draw_all(scalars, factor, metrics_path, autodr_path, run, out_dir, lib="rsl_rl",
              episodes=None, episodes_meta=None, dt=None, only=None) -> list:
     """``only``: figure names (NAMES) to draw; None draws every figure the inputs allow
-    (2026-10-11: RT-201's demo_metrics.json has no below_fixture_rate, so only "stufen")."""
+    (RT-201 has no below_fixture_rate, so only "stufen" is available)."""
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt

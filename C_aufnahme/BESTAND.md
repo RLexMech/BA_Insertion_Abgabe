@@ -1,70 +1,11 @@
-# Bestand Experiment C, 18.10.2026
+# Bestand Experiment C
 
-Quelle: `C_Bestand_20261018_222256_056264.zip` vom Trainings-PC,
-Originalprojekt `Phase5_Robustheit_v1`. Alle übertragenen Dateien wurden gegen
-die im ZIP enthaltenen SHA256 geprüft. `BESTAND.json` dokumentiert die
-übernommenen Dateien, Quellen, Prüfsummen und gemeldeten Paketversionen.
+- `models/`: 15 RSL-RL-Endmodelle `model_1499.pt` mit Konfigurationen und AutoDR-Zustand. `models/manifest.json` ordnet Methode und Seed zu.
+- `training_logs/<RT>/`: Konsolenlogs, Lernkurven, Episodendaten und Trainingskennzahlen.
+- `source/insertion/insertion/tasks/direct/insertion/assets/`: USD-/OBJ-Dateien und Asset-Metadaten.
+- `../auswertung/daten/experiment_C_rsl_rl/`: historische Evaluationsdaten und weitere C-Versuche.
+- `BESTAND.json`: Dateizuordnung, Prüfsummen und Paketversionen; für RT-206s2, RT-206s3 und RT-206s4 auch die Abschnitte der zusammengefassten Quelllogs.
 
-- `models/`: 15 unveränderte RSL-RL-Endmodelle `model_1499.pt`, jeweils mit
-  `params/env.yaml`, `params/agent.yaml` und `autodr_1499.json`.
-  Die Modellprüfsummen stimmen mit den 41 archivierten Evaluationsmanifesten
-  überein; `models/manifest.json` ordnet Methode und Seed zu.
-- `training_logs/<RT>/`: vollständiger Konsolenlauf mit Iterationen 0–1499 und
-  Exitcode 0 sowie `scalars.csv`, `episodes.csv`, `episodes_meta.json` und
-  `demo_metrics.json` aus dem jeweiligen Lauf.
-- `source/insertion/insertion/tasks/direct/insertion/assets/`: sieben aktive
-  USD-/OBJ-/Begleitdateien, bytegleich zu den entsprechenden D-Assets.
-- Historische Evaluationsdaten und frühere C-Versuche bleiben unter
-  `../auswertung/daten/experiment_C_rsl_rl/`.
+Trainingsumgebung: Isaac Sim 5.1.0.0, Isaac Lab 2.3.2.post1, RSL-RL 3.0.1, PyTorch 2.7.0+cu118 und NumPy 2.4.6.
 
-RT-206s2, s3 und s4 lagen als angehängte Konsolenlogs mit mehreren Seeds vor.
-Übernommen wurde je der vollständige Abschnitt vom Laufkopf bis zum Exitcode
-des passenden Seeds. Bei s4 heißt die Quelldatei `RT-206s2.txt`; ihr letzter
-Laufkopf benennt Seed 4. Die Originalbytes der Abschnitte bleiben unverändert;
-Quellhash und Bytebereich stehen in `BESTAND.json`. Bereits vorhandene kurze
-Logauszüge im Auswertungsarchiv bleiben unverändert.
-
-Der Abgabe-Code wurde mit dem übertragenen Original verglichen. Die
-Simulationslogik stimmt überein; die bereits gesetzten Abgabe-Standardwerte
-(-30 mm Startboden, drei Stall-Puffer, 256 Umgebungen, Seed 1) entsprechen den
-archivierten Trainingsaufrufen. Kommentare und Meldungstexte sind gekürzt.
-Hinzu kommen Paketierung, Dokumentation und Aufrufhilfen. Keine Gewichte wurden
-konvertiert. Die RSL-RL-Checkpoints enthalten keine NumPy-Pickle-Verweise;
-eine D-spezifische View-Konvertierung ist deshalb nicht vorgesehen.
-
-Die 41 archivierten Auswertungen wurden auf einer Arbeitskopie mit dem
-C-Collector geprüft: 41.050 Erstepisoden, `VERDICT OK`. Dateien, Python-Syntax,
-GUI-Tabellenauswahl und die 41 aufgelösten Evaluationsbefehle wurden lokal
-geprüft. Isaac Sim und PyTorch sind auf diesem Prüf-PC nicht installiert;
-eine neue GPU-/GUI-Wiedergabe und neue Evaluationen sind hier nicht erfolgt.
-
-Auf dem Trainings-PC gemeldet: Isaac Sim 5.1.0.0, Isaac Lab 2.3.2.post1,
-RSL-RL 3.0.1, PyTorch 2.7.0+cu118, NumPy 2.4.6. Dies ist eine Bestandsaufnahme,
-keine neu erzeugte vollständige Environment-Sperrdatei.
-
-
-## Abschlussprüfung und Umfang, 19.10.2026
-
-Die GUI-Wiedergabe und der vollständige Haupttest wurden auf dem Trainings-PC
-bestätigt. T-final und T-final-F umfassen 15 Originalmodelle mit jeweils 1000
-abgeschlossenen Erstepisoden. Collector: VERDICT OK. Alle protokollierten
-Erstepisodenwerte stimmen mit dem Archiv überein, abgesehen vom neuen Laufnamen.
-Haupttest: Auto-DR 97,02 %, No-DR 26,24 %, Fixed-DR 57,38 %.
-
-C enthält den Endstand mit Training, Wiedergabe, Evaluation und zugehörigen
-Prüfungen. Frühere Asset-Erstellung, Reparatur, Diagnose und Entwicklungsproben
-wurden entfernt; ihre Wiederholung gehört nicht zum Abgabeumfang. Der Hauptcode,
-Modelle, Assets und Testtabellen bleiben unverändert. Frühere Nachweise verbleiben
-im Auswertungsarchiv und die entfernten Hilfen in der Git-Historie.
-
-
-## Umfang der wiederholbaren Evaluation
-
-Die Abgabe-Aufrufe sind auf die vier C-Blöcke aus Abbildung B-1 begrenzt:
-Haupttest und Test ohne Streuung, jeweils Auto-DR/No-DR und Fixed-DR.
-Die frühere Bestandsprüfung von 41 archivierten Läufen bleibt ein historischer
-Prüfnachweis. Sie definiert nicht den Umfang der jetzt angebotenen Evaluation.
-Die alte zusätzliche Statistik-/Grafik-Berichtskette und die nicht benötigten
-Testtabellen sind aus C entfernt. Der Collector liefert die Prüfung und eine
-Ergebnistabelle je Modell ohne zusätzliche Analysepakete. Archiv und D bleiben
-unverändert.
+Aufrufe für Training, Wiedergabe und Evaluation stehen in [README.md](README.md). Die Evaluationsbedingungen beschreibt [eval_plan.md](eval_plan.md).

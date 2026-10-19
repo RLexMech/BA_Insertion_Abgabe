@@ -129,7 +129,6 @@ def tilt_schedule(
     return tilt_start * frac
 
 
-# NOT ``@torch.jit.script``, and the reason is MEASURED, not stylistic.
 def advance_phase(
     phase: torch.Tensor,
     lateral_err: torch.Tensor,

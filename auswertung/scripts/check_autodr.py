@@ -67,11 +67,7 @@ EXPECTED_KEYS = (
 )
 
 EXPECTED_TESTWERT = ("lat_r", "yaw", "tilt", "start_height")
-# ... and how many REPORT LINES carry the marker: those four, plus the one
-# constant line `delta steps (10)`, whose DELTA_STEPS_SOURCE is itself
-# [TESTWERT]. Unmarked are the Akkaya header line and the friction line.
-# MEASURED by running `provenance_lines(DR_DIMS)` on 2026-09-12: 7 lines,
-# 5 of them containing "[TESTWERT]". Not copied out of any prose.
+# Seven provenance lines, five with [TESTWERT], including delta steps (10).
 MARKED_PROVENANCE_LINES = 5
 
 # Checks that genuinely cannot be counter-proved, with the reason. Announced
@@ -259,10 +255,7 @@ def build_checks(ns, torch) -> list:
         _inv = str(exc)
     check("inverted maxima are refused BY NAME, not by the centre-range guard",
           "is above hi_max" in _inv, _inv[:70])
-    # MEASURED 2026-09-09 on the broken version: a two-sided quantity whose
-    # lower maximum equals its centre has delta 0, so ten "expansions" left
-    # the bounds untouched and still drove bounds_version to 10 -- the R12
-    # failure the module exists to prevent. Two gates now gate it.
+    # A zero expansion delta must neither move the bounds nor increment bounds_version (R12).
     refuses("a movable boundary with nowhere to go refuses at bind time",
             lambda: DimSpec("start_height", "m", 0.030, 0.050, False, "probe")
             .bind(0.030))
@@ -290,10 +283,7 @@ def build_checks(ns, torch) -> list:
     refuses("p_boundary outside [0, 1] refuses", lambda: AutoDR(DIMS, p_boundary=7.5))
     refuses("a retreat threshold above the advance threshold refuses",
             lambda: AutoDR(DIMS, advance_at=0.1, retreat_at=0.9))
-    # Deviation (1) -- corrected 2026-09-12, it read "(2)", which is the
-    # uniform boundary draw: our measure is a RATE. Akkaya's t_H = 20 / t_L = 10
-    # are COUNTS, and pasting them in here would freeze every boundary for
-    # the whole run without a single log line saying so.
+    # Deviation (1): thresholds are success rates; Akkaya's t_H=20 and t_L=10 are counts.
     refuses("an advance threshold above 1 refuses -- the measure is a rate",
             lambda: AutoDR(DIMS, advance_at=20.0, retreat_at=10.0))
     refuses("a negative retreat threshold refuses",
@@ -593,8 +583,7 @@ def build_checks(ns, torch) -> list:
     neg_drop["dropped"] = {k: -99 for k in st["keys"]}
     refuses("a resume with a negative dropped count refuses",
             lambda: fresh().load_state_dict(neg_drop))
-    # The dims block was raw-indexed until 2026-09-09 and refused with a
-    # bare KeyError, which names no file and no cause on the training PC.
+    # Invalid dimension data must raise a descriptive error.
     _dimless = dict(st)
     _dimless["dims"] = [dict(d) for d in st["dims"]]
     _dimless["dims"][0].pop("n_steps")
@@ -620,11 +609,7 @@ def build_checks(ns, torch) -> list:
           set(testwert_dims(DR_DIMS)) == {d.name for d in DR_DIMS} - {"friction"},
           str(testwert_dims(DR_DIMS)))
     prov = provenance_lines(DR_DIMS)
-    # The marked-line count is pinned to MARKED_PROVENANCE_LINES and the
-    # derived count is pinned to the SAME literal. Comparing the report only
-    # against `testwert_dims` compared one fact with itself: both sides read
-    # `d.source`, so a marker dropped from a ceiling moved them together and
-    # the check stayed green (critic finding, 2026-09-12).
+    # Pin both marker counts to an independent literal so a missing marker cannot mask itself.
     _marked = sum(1 for line in prov if "[TESTWERT]" in line)
     check("the provenance report names every quantity and both constants",
           len(prov) == len(DR_DIMS) + 2
@@ -640,13 +625,7 @@ def build_checks(ns, torch) -> list:
           len(_fric_line) == 1 and "(sourced)" in _fric_line[0]
           and "[TESTWERT]" not in _fric_line[0],
           _fric_line[0][:70] if _fric_line else "no friction line")
-    # -- and the telemetry PUBLISHES those names ----------------------------
-    # `as_dict()["testwert"]` is the route by which the provisional list
-    # reaches the run's JSON, and until 2026-09-12 nothing read it back
-    # (critic finding): the list could lose a name, or all of them, with
-    # every check above still green. Pinned against the EXPECTED_TESTWERT
-    # literal, not against `testwert_dims` -- that is the function the
-    # telemetry itself calls, and grading it with itself is the same trap.
+    # Check published testwert names against EXPECTED_TESTWERT, independently of testwert_dims.
     check("AutoDR.as_dict publishes the decided-not-derived names",
           tuple(fresh().as_dict()["testwert"]) == EXPECTED_TESTWERT,
           str(fresh().as_dict()["testwert"]))
@@ -671,9 +650,7 @@ def build_checks(ns, torch) -> list:
     check("the last TILT bin edge is the tilt magnitude ceiling",
           same_number(_tilt_edges[-1], _tilt_ceil_deg),
           f"edge {_tilt_edges[-1]:.10g} deg vs ceiling {_tilt_ceil_deg:.10g} deg")
-    # The HEIGHT twin (after the H_min measurement 2026-09-14):
-    # the last edge is the start_height ceiling, so the AutoDR phase of a
-    # floored run has a bin for every 50 mm up to the 0.270 m ceiling.
+    # The height bins extend in 50 mm steps to the 0.270 m ceiling.
     _h_edges = env_bin_edges("_start_height_bin_edges_m")
     _h_ceil_m = next(d for d in DR_DIMS if d.name == "start_height").hi_max
     check("the last HEIGHT bin edge is the start_height ceiling",
@@ -804,8 +781,7 @@ def build_checks(ns, torch) -> list:
     _mine[0][0] = 99.0
     check("the table is COPIED, so a later write cannot walk back validation",
           _t2.rows[0][0] == 0.5, str(_t2.rows[0][0]))
-    # Wrapping IS duplication -- the docstring said otherwise until
-    # 2026-09-09. It is the caller that must stop at served >= n_rows.
+    # Wrapping repeats rows; the caller must stop at served >= n_rows.
     _one = RowTable([[0.25] * width], "x")
     check("a wrapped take REPEATS a row id -- served is what says so",
           _one.take(3) == [0, 0, 0] and _one.served == 3 and _one.n_rows == 1,
@@ -2496,7 +2472,7 @@ FIXED_DR_MUTATIONS: tuple = (
 MUTATIONS = MUTATIONS + STALL_MUTATIONS + FIXED_DR_MUTATIONS
 
 FLOOR_EXTRA_FLIPS: dict = {
-    # Stagnation pins (2026-09-14) that the OLDER mutations also flip.
+    # Stagnation checks affected by the shared mutations.
     "all_at_max-ignores-the-step-count": (
         "clamped_max does NOT count as a hold -- a boundary at its ceiling is done",
     ),
@@ -2601,8 +2577,7 @@ _FD_STATE = ("a Fixed-DR state round-trips under its own format; AutoDR refuses 
 _FD_SIM = "Fixed-DR in a simulated run: the floor reaches H_min and the seven never move"
 
 FIXED_DR_EXTRA_FLIPS: dict = {
-    # Fixed-DR pins (2026-09-23) that the OLDER mutations also flip: FixedDR
-    # inherits every AutoDR line these break, so the flip is the point.
+    # FixedDR inherits the AutoDR behavior targeted by these mutations.
     "floor-not-excluded-from-the-dr-draw": (_FD_SIM,),
     "floor-envs-not-nailed": (_FD_SIM,),
     "phase-never-leaves-floor": (_FD_SIM, _FD_AT_MAX, _FD_NO_B, _FD_FLOOR, _FD_CURVES),
@@ -2663,8 +2638,7 @@ def _self_test(torch) -> int:
         return 1
     print(f"  PASS  baseline: {len(baseline)} checks green")
 
-    # MEASURED 2026-09-14: 132 mutations in sequence took 210 s; the table
-    # is spread over a process pool, the report keeps the table's order.
+    # Run mutations in parallel and report them in table order.
     results: dict = {}
     with concurrent.futures.ProcessPoolExecutor() as pool:
         for name, got in pool.map(_run_mutation, range(len(MUTATIONS)), chunksize=4):

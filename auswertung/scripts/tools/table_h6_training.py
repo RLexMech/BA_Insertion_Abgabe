@@ -2,22 +2,22 @@ r"""Appendix tables to figure H6 (training success over the epoch): the seed mea
 with its 95 % bootstrap interval per arm, and per seed the epoch from which the
 training success stays at or above 95 % until the last epoch.
 
-Two steps, because no one Python here has both libraries (as table_ood_newcombe.py):
+Generate the CSV first, then the Word table (requires python-docx):
 
-  .venv-analysis\Scripts\python.exe scripts/tools/table_h6_training.py --csv
+  python scripts/tools/table_h6_training.py --csv
       reads daten/endstudie_rl_games/training_auszug/curves.csv through eval_figures.data_f7
       (the data function H6 draws, never recomputed here); writes
       docs/tabellen/Tab_A_H6_lernkurve.csv        every epoch, mean + interval + seeds
       docs/tabellen/Tab_A_H6_95_prozent.csv       per seed the "stays >= 95 %" epoch
   python scripts/tools/table_h6_training.py
-      (system Python, python-docx) turns both CSVs into one
+      (python-docx) turns both CSVs into one
       docs/tabellen/Tab_A_H6_lernkurve.docx; the curve table every STEP epochs.
 
 "Reaches 95 %" is read as "stays at or above 95 % from this epoch to the last":
 every seed starts above 95 % in epochs 1-2 (the start phase), so a first crossing
 says nothing.
 
-Third table (thesis 5.2.1, 2026-10-09): per Auto-DR seed the "stays >= 95 %" epoch
+Third table (thesis 5.2.1): per Auto-DR seed the "stays >= 95 %" epoch
 from above, the epoch from which the AutoDR friction boundary ``dr/friction_hi``
 (curves.csv) stays at its ceiling ``hi_max`` (``autodr_s<N>_autodr_ep100.json``
 ``dims``), the epochs at that ceiling, and the success in the T-ood blocks
@@ -194,7 +194,7 @@ def write_docx() -> None:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--csv", action="store_true", help="step 1 (.venv-analysis): curves.csv -> CSV")
+    ap.add_argument("--csv", action="store_true", help="step 1: curves.csv -> CSV")
     ap.add_argument("--curves", default=str(REPO / "daten" / "endstudie_rl_games" / "training_auszug" / "curves.csv"))
     a = ap.parse_args()
     if a.csv:

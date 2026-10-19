@@ -40,11 +40,11 @@ For rl_games, --arm ARM=PREFIX selects runs; F8 additionally requires
 <prefix><N>_autodr_final.json. OOD figures require T-ood data.
 
 Usage:
-    .venv-analysis/Scripts/python.exe scripts/eval_figures.py --extract-training rt_logs
-    .venv-analysis/Scripts/python.exe scripts/eval_figures.py --results results/eval
-    .venv-analysis/Scripts/python.exe scripts/eval_figures.py --extract-training rt_logs --arm autodr=RT-242s --arm nodr=RT-244s --arm fixeddr=RT-243s --training results/training_rlgames
-    .venv-analysis/Scripts/python.exe scripts/eval_figures.py --results daten/endstudie_rl_games/evaluation --training daten/endstudie_rl_games/training_auszug --out docs/figures/eval_rlgames
-    .venv-analysis/Scripts/python.exe scripts/eval_figures.py --self-test
+    python scripts/eval_figures.py --extract-training rt_logs
+    python scripts/eval_figures.py --results results/eval
+    python scripts/eval_figures.py --extract-training rt_logs --arm autodr=RT-242s --arm nodr=RT-244s --arm fixeddr=RT-243s --training results/training_rlgames
+    python scripts/eval_figures.py --results daten/endstudie_rl_games/evaluation --training daten/endstudie_rl_games/training_auszug --out docs/figures/eval_rlgames
+    python scripts/eval_figures.py --self-test
 """
 
 from __future__ import annotations
@@ -90,10 +90,7 @@ def _mio_axis(ax):
 # The code keeps its column name ``iteration``.
 def xlabel_epoch(factor: int) -> str:
     return f"Epoche (je {_thousands(factor)} Policy-Schritte)"
-# Colour follows the method. Fixed-DR uses #199e70 because the
-# lighter #1baf7a has only 2.82:1 contrast on white. For the #199e70 / #D97706
-# pair, the checked colour-vision distances were 9.0 (protan) and 7.4 (tritan);
-# labels and distinct markers provide additional identification.
+# Method colours are supplemented by labels and distinct markers.
 METHOD_COLOR = {"autodr": "#3B6FD4", "nodr": "#D97706", "fixeddr": "#199e70"}
 METHOD_LABEL = {"autodr": "Auto-DR", "nodr": "No-DR", "fixeddr": "Fixed-DR"}
 # a second encoding beside the colour, because
@@ -107,11 +104,7 @@ YLABEL_RATE = "Erfolgsrate in %"
 YLABEL_TRAINING_RATE = "Erfolgsrate im Training in %"
 YLABEL_OPENING = "Öffnung der Grenzen in %"   # 0 = Nennwert, 100 = Maximum (T2)
 POLICY_DOT_LABEL = "Punkt: Policy je Seed"
-# The ablation pair of H9 / H11 / H12 (one home; plot_mlp_vs_lstm.py reads it):
-# the reference arm keeps the Auto-DR blue, the ablation takes the reference
-# palette's magenta (dark step) and a dashed line as second encoding. Pair
-# validated with the dataviz validator, light mode: CVD dE 13.6, normal-vision
-# dE 26.3, contrast >= 3:1 (2026-10-03).
+# Shared ablation style for H9/H11/H12: Auto-DR blue versus dashed magenta.
 ABLATION_COLOR = "#d55181"
 # the two arms of the force-sensor test, (colour, line style, label).
 FORCE_ARM_STYLE = {"autodr": (METHOD_COLOR["autodr"], "-", "Kraft in der Beobachtung"),
@@ -125,8 +118,7 @@ ARM_BLOCK = {"T-nominal": "T-nominal-F", "T-final": "T-final-F"}
 INK = "#1F2933"
 INK_MUTED = "#6B7280"
 GRID = "#E5E7EB"
-# dataviz status palette (references/palette.md), in the stack order that
-# passes the validator's adjacent CVD and normal-vision checks (2026-09-23).
+# Outcome colours in stack order.
 OUTCOMES = (
     ("success", "Erfolg", "#0ca30c"),
     ("success_with_force_violation", "Erfolg mit Kraftverletzung", "#fab219"),
@@ -156,7 +148,7 @@ NODR_ENV_KEYS = ("dr_mode", "start_lateral_offset", "fixture_yaw_rad", "fixture_
 F3_PANELS = (
     # Labels for the disturbance dimensions.
     ("lat_r_mm", "Startversatz in mm", 1.0),
-    # Thesis words (Tab. 4-1), 2026-10-11; two lines, in one the H2 panel titles ran into each other.
+    # Two-line labels use the terminology of Table 4-1.
     ("yaw_abs_deg", "Betrag der Gierung\nder Aufnahme in °", 1.0),
     ("tilt_deg", "Kippung der\nAufnahme in °", 1.0),
     ("start_height_m", "Starthöhe in mm", 1000.0),
@@ -1075,9 +1067,7 @@ def data_h14(df: pd.DataFrame, sidecars: dict) -> dict:
     return out
 
 
-# H15: epochs per point. The share of the successes needs successes in the point:
-# Fixed-DR s5 has about 10 per epoch, so one epoch is too thin a point; ten epochs
-# pool 600-6000 episodes per seed and point (prototype 2026-10-07).
+# H15 pools ten epochs per point to include enough successful episodes for Fixed-DR s5.
 H15_EPOCHS = 10
 
 
@@ -1637,7 +1627,7 @@ def draw_f6(plt, d):
     # of the force line (every ECDF is above 85 % past 20 N there -- RT-232;
     # upper left ran into the curves at 100 %, lower right into the line).
     notes = [f"{METHOD_LABEL[m]}: {', '.join(f's{s}' for s in c['no_success'])} ohne Erfolg,\n"
-             # The legend's seed count is (b)'s; (a)'s band of such an arm rests on fewer (Kritik A 2026-10-06).
+             # The legend reports panel (b)'s seed count; panel (a) may use fewer seeds.
              f"Kurve und Band über {len(c['seeds'])} Seeds" for m, c in d["ecdf"].items() if c["no_success"]]
     if notes:
         a1.text(0.97 * lim, 3, "\n".join(notes), fontsize=6.5, color=INK_MUTED, ha="right", va="bottom")
@@ -1797,8 +1787,7 @@ def _training_extra(d: dict, fig_key: str) -> tuple:
 
 
 def _legend_room(fig, leg, ax=None, axes_h=None):
-    """Room below the plot for the legend ``leg`` as measured, not guessed (as
-    draw_pairs). With ``axes_h`` (inches) the figure height is set so that
+    """Reserve space below the plot for the measured legend size. With ``axes_h`` (inches) the figure height is set so that
     ``ax`` is that tall; the width stays. Extra height spreads over the rows of
     panels, so each step adds the shortfall once per row."""
     for _ in range(8):
@@ -1999,9 +1988,7 @@ def draw_f12(plt, d):
     return fig
 
 
-# Main-text figures H1-H4: no new colours (the method hues and the status
-# palette, both validated 2026-09-23); a second condition is a hollow bar.
-# Hollow = the reference test, filled = the test under study.
+# H1-H4: hollow bars denote the reference test; filled bars denote the comparison test.
 H_CONDITION = (("T-nominal", f"hohl: {TEST_NOMINAL}"), ("T-final", f"voll: {TEST_MAIN}"))
 H_RUN_LABEL = POLICY_DOT_LABEL
 # The mean above each bar: two numbers per group must not run into each other.
@@ -3695,8 +3682,7 @@ MUTATIONS = (
      ' for k in ("agent", "env"))) if agent.is_file()', (CHECKS[30],)),
     ("f7-drops-the-grid-guard", "            elif not np.array_equal(x, xs):", "            elif False:",
      (CHECKS[31],)),
-    # F11/F12 (ported from p6 7d008ff1 / db85986c).
-    # The start-height cap (x1.2) read as x1.5: its x1.0 value becomes 0.10 m.
+    # F11/F12: test a start-height cap factor of 1.5 instead of 1.2.
     ("f11-edge-ignores-the-block-factor", 'edge = c + (b["physical"] - c) / b["factor"]',
      'edge = c + (b["physical"] - c) / sidecar["factor"]', (CHECKS[33],)),
     ("f11-two-references-pass", 'if (ov["k"], ov["n"]) != (ref["k"], ref["n"]):', "if False:", (CHECKS[33],)),

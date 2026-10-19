@@ -1,15 +1,15 @@
 r"""Appendix table: the T-ood blocks of the policies that learned the task,
 each against its OWN main test, with the Newcombe interval of the difference.
 
-Two steps, because no one Python here has both libraries:
+Generate the CSV first, then the Word table (requires python-docx):
 
-  .venv-analysis\Scripts\python.exe scripts/tools/table_ood_newcombe.py --csv
+  python scripts/tools/table_ood_newcombe.py --csv
       reads daten/endstudie_rl_games/evaluation/summary.json (rates, 95 % Newcombe as eval_stats
       wrote them, never recomputed) and adds the Bonferroni reading over all
       comparisons of the table (statsmodels, the same call as eval_stats);
       writes docs/tabellen/Tab_A_ausserhalb_newcombe.csv
   python scripts/tools/table_ood_newcombe.py
-      (system Python, python-docx) turns that CSV into
+      (python-docx) turns that CSV into
       docs/tabellen/Tab_A_ausserhalb_newcombe.docx
 
 The learned policies come from eval_figures.data_learned's rule (LEARNED_MIN on
@@ -82,7 +82,7 @@ def write_docx() -> None:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--csv", action="store_true", help="step 1 (.venv-analysis): summary.json -> CSV")
+    ap.add_argument("--csv", action="store_true", help="step 1: summary.json -> CSV")
     ap.add_argument("--summary", default=str(REPO / "daten" / "endstudie_rl_games" / "evaluation" / "summary.json"))
     a = ap.parse_args()
     if a.csv:

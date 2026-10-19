@@ -3,14 +3,14 @@ value range of the five disturbances. Auto-DR left the figure:
 at 100 % its values could not be read there. Same numbers H2 drew: the seed mean,
 its 95 % percentile bootstrap interval, the lowest and highest seed.
 
-Two steps, because no one Python here has both libraries (as table_h6_training.py):
+Generate the CSV first, then the Word table (requires python-docx):
 
-  .venv-analysis\Scripts\python.exe scripts/tools/table_h2_autodr.py --csv
+  python scripts/tools/table_h2_autodr.py --csv
       reads daten/endstudie_rl_games/evaluation/summary.json through eval_figures.data_f3 (the
       data function H2 draws, never recomputed here); writes
       docs/tabellen/Tab_H2_autodr_stoergroessen.csv
   python scripts/tools/table_h2_autodr.py
-      (system Python, python-docx) turns it into
+      (python-docx) turns it into
       docs/tabellen/Tab_H2_autodr_stoergroessen.docx
 
 
@@ -86,7 +86,7 @@ def write_docx() -> None:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--csv", action="store_true", help="step 1 (.venv-analysis): summary.json -> CSV")
+    ap.add_argument("--csv", action="store_true", help="step 1: summary.json -> CSV")
     ap.add_argument("--results", default=str(REPO / "daten" / "endstudie_rl_games" / "evaluation"))
     a = ap.parse_args()
     if a.csv:

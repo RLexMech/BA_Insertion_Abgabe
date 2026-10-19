@@ -9,19 +9,18 @@ seed as a thin line under them: training success rate, return per episode,
 episode length, and how far AutoDR has opened its boundaries. Both chains are
 the AutoDR arm with the same command, seeds and spread; only the memory
 differs, so the TRAINING curves may stand side by side here (unlike across
-arms, H5/H6). Laptop only, in ``.venv-analysis``.
+arms, H5/H6).
 
 A thin caller of ``eval_figures.py`` like ``plot_seed_curves.py``: the
 per-run reading (``read_rl_games_run``, axis and epoch guard), the mean
 (``_mean_std``), the interval (``_boot_ci``), the band, the axis style, the font and the save
 metadata are its. OWN here, named: two columns ``read_rl_games_run`` does not
 carry -- ``Episode/dr/bounds_version`` (real AutoDR moves; 75 = all seven
-boundaries at their maximum after the five floor rungs, RT-242s/RT-260s
-OUTCOME) and rl_games' ``episode_lengths/iter`` -- read from the same
+boundaries at their maximum after the five floor rungs, RT-242s/RT-260s) and rl_games' ``episode_lengths/iter`` -- read from the same
 ``scalars.csv`` on the same epoch rows, and refused when a row is missing.
 
-    .venv-analysis/Scripts/python.exe scripts/plot_mlp_vs_lstm.py
-    .venv-analysis/Scripts/python.exe scripts/plot_mlp_vs_lstm.py --ablation force   # H11
+    python scripts/plot_mlp_vs_lstm.py
+    python scripts/plot_mlp_vs_lstm.py --ablation force   # H11
 """
 
 from __future__ import annotations
@@ -38,12 +37,8 @@ sys.path.insert(0, str(REPO / "scripts"))
 import eval_figures as EF  # noqa: E402
 
 SCRIPT_MARKER = "plot_mlp_vs_lstm-2026-10-06b"
-# LSTM keeps the Auto-DR blue of H5/H6 (it is that arm); the MLP takes the
-# ablation colour, dashed (eval_figures.ABLATION_COLOR, its one home with the
-# validation note). --ablation force (H11, 2026-10-04): the same form
-# and pair for the force-sensor ablation -- RT-242s (actor sees force) against
-# RT-261s (actor blind to force, critic keeps it); colour, line and label are
-# eval_figures.FORCE_ARM_STYLE, which H12 draws too.
+# Use shared Auto-DR and ablation styles from eval_figures.
+# H11 compares RT-242s (force visible to actor) with RT-261s (force visible only to critic).
 ABLATIONS = {
     "lstm": ("H9_mlp_gegen_lstm", (
         ("lstm", "RT-242s", "mit LSTM", EF.METHOD_COLOR["autodr"], "-"),
@@ -55,7 +50,7 @@ ABLATIONS = {
     )),
 }
 NAME, NETS = ABLATIONS["lstm"]
-BOUNDS_TOTAL = 75.0   # 5 floor rungs + 7 boundaries x 10 steps (autodr.DR_DIMS, RT-242s OUTCOME P3)
+BOUNDS_TOTAL = 75.0   # 5 floor rungs + 7 boundaries x 10 steps (autodr.DR_DIMS, RT-242s).
 # Plot-area height per panel in inches.
 AXES_H = 1.79
 EXTRA = {"bounds": "Episode/dr/bounds_version", "length": "episode_lengths/iter"}
@@ -136,7 +131,7 @@ def draw(plt, d: dict, factor: int):
         ax.set_title(title, fontsize=EF.FONT_PT, color=EF.INK, loc="left")
         EF._style(ax, unit)
     for ax in axes[1]:
-        # Two lines: at 12 pt one line is wider than the panel (2026-10-11).
+        # Split the title across two lines.
         ax.set_xlabel(EF.xlabel_epoch(factor).replace(" (", "\n("), color=EF.INK, fontsize=EF.FONT_PT)
     n = {len(v["runs"]) for v in d.values()}
     if len(n) != 1:

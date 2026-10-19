@@ -9,12 +9,12 @@ the median of the largest interpenetration. Every number comes from
 ``plot_kraft_durchdringung.data_h24`` / ``data_h23`` (nearest rank, counts held
 against summary.json there), never recomputed here.
 
-Two steps, because no one Python here has both libraries:
+Generate the CSV first, then the Word table (requires python-docx):
 
-  .venv-analysis\Scripts\python.exe scripts/tools/table_kraft_durchdringung.py --csv
+  python scripts/tools/table_kraft_durchdringung.py --csv
       -> docs/tabellen/Tab_A_ausserhalb_kraft.csv, Tab_A_beobachtungsfehler_kraft.csv
   python scripts/tools/table_kraft_durchdringung.py
-      (system Python, python-docx) -> the same names as .docx
+      (python-docx) -> the same names as .docx
 
 
 """
@@ -94,7 +94,7 @@ def write_docx() -> None:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--csv", action="store_true", help="step 1 (.venv-analysis): data -> CSV")
+    ap.add_argument("--csv", action="store_true", help="step 1: data -> CSV")
     a = ap.parse_args()
     if a.csv:
         write_csv()

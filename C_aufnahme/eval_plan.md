@@ -38,8 +38,7 @@ werden; das ist keine Bestätigung, dass auch der Test ohne Streuung gelaufen is
 | Fixed-DR | 57,38 % | 59,06 % |
 
 Referenz sind die vorhandenen Daten unter
-`../auswertung/daten/experiment_C_rsl_rl/evaluation/`. Das Archiv einschließlich
-zusätzlicher historischer Versuche bleibt unverändert. Die GUI-Vorschau mit
+`../auswertung/daten/experiment_C_rsl_rl/evaluation/`. Die GUI-Vorschau mit
 vier Fällen ersetzt keinen Messlauf. `eval_table_seed20.csv` dient ausschließlich
 dem internen Selbsttest von `check_eval_conditions.py`, nicht einem weiteren
 Evaluationsblock.

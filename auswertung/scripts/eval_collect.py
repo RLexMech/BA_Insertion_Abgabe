@@ -17,8 +17,8 @@ Export episode==0 rows only (L-15); report G4/G6 shares without thresholds.
 --self-test uses synthetic runs.
 
 Usage:
-    .venv-analysis/Scripts/python.exe scripts/eval_collect.py --results results/eval
-    .venv-analysis/Scripts/python.exe scripts/eval_collect.py --self-test
+    python scripts/eval_collect.py --results results/eval
+    python scripts/eval_collect.py --self-test
 """
 
 from __future__ import annotations
@@ -38,12 +38,8 @@ SCRIPT_MARKER = "eval_collect-2026-09-30b"
 REPO = pathlib.Path(__file__).resolve().parents[1]
 TABLE_DIR = REPO / "scripts" / "eval"
 
-# block -> (table file, width). `technik` runs both
-# widths on the practice table, so its width is read from the manifest.
-# The 18-column tables (appended fixture_noise_z); the 17-column
-# `_c17` ones and the 16-column ones stay the identities of the
-# evaluations drawn on them -- the 16-column one is the old MLP
-# evaluation's, read on its own commit 823c1be4.
+# Block -> (table file, width). For technik, read the width from the manifest.
+# Keep the 16-, 17- and 18-column table identities separate.
 BLOCKS = {
     "T-nominal": ("eval_table_seed10_c18.csv", "nominal"),
     "T-auswahl": ("eval_table_seed30_c18.csv", "target"),
@@ -148,9 +144,7 @@ def collect_run(block: str, folder: str, run: dict, table: dict) -> tuple[list, 
     ident = identity_from_checkpoint(man.get("checkpoint_path", ""))
     if ident != (method, seed):
         problems.append(f"folder says {(method, seed)}, checkpoint path says {ident}")
-    # The stats read the FOLDER tag, check_eval_conditions expects the noise
-    # widths from the MANIFEST tag (pn2/gx2/py2): both
-    # must agree (p6 a766ae9e).
+    # Folder and manifest tags must specify the same noise condition (pn2/gx2/py2).
     if (man.get("tag") or "") != tag:
         problems.append(f"folder tag {tag!r}, manifest tag {man.get('tag')!r}")
 
@@ -184,8 +178,7 @@ def collect_run(block: str, folder: str, run: dict, table: dict) -> tuple[list, 
             # success AND below the abort limit. The
             # env aborts at `>=` (insertion_math.py:1223), so strict is `<`.
             "success_strict": int(ok and f_filt < limit),
-            # Read from the force, not from `outcome`: a success in the abort
-            # step is written `success` (InBachelorErwähnen 2026-09-16).
+            # Read the force flag separately: success and force violation can occur in the same step.
             "force_abort": int(f_filt >= limit),
             "steps": int(r["steps"]),
             "force_max_filtered_n": f_filt,
@@ -406,7 +399,7 @@ CASES = (
      lambda runs, tables: runs.__setitem__(("T-final-F", "autodr_s2"), _fake_run(
          tables["T-final-F"], "autodr", 2, "target", [("success", 1.0)] * 4)),
      "takes only"),
-    # (p6 a766ae9e): a noise run staged under the reference's folder name.
+    # Reject a noise run stored under the reference folder name.
     ("py2-run-staged-as-the-reference",
      lambda runs, tables: runs.__setitem__(("T-final", "autodr_s2"), _noise(
          _fake_run(tables["T-final"], "autodr", 2, "target", [("success", 1.0)] * 4), "py2")),

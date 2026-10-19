@@ -9,9 +9,9 @@ before the observation noise: depth = -tip_true_m z (pocket frame,
 `insertion_math.part_tip_pose`), force = |force_ema_n| (the EMA the force abort
 reads); a step with `wrench_valid` false carries no force. Extract the supplied traces before drawing:
 
-    .venv-analysis/Scripts/python.exe scripts/plot_trace_verklemmen.py --extract
+    python scripts/plot_trace_verklemmen.py --extract
         daten/endstudie_rl_games/spuren/RT-271/RT-271_s{2,4}_trace.json -> results/traces/RT-271_zeile906.csv
-    .venv-analysis/Scripts/python.exe scripts/plot_trace_verklemmen.py
+    python scripts/plot_trace_verklemmen.py
         -> docs/figures/eval_rlgames/H21_verklemmen_zeile906.{pdf,svg,png}
 
 Reference lines: the success depth and the pocket entrance (depth 0), both from
@@ -30,7 +30,7 @@ REPO = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "scripts"))
 
 NAME = "H21_verklemmen_zeile906"
-ENV = 0          # view table row 0 = T-ood table row 906 (RT-271 expectation, step 2)
+ENV = 0          # View-table row 0 corresponds to T-ood row 906 (RT-271).
 SEEDS = ("2", "4")
 TRACE = REPO / "daten" / "endstudie_rl_games" / "spuren" / "RT-271" / "RT-271_s{}_trace.json"
 DATA = REPO / "results" / "traces" / "RT-271_zeile906.csv"
@@ -77,8 +77,8 @@ def draw() -> list:
     cfg = json.loads(MANIFEST.read_text(encoding="utf-8"))["env_cfg"]
     seat_mm = 1000.0 * float(cfg["fixed_asset"]["success_depth"])
     cap_s = float(cfg["episode_length_s"])
-    # Not dashed: dashed means "Ablation". Two lines of one method:
-    # the one under study in the method colour, the reference in grey (D7), 2026-10-11.
+    # Use solid lines for both runs; dashed lines denote ablations.
+    # The comparison run uses the method colour and the reference uses grey.
     style = {"2": dict(ls="-", color=EF.METHOD_COLOR["autodr"], label="Auto-DR Seed 2 (Zeitlimit)"),
              "4": dict(ls="-", color=EF.INK_MUTED, label="Auto-DR Seed 4 (Erfolg)")}
     fig, (ax_d, ax_f) = plt.subplots(2, 1, sharex=True, figsize=(EF.FIG_W, 3.9))

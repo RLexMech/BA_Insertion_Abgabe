@@ -9,14 +9,14 @@ Epochs 101..250 = RT-253s1/s2/s5 (`daten/endstudie_rl_games/trainingslaeufe/RT-2
 `--extract` with `eval_figures.read_rl_games_run` (the one rl_games reader) to
 the tracked `daten/endstudie_rl_games/training_auszug/fortsetzung_RT-253.csv`. Two steps:
 
-    .venv-analysis/Scripts/python.exe scripts/plot_fortsetzung_fixeddr.py --extract
+    python scripts/plot_fortsetzung_fixeddr.py --extract
         daten/endstudie_rl_games/trainingslaeufe/RT-253s/RT-253s{1,2,5}_* -> <CSV>
-    .venv-analysis/Scripts/python.exe scripts/plot_fortsetzung_fixeddr.py
+    python scripts/plot_fortsetzung_fixeddr.py
         -> docs/figures/eval_rlgames/H25_fortsetzung_fixed_dr.{pdf,svg,png}
 
 Each seed's line breaks at the resume (two runs). Three runs: each seed is its own line, no mean and no band (2-4 runs). No smoothing. Raw values, as H6: s1 and s2 log no success rate in
 epoch 101 (no episode ended), s5's epochs 101/102 read 1.000/0.987 -- censoring
-right after the reset of all environments (RT-253 OUTCOME), not a reading; the
+right after the reset of all environments (RT-253), not a reading; the
 caption names it. The script prints the caption facts.
 """
 import argparse
@@ -38,7 +38,7 @@ DATA = REPO / "daten" / "endstudie_rl_games" / "training_auszug" / "fortsetzung_
 OUT = REPO / "docs" / "figures" / "eval_rlgames"
 COLUMNS = ("method", "seed", "iteration", "env_steps", "Episode/success_rate")
 RESUME_AT = 100     # last epoch of the final study; RT-253 resumes from ep_100
-LAST_EPOCH = 250    # --max_iterations 250 (RT-253 expectation)
+LAST_EPOCH = 250    # Final epoch of RT-253.
 
 
 def extract() -> None:

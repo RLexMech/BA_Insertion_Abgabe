@@ -12,9 +12,9 @@ z range, Kapitel 4.3.2) and no row. Every mean over the five seeds carries its
 Inputs (final study, Experiment D, RT-242/243/244): ``results/eval_rlgames/``
 (summary.json, T-ood manifests) and ``results/eval_rlgames_sweep/``. Reuses
 ``eval_figures`` (data_f3, data_h14, _boot_ci, the OOD/sweep input checks and
-the style helpers) and changes nothing there. Thin caller, ``.venv-analysis``:
+the style helpers):
 
-    .venv-analysis/Scripts/python.exe scripts/plot_ausserhalb_pruefbereich.py
+    python scripts/plot_ausserhalb_pruefbereich.py
 
 Writes ``docs/figures/eval_rlgames/H17_ausserhalb_pruefbereich.{pdf,svg,png}``.
 """

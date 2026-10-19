@@ -584,8 +584,7 @@ def _oracle_vs_production(table_name: str = "eval_table_seed20_c18.csv",
         spec.loader.exec_module(mod)
         return mod
 
-    # Loaded ONCE per process (p6 019ae3d8): a second torch_shim.load() finds
-    # the shim already registered as `torch` and fails.
+    # Load once per process: a second load would find the shim registered as torch.
     if "production" not in _ORACLE_CACHE:
         torch, _ = _load("torch_shim", PRODUCTION_ROOT / "scripts" / "tools" / "torch_shim.py").load()
         sys.modules.setdefault("torch", torch)

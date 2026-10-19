@@ -126,8 +126,7 @@ def draw(probes: list[dict], out: pathlib.Path, run: str, note: str | None,
     ax.spines[["top", "right"]].set_visible(False)
     ax.grid(axis="y", color="0.88", zorder=0)
     if any(inside):
-        # NOT "lower left": that is where the per-bar episode counts sit,
-        # and the legend covered the n of the first bar (observed 2026-09-06).
+        # Keep the legend clear of the per-bar episode counts.
         ax.legend(loc="upper right", frameon=False, fontsize=9)
     if not no_title:
         title = f"{run}: Erfolgsrate je fester Starthöhe" if run else \
