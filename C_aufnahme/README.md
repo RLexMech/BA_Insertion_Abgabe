@@ -69,15 +69,13 @@ Block unverändert einfügen. Das ist der Haupttest von Auto-DR und No-DR (10 Mo
 .\scripts\run_eval.ps1 -Block T-final -Rt RT-902
 ```
 
-Die anderen Tests der Arbeit, ebenfalls direkt kopierbar:
+Die übrigen C-Blöcke zu Abbildung B-1 (Anhang B.1), ebenfalls direkt kopierbar:
 
 | Test | Aufruf |
 |---|---|
-| Auswahltest | `.\scripts\run_eval.ps1 -Block T-auswahl -Rt RT-901` |
 | Haupttest Fixed-DR | `.\scripts\run_eval.ps1 -Block T-final-F -Rt RT-903` |
 | Test ohne Streuung Auto-DR / No-DR | `.\scripts\run_eval.ps1 -Block T-nominal -Rt RT-904` |
 | Test ohne Streuung Fixed-DR | `.\scripts\run_eval.ps1 -Block T-nominal-F -Rt RT-905` |
-| Grenztest, Auto-DR Seed 1 | `.\scripts\run_eval.ps1 -Block T-grenze -Rt RT-906` |
 
 Ergebnisse: `results/eval/`. Für eine erneute Wiederholung neue `-Rt`-Nummern und `-ResultsRoot results/eval_wiederholung` verwenden.
 Die vollständigen Trainingslogs liegen unter `training_logs/<RT>/`.
@@ -98,11 +96,14 @@ Auto-DR **97,02 %**, No-DR **26,24 %**, Fixed-DR **57,38 %**.
 Der vollständige Wiederholungslauf vom 19.10.2026 hat diese Werte für jeden Seed bestätigt.
 Ausgewertet wird ausschließlich der erste abgeschlossene Versuch jeder Umgebung.
 `VERDICT OK` bestätigt die geprüften Testbedingungen; die Erfolgsraten stehen darunter.
-Einzelversuche: `results/eval/episodes_all.csv`; Prüfprotokoll: `results/eval/collect_report.json`.
+Je Modell: `results/eval/summary_tables.csv`; Einzelversuche: `results/eval/episodes_all.csv`;
+Prüfprotokoll: `results/eval/collect_report.json`.
 
 Die ursprünglichen Ergebnisse der Arbeit liegen unter
 `../auswertung/daten/experiment_C_rsl_rl/evaluation/`.
 Die dort vorhandene `summary_tables.csv` enthält die archivierte Auswertung.
+Dieses Archiv einschließlich zusätzlicher historischer Versuche bleibt unverändert.
+Die hier wiederholbare Evaluation umfasst ausschließlich Haupttest und Test ohne Streuung.
 
 Die verbliebenen `check_*.py` prüfen Mathematik, Auto-DR, Kontaktgeometrie,
 Erfolgskriterium und Ergebnisdaten. Sie werden für die obigen Modellaufrufe

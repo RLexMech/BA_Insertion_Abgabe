@@ -6,7 +6,7 @@
 Input: RESULTS/<block>/<method>_s<seed>/ with episodes, applied conditions
 and evaluation manifest. Checks table identity, conditions, checkpoint identity
 and a consistent clean code revision. Repeated episodes are excluded.
-Outputs episodes_all.csv and collect_report.json; prints success rates.
+Outputs episodes_all.csv, summary_tables.csv and collect_report.json; prints success rates.
 Usage: python scripts/eval_collect.py --results results/eval"""
 
 from __future__ import annotations
@@ -22,16 +22,13 @@ import re
 import sys
 import tempfile
 
-SCRIPT_MARKER = "eval_collect-2026-09-24a"
+SCRIPT_MARKER = "eval_collect-c-thesis-2026-10-19"
 REPO = pathlib.Path(__file__).resolve().parents[1]
 TABLE_DIR = REPO / "scripts" / "eval"
 
 BLOCKS = {
     "T-nominal": ("eval_table_seed10.csv", "nominal"),
-    "T-auswahl": ("eval_table_seed30.csv", "target"),
     "T-final": ("eval_table_seed10.csv", "target"),
-    "T-grenze": ("eval_table_boundary_seed10.csv", "target"),
-    "technik": ("eval_table_seed20.csv", None),
     "T-nominal-F": ("eval_table_seed10.csv", "nominal"),
     "T-final-F": ("eval_table_seed10.csv", "target"),
 }
@@ -42,7 +39,7 @@ _FOLDER = re.compile(r"^(autodr|nodr|fixeddr)_s(\d+)(?:_([A-Za-z0-9-]+))?$")
 _CKPT_SEED = re.compile(r"_seed(\d+)$")
 
 OUT_COLUMNS = (
-    "block", "method", "seed", "tag", "width", "row_id", "boundary_key",
+    "block", "method", "seed", "tag", "width", "row_id",
     "outcome", "success_train", "success_strict", "force_abort",
     "steps", "force_max_filtered_n", "force_max_raw_n", "ip_max_mm", "force_limit_n",
     "lat_r_mm", "yaw_abs_deg", "tilt_deg", "start_height_m", "friction",
@@ -109,8 +106,6 @@ def collect_run(block: str, folder: str, run: dict, table: dict) -> tuple[list, 
 
     limit = float(run["episodes_meta"]["force"]["abort_limit_n"])
     applied = {r["row_id"]: r for r in run["ap_rows"]}
-    per_block = table["sidecar"].get("rows_per_block")
-    keys = [b["key"] for b in table["sidecar"].get("blocks", [])]
     rows = []
     for r in run["ep_rows"]:
         if r.get("episode") != "0":
@@ -124,7 +119,6 @@ def collect_run(block: str, folder: str, run: dict, table: dict) -> tuple[list, 
         rows.append({
             "block": block, "method": method, "seed": seed, "tag": tag, "width": width,
             "row_id": rid,
-            "boundary_key": keys[rid // per_block] if per_block else "",
             "outcome": r["outcome"],
             "success_train": int(ok),
             "success_strict": int(ok and f_filt < limit),
@@ -151,31 +145,13 @@ def collect_run(block: str, folder: str, run: dict, table: dict) -> tuple[list, 
     return rows, problems, info
 
 
-def g6_report(rows: list) -> list:
-    """G6: the same policy on the same table twice (technik, two tags) -- share of rows whose outcome differs."""
-    by = {}
-    for r in rows:
-        if r["block"] != "technik":
-            continue
-        by.setdefault((r["method"], r["seed"], r["width"]), {}).setdefault(r["tag"], {})[r["row_id"]] = r["outcome"]
-    out = []
-    for (method, seed, width), tags in sorted(by.items()):
-        names = sorted(tags)
-        for i in range(len(names)):
-            for j in range(i + 1, len(names)):
-                a, b = tags[names[i]], tags[names[j]]
-                common = sorted(set(a) & set(b))
-                diff = sum(1 for k in common if a[k] != b[k])
-                out.append({"method": method, "seed": seed, "width": width,
-                            "tags": [names[i], names[j]], "rows": len(common),
-                            "rows_with_other_outcome": diff})
-    return out
-
-
 def collect(runs: dict, tables: dict) -> tuple[list, list, dict]:
     """``runs``: {(block, folder): parsed files}. Returns (rows, problems, report)."""
     rows, problems, infos = [], [], []
     for (block, folder) in sorted(runs):
+        if block not in BLOCKS:
+            problems.append(f"unsupported evaluation block: {block}")
+            continue
         r, p, info = collect_run(block, folder, runs[(block, folder)], tables[block])
         rows += r
         problems += [f"{block}/{folder}: {x}" for x in p]
@@ -193,7 +169,7 @@ def collect(runs: dict, tables: dict) -> tuple[list, list, dict]:
         if key in seen:
             problems.append(f"{i['block']}: {seen[key]} and {i['folder']} are the same policy and tag")
         seen[key] = i["folder"]
-    report = {"marker": SCRIPT_MARKER, "runs": infos, "g6": g6_report(rows),
+    report = {"marker": SCRIPT_MARKER, "runs": infos,
               "code_commit": codes, "plan_commit": plans, "problems": problems}
     return rows, problems, report
 
@@ -225,12 +201,31 @@ def load_runs(results: pathlib.Path) -> dict:
     return runs
 
 
+SUMMARY_COLUMNS = ("block", "method", "seed", "tag", "episodes", "successes", "success_rate_pct")
+
+
+def summarize_policies(rows: list) -> list:
+    """Success counts and percentages per evaluated model; no additional tests."""
+    groups = {}
+    for row in rows:
+        key = (row["block"], row["method"], row["seed"], row["tag"])
+        group = groups.setdefault(key, [0, 0])
+        group[0] += 1
+        group[1] += int(row["success_train"])
+    return [dict(zip(SUMMARY_COLUMNS, (*key, n, k, 100.0 * k / n)))
+            for key, (n, k) in sorted(groups.items())]
+
+
 def write_outputs(results: pathlib.Path, rows: list, report: dict) -> None:
     with open(results / "episodes_all.csv", "w", newline="", encoding="utf-8") as fh:
         w = csv.DictWriter(fh, fieldnames=OUT_COLUMNS, lineterminator="\n")
         w.writeheader()
         for r in rows:
             w.writerow({k: (f"{v:.9g}" if isinstance(v, float) else v) for k, v in r.items()})
+    with open(results / "summary_tables.csv", "w", newline="", encoding="utf-8") as fh:
+        writer = csv.DictWriter(fh, fieldnames=SUMMARY_COLUMNS, lineterminator="\n")
+        writer.writeheader()
+        writer.writerows(summarize_policies(rows))
     with open(results / "collect_report.json", "w", encoding="utf-8", newline="\n") as fh:
         json.dump(report, fh, indent=2, sort_keys=True)
 
@@ -241,11 +236,9 @@ CODE = "c" * 40
 PLAN = "d" * 40
 
 
-def _fake_table(sha: str, n: int = 4, boundary: bool = False) -> dict:
+def _fake_table(sha: str, n: int = 4) -> dict:
     rows = [[((5 * i + 3 * j) % 7) / 6.0 for j in range(16)] for i in range(n)]
     sidecar = {"sha256": sha, "n_rows": n}
-    if boundary:
-        sidecar.update(rows_per_block=2, blocks=[{"key": "lat_r_hi"}, {"key": "yaw_lo"}])
     return {"rows": rows, "sidecar": sidecar, "sha": sha}
 
 
@@ -283,13 +276,13 @@ def _fake_run(table: dict, method: str, seed: int, width: str, outcomes: list) -
 
 def _good():
     tables = {"T-final": _fake_table(SHA_A), "T-nominal": _fake_table(SHA_A),
-              "T-grenze": _fake_table(SHA_B, boundary=True), "T-final-F": _fake_table(SHA_A)}
+              "T-nominal-F": _fake_table(SHA_A), "T-final-F": _fake_table(SHA_A)}
     outs = [("success", 12.0), ("success", 31.0), ("timeout", 5.0), ("force_abort", 30.0)]
     runs = {
         ("T-final", "autodr_s1"): _fake_run(tables["T-final"], "autodr", 1, "target", outs),
         ("T-final", "nodr_s1"): _fake_run(tables["T-final"], "nodr", 1, "target", outs),
         ("T-nominal", "nodr_s1"): _fake_run(tables["T-nominal"], "nodr", 1, "nominal", outs),
-        ("T-grenze", "autodr_s1"): _fake_run(tables["T-grenze"], "autodr", 1, "target", outs),
+        ("T-nominal-F", "fixeddr_s1"): _fake_run(tables["T-nominal-F"], "fixeddr", 1, "nominal", outs),
         ("T-final-F", "fixeddr_s1"): _fake_run(tables["T-final-F"], "fixeddr", 1, "target", outs),
     }
     return runs, tables
@@ -300,6 +293,9 @@ def _set_man(key, run, val):
 
 
 CASES = (
+    ("unsupported-block",
+     lambda runs, tables: runs.__setitem__(("unsupported", "autodr_s1"), runs[("T-final", "autodr_s1")]),
+     "unsupported evaluation block"),
     ("manifest-names-another-table", _set_man("table_sha256", ("T-final", "nodr_s1"), SHA_B), "is not"),
     ("final-run-at-nominal-width", _set_man("width", ("T-final", "nodr_s1"), "nominal"), "width"),
     ("dirty-clone", _set_man("code_dirty", ("T-final", "nodr_s1"), True), "code_dirty"),
@@ -336,6 +332,12 @@ def self_test() -> int:
     fin = [r for r in rows if r["block"] == "T-final" and r["method"] == "autodr"]
     checks = [
         ("baseline has no problem", problems == []),
+        ("only thesis blocks are supported", set(BLOCKS) == {"T-final", "T-final-F", "T-nominal", "T-nominal-F"}),
+        ("summary counts first-episode successes per model",
+         len(summarize_policies(rows)) == 5 and all(
+             r["episodes"] == 4 and r["successes"] == 2 and r["success_rate_pct"] == 50.0
+             for r in summarize_policies(rows))),
+
         ("episode-0 rows only: 4 per run, 5 runs", len(rows) == 20),
         ("success_train counts the success in the abort step",
          [r["success_train"] for r in fin] == [1, 1, 0, 0]),
@@ -352,8 +354,6 @@ def self_test() -> int:
         ("identity of a Fixed-DR folder (RT-231 name, constructed)", identity_from_checkpoint(
             r"logs\rsl_rl\ur5e_insertion\09-24_10-00-00__RT-231s1_fixed_dr_offset5mm_currOFF"
             r"_start+20mm_floor-30mm_seed1\model_1499.pt") == ("fixeddr", 1)),
-        ("boundary key = row // rows_per_block",
-         [r["boundary_key"] for r in rows if r["block"] == "T-grenze"] == ["lat_r_hi", "lat_r_hi", "yaw_lo", "yaw_lo"]),
         ("tilt reading: a pure yaw quaternion reads 0 deg", tilt_deg(0.0, 0.0) == 0.0),
         ("tilt reading: 10 deg about x reads 10 deg",
          abs(tilt_deg(math.sin(math.radians(5.0)), 0.0) - 10.0) < 1e-9),
@@ -367,7 +367,10 @@ def self_test() -> int:
         write_outputs(pathlib.Path(tmp), rows, report)
         with open(pathlib.Path(tmp) / "episodes_all.csv", newline="", encoding="utf-8") as fh:
             back = list(csv.DictReader(fh))
-        ok = len(back) == 20 and tuple(back[0]) == OUT_COLUMNS
+        with open(pathlib.Path(tmp) / "summary_tables.csv", newline="", encoding="utf-8") as fh:
+            summaries = list(csv.DictReader(fh))
+        ok = (len(back) == 20 and tuple(back[0]) == OUT_COLUMNS
+              and len(summaries) == 5 and all(r["success_rate_pct"] == "50.0" for r in summaries))
         print(f"[eval_collect]   {'PASS' if ok else 'FAIL'}  episodes_all.csv round-trips with OUT_COLUMNS")
         bad += not ok
     for name, fn, needle in CASES:
@@ -392,6 +395,12 @@ def main() -> int:
         return self_test()
     results = pathlib.Path(args.results)
     print(f"[eval_collect] marker: {SCRIPT_MARKER}")
+    if results.is_dir():
+        ignored = sorted(p.name for p in results.iterdir()
+                         if p.is_dir() and p.name not in BLOCKS
+                         and any(p.glob("*/eval_manifest.json")))
+        if ignored:
+            print(f"[eval_collect] Outside C thesis scope, ignored: {', '.join(ignored)}")
     rows, problems, report = collect(load_runs(results), load_tables())
     if not report["runs"]:
         print(f"[eval_collect] REFUSED: no run folder under {results}/<block>/")

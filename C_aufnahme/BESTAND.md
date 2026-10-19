@@ -56,3 +56,15 @@ Prüfungen. Frühere Asset-Erstellung, Reparatur, Diagnose und Entwicklungsprobe
 wurden entfernt; ihre Wiederholung gehört nicht zum Abgabeumfang. Der Hauptcode,
 Modelle, Assets und Testtabellen bleiben unverändert. Frühere Nachweise verbleiben
 im Auswertungsarchiv und die entfernten Hilfen in der Git-Historie.
+
+
+## Umfang der wiederholbaren Evaluation
+
+Die Abgabe-Aufrufe sind auf die vier C-Blöcke aus Abbildung B-1 begrenzt:
+Haupttest und Test ohne Streuung, jeweils Auto-DR/No-DR und Fixed-DR.
+Die frühere Bestandsprüfung von 41 archivierten Läufen bleibt ein historischer
+Prüfnachweis. Sie definiert nicht den Umfang der jetzt angebotenen Evaluation.
+Die alte zusätzliche Statistik-/Grafik-Berichtskette und die nicht benötigten
+Testtabellen sind aus C entfernt. Der Collector liefert die Prüfung und eine
+Ergebnistabelle je Modell ohne zusätzliche Analysepakete. Archiv und D bleiben
+unverändert.

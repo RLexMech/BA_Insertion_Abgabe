@@ -1,6 +1,6 @@
 param(
     [Parameter(Mandatory = $true)]
-    [ValidateSet('T-auswahl','T-final','T-final-F','T-nominal','T-nominal-F','T-grenze')]
+    [ValidateSet('T-final','T-final-F','T-nominal','T-nominal-F')]
     [string]$Block,
     [Parameter(Mandatory = $true)][ValidatePattern('^RT-[0-9]+$')][string]$Rt,
     [string]$RunRoot = '',
@@ -22,10 +22,7 @@ try {
     $manifest = Get-Content -LiteralPath (Join-Path $repoRoot 'models/manifest.json') -Raw | ConvertFrom-Json
     $policies = @($manifest.models | Where-Object { $_.method -ne 'fixeddr' })
     if ($Block -like '*-F') { $policies = @($manifest.models | Where-Object { $_.method -eq 'fixeddr' }) }
-    if ($Block -eq 'T-grenze') { $policies = @($manifest.models | Where-Object { $_.run_id -eq 'RT-206s1' }) }
     $table = 'scripts/eval/eval_table_seed10.csv'
-    if ($Block -eq 'T-auswahl') { $table = 'scripts/eval/eval_table_seed30.csv' }
-    if ($Block -eq 'T-grenze') { $table = 'scripts/eval/eval_table_boundary_seed10.csv' }
     $width = 'target'
     if ($Block -like 'T-nominal*') { $width = 'nominal' }
     $tableHash = (Get-FileHash -LiteralPath $table -Algorithm SHA256).Hash.ToLower()
