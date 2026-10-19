@@ -33,4 +33,8 @@ python -u scripts/rsl_rl/play.py --task Template-Proxytask-Direct-v0 --kit_args=
 
 Vier Roboter, automatisches Ende nach 1500 Steuerschritten. Für dauerhafte Wiedergabe `--max-steps 1500` weglassen. Wiedergabemetriken landen im Unterordner `replay`; die ursprünglichen Trainingsmetriken bleiben erhalten.
 
-Voraussetzung ist die vorhandene Umgebung mit Isaac Sim 5.1, Isaac Lab 2.3.2.post1 und RSL-RL 3.0.1. Kein ONNX-Export oder Neutraining ist für die Wiedergabe nötig. Die GUI-Wiedergabe dieses Abgabestands ist noch am Trainings-PC zu bestätigen.
+Voraussetzung: Isaac Sim 5.1, Isaac Lab 2.3.2.post1 und RSL-RL 3.0.1 in `env_isaaclab`. Kein ONNX-Export oder Neutraining nötig.
+
+Sichtprüfung am 19.10.2026: Die GUI-Wiedergabe mit vier Umgebungen und 1500 Steuerschritten wurde vom Nutzer auf dem Trainings-PC als korrekt bestätigt.
+
+Zur vollständigen Abgabe gehören auch die lokal importierten Modell- und Assetdateien unter `models/` und `source/proxytask/proxytask/tasks/direct/proxytask/assets/`.
