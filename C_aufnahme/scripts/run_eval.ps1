@@ -14,6 +14,9 @@ if (-not $RunRoot) { $RunRoot = Join-Path $repoRoot 'models' }
 if (-not $ResultsRoot) { $ResultsRoot = Join-Path $repoRoot 'results/eval' }
 Push-Location $repoRoot
 try {
+    # Resolve relative arguments against C, not the native process working directory.
+    if (-not [IO.Path]::IsPathRooted($RunRoot)) { $RunRoot = Join-Path $repoRoot $RunRoot }
+    if (-not [IO.Path]::IsPathRooted($ResultsRoot)) { $ResultsRoot = Join-Path $repoRoot $ResultsRoot }
     $RunRoot = [IO.Path]::GetFullPath($RunRoot)
     $ResultsRoot = [IO.Path]::GetFullPath($ResultsRoot)
     $manifest = Get-Content -LiteralPath (Join-Path $repoRoot 'models/manifest.json') -Raw | ConvertFrom-Json
