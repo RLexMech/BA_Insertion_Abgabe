@@ -1,0 +1,76 @@
+{
+  "episodes": 250,
+  "success_rate_recent": 0.996,
+  "episodes_to_threshold": null,
+  "threshold": 0.9,
+  "recent_window_episodes": 250,
+  "success_rate_cumulative": 0.996,
+  "mean_max_depth_mm": 28.365680818911642,
+  "peg_side_m": 0.03,
+  "pocket_side_m": 0.032,
+  "side_clearance_mm": 1.0000000000000009,
+  "yaw_window_deg": 3.9596380797353943,
+  "reset_joint_noise_rad": 0.01,
+  "reset_yaw_noise_rad": 0.7854,
+  "fixture_pos_noise_xy_m": 0.02,
+  "fixture_yaw_noise_rad": 0.0,
+  "fixture_tilt_rad": 0.0,
+  "fixture_yaw_rad": 0.0,
+  "fixture_tilt_noise_rad": 0.1745,
+  "success_by_tilt_bin": [
+    {
+      "tilt_deg_from": 0.0,
+      "tilt_deg_to": 3.0,
+      "episodes": 70,
+      "success_rate": 0.9857142857142858
+    },
+    {
+      "tilt_deg_from": 3.0,
+      "tilt_deg_to": 6.0,
+      "episodes": 84,
+      "success_rate": 1.0
+    },
+    {
+      "tilt_deg_from": 6.0,
+      "tilt_deg_to": 9.0,
+      "episodes": 67,
+      "success_rate": 1.0
+    },
+    {
+      "tilt_deg_from": 9.0,
+      "tilt_deg_to": 12.0,
+      "episodes": 29,
+      "success_rate": 1.0
+    },
+    {
+      "tilt_deg_from": 12.0,
+      "tilt_deg_to": 15.0,
+      "episodes": 0,
+      "success_rate": null
+    }
+  ],
+  "action_scale_rad": 0.02,
+  "joint_target_lag_rad": {
+    "episodes": 250,
+    "max": 1.7633051872253418,
+    "max_steps": 88.16525936126709,
+    "success_mean": 0.2627611323054057,
+    "success_p95": 0.4955110251903534,
+    "success_max": 1.179945945739746,
+    "success_mean_steps": 13.138056615270285,
+    "success_p95_steps": 24.77555125951767,
+    "success_max_steps": 58.997297286987305,
+    "success_episodes": 249,
+    "failure_mean": 1.7633051872253418,
+    "failure_p95": 1.7633051872253418,
+    "failure_max": 1.7633051872253418,
+    "failure_mean_steps": 88.16525936126709,
+    "failure_p95_steps": 88.16525936126709,
+    "failure_max_steps": 88.16525936126709,
+    "failure_episodes": 1
+  },
+  "mean_success_episode_steps": 33.69879518072289,
+  "episode_length_s": 4.0,
+  "num_envs": 16,
+  "code_marker": "square-peg-2026-08-16-d038"
+}

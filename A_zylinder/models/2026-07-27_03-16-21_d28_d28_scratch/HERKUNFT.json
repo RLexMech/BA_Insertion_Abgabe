@@ -1,0 +1,78 @@
+{
+  "run": "2026-07-27_03-16-21_d28_d28_scratch",
+  "checkpoint": "model_599.pt",
+  "files": [
+    {
+      "source": "C:\\Users\\Simon\\Desktop\\Alexander_Pett\\temp\\proxytask_gen\\proxytask\\logs\\rsl_rl\\demo_insertion\\2026-07-27_03-16-21_d28_d28_scratch\\model_599.pt",
+      "file": "models/2026-07-27_03-16-21_d28_d28_scratch/model_599.pt",
+      "sha256": "fe753b5d47542b758584ca5ece434c0e140bf9a531311f18c9ade89fe1432ea0",
+      "bytes": 487539
+    },
+    {
+      "source": "C:\\Users\\Simon\\Desktop\\Alexander_Pett\\temp\\proxytask_gen\\proxytask\\source\\proxytask\\proxytask\\tasks\\direct\\proxytask\\assets\\Robot\\ur10e_peg_d28.usd",
+      "file": "source/proxytask/proxytask/tasks/direct/proxytask/assets/Robot/ur10e_peg_d28.usd",
+      "sha256": "f7d0da1869eb19f3c78a7ea6c44a7d923dc7073f2455cfc7fd3b58b50a7ecada",
+      "bytes": 71680395
+    },
+    {
+      "source": "C:\\Users\\Simon\\Desktop\\Alexander_Pett\\temp\\proxytask_gen\\proxytask\\source\\proxytask\\proxytask\\tasks\\direct\\proxytask\\assets\\Tisch\\tisch.usd",
+      "file": "source/proxytask/proxytask/tasks/direct/proxytask/assets/Tisch/tisch.usd",
+      "sha256": "e23deabe786e42432a107f1911e8e30d0ce433a4f6909fdaf088d7121628e4ad",
+      "bytes": 8229
+    },
+    {
+      "source": "C:\\Users\\Simon\\Desktop\\Alexander_Pett\\temp\\proxytask_gen\\proxytask\\logs\\rsl_rl\\demo_insertion\\2026-07-27_03-16-21_d28_d28_scratch\\params\\env.yaml",
+      "file": "models/2026-07-27_03-16-21_d28_d28_scratch/params/env.yaml",
+      "sha256": "16fd79b2281fa67323ad7d693af40aa89cc8d1e3489dec6acfea02ae390df12b",
+      "bytes": 8216
+    },
+    {
+      "source": "C:\\Users\\Simon\\Desktop\\Alexander_Pett\\temp\\proxytask_gen\\proxytask\\logs\\rsl_rl\\demo_insertion\\2026-07-27_03-16-21_d28_d28_scratch\\params\\agent.yaml",
+      "file": "models/2026-07-27_03-16-21_d28_d28_scratch/params/agent.yaml",
+      "sha256": "c4b570a713491c263684adea3046db7d698a0ef1e9298b1577637f2608fbe94e",
+      "bytes": 1031
+    },
+    {
+      "source": "C:\\Users\\Simon\\Desktop\\Alexander_Pett\\temp\\proxytask_gen\\proxytask\\logs\\rsl_rl\\demo_insertion\\2026-07-27_03-16-21_d28_d28_scratch\\demo_metrics.json",
+      "file": "models/2026-07-27_03-16-21_d28_d28_scratch/demo_metrics.json",
+      "sha256": "ca0cd76b89837a8011ddc6fe47478b88f5a63a359f969114666e1476e97b156a",
+      "bytes": 388
+    },
+    {
+      "source": "C:\\Users\\Simon\\Desktop\\Alexander_Pett\\temp\\proxytask_gen\\proxytask\\source\\proxytask\\proxytask\\tasks\\direct\\proxytask\\assets\\Robot\\ur10e_peg_d28.author.json",
+      "file": "source/proxytask/proxytask/tasks/direct/proxytask/assets/Robot/ur10e_peg_d28.author.json",
+      "sha256": "da1bf5d54ef133ab4a65a6ec5b34e23038353dd3e9a1e8265147209158316b9d",
+      "bytes": 3721
+    },
+    {
+      "source": "C:\\Users\\Simon\\Desktop\\Alexander_Pett\\temp\\proxytask_gen\\proxytask\\source\\proxytask\\proxytask\\tasks\\direct\\proxytask\\assets\\Tisch\\tisch.collision.json",
+      "file": "source/proxytask/proxytask/tasks/direct/proxytask/assets/Tisch/tisch.collision.json",
+      "sha256": "6e8e9639c6d259d2859ff18059c7f7d64f2f7d610aa9e9013dbdfbc3f9e56469",
+      "bytes": 1217
+    },
+    {
+      "source": "C:\\Users\\Simon\\Desktop\\Alexander_Pett\\temp\\proxytask_gen\\proxytask\\source\\proxytask\\proxytask\\tasks\\direct\\proxytask\\assets\\Tisch\\tisch.fix_asset.json",
+      "file": "source/proxytask/proxytask/tasks/direct/proxytask/assets/Tisch/tisch.fix_asset.json",
+      "sha256": "eebce4513629ae91528c6eb6c3c93efc11f7eca103ebc0d12b41d24ec38828c7",
+      "bytes": 3223
+    },
+    {
+      "source": "C:\\Users\\Simon\\Desktop\\Alexander_Pett\\temp\\proxytask_gen\\proxytask\\source\\proxytask\\proxytask\\tasks\\direct\\proxytask\\assets\\Tisch\\tisch.fix_units.json",
+      "file": "source/proxytask/proxytask/tasks/direct/proxytask/assets/Tisch/tisch.fix_units.json",
+      "sha256": "90f35864d84a34d6c29ceb27f70b9e9789da1bb12d2a125bcaddbb8cf399cfb3",
+      "bytes": 2525
+    },
+    {
+      "source": "C:\\Users\\Simon\\Desktop\\Alexander_Pett\\temp\\proxytask_gen\\proxytask\\source\\proxytask\\proxytask\\tasks\\direct\\proxytask\\assets\\Tisch\\tisch.spawn.json",
+      "file": "source/proxytask/proxytask/tasks/direct/proxytask/assets/Tisch/tisch.spawn.json",
+      "sha256": "edacfbd005531f8fdb29687c3d4ba75dfe0476f5ca8423b307b2add822c08104",
+      "bytes": 2582
+    },
+    {
+      "source": "C:\\Users\\Simon\\Desktop\\Alexander_Pett\\temp\\proxytask_gen\\proxytask\\source\\proxytask\\proxytask\\tasks\\direct\\proxytask\\assets\\Tisch\\Tisch.verify.json",
+      "file": "source/proxytask/proxytask/tasks/direct/proxytask/assets/Tisch/Tisch.verify.json",
+      "sha256": "ea3b5c8c03d8af2552aa68c916449930e89e931f4d4ee9f17df9acf6fdcf2b1d",
+      "bytes": 1308
+    }
+  ]
+}

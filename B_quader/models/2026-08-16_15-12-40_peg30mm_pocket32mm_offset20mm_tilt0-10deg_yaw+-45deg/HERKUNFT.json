@@ -1,0 +1,66 @@
+{
+  "run": "2026-08-16_15-12-40_peg30mm_pocket32mm_offset20mm_tilt0-10deg_yaw+-45deg",
+  "checkpoint": "model_7093.pt",
+  "files": [
+    {
+      "source": "C:\\Users\\Simon\\Desktop\\Alexander_Pett\\temp\\proxytask_gen\\generalisation-angle-probe\\logs\\rsl_rl\\demo_insertion\\2026-08-16_15-12-40_peg30mm_pocket32mm_offset20mm_tilt0-10deg_yaw+-45deg\\model_7093.pt",
+      "file": "models/2026-08-16_15-12-40_peg30mm_pocket32mm_offset20mm_tilt0-10deg_yaw+-45deg/model_7093.pt",
+      "sha256": "cb1eff6b403d8e9e1648470258e0d568b16784908e6a83d9350c7b7bde56e3e1",
+      "bytes": 506037
+    },
+    {
+      "source": "C:\\Users\\Simon\\Desktop\\Alexander_Pett\\temp\\proxytask_gen\\generalisation-angle-probe\\source\\proxytask\\proxytask\\tasks\\direct\\proxytask\\assets\\Robot\\ur10e_peg_s30.usd",
+      "file": "source/proxytask/proxytask/tasks/direct/proxytask/assets/Robot/ur10e_peg_s30.usd",
+      "sha256": "f36eaf677de11eb5dac3f7421d9c048c2337dd6eaa18b77d7b89d66903cf7054",
+      "bytes": 71678433
+    },
+    {
+      "source": "C:\\Users\\Simon\\Desktop\\Alexander_Pett\\temp\\proxytask_gen\\generalisation-angle-probe\\source\\proxytask\\proxytask\\tasks\\direct\\proxytask\\assets\\Tisch\\tisch_square_b32.usd",
+      "file": "source/proxytask/proxytask/tasks/direct/proxytask/assets/Tisch/tisch_square_b32.usd",
+      "sha256": "335011ee3fdae3352a59a64c51d4b4844e5d2c00e36d707c10bc5774b9a76bc4",
+      "bytes": 1654
+    },
+    {
+      "source": "C:\\Users\\Simon\\Desktop\\Alexander_Pett\\temp\\proxytask_gen\\generalisation-angle-probe\\logs\\rsl_rl\\demo_insertion\\2026-08-16_15-12-40_peg30mm_pocket32mm_offset20mm_tilt0-10deg_yaw+-45deg\\params\\env.yaml",
+      "file": "models/2026-08-16_15-12-40_peg30mm_pocket32mm_offset20mm_tilt0-10deg_yaw+-45deg/params/env.yaml",
+      "sha256": "0df5a8dedc3f076f43af568b7378834a6e013094f7c4100358b5256ffc0c5623",
+      "bytes": 9083
+    },
+    {
+      "source": "C:\\Users\\Simon\\Desktop\\Alexander_Pett\\temp\\proxytask_gen\\generalisation-angle-probe\\logs\\rsl_rl\\demo_insertion\\2026-08-16_15-12-40_peg30mm_pocket32mm_offset20mm_tilt0-10deg_yaw+-45deg\\params\\agent.yaml",
+      "file": "models/2026-08-16_15-12-40_peg30mm_pocket32mm_offset20mm_tilt0-10deg_yaw+-45deg/params/agent.yaml",
+      "sha256": "780a5800ad84de925d14c8ffbbbff29dd7545f3ea81fa50a3d1f7e16c5bf7444",
+      "bytes": 1082
+    },
+    {
+      "source": "C:\\Users\\Simon\\Desktop\\Alexander_Pett\\temp\\proxytask_gen\\generalisation-angle-probe\\logs\\rsl_rl\\demo_insertion\\2026-08-16_15-12-40_peg30mm_pocket32mm_offset20mm_tilt0-10deg_yaw+-45deg\\demo_metrics.json",
+      "file": "models/2026-08-16_15-12-40_peg30mm_pocket32mm_offset20mm_tilt0-10deg_yaw+-45deg/demo_metrics.json",
+      "sha256": "d2e6d008145cd547d14fd54e204242bc55fa3416d8a2805f11b7c40a8e468148",
+      "bytes": 2210
+    },
+    {
+      "source": "C:\\Users\\Simon\\Desktop\\Alexander_Pett\\temp\\proxytask_gen\\generalisation-angle-probe\\source\\proxytask\\proxytask\\tasks\\direct\\proxytask\\assets\\Robot\\ur10e_peg_s30.author.json",
+      "file": "source/proxytask/proxytask/tasks/direct/proxytask/assets/Robot/ur10e_peg_s30.author.json",
+      "sha256": "c291b9e3601f0b6c0946c5bf5acfaeaeaef7d6d3bec7a9d4f9bdcf7f50a8782e",
+      "bytes": 3764
+    },
+    {
+      "source": "C:\\Users\\Simon\\Desktop\\Alexander_Pett\\temp\\proxytask_gen\\generalisation-angle-probe\\source\\proxytask\\proxytask\\tasks\\direct\\proxytask\\assets\\Tisch\\tisch_square_b32.author.json",
+      "file": "source/proxytask/proxytask/tasks/direct/proxytask/assets/Tisch/tisch_square_b32.author.json",
+      "sha256": "a8c812c1a2664971267d9cf1397ca199eaaa7a5a623de92dab40d855bae392c1",
+      "bytes": 3010
+    },
+    {
+      "source": "C:\\Users\\Simon\\Desktop\\Alexander_Pett\\temp\\proxytask_gen\\generalisation-angle-probe\\source\\proxytask\\proxytask\\tasks\\direct\\proxytask\\assets\\Tisch\\tisch_square_b32.spawn.json",
+      "file": "source/proxytask/proxytask/tasks/direct/proxytask/assets/Tisch/tisch_square_b32.spawn.json",
+      "sha256": "677a721fa01a36744315acbcf5f1d4c60c06689b9dab01446439575727fc1c30",
+      "bytes": 2454
+    },
+    {
+      "source": "C:\\Users\\Simon\\Desktop\\Alexander_Pett\\temp\\proxytask_gen\\generalisation-angle-probe\\source\\proxytask\\proxytask\\tasks\\direct\\proxytask\\assets\\Tisch\\tisch_square_b32.verify.json",
+      "file": "source/proxytask/proxytask/tasks/direct/proxytask/assets/Tisch/tisch_square_b32.verify.json",
+      "sha256": "b47a3130cccce9b7d7da7117c4ab989253194b501407650bbe5f484e3359fc2c",
+      "bytes": 1386
+    }
+  ]
+}

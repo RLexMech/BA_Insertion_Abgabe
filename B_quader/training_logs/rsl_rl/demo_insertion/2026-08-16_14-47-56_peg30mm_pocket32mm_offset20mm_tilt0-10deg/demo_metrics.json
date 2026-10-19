@@ -1,0 +1,75 @@
+{
+  "episodes": 9000,
+  "success_rate_recent": 0.9005,
+  "episodes_to_threshold": 8698,
+  "threshold": 0.9,
+  "recent_window_episodes": 2000,
+  "success_rate_cumulative": 0.7563333333333333,
+  "mean_max_depth_mm": 27.078692106631934,
+  "peg_side_m": 0.03,
+  "pocket_side_m": 0.032,
+  "side_clearance_mm": 1.0000000000000009,
+  "yaw_window_deg": 3.9596380797353943,
+  "reset_joint_noise_rad": 0.01,
+  "reset_yaw_noise_rad": 0.7854,
+  "fixture_pos_noise_xy_m": 0.02,
+  "fixture_yaw_noise_rad": 0.0,
+  "fixture_tilt_rad": 0.0,
+  "fixture_tilt_noise_rad": 0.1745,
+  "success_by_tilt_bin": [
+    {
+      "tilt_deg_from": 0.0,
+      "tilt_deg_to": 3.0,
+      "episodes": 587,
+      "success_rate": 0.9437819420783645
+    },
+    {
+      "tilt_deg_from": 3.0,
+      "tilt_deg_to": 6.0,
+      "episodes": 594,
+      "success_rate": 0.9107744107744108
+    },
+    {
+      "tilt_deg_from": 6.0,
+      "tilt_deg_to": 9.0,
+      "episodes": 619,
+      "success_rate": 0.864297253634895
+    },
+    {
+      "tilt_deg_from": 9.0,
+      "tilt_deg_to": 12.0,
+      "episodes": 200,
+      "success_rate": 0.855
+    },
+    {
+      "tilt_deg_from": 12.0,
+      "tilt_deg_to": 15.0,
+      "episodes": 0,
+      "success_rate": null
+    }
+  ],
+  "action_scale_rad": 0.02,
+  "joint_target_lag_rad": {
+    "episodes": 2000,
+    "max": 5.821845531463623,
+    "max_steps": 291.09227657318115,
+    "success_mean": 0.36206244854778796,
+    "success_p95": 0.8237528800964355,
+    "success_max": 2.576165199279785,
+    "success_mean_steps": 18.103122427389398,
+    "success_p95_steps": 41.18764400482178,
+    "success_max_steps": 128.80825996398926,
+    "success_episodes": 1801,
+    "failure_mean": 1.7318740535022026,
+    "failure_p95": 3.3821444511413574,
+    "failure_max": 5.821845531463623,
+    "failure_mean_steps": 86.59370267511012,
+    "failure_p95_steps": 169.10722255706787,
+    "failure_max_steps": 291.09227657318115,
+    "failure_episodes": 199
+  },
+  "mean_success_episode_steps": 52.8295,
+  "episode_length_s": 4.0,
+  "num_envs": 128,
+  "code_marker": "square-peg-2026-08-16-d037"
+}

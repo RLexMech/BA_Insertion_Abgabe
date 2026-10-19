@@ -1,0 +1,65 @@
+{
+  "episodes": 242751,
+  "success_rate_recent": 0.993,
+  "episodes_to_threshold": 2081,
+  "threshold": 0.9,
+  "recent_window_episodes": 2000,
+  "success_rate_cumulative": 0.9507066912185738,
+  "mean_max_depth_mm": 28.815306313801557,
+  "peg_side_m": 0.03,
+  "pocket_side_m": 0.032,
+  "side_clearance_mm": 1.0000000000000009,
+  "yaw_window_deg": 3.9596380797353943,
+  "reset_joint_noise_rad": 0.01,
+  "reset_yaw_noise_rad": 0.7854,
+  "fixture_pos_noise_xy_m": 0.0,
+  "fixture_yaw_noise_rad": 0.0,
+  "fixture_tilt_rad": 0.0,
+  "fixture_tilt_noise_rad": 0.1745,
+  "success_by_tilt_bin": [
+    {
+      "tilt_deg_from": 0.0,
+      "tilt_deg_to": 3.0,
+      "episodes": 581,
+      "success_rate": 1.0
+    },
+    {
+      "tilt_deg_from": 3.0,
+      "tilt_deg_to": 6.0,
+      "episodes": 639,
+      "success_rate": 0.9968701095461658
+    },
+    {
+      "tilt_deg_from": 6.0,
+      "tilt_deg_to": 9.0,
+      "episodes": 592,
+      "success_rate": 0.9864864864864865
+    },
+    {
+      "tilt_deg_from": 9.0,
+      "tilt_deg_to": 12.0,
+      "episodes": 188,
+      "success_rate": 0.9787234042553191
+    },
+    {
+      "tilt_deg_from": 12.0,
+      "tilt_deg_to": 15.0,
+      "episodes": 0,
+      "success_rate": null
+    }
+  ],
+  "action_scale_rad": 0.02,
+  "joint_target_lag_rad": {
+    "success_mean": 0.2557625132880182,
+    "failure_mean": 1.2115135533469064,
+    "max": 2.682785987854004,
+    "success_mean_steps": 12.788125664400908,
+    "failure_mean_steps": 60.57567766734532,
+    "max_steps": 134.1392993927002,
+    "episodes": 2000
+  },
+  "mean_success_episode_steps": 36.8005,
+  "episode_length_s": 4.0,
+  "num_envs": 1024,
+  "code_marker": "square-peg-2026-08-16-d037"
+}

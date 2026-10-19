@@ -1,0 +1,55 @@
+{
+  "episodes": 97753,
+  "success_rate_recent": 0.992,
+  "episodes_to_threshold": 18914,
+  "threshold": 0.9,
+  "recent_window_episodes": 2000,
+  "success_rate_cumulative": 0.907900524792078,
+  "mean_max_depth_mm": 30.023648344911635,
+  "peg_side_m": 0.03,
+  "pocket_side_m": 0.032,
+  "side_clearance_mm": 1.0000000000000009,
+  "yaw_window_deg": 3.9596380797353943,
+  "reset_joint_noise_rad": 0.01,
+  "reset_yaw_noise_rad": 0.7854,
+  "fixture_pos_noise_xy_m": 0.0,
+  "fixture_yaw_noise_rad": 0.0,
+  "fixture_tilt_rad": 0.0,
+  "fixture_tilt_noise_rad": 0.0873,
+  "success_by_tilt_bin": [
+    {
+      "tilt_deg_from": 0.0,
+      "tilt_deg_to": 3.0,
+      "episodes": 1233,
+      "success_rate": 0.9959448499594485
+    },
+    {
+      "tilt_deg_from": 3.0,
+      "tilt_deg_to": 6.0,
+      "episodes": 767,
+      "success_rate": 0.9856584093872229
+    },
+    {
+      "tilt_deg_from": 6.0,
+      "tilt_deg_to": 9.0,
+      "episodes": 0,
+      "success_rate": null
+    },
+    {
+      "tilt_deg_from": 9.0,
+      "tilt_deg_to": 12.0,
+      "episodes": 0,
+      "success_rate": null
+    },
+    {
+      "tilt_deg_from": 12.0,
+      "tilt_deg_to": 15.0,
+      "episodes": 0,
+      "success_rate": null
+    }
+  ],
+  "mean_success_episode_steps": 41.2895,
+  "episode_length_s": 4.0,
+  "num_envs": 1024,
+  "code_marker": "square-peg-2026-08-16-d037"
+}

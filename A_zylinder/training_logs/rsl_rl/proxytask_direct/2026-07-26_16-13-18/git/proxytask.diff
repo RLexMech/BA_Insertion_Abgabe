@@ -1,0 +1,455 @@
+--- git status ---
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   source/proxytask/proxytask/tasks/direct/proxytask/agents/rsl_rl_ppo_cfg.py
+	modified:   source/proxytask/proxytask/tasks/direct/proxytask/proxytask_env.py
+	modified:   source/proxytask/proxytask/tasks/direct/proxytask/proxytask_env_cfg.py
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	scripts/add_bore_task_frame.py
+	scripts/add_fixture_collision.py
+	scripts/fix_fixture_asset.py
+	scripts/fix_stage_units.py
+	scripts/list_usd_prims.py
+	scripts/probe_assets.py
+	scripts/verify_fixture_spawn.py
+	scripts/verify_fixture_usd.py
+	source/proxytask/proxytask/tasks/direct/proxytask/assets/
+	source/proxytask/proxytask/tasks/direct/proxytask/task_geometry.py
+	source/proxytask/proxytask/tasks/direct/proxytask/ur10e_cfg.py
+
+no changes added to commit (use "git add" and/or "git commit -a") 
+
+
+--- git diff ---
+diff --git a/source/proxytask/proxytask/tasks/direct/proxytask/agents/rsl_rl_ppo_cfg.py b/source/proxytask/proxytask/tasks/direct/proxytask/agents/rsl_rl_ppo_cfg.py
+index 4556af6..7a7b575 100644
+--- a/source/proxytask/proxytask/tasks/direct/proxytask/agents/rsl_rl_ppo_cfg.py
++++ b/source/proxytask/proxytask/tasks/direct/proxytask/agents/rsl_rl_ppo_cfg.py
+@@ -13,7 +13,7 @@ class PPORunnerCfg(RslRlOnPolicyRunnerCfg):
+     num_steps_per_env = 16
+     max_iterations = 150
+     save_interval = 50
+-    experiment_name = "cartpole_direct"
++    experiment_name = "proxytask_direct"
+     policy = RslRlPpoActorCriticCfg(
+         init_noise_std=1.0,
+         actor_obs_normalization=False,
+diff --git a/source/proxytask/proxytask/tasks/direct/proxytask/proxytask_env.py b/source/proxytask/proxytask/tasks/direct/proxytask/proxytask_env.py
+index f2fcd32..b5a8f03 100644
+--- a/source/proxytask/proxytask/tasks/direct/proxytask/proxytask_env.py
++++ b/source/proxytask/proxytask/tasks/direct/proxytask/proxytask_env.py
+@@ -5,7 +5,6 @@
+ 
+ from __future__ import annotations
+ 
+-import math
+ import torch
+ from collections.abc import Sequence
+ 
+@@ -13,24 +12,73 @@ import isaaclab.sim as sim_utils
+ from isaaclab.assets import Articulation
+ from isaaclab.envs import DirectRLEnv
+ from isaaclab.sim.spawners.from_files import GroundPlaneCfg, spawn_ground_plane
+-from isaaclab.utils.math import sample_uniform
+ 
+-from .proxytask_env_cfg import ProxytaskEnvCfg
++from . import task_geometry
++from .proxytask_env_cfg import ProxytaskEnvCfg, resolve_fixture_usd_path
++
++# Marker for the manual two-machine copy. If the startup report does not show
++# this string, the copy on the training machine predates the current code.
++CODE_MARKER = "increment1-scene-2026-07-26e"
++
++
++def _axes_from_quat(q: torch.Tensor) -> torch.Tensor:
++    """Return the three body-frame axes of quaternion (w, x, y, z) as columns.
++
++    Written out instead of using isaaclab.utils.math.matrix_from_quat: that
++    import was never covered by probe_assets.py, and an import error in this
++    module would also break task registration.
++    """
++    w, x, y, z = q[0], q[1], q[2], q[3]
++    return torch.stack(
++        [
++            torch.stack([1 - 2 * (y * y + z * z), 2 * (x * y + w * z), 2 * (x * z - w * y)]),
++            torch.stack([2 * (x * y - w * z), 1 - 2 * (x * x + z * z), 2 * (y * z + w * x)]),
++            torch.stack([2 * (x * z + w * y), 2 * (y * z - w * x), 1 - 2 * (x * x + y * y)]),
++        ],
++        dim=1,
++    )
+ 
+ 
+ class ProxytaskEnv(DirectRLEnv):
++    """Increment-1 commissioning env: fixture + arm holding the home pose.
++
++    Zero reward, timeout-only dones, actions declared but not applied. The one
++    behavior beyond standing still is a one-time numeric startup report that
++    makes D-022/D-023 checkable (printed for env 0 and env 1, because a single
++    env cannot expose an absolute-instead-of-env-local error).
++    """
++
+     cfg: ProxytaskEnvCfg
+ 
+     def __init__(self, cfg: ProxytaskEnvCfg, render_mode: str | None = None, **kwargs):
+         super().__init__(cfg, render_mode, **kwargs)
+ 
+-        self._cart_dof_idx, _ = self.robot.find_joints(self.cfg.cart_dof_name)
+-        self._pole_dof_idx, _ = self.robot.find_joints(self.cfg.pole_dof_name)
+-
+-        self.joint_pos = self.robot.data.joint_pos
+-        self.joint_vel = self.robot.data.joint_vel
++        self._ee_body_idx = self.robot.find_bodies(self.cfg.ee_body_name)[0][0]
++        # Body poses are filled by the physics view only after a completed step,
++        # so the report is triggered from _get_observations, not from __init__.
++        #
++        # It is printed several times, not once. The first print lands 33 ms
++        # after the reset, which is far too early to judge whether the arm
++        # *holds* the home pose -- an unsettled transient there was misread as
++        # contact with the plate on 2026-07-26. Acceptance criterion 2 asks for
++        # the pose to be unchanged after 5 s, so the late prints are the ones
++        # that decide; the early one only proves the buffers are filled.
++        self._report_at_obs_calls = tuple(self.cfg.report_at_steps)
++        self._obs_calls = 0
+ 
+     def _setup_scene(self):
++        # Fixture into env_0 before cloning, so it replicates into every env.
++        # Not registered in self.scene: a static collider has no runtime state.
++        fixture_cfg = self.cfg.fixture_cfg
++        fixture_cfg.usd_path = resolve_fixture_usd_path()
++        self._fixture_usd_path = fixture_cfg.usd_path
++        fixture_cfg.func(
++            "/World/envs/env_0/Fixture",
++            fixture_cfg,
++            translation=self.cfg.fixture_pos,
++            orientation=(1.0, 0.0, 0.0, 0.0),
++        )
++
+         self.robot = Articulation(self.cfg.robot_cfg)
+         # add ground plane
+         spawn_ground_plane(prim_path="/World/ground", cfg=GroundPlaneCfg())
+@@ -49,87 +97,129 @@ class ProxytaskEnv(DirectRLEnv):
+         self.actions = actions.clone()
+ 
+     def _apply_action(self) -> None:
+-        self.robot.set_joint_effort_target(self.actions * self.cfg.action_scale, joint_ids=self._cart_dof_idx)
++        pass
+ 
+     def _get_observations(self) -> dict:
+-        obs = torch.cat(
+-            (
+-                self.joint_pos[:, self._pole_dof_idx[0]].unsqueeze(dim=1),
+-                self.joint_vel[:, self._pole_dof_idx[0]].unsqueeze(dim=1),
+-                self.joint_pos[:, self._cart_dof_idx[0]].unsqueeze(dim=1),
+-                self.joint_vel[:, self._cart_dof_idx[0]].unsqueeze(dim=1),
+-            ),
+-            dim=-1,
+-        )
+-        observations = {"policy": obs}
+-        return observations
++        self._obs_calls += 1
++        if self._obs_calls in self._report_at_obs_calls:
++            self._print_startup_report()
++        obs = torch.cat((self.robot.data.joint_pos, self.robot.data.joint_vel), dim=-1)
++        return {"policy": obs}
+ 
+     def _get_rewards(self) -> torch.Tensor:
+-        total_reward = compute_rewards(
+-            self.cfg.rew_scale_alive,
+-            self.cfg.rew_scale_terminated,
+-            self.cfg.rew_scale_pole_pos,
+-            self.cfg.rew_scale_cart_vel,
+-            self.cfg.rew_scale_pole_vel,
+-            self.joint_pos[:, self._pole_dof_idx[0]],
+-            self.joint_vel[:, self._pole_dof_idx[0]],
+-            self.joint_pos[:, self._cart_dof_idx[0]],
+-            self.joint_vel[:, self._cart_dof_idx[0]],
+-            self.reset_terminated,
+-        )
+-        return total_reward
++        return torch.zeros(self.num_envs, device=self.device)
+ 
+     def _get_dones(self) -> tuple[torch.Tensor, torch.Tensor]:
+-        self.joint_pos = self.robot.data.joint_pos
+-        self.joint_vel = self.robot.data.joint_vel
+-
+         time_out = self.episode_length_buf >= self.max_episode_length - 1
+-        out_of_bounds = torch.any(torch.abs(self.joint_pos[:, self._cart_dof_idx]) > self.cfg.max_cart_pos, dim=1)
+-        out_of_bounds = out_of_bounds | torch.any(torch.abs(self.joint_pos[:, self._pole_dof_idx]) > math.pi / 2, dim=1)
+-        return out_of_bounds, time_out
++        terminated = torch.zeros_like(time_out)
++        return terminated, time_out
+ 
+     def _reset_idx(self, env_ids: Sequence[int] | None):
+         if env_ids is None:
+             env_ids = self.robot._ALL_INDICES
+         super()._reset_idx(env_ids)
+ 
++        # Defaults only. The template's root-pose write pair is dropped because
++        # fix_root_link=True welds the root to the spawn transform; if the base
++        # drifts anyway, restore it with += self.scene.env_origins[env_ids].
+         joint_pos = self.robot.data.default_joint_pos[env_ids]
+-        joint_pos[:, self._pole_dof_idx] += sample_uniform(
+-            self.cfg.initial_pole_angle_range[0] * math.pi,
+-            self.cfg.initial_pole_angle_range[1] * math.pi,
+-            joint_pos[:, self._pole_dof_idx].shape,
+-            joint_pos.device,
+-        )
+         joint_vel = self.robot.data.default_joint_vel[env_ids]
+-
+-        default_root_state = self.robot.data.default_root_state[env_ids]
+-        default_root_state[:, :3] += self.scene.env_origins[env_ids]
+-
+-        self.joint_pos[env_ids] = joint_pos
+-        self.joint_vel[env_ids] = joint_vel
+-
+-        self.robot.write_root_pose_to_sim(default_root_state[:, :7], env_ids)
+-        self.robot.write_root_velocity_to_sim(default_root_state[:, 7:], env_ids)
+         self.robot.write_joint_state_to_sim(joint_pos, joint_vel, None, env_ids)
+ 
+-
+-@torch.jit.script
+-def compute_rewards(
+-    rew_scale_alive: float,
+-    rew_scale_terminated: float,
+-    rew_scale_pole_pos: float,
+-    rew_scale_cart_vel: float,
+-    rew_scale_pole_vel: float,
+-    pole_pos: torch.Tensor,
+-    pole_vel: torch.Tensor,
+-    cart_pos: torch.Tensor,
+-    cart_vel: torch.Tensor,
+-    reset_terminated: torch.Tensor,
+-):
+-    rew_alive = rew_scale_alive * (1.0 - reset_terminated.float())
+-    rew_termination = rew_scale_terminated * reset_terminated.float()
+-    rew_pole_pos = rew_scale_pole_pos * torch.sum(torch.square(pole_pos).unsqueeze(dim=1), dim=-1)
+-    rew_cart_vel = rew_scale_cart_vel * torch.sum(torch.abs(cart_vel).unsqueeze(dim=1), dim=-1)
+-    rew_pole_vel = rew_scale_pole_vel * torch.sum(torch.abs(pole_vel).unsqueeze(dim=1), dim=-1)
+-    total_reward = rew_alive + rew_termination + rew_pole_pos + rew_cart_vel + rew_pole_vel
+-    return total_reward
+\ No newline at end of file
++        # Writing the state is not enough: the implicit actuators regulate
++        # towards a *target*, and with no action applied nothing else writes
++        # one. If the initial target came from the USD drives (plausibly the
++        # zero configuration), the arm would pull away from the home pose under
++        # gravity and criteria 3-5 would fail together. Guarded because this
++        # method was not covered by probe_assets.py -- a missing method must
++        # degrade to a warning, not lose a whole copy-run round trip.
++        try:
++            self.robot.set_joint_position_target(joint_pos, env_ids=env_ids)
++        except (AttributeError, TypeError) as exc:
++            if not getattr(self, "_target_warning_printed", False):
++                self._target_warning_printed = True
++                print(f"[proxytask] set_joint_position_target unavailable ({exc}); relying on USD drive targets")
++
++    def _print_startup_report(self) -> None:
++        cfg = self.cfg
++        origins = self.scene.env_origins
++        bore = torch.tensor(cfg.bore_entrance_pos, device=self.device)
++        commanded = self.robot.data.default_joint_pos
++        down = torch.tensor([0.0, 0.0, -1.0], device=self.device)
++
++        # Computed from cfg rather than read off the base class: step_dt was not
++        # covered by probe_assets.py.
++        sim_time = self._obs_calls * cfg.sim.dt * cfg.decimation
++        print("=" * 72)
++        print(f"PROXYTASK STARTUP REPORT (increment 1, D-022/D-023 check)")
++        print(f"step {self._obs_calls} of {self._report_at_obs_calls}, t = {sim_time:.3f} s after reset")
++        print(f"code marker: {CODE_MARKER}")
++        print(f"fixture usd: {self._fixture_usd_path}")
++        print(f"fixture spawn translation: {cfg.fixture_pos}")
++        print(f"robot base sits on the plate top: base z {cfg.robot_base_pos[2]:.4f} "
++              f"= plate top {cfg.plate_top_z:.4f}; "
++              f"{task_geometry.BASE_TO_PLATE_EDGE*1000:.0f} mm from base centre to plate edge, "
++              f"{task_geometry.BORE_TO_BASE_DISTANCE*1000:.0f} mm to the bore")
++        print(f"joint_names: {self.robot.joint_names}")
++        print(f"body_names:  {self.robot.body_names}")
++        print(f"ee_body:     {cfg.ee_body_name} (index {self._ee_body_idx})")
++        for e in range(min(2, self.num_envs)):
++            root_local = self.robot.data.root_pos_w[e] - origins[e]
++            ee_pos_w = self.robot.data.body_pos_w[e, self._ee_body_idx]
++            ee_quat_w = self.robot.data.body_quat_w[e, self._ee_body_idx]
++            ee_local = ee_pos_w - origins[e]
++            bore_w = bore + origins[e]
++            delta = ee_pos_w - bore_w
++            xy_offset = torch.linalg.norm(delta[:2])
++            z_standoff = delta[2]
++            axes = _axes_from_quat(ee_quat_w)
++            print(f"-- env {e} --")
++            print(f"  env_origin:            {origins[e].tolist()}")
++            print(f"  joint_pos commanded:   {commanded[e].tolist()}")
++            print(f"  joint_pos actual:      {self.robot.data.joint_pos[e].tolist()}")
++            print(f"  root env-local pos:    {root_local.tolist()}  (expect {cfg.robot_base_pos})")
++            print(f"  EE world pos:          {ee_pos_w.tolist()}")
++            print(f"  EE env-local pos:      {ee_local.tolist()}")
++            print(f"  EE world quat (wxyz):  {ee_quat_w.tolist()}")
++            print(f"  bore world pos:        {bore_w.tolist()}")
++            print(f"  |EE - bore|:           {torch.linalg.norm(delta).item():.6f} m")
++            print(f"  XY offset to bore:     {xy_offset.item():.6f} m  (expect <= 0.005)")
++            print(f"  Z standoff to bore:    {z_standoff.item():.6f} m  (expect {cfg.home_standoff_z} +- 0.005)")
++            # All three axes are printed, not only z: the IK derives the tool
++            # direction from the DH frame, while these are the USD
++            # wrist_3_link axes, and the mapping between the two is unmeasured.
++            # If x or y (not z) reaches -1, the pose is right and the assumed
++            # tool axis is wrong -- a different fix than a wrong pose.
++            for name, col in zip("xyz", range(3)):
++                dot = torch.dot(axes[:, col], down).item()
++                note = "  <-- expect >= 0.999 here" if name == "z" else ""
++                print(f"  {name}-axis . (0,0,-1):    {dot:+.6f}{note}")
++            dev = (self.robot.data.joint_pos[e] - commanded[e]).abs()
++            worst = int(torch.argmax(dev).item())
++            print(f"  max joint deviation:   {dev[worst].item():.6f} rad "
++                  f"({torch.rad2deg(dev[worst]).item():.3f} deg) on {self.robot.joint_names[worst]}")
++            # Body positions with an explicit plate test. Height alone is not
++            # enough: a link below plate level but outside the plate footprint
++            # touches nothing. Reading only the height led to a wrong contact
++            # diagnosis on 2026-07-26 -- the forearm hangs beside the table, it
++            # is not inside it.
++            hx, hy = cfg.plate_half_extents
++            print("  body positions (env-local) and plate test:")
++            for bi, bname in enumerate(self.robot.body_names):
++                bp = self.robot.data.body_pos_w[e, bi] - origins[e]
++                bx, by, bz = bp[0].item(), bp[1].item(), bp[2].item()
++                over_plate = abs(bx) <= hx and abs(by) <= hy
++                # Strictly below the top surface: the base is mounted exactly on
++                # the plate top by design and must not read as a penetration.
++                in_plate = over_plate and cfg.plate_bottom_z <= bz < cfg.plate_top_z - 1e-3
++                if in_plate:
++                    note = "  <-- INSIDE THE PLATE"
++                elif over_plate and bz < cfg.plate_bottom_z:
++                    note = "  <-- under the plate, between the legs"
++                elif not over_plate and bz < cfg.plate_top_z:
++                    note = "  (beside the table, below plate level - no contact)"
++                else:
++                    note = ""
++                print(f"    {bname:<16} ({bx:+.4f}, {by:+.4f}, {bz:+.4f})   "
++                      f"clearance = {bz - cfg.plate_top_z:+.4f}{note}")
++        print("=" * 72)
+diff --git a/source/proxytask/proxytask/tasks/direct/proxytask/proxytask_env_cfg.py b/source/proxytask/proxytask/tasks/direct/proxytask/proxytask_env_cfg.py
+index d02000e..07851d7 100644
+--- a/source/proxytask/proxytask/tasks/direct/proxytask/proxytask_env_cfg.py
++++ b/source/proxytask/proxytask/tasks/direct/proxytask/proxytask_env_cfg.py
+@@ -3,46 +3,92 @@
+ #
+ # SPDX-License-Identifier: BSD-3-Clause
+ 
+-from isaaclab_assets.robots.cartpole import CARTPOLE_CFG
++"""Increment-1 scene cfg: static Tisch fixture + UR10e in the D-025 home pose.
+ 
++No peg, no gripper, no controller, no reward. Actions are declared but not
++applied; the env exists to promote D-022/D-023 to verified via a numeric
++startup report.
++"""
++
++import os
++
++import isaaclab.sim as sim_utils
+ from isaaclab.assets import ArticulationCfg
+ from isaaclab.envs import DirectRLEnvCfg
+ from isaaclab.scene import InteractiveSceneCfg
+ from isaaclab.sim import SimulationCfg
+ from isaaclab.utils import configclass
+ 
++from . import task_geometry
++from .ur10e_cfg import UR10E_HOME_CFG
++
++
++def resolve_fixture_usd_path() -> str:
++    """Return the path to the Tisch USD, or raise with a actionable message.
++
++    Called from ``_setup_scene``, not at module import, so ``list_envs.py``
++    keeps working on a machine without the gitignored asset. The file is
++    lowercase ``tisch.usd`` on disk while the docs say ``Tisch.usd``; Windows
++    hides the difference, Linux would not, so both spellings are tried.
++    """
++    env_override = os.environ.get("PROXYTASK_TISCH_USD")
++    candidates = []
++    if env_override:
++        candidates.append(env_override)
++    asset_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "Tisch")
++    candidates.append(os.path.join(asset_dir, "tisch.usd"))
++    candidates.append(os.path.join(asset_dir, "Tisch.usd"))
++    for path in candidates:
++        if os.path.isfile(path):
++            return path
++    raise FileNotFoundError(
++        "Tisch fixture USD not found. Tried: "
++        + "; ".join(candidates)
++        + ". Set PROXYTASK_TISCH_USD or place the asset per docs/asset_contract_tisch.md."
++    )
++
+ 
+ @configclass
+ class ProxytaskEnvCfg(DirectRLEnvCfg):
+     # env
+-    decimation = 2
++    decimation = 2  # 60 Hz control rate (D-024)
+     episode_length_s = 5.0
+-    # - spaces definition
+-    action_space = 1
+-    observation_space = 4
++    # - spaces definition (deliberate interim sizes, revisited with the OSC increment)
++    action_space = 6
++    observation_space = 12
+     state_space = 0
+ 
+     # simulation
+     sim: SimulationCfg = SimulationCfg(dt=1 / 120, render_interval=decimation)
+ 
+-    # robot(s)
+-    robot_cfg: ArticulationCfg = CARTPOLE_CFG.replace(prim_path="/World/envs/env_.*/Robot")
++    # robot
++    robot_cfg: ArticulationCfg = UR10E_HOME_CFG
++    ee_body_name = "wrist_3_link"
++
++    # fixture: no rigid_props → static collider (D-018). usd_path is resolved in
++    # _setup_scene via resolve_fixture_usd_path(); the placeholder here is never
++    # spawned.
++    fixture_cfg: sim_utils.UsdFileCfg = sim_utils.UsdFileCfg(
++        usd_path="",
++        collision_props=sim_utils.CollisionPropertiesCfg(collision_enabled=True),
++    )
++
++    # Task geometry (D-022, D-023). Defined once in task_geometry.py and mirrored
++    # here as cfg fields, so the robot base height is derived from the plate top
++    # rather than repeated as a matching literal.
++    fixture_pos = task_geometry.FIXTURE_POS
++    plate_top_z = task_geometry.PLATE_TOP_Z
++    plate_bottom_z = task_geometry.PLATE_BOTTOM_Z
++    plate_half_extents = task_geometry.PLATE_HALF_EXTENTS
++    bore_entrance_pos = task_geometry.BORE_ENTRANCE_POS
++    robot_base_pos = task_geometry.ROBOT_BASE_POS
++    home_standoff_z = task_geometry.HOME_STANDOFF_Z
++
++    # The startup report is printed at these step counts after reset. The early
++    # one only shows the buffers are filled; the late ones decide whether the
++    # pose is held (acceptance criterion 2: unchanged after 5 s). At 60 Hz these
++    # are 0.03 s, 1 s and 3 s.
++    report_at_steps = (2, 60, 180)
+ 
+     # scene
+-    scene: InteractiveSceneCfg = InteractiveSceneCfg(num_envs=4096, env_spacing=4.0, replicate_physics=True)
+-
+-    # custom parameters/scales
+-    # - controllable joint
+-    cart_dof_name = "slider_to_cart"
+-    pole_dof_name = "cart_to_pole"
+-    # - action scale
+-    action_scale = 100.0  # [N]
+-    # - reward scales
+-    rew_scale_alive = 1.0
+-    rew_scale_terminated = -2.0
+-    rew_scale_pole_pos = -1.0
+-    rew_scale_cart_vel = -0.01
+-    rew_scale_pole_vel = -0.005
+-    # - reset states/conditions
+-    initial_pole_angle_range = [-0.25, 0.25]  # pole angle sample range on reset [rad]
+-    max_cart_pos = 3.0  # reset if cart exceeds this position [m]
+\ No newline at end of file
++    scene: InteractiveSceneCfg = InteractiveSceneCfg(num_envs=128, env_spacing=3.0, replicate_physics=True)

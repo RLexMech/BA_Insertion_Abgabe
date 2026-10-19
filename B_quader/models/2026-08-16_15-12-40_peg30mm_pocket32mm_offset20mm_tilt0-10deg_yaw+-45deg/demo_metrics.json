@@ -1,0 +1,76 @@
+{
+  "episodes": 1726909,
+  "success_rate_recent": 0.9919428676066654,
+  "episodes_to_threshold": 407412,
+  "threshold": 0.9,
+  "recent_window_episodes": 5461,
+  "success_rate_cumulative": 0.9243845506624843,
+  "mean_max_depth_mm": 28.46208089745258,
+  "peg_side_m": 0.03,
+  "pocket_side_m": 0.032,
+  "side_clearance_mm": 1.0000000000000009,
+  "yaw_window_deg": 3.9596380797353943,
+  "reset_joint_noise_rad": 0.01,
+  "reset_yaw_noise_rad": 0.7854,
+  "fixture_pos_noise_xy_m": 0.02,
+  "fixture_yaw_noise_rad": 0.7854,
+  "fixture_tilt_rad": 0.0,
+  "fixture_yaw_rad": 0.0,
+  "fixture_tilt_noise_rad": 0.1745,
+  "success_by_tilt_bin": [
+    {
+      "tilt_deg_from": 0.0,
+      "tilt_deg_to": 3.0,
+      "episodes": 1650,
+      "success_rate": 0.9957575757575757
+    },
+    {
+      "tilt_deg_from": 3.0,
+      "tilt_deg_to": 6.0,
+      "episodes": 1592,
+      "success_rate": 0.9918341708542714
+    },
+    {
+      "tilt_deg_from": 6.0,
+      "tilt_deg_to": 9.0,
+      "episodes": 1670,
+      "success_rate": 0.9892215568862276
+    },
+    {
+      "tilt_deg_from": 9.0,
+      "tilt_deg_to": 12.0,
+      "episodes": 549,
+      "success_rate": 0.9890710382513661
+    },
+    {
+      "tilt_deg_from": 12.0,
+      "tilt_deg_to": 15.0,
+      "episodes": 0,
+      "success_rate": null
+    }
+  ],
+  "action_scale_rad": 0.02,
+  "joint_target_lag_rad": {
+    "episodes": 5461,
+    "max": 3.488910675048828,
+    "max_steps": 174.4455337524414,
+    "success_mean": 0.26411424111523313,
+    "success_p95": 0.5021352171897888,
+    "success_max": 2.413994789123535,
+    "success_mean_steps": 13.205712055761657,
+    "success_p95_steps": 25.10676085948944,
+    "success_max_steps": 120.69973945617676,
+    "success_episodes": 5417,
+    "failure_mean": 1.8725753372365779,
+    "failure_p95": 3.056230068206787,
+    "failure_max": 3.488910675048828,
+    "failure_mean_steps": 93.6287668618289,
+    "failure_p95_steps": 152.81150341033936,
+    "failure_max_steps": 174.4455337524414,
+    "failure_episodes": 44
+  },
+  "mean_success_episode_steps": 35.757919794909355,
+  "episode_length_s": 4.0,
+  "num_envs": 4096,
+  "code_marker": "square-peg-2026-08-16-d038"
+}

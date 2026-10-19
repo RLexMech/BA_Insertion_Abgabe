@@ -1,0 +1,15 @@
+{
+  "episodes": 65252,
+  "success_rate_recent": 0.9985,
+  "episodes_to_threshold": 11759,
+  "threshold": 0.9,
+  "recent_window_episodes": 2000,
+  "success_rate_cumulative": 0.883130019003249,
+  "mean_max_depth_mm": 27.978141576051712,
+  "peg_diameter_m": 0.028,
+  "radial_clearance_mm": 0.9999999999999991,
+  "reset_joint_noise_rad": 0.01,
+  "episode_length_s": 4.0,
+  "num_envs": 512,
+  "code_marker": "demo-sprint-2026-07-26a"
+}
