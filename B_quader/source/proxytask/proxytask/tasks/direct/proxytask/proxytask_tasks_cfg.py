@@ -50,7 +50,6 @@ def _pocket_from_env(default_mm: float = 32.0) -> float:
 
 # Default: 32 mm; override with PROXYTASK_POCKET_SIDE_MM.
 POCKET_SIDE = _pocket_from_env()
-"""Square pocket edge length [m] -- the curriculum variable (D-033)."""
 POCKET_DEPTH = 0.035
 SUCCESS_DEPTH = 0.025
 
@@ -157,7 +156,6 @@ class FixedAssetCfg:
 
     usd_path: str = ""
     side: float = POCKET_SIDE
-    """Square pocket edge length [m]."""
     depth: float = POCKET_DEPTH
     """Blind-pocket depth [m]; the bottom is a physical stop."""
     base_height: float = PLATE_TOP_Z

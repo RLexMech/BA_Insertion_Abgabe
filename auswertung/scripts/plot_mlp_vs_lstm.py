@@ -1,15 +1,15 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-r"""H9: the MLP ablation (D-214, RT-260s) beside the LSTM (RT-242s) in training.
+r"""H9: the MLP ablation (RT-260s) beside the LSTM (RT-242s) in training.
 
 Four panels over the training iteration, mean line and the 95 % bootstrap
-interval of that mean as band over the five seeds per network (D-218), each
-seed as a thin line under them (D-219): training success rate, return per episode,
+interval of that mean as band over the five seeds per network, each
+seed as a thin line under them: training success rate, return per episode,
 episode length, and how far AutoDR has opened its boundaries. Both chains are
 the AutoDR arm with the same command, seeds and spread; only the memory
 differs, so the TRAINING curves may stand side by side here (unlike across
-arms, H5/H6). Laptop only, in ``.venv-analysis`` (D-189).
+arms, H5/H6). Laptop only, in ``.venv-analysis``.
 
 A thin caller of ``eval_figures.py`` like ``plot_seed_curves.py``: the
 per-run reading (``read_rl_games_run``, axis and epoch guard), the mean
@@ -21,7 +21,7 @@ OUTCOME) and rl_games' ``episode_lengths/iter`` -- read from the same
 ``scalars.csv`` on the same epoch rows, and refused when a row is missing.
 
     .venv-analysis/Scripts/python.exe scripts/plot_mlp_vs_lstm.py
-    .venv-analysis/Scripts/python.exe scripts/plot_mlp_vs_lstm.py --ablation force   # H11, D-215
+    .venv-analysis/Scripts/python.exe scripts/plot_mlp_vs_lstm.py --ablation force   # H11
 """
 
 from __future__ import annotations
@@ -40,10 +40,10 @@ import eval_figures as EF  # noqa: E402
 SCRIPT_MARKER = "plot_mlp_vs_lstm-2026-10-06b"
 # LSTM keeps the Auto-DR blue of H5/H6 (it is that arm); the MLP takes the
 # ablation colour, dashed (eval_figures.ABLATION_COLOR, its one home with the
-# validation note). --ablation force (H11, D-215, 2026-10-04): the same form
+# validation note). --ablation force (H11, 2026-10-04): the same form
 # and pair for the force-sensor ablation -- RT-242s (actor sees force) against
 # RT-261s (actor blind to force, critic keeps it); colour, line and label are
-# eval_figures.FORCE_ARM_STYLE, which H12 (D-216) draws too.
+# eval_figures.FORCE_ARM_STYLE, which H12 draws too.
 ABLATIONS = {
     "lstm": ("H9_mlp_gegen_lstm", (
         ("lstm", "RT-242s", "mit LSTM", EF.METHOD_COLOR["autodr"], "-"),
@@ -103,7 +103,7 @@ def load_net(rt_logs: pathlib.Path, prefix: str) -> dict:
         a = np.asarray(v, dtype=float)
         if not np.isfinite(a).all():
             raise EF.FigError(f"{prefix}: {int((~np.isfinite(a)).sum())} empty {k} cells")
-        # mean, its interval, and the seeds themselves (thin lines, D-219)
+        # mean, its interval, and the seeds themselves (thin lines)
         out[k] = (EF._mean_std(a, NAME)[0], EF._boot_ci(a, NAME), a)
     return out
 
@@ -120,7 +120,7 @@ def draw(plt, d: dict, factor: int):
     )
     for ax, (key, title, unit, rate) in zip(axes.flat, panels):
         k = 100.0 if rate else 1.0
-        # The seeds first (D-219), then both bands, then both means (as eval_figures F7).
+        # The seeds first, then both bands, then both means (as eval_figures F7).
         for net, _, _, colour, style in NETS:
             EF._seed_lines(ax, d[net]["it"], list(d[net][key][2]), colour, rate=rate, linestyle=style)
         for net, _, _, colour, _ in NETS:

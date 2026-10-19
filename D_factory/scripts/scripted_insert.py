@@ -23,7 +23,7 @@ exit_with = _mod.exit_with
 
 SCRIPT_MARKER = "scripted_insert-2026-09-03a-h1"
 
-parser = argparse.ArgumentParser(description="Scripted controller: descent (measurement) or --free-space (D-108 H1).")
+parser = argparse.ArgumentParser(description="Scripted controller: descent (measurement) or --free-space (H1).")
 parser.add_argument(
     "--disable_fabric", action="store_true", default=False, help="Disable fabric and use USD I/O operations."
 )
@@ -46,7 +46,7 @@ parser.add_argument(
     help="Where to write the metrics file. Numbers are read from THIS file, never from the console.",
 )
 
-tune = parser.add_argument_group("controller (measurement settings, not task decisions)")
+tune = parser.add_argument_group("controller (measurement settings)")
 tune.add_argument("--standoff", type=float, default=0.010, help="m above the opening held during ALIGN.")
 tune.add_argument("--lateral-gain", type=float, default=0.5, help="Proportional gain on the lateral error.")
 tune.add_argument("--vertical-gain", type=float, default=0.5, help="Proportional gain on the standoff error.")
@@ -111,7 +111,7 @@ tune.add_argument(
         "H1 MODE. Block the ALIGN -> DESCEND transition, so the part regulates "
         "its lateral aim and its yaw at --standoff above the opening and never "
         "touches anything. What it measures is the RESIDUAL of that placement: "
-        "D-108's H1 says terminal accuracy is set by PD tracking rather than by "
+        "H1 says terminal accuracy is set by PD tracking rather than by "
         "the action scale, and action_scale = 0.02 stays UNCONFIRMED until this "
         "runs. Pair it with --aim-sweep x so the commanded offset is of the "
         "play's order instead of zero -- an aim of zero commands no move at "
@@ -151,7 +151,7 @@ tune.add_argument(
     choices=["osc", "joint_pd"],
     help=(
         "Override env cfg control_mode for this run. "
-        "Default None uses the cfg default (osc). 'joint_pd' uses the D-108 "
+        "Default None uses the cfg default (osc). 'joint_pd' uses the "
         "joint-space PD controller."
     ),
 )
@@ -310,7 +310,7 @@ def main() -> None:
             "approach transient, which is the one thing it exists to exclude."
         )
 
-    print("[scripted_insert] ---- the D-108 gate ----" if not args_cli.free_space
+    print("[scripted_insert] ---- the gate ----" if not args_cli.free_space
           else "[scripted_insert] ---- H1: free-space lateral tracking ----")
     print(f"[scripted_insert] marker: {SCRIPT_MARKER}")
     print(f"[scripted_insert] tool body: {unwrapped.cfg.peg_body_name} (index {peg_body_idx}), "
@@ -324,7 +324,7 @@ def main() -> None:
               f"({1.0 / (unwrapped.cfg.sim.dt * unwrapped.cfg.decimation):.1f} Hz control steps); "
               "the scripted command goes pocket -> env -> action, NO IK")
     else:
-        print(f"[scripted_insert] control_mode joint_pd: D-108 joint-delta chain via dls IK, decimation "
+        print(f"[scripted_insert] control_mode joint_pd: joint-delta chain via dls IK, decimation "
               f"{unwrapped.cfg.decimation} ({1.0 / (unwrapped.cfg.sim.dt * unwrapped.cfg.decimation):.1f} Hz)")
     print(f"[scripted_insert] action_scale {unwrapped.cfg.action_scale} rad, "
           f"F_abort {unwrapped.cfg.force_abort_f_max_n} N "
@@ -637,12 +637,12 @@ def main() -> None:
                   "so no tracking number here can be read. Lower --max-steps.")
         elif h1_verdict == "H1_MISSES":
             print("[scripted_insert]   The p95 steady error is NOT below half the cross "
-                  "play. That is D-108's H1 reading, and it is a FINDING, not a crash: "
+                  "play. That is H1 reading, and it is a FINDING, not a crash: "
                   "the recorded fallback is task-space deltas + impedance control. "
-                  "Whether to take it is a decision nobody has taken.")
+                  "The threshold has not been selected.")
     print(f"[scripted_insert] metrics -> {out.resolve()}")
     print("[scripted_insert] NOTE: engaged_depth_m stays UNSET. This run reports a "
-          "distribution; choosing the threshold is a decision, not a measurement.")
+          "distribution; choosing the threshold is a design choice, not a measurement.")
 
     env.close()
 

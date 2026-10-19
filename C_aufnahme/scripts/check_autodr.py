@@ -1418,8 +1418,8 @@ MUTATIONS: tuple = (
     ),
     (
         "one-sided-quantity-grows-a-lower-boundary",
-        (('DimSpec("tilt", "rad", 0.0, 0.17453292519943295, True, _D178),',
-          'DimSpec("tilt", "rad", -0.17453292519943295, 0.17453292519943295, False, _D178),'),),
+        (('DimSpec("tilt", "rad", 0.0, 0.17453292519943295, True, _CEILING_NOTE),',
+          'DimSpec("tilt", "rad", -0.17453292519943295, 0.17453292519943295, False, _CEILING_NOTE),'),),
         (
             "the boundary set has exactly seven entries",
             "tilt_lo is NOT a boundary -- the tilt magnitude is one-sided",
@@ -1433,20 +1433,20 @@ MUTATIONS: tuple = (
     ),
     (
         "the-lat_r-ceiling-outgrows-the-last-lateral-bin-edge",
-        (('DimSpec("lat_r", "m", 0.0, 0.030, True, _D178),',
-          'DimSpec("lat_r", "m", 0.0, 0.040, True, _D178),'),),
+        (('DimSpec("lat_r", "m", 0.0, 0.030, True, _CEILING_NOTE),',
+          'DimSpec("lat_r", "m", 0.0, 0.040, True, _CEILING_NOTE),'),),
         ("the last LATERAL bin edge is the lat_r ceiling",),
     ),
     (
         "the-yaw-ceiling-outgrows-the-last-yaw-bin-edge",
-        (('DimSpec("yaw", "rad", -0.08726646259971648, 0.08726646259971648, False, _D178),',
-          'DimSpec("yaw", "rad", -0.10471975511965977, 0.10471975511965977, False, _D178),'),),
+        (('DimSpec("yaw", "rad", -0.08726646259971648, 0.08726646259971648, False, _CEILING_NOTE),',
+          'DimSpec("yaw", "rad", -0.10471975511965977, 0.10471975511965977, False, _CEILING_NOTE),'),),
         ("the last YAW bin edge is the yaw magnitude ceiling",),
     ),
     (
         "the-tilt-ceiling-outgrows-the-last-tilt-bin-edge",
-        (('DimSpec("tilt", "rad", 0.0, 0.17453292519943295, True, _D178),',
-          'DimSpec("tilt", "rad", 0.0, 0.20943951023931953, True, _D178),'),),
+        (('DimSpec("tilt", "rad", 0.0, 0.17453292519943295, True, _CEILING_NOTE),',
+          'DimSpec("tilt", "rad", 0.0, 0.20943951023931953, True, _CEILING_NOTE),'),),
         ("the last TILT bin edge is the tilt magnitude ceiling",),
     ),
     (
@@ -1676,8 +1676,8 @@ MUTATIONS: tuple = (
     ),
     (
         "a-decided-ceiling-quietly-loses-its-marker",
-        (('            "[TESTWERT] hi = Phase-5 ceiling, decided not derived -- D-179 (1); "',
-          '            "hi = Phase-5 ceiling, decided not derived -- D-179 (1); "'),),
+        (('            "[TESTWERT] hi = Phase-5 ceiling, decided not derived; "',
+          '            "hi = Phase-5 ceiling, decided not derived; "'),),
         (
             "every quantity but friction carries [TESTWERT]",
             "the provenance report names every quantity and both constants",
@@ -2302,7 +2302,7 @@ def _run_mutation(index: int):
 
 
 def _coverage(baseline: dict) -> list:
-    """The CONVERSE direction of D-080: every check must have a defender."""
+    """Every check needs a mutation that detects the corresponding fault."""
     defended = {
         name for mname, _, expected in MUTATIONS for name in _expected_flips(mname, expected)
     }
@@ -2310,7 +2310,7 @@ def _coverage(baseline: dict) -> list:
 
 
 def _self_test(torch) -> int:
-    print("[check_autodr] counter-proof (D-080)")
+    print("[check_autodr] counter-proof")
     baseline = _run(torch)
     rc = 0
     if not all(baseline.values()):

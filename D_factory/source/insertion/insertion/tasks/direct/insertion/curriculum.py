@@ -31,8 +31,8 @@ class Ladder:
 
         if base is UNSET or step is UNSET:
             raise LadderError(
-                "curriculum base/step ranges are UNSET -- D-110 leaves the rung step "
-                "sizes [open]; they come from this project's own learning curves."
+                "curriculum base/step ranges are UNSET -- rung step "
+                "sizes must be set from learning curves."
             )
         for axis in self.axes:
             if axis not in base or axis not in step:
@@ -43,12 +43,12 @@ class Ladder:
             value = step[axis]
             if value is UNSET:
                 raise LadderError(
-                    f"curriculum step for axis {axis!r} is UNSET -- [open] per D-110"
+                    f"curriculum step for axis {axis!r} is UNSET"
                 )
             if value <= 0.0:
                 raise LadderError(
                     f"curriculum step for axis {axis!r} is {value} -- a non-positive step "
-                    "would SHIFT the ladder instead of widening it (D-110 forbids it)"
+                    "would SHIFT the ladder instead of widening it"
                 )
             self.step[axis] = float(value)
         for axis in self.axes:

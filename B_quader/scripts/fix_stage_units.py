@@ -12,7 +12,7 @@ import shutil
 
 from isaaclab.app import AppLauncher
 
-parser = argparse.ArgumentParser(description="Fix stage units of a CAD import (D-016).")
+parser = argparse.ArgumentParser(description="Fix stage units of a CAD import.")
 parser.add_argument("--usd", type=str, required=True, help="Path to the USD file to fix.")
 parser.add_argument(
     "--expect-extents",

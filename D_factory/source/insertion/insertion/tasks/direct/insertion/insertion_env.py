@@ -118,7 +118,7 @@ class InsertionEnv(DirectRLEnv):
                 raise ValueError(
                     f"force-sensor body '{self.cfg.force_sensor_body_name}' is not among "
                     f"{self.robot.data.body_names}. The wrench for observation channels "
-                    "25:28 (D-114) has nowhere to be read; a zero in its place would be a "
+                    "25:28 has nowhere to be read; a zero in its place would be a "
                     "silent defect, so this is a hard stop."
                 ) from exc
 
@@ -309,7 +309,7 @@ class InsertionEnv(DirectRLEnv):
         elif str(cfg.dr_mode) != "off":
             raise ValueError(
                 f"dr_mode={cfg.dr_mode!r} is not a mode this env can run. Known: 'off' "
-                "(static cfg fields), 'autodr', 'fixed_dr' (D-192) and 'table' (the "
+                "(static cfg fields), 'autodr', 'fixed_dr' and 'table' (the "
                 "evaluation). Anything "
                 "else is refused rather than silently run as 'off', which would train or "
                 "score a policy against the wrong distribution."
@@ -372,9 +372,9 @@ class InsertionEnv(DirectRLEnv):
                     "fixture_yaw_noise_rad / fixture_pos_noise_xy / fixture_pos_noise_z): "
                     "one run cannot be a "
                     "deterministic probe "
-                    "(one fixed pose, all envs, the instrument the D-036 baseline was "
+                    "(one fixed pose, all envs, the instrument the baseline was "
                     "measured with) and a randomised curriculum rung at the same time. "
-                    "Set exactly one side (D-037/D-038)."
+                    "Set exactly one side."
                 )
             half_tilt = 0.5 * float(cfg.fixture_tilt_rad)
             half_yaw = 0.5 * float(cfg.fixture_yaw_rad)
@@ -482,10 +482,10 @@ class InsertionEnv(DirectRLEnv):
                   f"{cfg.start_pose_solve_tol_m * 1000.0:.3f} mm, jacobian row block "
                   f"{self._jacobi_idx}, fixed base {self.robot.is_fixed_base}")
             if self._start_lat_half != 0.0:
-                print(f"[insertion] rung-0 start LATERAL OFFSET (D-170, a disk since D-178): "
+                print(f"[insertion] rung-0 start LATERAL OFFSET (disk): "
                       f"uniform over the AREA of a DISK of radius {self._start_lat_half * 1000.0:.3f} mm "
                       f"around the pocket axis, drawn per env at every reset. The part starts "
-                      f"OFF the pocket axis; plays are PLAY_X / PLAY_Y, and D-153's shoulder "
+                      f"OFF the pocket axis; plays are PLAY_X / PLAY_Y, and shoulder "
                       f"hole is reached at HOLE_REACH_OFFSET_Y = "
                       f"{insertion_tasks_cfg.HOLE_REACH_OFFSET_Y * 1000.0:.4f} mm -- read "
                       f"stage1_lateral_y_mm.over_reach in demo_metrics.json.")
@@ -493,7 +493,7 @@ class InsertionEnv(DirectRLEnv):
                 print("[insertion] rung-0 start lateral offset OFF "
                       "(start_lateral_offset = 0.0): every episode starts ON the pocket "
                       "axis, which CANCELS the lateral part of fixture_pos_noise_xy and "
-                      "reset_joint_noise (D-170).")
+                      "reset_joint_noise.")
             if self._start_floor_on:
                 print(f"[insertion] START FLOOR (SBC step 0): the start height is drawn per "
                       f"episode from [floor, {cfg.start_tip_above_entrance * 1000.0:+.3f}] mm, "
@@ -505,7 +505,7 @@ class InsertionEnv(DirectRLEnv):
                       f"uniform in [{_low * 1000.0:+.3f}, "
                       f"{cfg.start_tip_above_entrance * 1000.0:+.3f}] mm above the stage-2 "
                       f"opening plane. Episodes below 0 start INSIDE the pocket; the gated "
-                      f"max depth is seeded with the start depth, so D-165 pays nothing for "
+                      f"max depth is seeded with the start depth, so the depth reward pays nothing for "
                       f"the teleport itself.")
         elif cfg.start_tip_above_entrance is not None:
             print("[insertion] rung-0 start pose REQUESTED but there is no welded tool "
@@ -514,7 +514,7 @@ class InsertionEnv(DirectRLEnv):
             print("[insertion] rung-0 start pose OFF (start_tip_above_entrance = None); "
                   "every episode starts at the bare home pose, "
                   f"{insertion_tasks_cfg.WORKCELL_HOME_TIP_ABOVE_ENTRANCE * 1000.0:+.3f} mm "
-                  "above the stage-2 opening plane. D-161 measured the whole reward at "
+                  "above the stage-2 opening plane. The reward was measured at "
                   "3.05e-23 there.")
 
         self._start_height = torch.full(
@@ -787,7 +787,7 @@ class InsertionEnv(DirectRLEnv):
         self.robot.set_joint_position_target(self._joint_targets)
 
     def _build_task_space_controller(self) -> None:
-        """Isaac Lab's OperationalSpaceController, configured per Decision (2)."""
+        """Isaac Lab's OperationalSpaceController."""
         self._osc = None
         self._osc_delta = torch.zeros(self.num_envs, 6, device=self.device)
         self._osc_target_pose_w = torch.zeros(self.num_envs, 7, device=self.device)
@@ -921,7 +921,6 @@ class InsertionEnv(DirectRLEnv):
         return tip_local, depth, gate, below_plate, alignment, phi, cos4phi, sin4phi, tip_rel
 
     def _get_observations(self) -> dict:
-        """The REAL task's observation (D-107), minus its force block."""
         self._obs_calls += 1
 
         joint_pos = self.robot.data.joint_pos
@@ -957,7 +956,7 @@ class InsertionEnv(DirectRLEnv):
             yaw_cs = torch.zeros(self.num_envs, 2, device=self.device)
             yaw_cs[:, 0] = 1.0
 
-        # The force block (D-114). Read RAW at the measured link and smoothed
+        # The force block. Read RAW at the measured link and smoothed
         if self._force_body_idx is not None:
             wrench_raw = self.robot.data.body_incoming_joint_wrench_b[:, self._force_body_idx, 0:6]
             force_raw = wrench_raw[:, 0:3]
@@ -1035,7 +1034,7 @@ class InsertionEnv(DirectRLEnv):
         return {"policy": obs, "critic": critic}
 
     def _true_pocket_blocks(self) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        """``tip_rel``, ``yaw_cos_sin`` and ``pocket_quat`` of the TRUE state, for the critic group (D-195)."""
+        """``tip_rel``, ``yaw_cos_sin`` and ``pocket_quat`` of the TRUE state, for the critic group."""
         true_rot, pocket_quat = insertion_math.believed_pocket_frame(
             self._fixture_quat, torch.zeros(self.num_envs, device=self.device)
         )
@@ -1074,7 +1073,6 @@ class InsertionEnv(DirectRLEnv):
         return obs
 
     def _get_dones(self) -> tuple[torch.Tensor, torch.Tensor]:
-        """The REAL termination (D-113): exactly two exits, and the per-step predicates the reward reads."""
         time_out = self.episode_length_buf >= self.max_episode_length - 1
         if self._peg_body_idx is None:
             terminated = torch.zeros_like(time_out)
@@ -1194,7 +1192,6 @@ class InsertionEnv(DirectRLEnv):
         return terminated, truncated
 
     def _get_rewards(self) -> torch.Tensor:
-        """The REAL reward (D-109 / D-114), one call site."""
         if self._peg_body_idx is None or not self._rl_terms_enabled:
             return torch.zeros(self.num_envs, device=self.device)
         terms = insertion_math.compute_reward_terms_insertion(
@@ -1716,14 +1713,14 @@ class InsertionEnv(DirectRLEnv):
         )
 
     def _success_by_lateral_bin(self) -> list[dict]:
-        """Trailing-window success rate resolved by the episode's LATERAL START OFFSET (D-170)."""
+        """Trailing-window success rate resolved by the episode's LATERAL START OFFSET."""
         return self._rate_by_bin(
             self._recent_successes, self._recent_lateral_mm, self._lateral_bin_edges_mm,
             "lateral_mm_from", "lateral_mm_to", "success_rate", first_lower=0.0, scale=1.0,
         )
 
     def _success_by_yaw_bin(self) -> list[dict]:
-        """Trailing-window success rate resolved by pocket YAW magnitude (D-038)."""
+        """Trailing-window success rate resolved by pocket YAW magnitude."""
         return self._rate_by_bin(
             self._recent_successes, self._recent_yaw_deg, self._yaw_bin_edges_deg,
             "yaw_deg_from", "yaw_deg_to", "success_rate", first_lower=0.0, scale=1.0,
@@ -1825,7 +1822,7 @@ class InsertionEnv(DirectRLEnv):
         return out
 
     def _torque_stats(self) -> dict:
-        """The per-episode peak of the smoothed torque magnitude, N m, as a spread -- the D-188 twin of ``_force_stats``, same nearest-rank percentiles, plus the share of steps whose wrench was VALID (not the reset step)."""
+        """The per-episode peak of the smoothed torque magnitude, N m, as a spread -- the twin of ``_force_stats``, same nearest-rank percentiles, plus the share of steps whose wrench was VALID (not the reset step)."""
         values = sorted(self._recent_torque_norm)
         out: dict = {
             "episodes": len(values),
@@ -2000,11 +1997,11 @@ class InsertionEnv(DirectRLEnv):
                 "pocket_qz": "see pocket_qw",
                 "pocket_dx_m": "commanded pocket position minus its base position, x, ENV frame, m",
                 "pocket_dy_m": "same, y",
-                "pocket_dz_m": "same, z (D-204 (4))",
-                "grasp_obs_x_m": "grasp belief error on the OBSERVATION only (D-183), m",
+                "pocket_dz_m": "same, z",
+                "grasp_obs_x_m": "grasp belief error on the OBSERVATION only, m",
                 "pocket_obs_yaw_rad": "pocket-yaw belief error on the OBSERVATION only, about "
-                                      "the pocket's own axis (D-194), rad",
-                "friction_cmd": "friction _apply_friction commanded; the one-shot D-111 value "
+                                      "the pocket's own axis, rad",
+                "friction_cmd": "friction _apply_friction commanded; the one-shot value "
                                 "when the provider carries no friction",
                 "friction_robot_min": "PhysX read-back, robot, min over shapes and static+dynamic",
                 "friction_robot_max": "same, max",
@@ -2045,10 +2042,10 @@ class InsertionEnv(DirectRLEnv):
             },
             "interpenetration": {
                 "method": "Warp mesh query, insertion_sdf.SdfDistanceQuery.interpen_distances -> "
-                          "insertion_math.max_interpen_dist (SAPU port, D-109 (10)); not a PhysX reading",
+                          "insertion_math.max_interpen_dist (SAPU port); not a PhysX reading",
                 "body_pair": "part surface sample points (fuegeteil.obj, tool_link frame) against the "
                              "fixture mesh (aufnahme.obj, entrance-anchored pocket frame). The gripper "
-                             "has no collider (D-077); the table is not queried.",
+                             "has no collider; the table is not queried.",
                 "sample_points": int(cfg.sdf_num_sample_points),
                 "sample_seed": int(cfg.sdf_seed),
                 "query_max_dist_m": float(cfg.sdf_max_dist),
@@ -2059,7 +2056,7 @@ class InsertionEnv(DirectRLEnv):
                 "sampling_note": "read once per policy step; the physics steps in between are not seen",
                 "t1_mm": thresh * 1000.0,
                 "t1_meaning": "ALGORITHMIC acceptance threshold of this code, INTERPEN_THRESH = "
-                              "0.5 * PLAY_X (D-106 (3)): at or above it the SAPU scale is zero and "
+                              "0.5 * PLAY_X: at or above it the SAPU scale is zero and "
                               "no success can fire. NOT a physically admissible penetration.",
                 "mesh_note": "the fixture mesh is not watertight (RT-64); the reading at known "
                              "separated and overlapping poses is check_insertion_sdf.py --pose-ladder",
@@ -2105,7 +2102,6 @@ class InsertionEnv(DirectRLEnv):
         }
 
     def _stage1_lateral_stats(self) -> dict:
-        """The D-153 exposure, measured instead of argued."""
         values = sorted(self._recent_stage1_lat_y)
         if not values:
             return {"episodes": 0}
@@ -2393,7 +2389,7 @@ class InsertionEnv(DirectRLEnv):
 
         problems = []
         if mpu_ok is False:
-            problems.append("metersPerUnit is not 1.0 (D-083 unit repair not applied)")
+            problems.append("metersPerUnit is not 1.0 (unit repair not applied)")
         if up_ok is False:
             problems.append("up-axis is not Z")
         if self_contained is False:
@@ -2458,19 +2454,19 @@ class InsertionEnv(DirectRLEnv):
                   f"[placeholder], damping ratio {cfg.osc_damping_ratio} (critical, 2*sqrt(kp))")
             print(f"  step limits:  {cfg.osc_pos_step_limit_m} m, {cfg.osc_rot_step_limit_rad} rad "
                   f"({math.degrees(cfg.osc_rot_step_limit_rad):.2f} deg) per policy step "
-                  f"[placeholder, Factory thresholds, D-197]")
+                  f"[placeholder, Factory thresholds]")
             print(f"  action EMA:   {cfg.action_ema_factor} on the new clamped draw, applied = EMA state "
-                  f"[placeholder, Factory ema_factor, D-197]; obs prev_action = EMA state; "
+                  f"[placeholder, Factory ema_factor]; obs prev_action = EMA state; "
                   f"action-rate term measured on the RAW draw, weight {cfg.action_rate_scale} "
                   f"(Factory 0.0)")
-            print(f"  tip clamp:    +-{cfg.osc_pos_clamp_m} m x/y [placeholder, D-180 rule at D-197's step: "
+            print(f"  tip clamp:    +-{cfg.osc_pos_clamp_m} m x/y [placeholder, workspace coverage: "
                   f"disk reach + one action step + set air] and "
-                  f"+-{cfg.osc_pos_clamp_z_m} m z [placeholder, D-180 rule at D-197's step: highest "
+                  f"+-{cfg.osc_pos_clamp_z_m} m z [placeholder, workspace coverage: highest "
                   f"legal start + one action step + set air] box around the pocket entrance; tilt cone "
                   f"{math.degrees(cfg.osc_tilt_clamp_rad):.2f} deg from THIS EPISODE'S POCKET AXIS "
                   f"(CAD, Geometrie_Fuegeteil_Aufnahme.tex:264)")
             print(f"  yaw band:     +-{math.degrees(cfg.osc_yaw_clamp_rad):.2f} deg about THIS EPISODE'S SEATED "
-                  f"orientation (pocket * SEATED_TOOL_QUAT_LOCAL) [placeholder, own, D-196 rule at D-197's "
+                  f"orientation (pocket * SEATED_TOOL_QUAT_LOCAL) [placeholder, own, yaw coverage at the action "
                   f"step: worst start yaw + belief error + one rotation step]")
             try:
                 _seat_w = insertion_math.quat_mul(self._fixture_quat, self._seat_quat_local)
@@ -2481,7 +2477,7 @@ class InsertionEnv(DirectRLEnv):
                 _yaw_deg = torch.rad2deg(torch.atan2(_x_seat[:, 1], _x_seat[:, 0]))
                 print(f"  reset yaw vs seat: max |yaw| {float(_yaw_deg.abs().max()):.3f} deg over "
                       f"{self.num_envs} envs (env 0 {float(_yaw_deg[0]):+.3f}); expect about 0 at DR width 0 "
-                      f"-- the home tool IS the seated orientation (RT-102, D-196 seam 0)")
+                      f"-- the home tool IS the seated orientation (RT-102)")
             except Exception as _exc:  # noqa: BLE001 -- report line, never a crash
                 print(f"  reset yaw vs seat: UNREAD -- {type(_exc).__name__}: {_exc}")
             print(f"  controlled body: {self.robot.body_names[self._osc_body_idx]} (index {self._osc_body_idx}, "
@@ -2490,7 +2486,7 @@ class InsertionEnv(DirectRLEnv):
                   f"controller {1.0 / cfg.sim.dt:.1f} Hz; episode {self.max_episode_length} steps = "
                   f"{cfg.episode_length_s:.4f} s (step count fixed; duration follows, not independently validated)")
         else:
-            print(f"control_mode:   joint_pd -- D-108 joint-target integrator on the USD drives "
+            print(f"control_mode:   joint_pd -- joint-target integrator on the USD drives "
                   f"(action_scale {cfg.action_scale} rad/step), policy {_rate:.1f} Hz; the PD half of the "
                   f"controller comparison measurement, not a training option")
         try:
@@ -2539,7 +2535,7 @@ class InsertionEnv(DirectRLEnv):
                   f"vs maxForce {[round(float(v), 1) for v in self.robot.data.joint_effort_limits[0].tolist()]}")
             if self._control_mode == "osc":
                 _kp_bound = 20.0 / (float(_lam_lin.max()) * float(cfg.osc_pos_step_limit_m))
-                print(f"  Decision (4) reading: kp <= F_search / (Lambda_max * step_limit) = 20 N / "
+                print(f"  Stiffness bound: kp <= F_search / (Lambda_max * step_limit) = 20 N / "
                       f"({float(_lam_lin.max()):.4f} kg * {cfg.osc_pos_step_limit_m} m) = {_kp_bound:.1f} "
                       f"(unit check: kg*m in the denominator is a force per (N/m), READ, not decided)")
         except Exception as _exc:  # noqa: BLE001 -- report line, never a crash
@@ -2558,17 +2554,17 @@ class InsertionEnv(DirectRLEnv):
         print("INSERTION STARTUP REPORT -- REAL geometry and physics, PROXY scoring (UNVERIFIED)")
         print(f"step {self._obs_calls} of {self._report_at_obs_calls}, t = {sim_time:.3f} s after reset")
         print(f"code marker: {CODE_MARKER}")
-        print(f"episode cap (D-113 (3)): {self.max_episode_length} control steps "
+        print(f"episode cap: {self.max_episode_length} control steps "
               f"= {cfg.episode_length_s:.6f} s at {1.0 / (cfg.sim.dt * cfg.decimation):.1f} Hz")
         self._print_controller_report()
         print(f"fixture usd: {self._fixture_usd_path}")
         print(f"robot usd:   {self._robot_usd_path}")
         print(f"fixture spawn translation: {cfg.fixture_pos}  (asset origin = opening plane at pocket centre)")
-        print(f"fixture tilt (D-036 probe): {math.degrees(cfg.fixture_tilt_rad):+.2f} deg about env y (lateral axis; +tips the back-wall side down) through the pocket centre "
+        print(f"fixture tilt (probe): {math.degrees(cfg.fixture_tilt_rad):+.2f} deg about env y (lateral axis; +tips the back-wall side down) through the pocket centre "
               f"({'ACTIVE -- one fixed angle in every env' if cfg.fixture_tilt_rad != 0.0 else 'inactive'})")
-        print(f"fixture yaw (D-038 probe): {math.degrees(cfg.fixture_yaw_rad):+.2f} deg about env z through the pocket centre "
+        print(f"fixture yaw (probe): {math.degrees(cfg.fixture_yaw_rad):+.2f} deg about env z through the pocket centre "
               f"({'ACTIVE -- one fixed angle in every env' if cfg.fixture_yaw_rad != 0.0 else 'inactive'})")
-        print(f"fixture tilt noise (D-037): magnitude 0..{math.degrees(cfg.fixture_tilt_noise_rad):.2f} deg, "
+        print(f"fixture tilt noise: magnitude 0..{math.degrees(cfg.fixture_tilt_noise_rad):.2f} deg, "
               "direction uniform over 360 deg, resampled per episode "
               f"({'ACTIVE -- per-env pocket orientation' if cfg.fixture_tilt_noise_rad > 0.0 else 'inactive'})")
         print(f"pocket-frame measurement: {'ON -- gate/depth/alignment/phi and obs 12:15 in the pocket frame' if self._tilt_active else 'OFF -- pocket upright, env-local measurement'}")
@@ -2613,10 +2609,10 @@ class InsertionEnv(DirectRLEnv):
                       f"{self._tilt_reach}. fixture_pos_noise_xy "
                       f"({float(cfg.fixture_pos_noise_xy):.4f} m) and _z "
                       f"({float(cfg.fixture_pos_noise_z):.4f} m), the joint noise, the "
-                      f"tilt azimuth and the lateral angle lat_phi stay LIVE by design (D-178 (2)) and no boundary tracks them.")
+                      f"tilt azimuth and the lateral angle lat_phi stay LIVE by design and no boundary tracks them.")
             print("  Verify AutoDR behavior using the [autodr] lines and dr/ curves "
                   "of this run.")
-        print(f"fixture pose noise (D-034, D-204): xy +-{cfg.fixture_pos_noise_xy:.3f} m, "
+        print(f"fixture pose noise: xy +-{cfg.fixture_pos_noise_xy:.3f} m, "
               f"z +-{cfg.fixture_pos_noise_z:.3f} m, "
               f"yaw +-{cfg.fixture_yaw_noise_rad:.4f} rad "
               f"({'ACTIVE -- kinematic fixture teleported per reset' if (cfg.fixture_pos_noise_xy > 0.0 or cfg.fixture_pos_noise_z > 0.0 or cfg.fixture_yaw_noise_rad > 0.0) else 'inactive -- fixture stays at the spawn pose'})")
@@ -2625,7 +2621,7 @@ class InsertionEnv(DirectRLEnv):
         print(f"floor z:        {wc.FLOOR_Z:+.4f}   table 1 top: {wc.T1_TOP_Z:+.4f}   "
               f"table 2 top: {wc.T2_TOP_Z:+.4f}")
         print(f"plate drop:     {(wc.T1_TOP_Z - wc.T2_TOP_Z)*1000:.1f} mm "
-              f"(measured {wc.PLATE_TOP_DROP*1000:.1f} mm, D-058 direct reading leads; "
+              f"(measured {wc.PLATE_TOP_DROP*1000:.1f} mm, "
               f"the 884/787 pair would give 97.0 mm)")
         print(f"block top:      {wc.BLOCK_TOP_Z:+.4f} = {wc.GUIDE_EDGE_ABOVE_T2*1000:.1f} mm above table 2; "
               f"{'ABOVE' if wc.BLOCK_TOP_Z > 0 else 'below'} the robot foot plane")
@@ -2640,7 +2636,7 @@ class InsertionEnv(DirectRLEnv):
               f"{wc.BLOCK_BEHIND_POCKET_X*1000:.4f} mm of block behind the cut-out, "
               f"high wall {wc.BLOCK_REAR_WALL_H*1000:.0f} mm above the rim")
         print(f"tool home yaw:  {math.degrees(wc.TOOL_HOME_YAW_RAD):+.1f} deg about the tool axis "
-              f"(weld yaw {math.degrees(wc.TOOL_WELD_YAW_RAD):+.1f} deg, D-078); "
+              f"(weld yaw {math.degrees(wc.TOOL_WELD_YAW_RAD):+.1f} deg); "
               "the part's lugs face the pocket features at this angle")
         print(f"block boxes:    {len(wc.block_recess_boxes())} "
               f"(incl. the two +Y slot fillers beside the tab: "
@@ -2690,10 +2686,10 @@ class InsertionEnv(DirectRLEnv):
                 print(f"torque tare: ON -- lever = authored tool COM minus the MEASURED reference "
                       f"point (origin of '{cfg.ee_body_name}' + {tuple(cfg.torque_ref_offset_parent_m)} m "
                       f"in its frame, RT-192a2), moment = lever x hold force, rotated into the same "
-                      f"frame, subtracted BEFORE the EMA (D-188).")
+                      f"frame, subtracted BEFORE the EMA.")
         print(f"obs mode {insertion_math.obs_version(self._obs_mode)}: "
               f"{'torque 28:31 IN the policy observation' if self._obs_mode == 'wrench' else 'torque read and logged, NOT in the policy observation'}; "
-              f"torque_obs_noise_std_nm {cfg.torque_obs_noise_std_nm} (0 = off, OPEN per D-188); "
+              f"torque_obs_noise_std_nm {cfg.torque_obs_noise_std_nm} (0 = off); "
               f"the wrench EMA skips the reset step and advances once per step.")
         spawn_cfg = cfg.robot_cfg.spawn
         declared = (
@@ -2710,7 +2706,7 @@ class InsertionEnv(DirectRLEnv):
             if self._friction_reach
             else f"u = {insertion_tasks_cfg.CONTACT_FRICTION} written once, PROVISIONAL/F3"
         )
-        print(f"contact friction (D-111, {_fric_head}): "
+        print(f"contact friction ({_fric_head}): "
               f"PhysX reads back robot [{_fric_r.min():.3f}, {_fric_r.max():.3f}], "
               f"fixture [{_fric_f.min():.3f}, {_fric_f.max():.3f}] (static+dynamic pooled)")
         if self._friction_reach:
@@ -2736,7 +2732,7 @@ class InsertionEnv(DirectRLEnv):
                   f"Read it against the iteration time in THIS log.")
         else:
             print(f"friction per reset: OFF -- no friction reach (dr_mode="
-                  f"{cfg.dr_mode}). Every env keeps the one-shot D-111 value "
+                  f"{cfg.dr_mode}). Every env keeps the one-shot value "
                   f"for the whole run and no reset writes a material.")
         try:
             from pxr import Usd as _Usd  # noqa: PLC0415
@@ -2751,7 +2747,7 @@ class InsertionEnv(DirectRLEnv):
             for _root_path in ("/World/envs/env_0/Robot", "/World/envs/env_0/Fixture"):
                 _root = _stage.GetPrimAtPath(_root_path)
                 if not _root or not _root.IsValid():
-                    print(f"solver iterations (D-115 verify): {_root_path}: prim not found")
+                    print(f"solver iterations: {_root_path}: prim not found")
                     continue
                 _root_authored = False
                 for _p in _Usd.PrimRange(_root):
@@ -2762,12 +2758,12 @@ class InsertionEnv(DirectRLEnv):
                             _vals.append(f"{_an.split(':', 1)[1]}={_a.Get()}")
                     if _vals:
                         _root_authored = True
-                        print(f"solver iterations (D-115 verify): {_p.GetPath()}: {', '.join(_vals)}")
+                        print(f"solver iterations: {_p.GetPath()}: {', '.join(_vals)}")
                 if not _root_authored:
-                    print(f"solver iterations (D-115 verify): {_root_path}: NO authored value on any "
+                    print(f"solver iterations: {_root_path}: NO authored value on any "
                           "prim below -- the PhysX SDK default applies and is NOT readable here")
         except Exception as _exc:  # noqa: BLE001 -- report line, never a crash
-            print(f"solver iterations (D-115 verify): UNCHECKED -- {type(_exc).__name__}: {_exc}")
+            print(f"solver iterations: UNCHECKED -- {type(_exc).__name__}: {_exc}")
         if self._peg_body_idx is None:
             print(f"peg_body:    *** MISSING *** '{cfg.peg_body_name}' is not among the bodies above.")
             print( "             The welded link did not survive authoring; every peg number below is void.")
@@ -2785,7 +2781,7 @@ class InsertionEnv(DirectRLEnv):
                   f"X {wc.PLAY_X*1000:.4f} mm across the lugs, "
                   f"Y {wc.PLAY_Y*1000:.4f} mm along the part")
             print( "             yaw window: OPEN -- the proxy's C4 window does not apply to a part "
-                   "that fits one way round, and D-106's bound is not recomputed against PLAY_X (D-121).")
+                   "that fits one way round, and the yaw bound is not recomputed against PLAY_X.")
         print(f"asset check (peg):     {self._asset_geometry_line()}")
         print(f"asset check (fixture): {self._fixture_geometry_line()}")
         resting_speed = torch.linalg.norm(joint_vel_fd[: min(2, self.num_envs)], dim=-1)
@@ -2798,26 +2794,26 @@ class InsertionEnv(DirectRLEnv):
         )
         print(f"observation layout (built {self.cfg.observation_space}-dim of "
               f"{insertion_math.obs_dim(self._obs_mode)}, mode {self._obs_mode}, "
-              f"D-107/D-114/D-188): {obs_blocks}")
-        print(f"  12:15 frame: {'POCKET, D-036' if self._tilt_active else 'env-local'}; "
-              "19:21 is (cos phi, sin phi), NOT cos 4 phi (D-107 (2))")
+              f"): {obs_blocks}")
+        print(f"  12:15 frame: {'POCKET' if self._tilt_active else 'env-local'}; "
+              "19:21 is (cos phi, sin phi), NOT cos 4 phi")
         _n_obs = min(4, self.num_envs)
         _noise = getattr(self, "_observation_noise_model", None)
         if _noise is None:
-            print("observation bias (D-182): OFF -- both sigmas are 0.0, so "
+            print("observation bias: OFF -- both sigmas are 0.0, so "
                   "resolve_obs_noise_model returned None and no model exists")
         else:
             _t_lo, _t_hi = insertion_math.OBS_SLICES["tip_rel"]
             _bias_rows = [[round(v, 6) for v in _row]
                           for _row in _noise._bias[:_n_obs, _t_lo:_t_hi].tolist()]
-            print(f"observation bias env0..{_n_obs - 1} (D-182, tip_rel "
+            print(f"observation bias env0..{_n_obs - 1} (tip_rel "
                   f"{_t_lo}:{_t_hi}, uniform +-{cfg.obs_noise_pocket_pos_std_m} m, "
                   f"drawn per EPISODE): {_bias_rows}")
-        print(f"grasp belief error env0..{_n_obs - 1} (D-183, "
+        print(f"grasp belief error env0..{_n_obs - 1} ("
               f"+-{cfg.grasp_obs_offset_x_m} m on the part's short axis, drawn "
               f"per EPISODE): "
               f"{[round(v, 6) for v in self._grasp_obs_off[:_n_obs, 0].tolist()]}")
-        print(f"pocket-yaw belief error env0..{_n_obs - 1} (D-194, "
+        print(f"pocket-yaw belief error env0..{_n_obs - 1} ("
               f"+-{cfg.pocket_obs_yaw_rad} rad about the pocket axis, drawn "
               f"per EPISODE): "
               f"{[round(v, 6) for v in self._pocket_obs_yaw[:_n_obs].tolist()]}")
@@ -2831,7 +2827,7 @@ class InsertionEnv(DirectRLEnv):
                  else "*** OFF -- FIXED RUNG 0, no advance, no retreat; the start "
                       "scatter is whatever the cfg holds and never widens ***"))
         if self._rl_terms_enabled and self._sdf_query is not None:
-            print("reward (D-109 + the 2026-09-01 revision): kernel_sum(sdf_dist) "
+            print("reward: kernel_sum(sdf_dist) "
                   "+ engaged + success bonuses, SAPU-scaled; "
                   f"time penalty {self.cfg.time_penalty_per_step:+.6f}/step "
                   f"(-1/T at T = {self.cfg.episode_steps}); action-rate penalty "
@@ -2846,7 +2842,7 @@ class InsertionEnv(DirectRLEnv):
                   "env.shaping_gamma too; "
                   + ("*** OFF, w_tilt 0 -- the pre-RT-171 reward ***"
                      if float(self.cfg.w_tilt) == 0.0 else "ON"))
-            print("termination (D-113 + the 2026-09-01 revision): timeout, force "
+            print("termination: timeout, force "
                   f"abort at {self.cfg.force_abort_f_max_n} N (payment "
                   f"{self.cfg.abort_payment}, both PLACEHOLDERS, see the block "
                   "above), AND success -- which ends the episode and pays its "
@@ -2944,7 +2940,7 @@ class InsertionEnv(DirectRLEnv):
             print(f"  Z standoff (flange):   {z_standoff.item():.6f} m  (expect {expect_flange_z:.4f} at the "
                   f"NOISELESS start pose; tool point "
                   f"{self._start_tip_height:.4f} + chain {cfg.peg_length:.4f}"
-                  f"{'' if self.cfg.start_tip_above_entrance is None else ', D-161 rung 0 -- NOT the home pose'})")
+                  f"{'' if self.cfg.start_tip_above_entrance is None else ' rung 0 -- NOT the home pose'})")
             print(f"                         with USD drives the droop is spent: RT-46 read 0.317026 m at "
                   f"t = 3.000 s, 0.000026 m off nominal. Reset noise would add +-0.0098 m, but it is 0.0 "
                   f"right now -- so judge this against the CENTRE")
@@ -2989,7 +2985,7 @@ class InsertionEnv(DirectRLEnv):
                 print(f"  peg origin env-local:  {(peg_pos_w - origins[e]).tolist()}")
                 print(f"  peg TIP env-local:     {tip_local.tolist()}")
                 print(f"  peg TIP rel. entrance: {[round(v, 6) for v in tip_rel_e.tolist()]}  "
-                      f"({'POCKET frame (D-036)' if self._tilt_rot is not None else 'env-local; pocket upright'}"
+                      f"({'POCKET frame' if self._tilt_rot is not None else 'env-local; pocket upright'}"
                       f" -- this is observation channels 12:15)")
                 print(f"  flange -> peg origin:  {torch.linalg.norm(peg_pos_w - ee_pos_w).item():.6f} m"
                       f"  (expect 0.000000)")
@@ -3022,7 +3018,7 @@ class InsertionEnv(DirectRLEnv):
                        - home_pose[e, self._yaw_joint_idx])
             print(f"  reset yaw noise:       {yaw_off.item():+.6f} rad "
                   f"({torch.rad2deg(yaw_off).item():+.3f} deg) on {cfg.yaw_joint_name}"
-                  f"  (D-038, sampled +-{cfg.reset_yaw_noise:.4f} rad -- NOT an error)")
+                  f"  (sampled +-{cfg.reset_yaw_noise:.4f} rad -- NOT an error)")
             hx, hy = cfg.plate_half_extents
             print("  body positions (env-local) and plate test"
                   f"{' -- WORLD-FRAME, indicative only under tilt' if self._tilt_rot is not None else ''}:")

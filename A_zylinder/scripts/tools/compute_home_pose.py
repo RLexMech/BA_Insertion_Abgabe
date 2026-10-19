@@ -171,7 +171,7 @@ def main() -> None:
     print(f"  base (env-local):  {ROBOT_BASE_POS}")
     print(f"  bore (env-local):  {BORE_ENTRANCE_POS}")
     print(f"  flange in base frame: ({dx:.4f}, {dy:.4f}, {args.standoff:.4f}) m")
-    print("  orientation: diag(1, -1, -1), tool axis along -Z (D-022 convention)")
+    print("  orientation: diag(1, -1, -1), tool axis along -Z")
 
     d4 = dh["d"][3]
     d6 = dh["d"][5]
@@ -219,10 +219,10 @@ def main() -> None:
     print(f"  branch {idx}  (within +-180: {within}, q3 < 0: {elbow_neg})")
     print(f"  wrist-singularity margin |sin q5| = {wrist_margin:.4f}")
     if wrist_margin < 0.3:
-        print("  WARNING: below 0.3 — this is a real finding for D-023.")
+        print("  WARNING: below 0.3 — wrist singularity margin is small.")
         print("  Reconsider the standoff height or the base placement before proceeding.")
     else:
-        print("  -> comfortably clear of a wrist singularity (D-023 caveat answered).")
+        print("  -> comfortably clear of a wrist singularity.")
 
     for label, offset in (("base frame as given", 0.0), ("base frame rotated pi about z", math.pi)):
         shifted = wrap_to_pi(q + np.array([offset, 0.0, 0.0, 0.0, 0.0, 0.0]))

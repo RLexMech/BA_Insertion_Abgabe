@@ -15,7 +15,7 @@ from isaaclab.app import AppLauncher
 
 SCRIPT_MARKER = "author_peg_ur10e-2026-07-28a-square"
 
-parser = argparse.ArgumentParser(description="Weld the square peg into a copy of the UR10e USD (D-019, D-029).")
+parser = argparse.ArgumentParser(description="Weld the square peg into a copy of the UR10e USD.")
 parser.add_argument("--src", type=str, default=None, help="Source UR10e USD; default is the shipped UR10e_CFG path.")
 parser.add_argument("--out", type=str, default=None, help="Output USD; default is the package assets/Robot path.")
 parser.add_argument("--peg-approx", type=str, default="convexHull", help="Collision approximation for the peg.")

@@ -253,7 +253,7 @@ def k3_blocks(df: pd.DataFrame, final: dict) -> dict:
 
 
 def ood_blocks(df: pd.DataFrame) -> dict:
-    '(3) / (ported from p6 db85986c): each OOD block against the'
+    '(3) / each OOD block against the'
     g = df[df["block"] == "T-ood"]
     pols = sorted((m, int(s)) for m, s in set(zip(g["method"], g["seed"])))
     per = {}
@@ -278,7 +278,7 @@ def ood_blocks(df: pd.DataFrame) -> dict:
 
 
 def noise_blocks(df: pd.DataFrame) -> dict:
-    '(3) / (3) (ported from p6 a766ae9e): each observation-noise'
+    '(3) / (3) each observation-noise'
     f = df[df["block"].isin(("T-final", "T-final-F"))]
     noisy = f[f["tag"].isin(list(CEC.NOISE_TAGS))]
     pols = sorted((m, int(s)) for m, s in set(zip(noisy["method"], noisy["seed"])))
@@ -386,7 +386,7 @@ def summarize(df: pd.DataFrame, t1_mm: float | None = None) -> dict:
             out[kname] = {"missing": f"no {block} runs"}
             continue
         if force_root(df):
-            out[kname] = {"missing": "force-ablation root (D-216): no nodr arm; see FORCE"}
+            out[kname] = {"missing": "force-ablation root: no nodr arm; see FORCE"}
             continue
         a, b = method_rates(pol, block)
         try:
@@ -457,7 +457,7 @@ def write_outputs(results: pathlib.Path, summary: dict) -> None:
     pd.DataFrame(rows).to_csv(results / "summary_tables.csv", index=False, lineterminator="\n")
 
 
-# Self-test (D-080): checks on built data; each mutation of THIS file's source
+# Self-test: checks on built data; each mutation of THIS file's source
 
 
 N_EP = 100
@@ -633,10 +633,10 @@ CHECKS = (
     "NOISE refuses a policy whose untagged T-final is missing (s4), it is not skipped",
     "noise-tagged T-final runs change neither K1 nor the OOD reference",
 
-    "D-208: a Fixed-DR seed that tops T-auswahl (99/100) is the final policy; K3 reads its T-final-F 74/100",
-    "D-208 OOD: fixeddr s2 lat_r_hi 20/50 vs ITS T-final-F 72/100 -> Newcombe = library call",
-    "D-208 NOISE: fixeddr s2 pn2 60/100 vs its untagged T-final-F 72/100 -> Newcombe = library call",
-    "D-208 K4: Fixed-DR's five T-final-F rates beside AutoDR / No-DR",
+    "a Fixed-DR seed that tops T-auswahl (99/100) is the final policy; K3 reads its T-final-F 74/100",
+    "OOD: fixeddr s2 lat_r_hi 20/50 vs ITS T-final-F 72/100 -> Newcombe = library call",
+    "NOISE: fixeddr s2 pn2 60/100 vs its untagged T-final-F 72/100 -> Newcombe = library call",
+    "K4: Fixed-DR's five T-final-F rates beside AutoDR / No-DR",
 
     "friction bins: five equal bins over 0.08..0.20 (width 0.024), 0.20 lands in the LAST bin",
 
@@ -648,7 +648,7 @@ CHECKS = (
     "FORCE pn2: diff = 0.93 - 0.8433 and Welch = reference formula over the seed rates of tag pn2",
     "FORCE loss T-final -> pn2 per seed = rate pn2 - rate T-final, equal to NOISE diffs_vs_final",
     "FORCE root: K1 and K2 are 'missing' (no nodr arm), not an error; NOISE holds both arms",
-    "a root without autodr_nf has no FORCE key (summary.json as before D-216)",
+    "a root without autodr_nf has no FORCE key (standard summary.json)",
     "FORCE with untagged runs only: pn2 'missing', T-final computed, no loss",
 
     "BONFERRONI: family K1, K2, K5, K5_nominal (k = 4); each Welch CI = reference formula at ALPHA / 4, "
@@ -960,7 +960,7 @@ MUTATIONS = (
 )
 
 
-_SELF_TEST_MARKER = "# Self-test (D-080): checks on built data"
+_SELF_TEST_MARKER = "# Self-test: checks on built data"
 
 
 def self_test() -> int:

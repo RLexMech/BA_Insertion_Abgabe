@@ -1,18 +1,18 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-r"""Plot eight diagnostics for one AutoDR run (RT-206; rl_games: D-200).
+r"""Plot eight diagnostics for one AutoDR run (RT-206).
 
 erfolg: success with phase/all-at-max markers; stufen: normalised boundaries;
 kraft: peak-force mean/p95 and abort rate; ppo: reward/losses/entropy
-(EV/KL unavailable, D-116); physik: depth, below-fixture rate, engagement,
+(EV/KL unavailable); physik: depth, below-fixture rate, engagement,
 penetration; endfenster: final-window bins; randerfolg: last full-buffer
 success and thresholds, omitting -1; dauer: successful episode median/p90
 duration and episode cap, requiring --episodes and --episodes-meta.
 
 Read curves from scalars.csv, boundaries/floor from the AutoDR sidecar,
 force limit and gate floor from demo_metrics.json. Read YAML to choose the
-library and per-run step factor (D-195); rl_games uses tag-specific axes.
+library and per-run step factor; rl_games uses tag-specific axes.
 Duration uses the effective policy timestep. Missing required tags/keys
 fail. Event markers share the curve axis; wall time is reported separately.
 Outputs use <out-dir>/<run>_<name> with PNG/PDF siblings.
@@ -44,7 +44,7 @@ run_axis = importlib.util.module_from_spec(_spec)
 sys.modules["run_axis"] = run_axis
 _spec.loader.exec_module(run_axis)
 
-XLABEL = "Policy-Schritte in Mio."   # D-195 CURVE AXIS
+XLABEL = "Policy-Schritte in Mio."   # CURVE AXIS
 # fig_stufen: plot-area height per panel in inches (RT-201_stufen).
 STUFEN_AXES_H = 1.51
 RUN = "#3B6FD4"   # series 1 (plot_run_curves.py precedent, validated with REF)
@@ -164,7 +164,7 @@ def mio(x: float, digits: int | None = None) -> str:
 
 
 def env_axis(ax):
-    """The D-195 x axis label, ticks in millions instead of matplotlib's 1e6 offset."""
+    """The x axis label, ticks in millions instead of matplotlib's 1e6 offset."""
     from matplotlib.ticker import FuncFormatter
 
     ax.xaxis.set_major_formatter(FuncFormatter(lambda v, _: mio(v)))
@@ -376,7 +376,7 @@ def dauer_points(rows, factor, lib: str) -> list[tuple[int, int, int]]:
     """``(x, median steps, p90 steps)`` per iteration over the successful
     episodes of ``episodes.csv``. rsl_rl: episode 0 of each env is dropped
     (init_at_random_ep_len, its steps is not its length); rl_games starts no
-    env at a random step (D-200)."""
+    env at a random step."""
     by_it: dict[int, list[int]] = {}
     for r in rows:
         if r["outcome"] != "success" or (lib == "rsl_rl" and int(r["episode"]) == 0):
@@ -516,7 +516,7 @@ def _synthetic(tmp: pathlib.Path, drop_tag: str | None = None, lib: str = "rsl_r
     tags = [t for t in tags if t != drop_tag]
     val = lambda t, i: min(1.0, i / 20) if "/" in t else 0
     if lib == "rl_games":
-        # D-200: one wide table, three step axes (run_axis docstring), F = 16 * 8 = 128.
+        # one wide table, three step axes (run_axis docstring), F = 16 * 8 = 128.
         # rewards/time at 10 * epoch s shares the rows of epochs 10, 20, 30, 40.
         env_tag = lambda t: t if t.startswith("Episode/") else "Episode/" + t
         cells: dict[int, dict[str, float]] = {}
@@ -547,7 +547,7 @@ def _synthetic(tmp: pathlib.Path, drop_tag: str | None = None, lib: str = "rsl_r
             for i in range(40):
                 w.writerow([i, 120.0 * i] + [val(t, i) for t in tags])
                 w.writerow([i, 99999.0] + ["" for _ in tags])  # a */time-only row
-        # D-195: the run's own factor, one iteration = 16 * 8 = 128 env steps.
+        # the run's own factor, one iteration = 16 * 8 = 128 env steps.
         (tmp / "agent.yaml").write_text("seed: 1\nnum_steps_per_env: 16\n", encoding="utf-8")
     (tmp / "env.yaml").write_text("seed: 1\nscene:\n  num_envs: 8\n  env_spacing: 3.0\n", encoding="utf-8")
     # episodes.csv: iteration 0 holds episode 0 (10 steps) and episode 1 (50 steps).
@@ -569,7 +569,7 @@ def _synthetic(tmp: pathlib.Path, drop_tag: str | None = None, lib: str = "rsl_r
     (tmp / "m.json").write_text(json.dumps(m))
 
 
-# Self-test (D-080): the x axis in env steps, on the source behind a namespace
+# Self-test: the x axis in env steps, on the source behind a namespace
 AXIS_CHECKS = (
     "T2 the phase-dr marker sits at env_steps(20, 16, 8) = 2688",
     "T5 every x = (it + 1) * 16 * 8",
@@ -673,7 +673,7 @@ def self_test() -> int:
             ok = "dr/yaw_lo" in str(e)
         print(f"[{'PASS' if ok else 'FAIL'}] T4 MUTATION missing tag dr/yaw_lo stops with its name")
         fails += not ok
-        cut = src.index("# Self-test (D-080): the x axis in env steps")
+        cut = src.index("# Self-test: the x axis in env steps")
         head, tail = src[:cut], src[cut:]
         for mname, old, new, want in MUTATIONS:
             if head.count(old) != 1:

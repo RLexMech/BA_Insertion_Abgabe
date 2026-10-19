@@ -13,7 +13,7 @@ from isaaclab.app import AppLauncher
 
 SCRIPT_MARKER = "author_tisch_square-2026-08-05b"
 
-parser = argparse.ArgumentParser(description="Generate the square-pocket table USD (D-033).")
+parser = argparse.ArgumentParser(description="Generate the square-pocket table USD.")
 parser.add_argument("--pocket-side-mm", type=float, default=None,
                     help="Pocket opening edge length [mm]; default is the cfg value "
                          "(itself overridable via PROXYTASK_POCKET_SIDE_MM).")

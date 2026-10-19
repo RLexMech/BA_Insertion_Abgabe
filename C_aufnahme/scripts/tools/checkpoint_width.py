@@ -1,7 +1,7 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-r"""Reject actor observation-width mismatch before runner.load (D-188).
+r"""Reject actor observation-width mismatch before runner.load.
 
 Force mode needs 28 channels; wrench mode needs 31. For rsl_rl 3.0.1,
 read the second dimension of the first 2-D actor.<n>.weight in

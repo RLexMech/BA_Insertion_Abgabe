@@ -1,12 +1,12 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-r"""Check scripted-policy observation-to-joint-action math offline (D-108).
+r"""Check scripted-policy observation-to-joint-action math offline.
 
 NumPy with a torch shim; no Isaac, GPU or torch required. Check the
 pocket-to-environment-to-robot-base frame chain using known rotations.
 --self-test mutates one condition at a time: exactly its declared checks
-must fail; missing or additional failures fail the test (D-080).
+must fail; missing or additional failures fail the test.
 
 Usage:
     python scripts/check_scripted_insert.py
@@ -1227,7 +1227,7 @@ def _run(mutations=()) -> dict[str, bool]:
 
 def _self_test() -> int:
     """Break the source one way at a time; require exactly the named flips."""
-    print("[check_scripted_insert] counter-proof (D-080)")
+    print("[check_scripted_insert] counter-proof")
     baseline = _run()
     rc = 0
     if not all(baseline.values()):
@@ -1267,7 +1267,7 @@ def _self_test() -> int:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--self-test", action="store_true", help="run the D-080 counter-proof")
+    parser.add_argument("--self-test", action="store_true", help="run the counter-proof")
     args = parser.parse_args()
     if args.self_test:
         return _self_test()

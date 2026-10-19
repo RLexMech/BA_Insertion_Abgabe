@@ -98,9 +98,9 @@ for idx, mc, pe, ee, q in rows:
 
 print()
 print("=" * 74)
-print("STEP 3 - D-025 selection criteria applied to the clear branches")
+print("STEP 3 - selection criteria applied to the clear branches")
 print("=" * 74)
-print("D-025 order: all |q| < pi, then q3 < 0, then max |sin q5|, then min ||q||.")
+print("order: all |q| < pi, then q3 < 0, then max |sin q5|, then min ||q||.")
 print("Plate clearance was not among them -- the plate had no collision then.")
 print()
 print(f"{'br':>3} {'clear':>9} {'min z':>8} {'max|q|':>8} {'||q||':>7} {'q3<0':>6} {'|sin q5|':>9} {'all<pi':>7}")
@@ -121,7 +121,7 @@ qualified.sort(key=lambda r: np.linalg.norm(r[4]))
 print()
 if qualified:
     sel = qualified[0]
-    print(f"selected by D-025 criteria: branch {sel[0]}")
+    print(f"selected by criteria: branch {sel[0]}")
     print(f"  joint angles: [{', '.join(f'{v:+.6f}' for v in sel[4])}]")
     names = ["shoulder_pan", "shoulder_lift", "elbow", "wrist_1", "wrist_2", "wrist_3"]
     for n, v in zip(names, sel[4]):

@@ -9,9 +9,9 @@ Validate table/width, G1a/G2/G3, clean and consistent code/plan commits,
 method/seed identity and unique untagged policies. Fail with exit 1.
 
 Fixed-DR uses T-final-F/T-nominal-F, never the corresponding unsuffixed
-blocks; it also supports selection/OOD/boundary tests (D-192, D-208).
+blocks; it also supports selection/OOD/boundary tests.
 The force-blind autodr_nf arm is identified by RT-261 run tags, not the
-shared _autodr_ marker used by RT-242 (D-215, D-216); use a separate root.
+shared _autodr_ marker used by RT-242; use a separate root.
 
 Export episode==0 rows only (L-15); report G4/G6 shares without thresholds.
 --self-test uses synthetic runs.
@@ -40,8 +40,8 @@ TABLE_DIR = REPO / "scripts" / "eval"
 
 # block -> (table file, width). `technik` runs both
 # widths on the practice table, so its width is read from the manifest.
-# The 18-column tables (D-204 (4) appended fixture_noise_z); the 17-column
-# `_c17` ones (D-194) and the 16-column ones stay the identities of the
+# The 18-column tables (appended fixture_noise_z); the 17-column
+# `_c17` ones and the 16-column ones stay the identities of the
 # evaluations drawn on them -- the 16-column one is the old MLP
 # evaluation's, read on its own commit 823c1be4.
 BLOCKS = {
@@ -49,25 +49,20 @@ BLOCKS = {
     "T-auswahl": ("eval_table_seed30_c18.csv", "target"),
     "T-final": ("eval_table_seed10_c18.csv", "target"),
     "T-grenze": ("eval_table_boundary_seed10_c18.csv", "target"),
-    # D-206 (3) (D-055/D-191, from p6-TestAusserhalb 019ae3d8): the boundary
-    # table with its nailed cells moved outwards (make_eval_table.py --kind
-    # ood). The five AutoDR seeds (run_eval.ps1) and, since D-208, the five
-    # Fixed-DR seeds (rt_log.ps1 loop); scripts/rl_games/run_eval.ps1 reads
-    # this line. Target width: the table itself leaves the band.
     "T-ood": ("eval_table_ood_seed10_c18.csv", "target"),
     # RT-264 (robustness curve): one quantity stepped x0.25/x0.5 .. x2.0 of the
     # target distance, eight blocks of the SAME 125 rows (make_eval_table.py
     # --kind sweep). All 15 policies; read behind --eval-ood like T-ood.
     "T-sweep-tilt": ("eval_table_sweep_tilt_seed10_c18.csv", "target"),
     "T-sweep-fric": ("eval_table_sweep_friction_seed10_c18.csv", "target"),
-    # D-227: T-final's rows with lat_r, yaw, tilt, friction stretched to x1.5
+    # T-final's rows with lat_r, yaw, tilt, friction stretched to x1.5
     # at once (make_eval_table.py --kind wide). AutoDR and Fixed-DR s1..s5;
     # read behind --eval-ood like T-ood; own root results/eval_rlgames_wide/.
     "T-wide": ("eval_table_wide_seed10_c18.csv", "target"),
     "technik": ("eval_table_seed20_c18.csv", None),
-    # Fixed-DR arm (D-192, added afterwards): same table and width as the block
+    # Fixed-DR arm (added afterwards): same table and width as the block
     # it is compared with; only Fixed-DR plays here. Its T-final / T-nominal
-    # runs are these blocks (D-208: T-auswahl, T-ood, T-grenze are shared).
+    # runs are these blocks (T-auswahl, T-ood, T-grenze are shared).
     "T-nominal-F": ("eval_table_seed10_c18.csv", "nominal"),
     "T-final-F": ("eval_table_seed10_c18.csv", "target"),
 }
@@ -75,12 +70,12 @@ METHODS = ("autodr", "nodr", "fixeddr", "autodr_nf")
 # The blocks whose table leaves [0, 1] and is read with allow_outside.
 OUTSIDE_BLOCKS = ("T-ood", "T-sweep-tilt", "T-sweep-fric", "T-wide")
 FIXED_BLOCKS = ("T-nominal-F", "T-final-F")
-# The blocks whose Fixed-DR runs are the -F blocks above (D-192); no Fixed-DR here.
+# The blocks whose Fixed-DR runs are the -F blocks above; no Fixed-DR here.
 NO_FIXED_BLOCKS = ("T-nominal", "T-final")
 # train.py tags the run folder with the dr_mode (train.py:339-340); 'off' has none.
 _MODE_TAG = {"_autodr_": "autodr", "_fixed_dr_": "fixeddr"}
-# D-216: a run tag (rt_log.ps1 RT_NAME, train.py) that turns the mode's method
-# into another arm. RT-261 = AutoDR with the actor blind to force (D-215).
+# a run tag (rt_log.ps1 RT_NAME, train.py) that turns the mode's method
+# into another arm. RT-261 = AutoDR with the actor blind to force.
 _RUN_TAG_METHOD = {"autodr": (re.compile(r"__RT-261s\d+_"), "autodr_nf")}
 _FOLDER = re.compile(r"^(autodr_nf|autodr|nodr|fixeddr)_s(\d+)(?:_([A-Za-z0-9-]+))?$")
 _CKPT_SEED = re.compile(r"_seed(\d+)$")
@@ -106,7 +101,7 @@ CEC = _load_module("check_eval_conditions", REPO / "scripts" / "check_eval_condi
 def identity_from_checkpoint(path: str) -> tuple[str, int] | None:
     """``(method, seed)`` out of the training run folder that holds the checkpoint.
     rsl_rl keeps the checkpoint in the run folder itself; rl_games one level
-    down, in ``<run>\\nn\\`` (D-206, B1)."""
+    down, in ``<run>\\nn\\``."""
     folder = pathlib.PureWindowsPath(str(path)).parent
     if folder.name == "nn":
         folder = folder.parent
@@ -154,7 +149,7 @@ def collect_run(block: str, folder: str, run: dict, table: dict) -> tuple[list, 
     if ident != (method, seed):
         problems.append(f"folder says {(method, seed)}, checkpoint path says {ident}")
     # The stats read the FOLDER tag, check_eval_conditions expects the noise
-    # widths from the MANIFEST tag (pn2/gx2/py2, D-191 (3), D-206 (3)): both
+    # widths from the MANIFEST tag (pn2/gx2/py2): both
     # must agree (p6 a766ae9e).
     if (man.get("tag") or "") != tag:
         problems.append(f"folder tag {tag!r}, manifest tag {man.get('tag')!r}")
@@ -305,7 +300,7 @@ def write_outputs(results: pathlib.Path, rows: list, report: dict) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Self-test (D-080): a built results tree, broken one way per case
+# Self-test: a built results tree, broken one way per case
 # ---------------------------------------------------------------------------
 
 SHA_A = "a1" * 32
@@ -338,7 +333,7 @@ def _fake_run(table: dict, method: str, seed: int, width: str, outcomes: list) -
                         "ip_max_mm": "0.1"})
     ep_rows.append(dict(ep_rows[0], episode="1"))
     tag = {"autodr": "_autodr_", "fixeddr": "_fixed_dr_", "autodr_nf": "_autodr_"}.get(method, "_")
-    # The rl_games form of the path (D-206): the checkpoint sits in <run>\nn\.
+    # The rl_games form of the path: the checkpoint sits in <run>\nn\.
     prefix = {"autodr": "RT-242", "fixeddr": "RT-243", "autodr_nf": "RT-261"}.get(method, "RT-244")
     return {
         "ep_header": ["env_id", "episode", "outcome", "steps", "force_max_filtered_n",
@@ -374,7 +369,7 @@ def _good():
         ("T-nominal", "nodr_s1"): _fake_run(tables["T-nominal"], "nodr", 1, "nominal", outs),
         ("T-grenze", "autodr_s1"): _fake_run(tables["T-grenze"], "autodr", 1, "target", outs),
         ("T-final-F", "fixeddr_s1"): _fake_run(tables["T-final-F"], "fixeddr", 1, "target", outs),
-        # D-208: Fixed-DR is a candidate; it plays T-auswahl beside the other arms.
+        # Fixed-DR is a candidate; it plays T-auswahl beside the other arms.
         ("T-auswahl", "fixeddr_s1"): _fake_run(tables["T-auswahl"], "fixeddr", 1, "target", outs),
     }
     return runs, tables
@@ -400,8 +395,6 @@ CASES = (
     ("unreadable-folder-name",
      lambda runs, tables: runs.__setitem__(("T-final", "ppo_1"), runs.pop(("T-final", "nodr_s1"))),
      "folder name"),
-    # D-192: a Fixed-DR checkpoint must not pass as No-DR (before 2026-09-23
-    # every folder without "_autodr_" was read as nodr).
     ("folder-says-nodr-checkpoint-says-fixed-dr",
      lambda runs, tables: runs.__setitem__(("T-final-F", "nodr_s1"), runs.pop(("T-final-F", "fixeddr_s1"))),
      "checkpoint path says"),
@@ -413,7 +406,7 @@ CASES = (
      lambda runs, tables: runs.__setitem__(("T-final-F", "autodr_s2"), _fake_run(
          tables["T-final-F"], "autodr", 2, "target", [("success", 1.0)] * 4)),
      "takes only"),
-    # D-206 (3) (p6 a766ae9e): a noise run staged under the reference's folder name.
+    # (p6 a766ae9e): a noise run staged under the reference's folder name.
     ("py2-run-staged-as-the-reference",
      lambda runs, tables: runs.__setitem__(("T-final", "autodr_s2"), _noise(
          _fake_run(tables["T-final"], "autodr", 2, "target", [("success", 1.0)] * 4), "py2")),
@@ -424,7 +417,7 @@ CASES = (
          dict(copy.deepcopy(runs[("T-final", "autodr_s1")]),
               manifest=dict(runs[("T-final", "autodr_s1")]["manifest"], tag="gx2"))),
      "G3b"),
-    # D-216: an RT-261 checkpoint (actor without force) staged as an AutoDR seed.
+    # an RT-261 checkpoint (actor without force) staged as an AutoDR seed.
     ("rt-261-checkpoint-in-folder-autodr_s3",
      lambda runs, tables: runs.__setitem__(("T-final", "autodr_s3"), _fake_run(
          tables["T-final"], "autodr_nf", 3, "target", [("success", 1.0)] * 4)),
@@ -433,7 +426,7 @@ CASES = (
 
 
 def _noise(run: dict, tag: str) -> dict:
-    """``run`` as the x2 block ``tag`` (D-191 (3), D-206 (3)): the manifest tag,
+    """``run`` as the x2 block ``tag``: the manifest tag,
     both records of the doubled width, the applied column scaled by it."""
     r = copy.deepcopy(run)
     (key, w), = CEC.NOISE_TAGS[tag].items()
@@ -451,7 +444,7 @@ def _noise(run: dict, tag: str) -> dict:
 def _tables_the_env_refuses() -> list:
     """BLOCKS tables that THIS code's env cannot play: ``autodr.RowTable.from_csv``,
     the reader ``play.py --eval-table`` goes through, refuses them (a 16-column
-    table since D-194, `autodr.py` ``from_csv``). T-ood is read as ``play.py
+    table; see `autodr.py` ``from_csv``). T-ood is read as ``play.py
     --eval-ood`` reads it, with ``allow_outside``."""
     autodr = _load_module("check_autodr", REPO / "scripts" / "check_autodr.py").load_autodr()
     out = []
@@ -502,7 +495,7 @@ def self_test() -> int:
          abs(tilt_deg(math.sin(math.radians(5.0)), 0.0) - 10.0) < 1e-9),
         ("G4: the repeat episode is counted", all(i["g4_repeats"] == 1 and i["g4_same_outcome"] == 1
                                                  for i in report["runs"])),
-        # D-206 B1: the rl_games form, `<run>\nn\<file>`; the three REAL run
+        # the rl_games form, `<run>\nn\<file>`; the three REAL run
         # folders of RT-245 / RT-243s (rt_logs/RT-245, rt_logs/RT-243s).
         ("identity of the real RT-242s1 rl_games path (nn)", identity_from_checkpoint(
             r"C:\Users\Simon\Desktop\Alexander_Pett\temp\Contactrich_Insertion\Phase5_RlGames_v1\logs\rl_games"
@@ -513,7 +506,7 @@ def self_test() -> int:
             r"_start+20mm_floor-30mm_seed2\nn\last_ur5e_insertion_ep_100_rew_47.91025.pth") == ("fixeddr", 2)),
         ("a rl_games path is not read as the folder 'nn'", identity_from_checkpoint(
             r"logs\rl_games\x\nn\last.pth") is None),
-        # D-216: the REAL RT-261s1 folder (rt_logs/RT-261s, p5-rlgames); it carries
+        # the REAL RT-261s1 folder (rt_logs/RT-261s, p5-rlgames); it carries
         # `_autodr_` like RT-242s1, only the run tag tells the arms apart.
         ("identity of the real RT-261s1 rl_games path (run tag, not mode word)", identity_from_checkpoint(
             r"logs\rl_games\ur5e_insertion\10-03_15-55-01__RT-261s1_autodr_offset50mm_currOFF"
@@ -525,7 +518,7 @@ def self_test() -> int:
                                                          [("success", 1.0)] * 3 + [("timeout", 1.0)])
         runs_k[("T-final", f"autodr_nf_s{s}_pn2")] = _noise(runs_k[("T-final", f"autodr_nf_s{s}")], "pn2")
     rows_k, problems_k, _ = collect(runs_k, tables)
-    checks.append(("D-216: autodr_nf s1, s2 (untagged + pn2) are collected beside autodr in one root",
+    checks.append(("autodr_nf s1, s2 (untagged + pn2) are collected beside autodr in one root",
                    problems_k == [] and sum(r["method"] == "autodr_nf" for r in rows_k) == 16
                    and {r["tag"] for r in rows_k if r["method"] == "autodr_nf"} == {"", "pn2"}))
     for tag in CEC.NOISE_TAGS:

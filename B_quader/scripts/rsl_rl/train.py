@@ -36,7 +36,7 @@ parser.add_argument(
     help="Stop training once the trailing-window success rate reaches this value (e.g. 0.99) "
     "instead of always running --max_iterations. Checked between blocks of "
     "--stop-check-every iterations; --max_iterations stays the backstop. Note under a "
-    "randomised pocket tilt (D-037) this is the MEAN over the whole angle range and can be "
+    "randomised pocket tilt this is the MEAN over the whole angle range and can be "
     "reached while the largest angles lag -- read success_by_tilt_bin in demo_metrics.json "
     "before calling a rung done.",
 )

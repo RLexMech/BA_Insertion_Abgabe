@@ -1,7 +1,7 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-r"""Convert training logs to total environment steps (D-195, D-200).
+r"""Convert training logs to total environment steps.
 
 rsl_rl 3.0.1 logs after rollout/update: x = (iteration+1)*num_steps_per_env*num_envs.
 Read num_steps_per_env from agent.yaml and scene.num_envs from env.yaml;
@@ -18,8 +18,7 @@ Read per tag because different axes can share a CSV row. Validate F against
 info/epochs. Read horizon_length from agent.yaml params.config.
 
 read_policy_dt returns sim.dt times the effective decimation: OSC uses
-osc_decimation, not the pre-resolution decimation dumped in env.yaml
-(D-024). Readers are stdlib-only and require unambiguous keys.
+osc_decimation, not the pre-resolution decimation dumped in env.yaml. Readers are stdlib-only and require unambiguous keys.
 
 Usage:
     python scripts/tools/run_axis.py --self-test
@@ -189,7 +188,7 @@ def env_steps(it: int, num_steps_per_env: int, num_envs: int) -> int:
 
 
 def wall_time_line(steps: list[int], walls: list[float]) -> str:
-    """The one line of text wall time gets (D-195): last minus first
+    """The one line of text wall time gets: last minus first
     ``wall_time`` of the ITERATION rows the caller passes (never the
     ``*/time``-only rows, whose step is a clock, not an iteration)."""
     if not steps:
@@ -198,7 +197,7 @@ def wall_time_line(steps: list[int], walls: list[float]) -> str:
             f"(steps {steps[0]}..{steps[-1]}, last minus first wall_time)")
 
 
-# Self-test (D-080): checks on built data
+# Self-test: checks on built data
 CHECKS = (
     "real RT-235s1 files read (128, 256)",
     "a second num_envs under another block is refused",
@@ -373,7 +372,7 @@ MUTATIONS = (
     ("osc-reads-dumped-decimation", 'dec_key = "osc_decimation" if mode == "osc" else "decimation"',
      'dec_key = "decimation"', (CHECKS[19], CHECKS[20])),
 )
-_SELF_TEST_MARKER = "# Self-test (D-080): checks on built data"
+_SELF_TEST_MARKER = "# Self-test: checks on built data"
 
 
 def _self_test() -> int:

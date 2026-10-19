@@ -1,11 +1,11 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-r"""Offline AutoDR state-machine and mutation tests (D-080).
+r"""Offline AutoDR state-machine and mutation tests.
 
 Load source directly; use a NumPy shim for tensor helpers. Check seven
-boundaries/buffers, radial lateral offset (D-178), one-sided height
-(D-179), expansion/retreat/hold thresholds, buffer reset, clamping,
+boundaries/buffers, radial lateral offset, one-sided height,
+expansion/retreat/hold thresholds, buffer reset, clamping,
 mapping, sampling, bounds_version and state round-trip.
 
 Lateral/yaw/tilt histogram ceilings must match DR_DIMS; read the environment
@@ -36,9 +36,6 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 PKG_DIR = ROOT / "source" / "insertion" / "insertion" / "tasks" / "direct" / "insertion"
 AUTODR_SRC = PKG_DIR / "autodr.py"
 CURRICULUM_SRC = PKG_DIR / "curriculum.py"
-# The readout tables of D-178 (7) live in the env, whose ceilings live here.
-# insertion_env.py imports isaaclab and torch, so it is READ, not imported --
-# the same `ast` route check_env_wiring.py takes to the same file.
 ENV_SRC = PKG_DIR / "insertion_env.py"
 
 # A stand-in package name, so `from .curriculum import ...` resolves without
@@ -69,15 +66,6 @@ EXPECTED_KEYS = (
     "friction_lo", "friction_hi",
 )
 
-# The OUTSIDE number for the provenance report. Until 2026-09-12 both sides of
-# the marked-line count came out of the same `d.source` expression -- the
-# report's mark and `testwert_dims` -- so dropping a marker moved both and the
-# comparison could not fail (critic finding). These two literals are the
-# anchor that does not move with the module.
-#
-# The four quantities whose limits are DECIDED and not derived: the ceilings
-# of lat_r, yaw and tilt (D-178 (5)) and start_height's (D-179 (1)). friction
-# is deliberately absent -- D-181 (2) gives its band a source.
 EXPECTED_TESTWERT = ("lat_r", "yaw", "tilt", "start_height")
 # ... and how many REPORT LINES carry the marker: those four, plus the one
 # constant line `delta steps (10)`, whose DELTA_STEPS_SOURCE is itself
@@ -87,7 +75,7 @@ EXPECTED_TESTWERT = ("lat_r", "yaw", "tilt", "start_height")
 MARKED_PROVENANCE_LINES = 5
 
 # Checks that genuinely cannot be counter-proved, with the reason. Announced
-# every run so an omission can never hide as a decision. Same escape hatch as
+# every run so an omission can never hide as a configuration choice. Same escape hatch as
 # `Unprovable` in scripts/tools/checks.py.
 UNPROVABLE: dict = {}
 
@@ -168,8 +156,7 @@ def env_bin_edges(attr: str) -> tuple:
 def magnitude_ceiling(dim) -> float:
     """How far the quantity can get from zero once its boundary is at the top.
 
-    All three tables bin a MAGNITUDE -- the lateral hypot, |yaw| (D-173 (3),
-    (4)) and the tilt magnitude (D-037; its direction is the separate
+    All three tables bin a MAGNITUDE -- the lateral hypot, |yaw| and the tilt magnitude (its direction is the separate
     `tilt_azimuth` column) -- so the number a bin edge must meet is the larger
     of the two maxima in absolute value, not `hi_max` by convention.
     """
@@ -252,7 +239,7 @@ def build_checks(ns, torch) -> list:
             lambda: bind_centres({k: v for k, v in CENTRES.items() if k != "friction"}))
     refuses("a centre outside the maxima refuses",
             lambda: bind_centres({**CENTRES, "friction": 9.9}))
-    # D-179 (2): a one-sided quantity's lower edge IS its centre, so `bind`
+    # a one-sided quantity's lower edge IS its centre, so `bind`
     # writes the centre into `lo_max` before every range check. The probe
     # centre of start_height sits off the table's placeholder on purpose --
     # without that a bind that kept the placeholder would pass unseen.
@@ -626,7 +613,7 @@ def build_checks(ns, torch) -> list:
             lambda: fresh().load_state_dict(_extra))
 
     # -- provenance: four ceilings marked, the friction band sourced ---------
-    # D-181 (2) gives the friction band a SOURCE, so it is the one quantity
+    # Friction has a literature source, so it is the one quantity
     # without the marker. The four ceilings are decided and
     # not derived, which is exactly what the marker means.
     check("every quantity but friction carries [TESTWERT]",
@@ -669,16 +656,6 @@ def build_checks(ns, torch) -> list:
           tuple(FixedWidth.at_centre(DIMS).as_dict()["testwert"]) == EXPECTED_TESTWERT,
           str(FixedWidth.at_centre(DIMS).as_dict()["testwert"]))
 
-    # -- the ceiling IS the last bin edge (D-178 (7)) ------------------------
-    # The three readout tables live in insertion_env.py; `_rate_by_bin` makes
-    # ONE bin per edge and the LAST bin also takes everything at or above the
-    # last edge. So an edge above the ceiling names a bin no draw can ever
-    # reach, and an edge below it collapses every wide draw into one bin --
-    # which is what D-178 (7) measured on the old (2, 4, 6, 8) mm edges:
-    # 96.0 % of a 30 mm disk landed in the last bin. Nothing compared the two
-    # homes until 2026-09-12 (critic finding, HANDOFF-RL § Open point 000).
-    # BOTH sides are read: the edge out of the env source, the ceiling out of
-    # DR_DIMS. A literal on either side would compare one fact with itself.
     _lat_edges = env_bin_edges("_lateral_bin_edges_mm")
     _lat_ceil_mm = magnitude_ceiling(next(d for d in DR_DIMS if d.name == "lat_r")) * 1000.0
     check("the last LATERAL bin edge is the lat_r ceiling",
@@ -689,19 +666,14 @@ def build_checks(ns, torch) -> list:
     check("the last YAW bin edge is the yaw magnitude ceiling",
           same_number(_yaw_edges[-1], _yaw_ceil_deg),
           f"edge {_yaw_edges[-1]:.10g} deg vs ceiling {_yaw_ceil_deg:.10g} deg")
-    # The TILT twin. D-178 (7) re-cut lateral and yaw and
-    # left this table on D-037's superseded ladder, (3, 6, 9, 12, 15) deg:
-    # against the 10 deg ceiling the [12, inf) bin could never fill and
-    # [9, 12) only ever saw 9-10 deg, so two of the five bins carried no
-    # measurement. Same two homes, same route, same helpers as the two above.
     _tilt_edges = env_bin_edges("_tilt_bin_edges_deg")
     _tilt_ceil_deg = math.degrees(magnitude_ceiling(next(d for d in DR_DIMS if d.name == "tilt")))
     check("the last TILT bin edge is the tilt magnitude ceiling",
           same_number(_tilt_edges[-1], _tilt_ceil_deg),
           f"edge {_tilt_edges[-1]:.10g} deg vs ceiling {_tilt_ceil_deg:.10g} deg")
-    # The HEIGHT twin (D-179 (5), after the H_min measurement 2026-09-14):
+    # The HEIGHT twin (after the H_min measurement 2026-09-14):
     # the last edge is the start_height ceiling, so the AutoDR phase of a
-    # floored run has a bin for every 50 mm up to the 0.270 m ceiling (D-202).
+    # floored run has a bin for every 50 mm up to the 0.270 m ceiling.
     _h_edges = env_bin_edges("_start_height_bin_edges_m")
     _h_ceil_m = next(d for d in DR_DIMS if d.name == "start_height").hi_max
     check("the last HEIGHT bin edge is the start_height ceiling",
@@ -743,12 +715,12 @@ def build_checks(ns, torch) -> list:
           and nod.scalars()["dr/flags_dropped"] == 0.0,
           str(sorted(set(fresh().scalars()) ^ set(nod.scalars()))))
 
-    # -- the 18-column table layout (D-204 (4) appended fixture_noise_z) -----
+    # -- the 18-column table layout (appended fixture_noise_z) -----
     check("the evaluation table has eighteen columns", width == 18, str(width))
     check("the tilt AZIMUTH owns a column but is not an AutoDR quantity",
           "tilt_azimuth" in TABLE_COLUMNS
           and "tilt_azimuth" not in {d.name for d in DIMS})
-    # THE GRASP BELIEF ERROR (D-183) is the sixteenth column, and the only
+    # THE GRASP BELIEF ERROR is the sixteenth column, and the only
     # one that moves no part: it is the per-episode error in where the
     # policy believes the cups hold it, applied to the observation alone.
     # It is in the table so the evaluation can replay it -- an episode
@@ -770,7 +742,7 @@ def build_checks(ns, torch) -> list:
           and "grasp_obs_x" not in DR_DIM_NAMES
           and _grasp_col not in p.boundary_columns,
           f"column {_grasp_col}, boundary columns {p.boundary_columns}")
-    # THE POCKET-YAW BELIEF ERROR (D-194) is the seventeenth column, a belief
+    # THE POCKET-YAW BELIEF ERROR is the seventeenth column, a belief
     # error of the same kind: the observation alone, replayed by the table,
     # no boundary. By NAME for the same reason as the grasp column above.
     _pyaw_col = COLUMN_INDEX.get("pocket_obs_yaw")
@@ -779,7 +751,7 @@ def build_checks(ns, torch) -> list:
           and "pocket_obs_yaw" not in DR_DIM_NAMES
           and _pyaw_col not in p.boundary_columns,
           f"column {_pyaw_col}, boundary columns {p.boundary_columns}")
-    # THE FIXTURE z SPREAD (D-204 (4)) is the eighteenth column: a fixed-width
+    # THE FIXTURE z SPREAD is the eighteenth column: a fixed-width
     # disturbance like its x and y twins, no boundary. APPENDED, so every
     # older column keeps its index. By NAME, as the env asks for it
     # (`self._col["fixture_noise_z"]`).
@@ -842,8 +814,6 @@ def build_checks(ns, torch) -> list:
             lambda: RowTable([[1.5] * width], "x"))
     refuses("a row of the wrong width refuses",
             lambda: RowTable([[0.5] * (width - 1)], "x"))
-    # OOD tables (D-206 (3), ported from p6-TestAusserhalb a3976a3a, D-055):
-    # values beyond [0, 1] only on explicit request; a non-finite value never.
     try:
         _ood = RowTable([[2.25, -0.25] + [1.5] * (width - 2)], "x", allow_outside=True)
         _ood_ok = _ood.rows[0][:3] == [2.25, -0.25, 1.5] and _ood.allow_outside is True
@@ -906,7 +876,7 @@ def build_checks(ns, torch) -> list:
     refuses("a grid pair naming a non-randomised column refuses",
             lambda: GridTable(grid_rows, "x", ("lat_r", "tilt_azimuth"),
                               cells=3, reps=2))
-    # D-178 (2): the lateral ANGLE is a table column without a boundary, like
+    # the lateral ANGLE is a table column without a boundary, like
     # the azimuth, so it is no pair partner either.
     refuses("a grid pair naming the lateral ANGLE refuses -- lat_phi is a column, not a quantity",
             lambda: GridTable(grid_rows, "x", ("lat_r", "lat_phi"),
@@ -1257,7 +1227,7 @@ def build_checks(ns, torch) -> list:
             lambda: AutoDR(DIMS, stall_buffers=2).load_state_dict(
                 {**st_s, "last_rate": {**st_s["last_rate"], "tilt_hi": 2.0}}))
 
-    # -- FIXED-DR (D-192): AutoDR's floor phase, then the full width ---------
+    # -- FIXED-DR: AutoDR's floor phase, then the full width ---------
     FixedDR = ns["FixedDR"]
 
     def fixed_dr():
@@ -1681,8 +1651,8 @@ MUTATIONS: tuple = (
     ),
     (
         "one-sided-quantity-grows-a-lower-boundary",
-        (('DimSpec("tilt", "rad", 0.0, 0.17453292519943295, True, _D178),',
-          'DimSpec("tilt", "rad", -0.17453292519943295, 0.17453292519943295, False, _D178),'),),
+        (('DimSpec("tilt", "rad", 0.0, 0.17453292519943295, True, _CEILING_NOTE),',
+          'DimSpec("tilt", "rad", -0.17453292519943295, 0.17453292519943295, False, _CEILING_NOTE),'),),
         (
             "the boundary set has exactly seven entries",
             "tilt_lo is NOT a boundary -- the tilt magnitude is one-sided",
@@ -1700,19 +1670,19 @@ MUTATIONS: tuple = (
         # whose printed upper bound is a lie, and the widest offsets -- the
         # ones the run exists to measure -- are the ones it mislabels.
         "the-lat_r-ceiling-outgrows-the-last-lateral-bin-edge",
-        (('DimSpec("lat_r", "m", 0.0, 0.030, True, _D178),',
-          'DimSpec("lat_r", "m", 0.0, 0.040, True, _D178),'),),
+        (('DimSpec("lat_r", "m", 0.0, 0.030, True, _CEILING_NOTE),',
+          'DimSpec("lat_r", "m", 0.0, 0.040, True, _CEILING_NOTE),'),),
         ("the last LATERAL bin edge is the lat_r ceiling",),
     ),
     (
         # Same defect on the yaw axis: the ceiling goes to 6 deg and the last
         # bin edge stays at 5. Moved SYMMETRICALLY, because the yaw table is
-        # symmetric about 0 (D-173 (4)) -- a one-sided move would also break
+        # symmetric about 0 -- a one-sided move would also break
         # the exactness of the nailing chain through map_unit_to_bounds, and
         # this mutation would then be counter-proving two things at once.
         "the-yaw-ceiling-outgrows-the-last-yaw-bin-edge",
-        (('DimSpec("yaw", "rad", -0.08726646259971648, 0.08726646259971648, False, _D178),',
-          'DimSpec("yaw", "rad", -0.10471975511965977, 0.10471975511965977, False, _D178),'),),
+        (('DimSpec("yaw", "rad", -0.08726646259971648, 0.08726646259971648, False, _CEILING_NOTE),',
+          'DimSpec("yaw", "rad", -0.10471975511965977, 0.10471975511965977, False, _CEILING_NOTE),'),),
         ("the last YAW bin edge is the yaw magnitude ceiling",),
     ),
     (
@@ -1721,14 +1691,14 @@ MUTATIONS: tuple = (
         # in a bin whose printed upper bound is a lie, and those are the angles
         # the Phase-5 run exists to measure.
         # CUT ONE-SIDED ON PURPOSE, and this is not cosmetic: `tilt` is a
-        # one-sided magnitude (D-178 (2)), so moving `lo_max` too -- the shape
+        # one-sided magnitude, so moving `lo_max` too -- the shape
         # the yaw twin above needs -- would grow a `tilt_lo` boundary and flip
         # the eight checks that `one-sided-quantity-grows-a-lower-boundary`
         # already counter-proves. Only `hi_max` moves, exactly like the lat_r
         # mutation above, and the declared set stays the single bin-edge check.
         "the-tilt-ceiling-outgrows-the-last-tilt-bin-edge",
-        (('DimSpec("tilt", "rad", 0.0, 0.17453292519943295, True, _D178),',
-          'DimSpec("tilt", "rad", 0.0, 0.20943951023931953, True, _D178),'),),
+        (('DimSpec("tilt", "rad", 0.0, 0.17453292519943295, True, _CEILING_NOTE),',
+          'DimSpec("tilt", "rad", 0.0, 0.20943951023931953, True, _CEILING_NOTE),'),),
         ("the last TILT bin edge is the tilt magnitude ceiling",),
     ),
     (
@@ -1970,8 +1940,8 @@ MUTATIONS: tuple = (
         # notices. The as_dict readers notice too, because the published list
         # is the same shrunken one.
         "a-decided-ceiling-quietly-loses-its-marker",
-        (('            "[TESTWERT] hi = ceiling, decided not derived -- D-202 (was 0.120, D-179 (1)); "',
-          '            "hi = ceiling, decided not derived -- D-202 (was 0.120, D-179 (1)); "'),),
+        (('            "[TESTWERT] hi = ceiling, decided not derived; "',
+          '            "hi = ceiling, decided not derived; "'),),
         (
             "every quantity but friction carries [TESTWERT]",
             "the provenance report names every quantity and both constants",
@@ -2005,7 +1975,7 @@ MUTATIONS: tuple = (
         ),
     ),
     (
-        # The friction band gets the marker back. D-181 (2) gives it a source,
+        # The friction band gets the marker back despite its literature source,
         # so the marker would announce a provisional number that is not one,
         # beside four ceilings that really are decided-not-derived.
         "the-sourced-friction-band-is-marked-again",
@@ -2040,10 +2010,6 @@ MUTATIONS: tuple = (
         ),
     ),
     (
-        # ONE column goes and the width drops back to sixteen. The anchor is
-        # the joint-noise line rather than the last line of the tuple: the
-        # last line moved when D-183 appended the grasp column, and an
-        # anchor on "whatever is last" would have to move again next time.
         "a-table-column-is-lost",
         (('    "joint_noise_5",    # 14\n', ""),),
         ("the evaluation table has eighteen columns",),
@@ -2069,7 +2035,7 @@ MUTATIONS: tuple = (
         ("the grasp belief error owns a table column and nails NO boundary",),
     ),
     (
-        # D-194: the pocket-yaw column renamed in its one home. The width is
+        # the pocket-yaw column renamed in its one home. The width is
         # unchanged; the env's `self._col["pocket_obs_yaw"]` is a KeyError.
         "the-pocket-yaw-column-is-renamed",
         (('    "pocket_obs_yaw",   # 16 pocket-yaw belief error',
@@ -2077,7 +2043,7 @@ MUTATIONS: tuple = (
         ("the pocket-yaw belief error owns a table column and nails NO boundary",),
     ),
     (
-        # D-204 (4): the z column renamed in its one home. The width is
+        # the z column renamed in its one home. The width is
         # unchanged; the env's `self._col["fixture_noise_z"]` is a KeyError.
         "the-fixture-z-column-is-renamed",
         (('    "fixture_noise_z",  # 17 fixture_pos_noise_z',
@@ -2338,7 +2304,7 @@ MUTATIONS: tuple = (
         ("a centre outside the maxima refuses",),
     ),
     (
-        # D-179 (2) undone: a one-sided quantity keeps the table's placeholder
+        # undone: a one-sided quantity keeps the table's placeholder
         # lower edge instead of its centre. The width-0 bounds still read the
         # centre, so only `lo_max` itself -- what `bounds_max` reports and a
         # FixedWidth state saves -- carries the wrong number.
@@ -2469,8 +2435,6 @@ STALL_MUTATIONS: tuple = (
     ),
 )
 
-# FIXED-DR (D-192, 2026-09-23). Every expected flip below was confirmed by
-# --self-test on 2026-09-23.
 FIXED_DR_MUTATIONS: tuple = (
     (
         "fixed-dr-seven-start-at-width-0",
@@ -2682,7 +2646,7 @@ def _run_mutation(index: int):
 
 
 def _coverage(baseline: dict) -> list:
-    """The CONVERSE direction of D-080: every check must have a defender."""
+    """Every check needs a mutation that detects the corresponding fault."""
     defended = {
         name for mname, _, expected in MUTATIONS for name in _expected_flips(mname, expected)
     }
@@ -2690,7 +2654,7 @@ def _coverage(baseline: dict) -> list:
 
 
 def _self_test(torch) -> int:
-    print("[check_autodr] counter-proof (D-080)")
+    print("[check_autodr] counter-proof")
     baseline = _run(torch)
     rc = 0
     if not all(baseline.values()):

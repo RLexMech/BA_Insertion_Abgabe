@@ -1,17 +1,16 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-r"""H10: the switch to rl_games with Factory's PPO setup (D-200) in training --
+r"""H10: the switch to rl_games with Factory's PPO setup in training --
 RT-238s1 (rsl_rl, Isaac Lab's Cartpole PPO values, LSTM 2 x 256) against
 RT-240s1 (rl_games, Factory/FORGE yaml, LSTM 2 x 1024), seed 1 each.
 
-Same task: both runs are the AutoDR arm with the same env command (D-204 not
-yet built: start ceiling 0.120 m, fixture spread 0.005 m); `git diff 5512e64
-de2c319 -- source` touches only the agent configs and their registration.
-What differs is the D-200 bundle -- library, PPO values, network size -- so the
-figure shows the switch as a whole, not one cause (D-200, consequence 4).
+Same task: both runs are the AutoDR arm with the same env command
+(start ceiling 0.120 m, fixture spread 0.005 m).
+What differs is the bundle -- library, PPO values, network size -- so the
+figure shows the switch as a whole, not one cause.
 Both collect 256 envs x 128 steps = 32 768 env steps per iteration/epoch, so
-the x axis is total env steps for both (D-195), one seed each, lines only.
+the x axis is total env steps for both, one seed each, lines only.
 
 Two panels side by side on one y axis: training
 success rate and AutoDR opening (bounds_version / 75). A dotted line per run
@@ -49,11 +48,11 @@ ENVS = 256
 BOUNDS_TOTAL = 75.0   # 5 floor rungs + 7 boundaries x 10 steps (RT-240s1 / RT-242s OUTCOME; RT-206s1 max 75)
 # Two pairs, one drawing. Each run brings its own steps per iteration (run_axis
 # factor = steps x ENVS; all four runs used --num_envs 256).
-#  H10: the D-200 switch alone, same task (D.3).
+#  H10: the switch alone, same task (D.3).
 #  H16: the end state of stage C against the end state of stage D, AutoDR seed 1
 # NOT the same task: D spreads the fixture +-50 mm in
 #       x, y, z instead of +-5 mm in x, y, starts higher and adds the yaw belief
-#       error (eval_manifest.json of both studies); the caption must say so (D-200 (4)).
+#       error (eval_manifest.json of both studies); the caption must say so.
 #       RT-206s1: rsl_rl num_steps_per_env 16 at git 5a6cc8e (agents/rsl_rl_ppo_cfg.py:30).
 PAIRS = {
     "H10": {"name": "H10_rsl_rl_gegen_rl_games",

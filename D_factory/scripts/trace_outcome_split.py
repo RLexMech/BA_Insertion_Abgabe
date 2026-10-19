@@ -359,7 +359,7 @@ def _self_test() -> int:
     for _k in ("torque_tared_raw_nm", "torque_ema_nm", "wrench_valid"):
         del _old["truth"][_k]
     _old_rep = "\n".join(truth_report(truth_per_env(_old, 20), 20))
-    checks.append(("truth: a pre-D-188 trace prints WITHOUT the tau fields, no failure",
+    checks.append(("truth: a previous trace prints WITHOUT the tau fields, no failure",
                    "env 1 n=235" in _old_rep and "raw tau" not in _old_rep
                    and "wrench valid" not in _old_rep))
     bad = [n for n, ok in checks if not ok]

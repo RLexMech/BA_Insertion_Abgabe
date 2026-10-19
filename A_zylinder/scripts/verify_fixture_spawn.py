@@ -12,7 +12,7 @@ import traceback
 
 from isaaclab.app import AppLauncher
 
-parser = argparse.ArgumentParser(description="Measure the fixture spawn transform (D-022).")
+parser = argparse.ArgumentParser(description="Measure the fixture spawn transform.")
 parser.add_argument("--usd", type=str, default=None, help="Fixture USD path; default uses the env resolver.")
 parser.add_argument(
     "--pos",

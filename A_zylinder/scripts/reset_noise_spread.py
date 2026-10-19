@@ -2,7 +2,7 @@ r"""Estimate peg-tip position and tilt spread from uniform joint reset noise.
 
 Uses UR forward kinematics and a 50 mm flange-to-tip offset; NumPy only.
 The estimate describes the commanded reset pose. Gravity-induced droop
-of about 13.4 mm (D-026) is a separate systematic offset, not included in
+of about 13.4 mm is a separate systematic offset, not included in
 the scatter. Joint noise changes both position and orientation.
 
 Usage:

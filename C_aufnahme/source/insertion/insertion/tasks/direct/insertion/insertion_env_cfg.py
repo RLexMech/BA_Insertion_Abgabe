@@ -46,7 +46,7 @@ def resolve_proxy_tisch_usd_path() -> str:
         f"INSERTION_TISCH_USD to a table whose pocket really is {pocket_mm:g} mm. "
         "A size-less tisch_square.usd and the round tisch.usd are NOT "
         "accepted; the pocket size is part of the filename because it is the curriculum "
-        "variable (D-033)."
+        "variable."
     )
 
 
@@ -218,7 +218,7 @@ RL_PENDING: tuple[str, ...] = (
 )
 
 RL_PENDING_MARKS: dict = {
-    "rung_step_sizes": "[open] D-110 (3) -- from our own learning curves",
+    "rung_step_sizes": "[open] Set from learning curves",
 }
 
 CURRICULUM_PENDING: tuple[str, ...] = (
@@ -299,24 +299,23 @@ RL_PLACEHOLDERS: dict = {
 PROXY_TASK_VALUES: dict = {
     "cfg.w_depth_progress": (
         "[proxy] the square-peg proxy's reward_w_depth, paid per metre of "
-        "NEW gated max depth (D-165). The proxy solved 1 mm clearance with it "
+        "NEW gated max depth. The proxy solved 1 mm clearance with it "
         "at 100; nothing on this task has sized it. Zero switches the term "
-        "off and reproduces the pre-D-165 reward."
+        "off and reproduces the previous reward."
     ),
     "cfg.held_asset.side": (
         "[proxy] the held body modelled as a SQUARE of this side. The real "
         "part is rectangular with lugs (PART_BODY_X / PART_BBOX_M). Read by "
-        "the four-corner gate; moves with the SDF rework (D-109), not alone."
+        "the four-corner gate; moves with the SDF rework, not alone."
     ),
     "cfg.fixed_asset.side": (
         "[proxy] the square pocket edge the gate tests against. The real "
         "opening is POCKET_OPENING_X x POCKET_OPENING_Y and is not square. "
-        "Read by the four-corner gate; moves with the SDF rework (D-109)."
+        "Read by the four-corner gate; moves with the SDF rework."
     ),
     "cfg.gate_min_alignment": (
         "[proxy] tool-axis alignment floor, calibrated on the square peg. "
-        "The real bound is D-106's across-tilt limit, which D-121 reopened "
-        "and has not been recomputed."
+        "The across-tilt limit has not been recomputed."
     ),
     "tasks.SIDE_CLEARANCE": (
         "[proxy] half-clearance per axis of the square pair. The real task "
@@ -326,8 +325,8 @@ PROXY_TASK_VALUES: dict = {
     ),
     "tasks.YAW_WINDOW_RAD": (
         "[proxy] the C4 free-yaw window of a square in a square. The real "
-        "part fits ONE way round, so there is no equivalent; D-106's yaw "
-        "bound was reopened by D-121 and is not recomputed. The report no "
+        "part fits ONE way round, so there is no equivalent; the yaw "
+        "bound has not been recomputed. The report no "
         "longer prints it. Kept only because compare_runs.py reads the "
         "metrics key yaw_window_deg."
     ),
@@ -382,14 +381,14 @@ def resolve_start_lateral_offset(value) -> float:
     """``cfg.start_lateral_offset`` as the RADIUS of the start disk, in metres."""
     if isinstance(value, (list, tuple)):
         raise ValueError(
-            f"start_lateral_offset={value!r}: the (x, y) half-width pair of D-176 is "
-            "withdrawn. Since D-178 (3) the lateral start offset is a disk and this "
+            f"start_lateral_offset={value!r}: the (x, y) half-width pair is "
+            "unsupported. The lateral start offset is a disk and this "
             "field is ONE radius in metres: env.start_lateral_offset=<radius>."
         )
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise ValueError(
             f"start_lateral_offset={value!r} ({type(value).__name__}) is not a number: "
-            "expected ONE radius in metres (D-178 (3))."
+            "expected ONE radius in metres."
         )
     radius = float(value)
     if radius < 0.0:
@@ -418,14 +417,14 @@ def resolve_control_mode(cfg) -> str:
 
 
 def resolve_obs_layout(cfg) -> str:
-    """Derive ``observation_space`` from ``cfg.obs_wrench_mode`` and return the mode (D-188)."""
+    """Derive ``observation_space`` from ``cfg.obs_wrench_mode`` and return the mode."""
     mode = str(cfg.obs_wrench_mode)
     try:
         width = insertion_math.obs_dim(mode)
     except ValueError as exc:
         raise RlConfigIncomplete(
             f"obs_wrench_mode is {mode!r}; the only modes are "
-            f"{insertion_math.OBS_MODES} (D-188)."
+            f"{insertion_math.OBS_MODES}."
         ) from exc
     cfg.observation_space = width
     return mode
@@ -538,7 +537,7 @@ def validate_rl_config(cfg) -> None:
             f"the decided rule is R_time = -1/T = {want_time!r} at T = {steps} "
             "steps (Brahmbhatt et al., ICRA 2023, arXiv:2301.12587 Sec. III). A "
             "time penalty that is not -1/T no longer sums to one abort payment "
-            "over an episode, and the decision's two safety inequalities are "
+            "over an episode, and the two safety inequalities are "
             "stated for -1/T alone."
         )
     if float(cfg.action_rate_scale) < 0.0:

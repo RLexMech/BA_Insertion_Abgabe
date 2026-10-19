@@ -11,7 +11,7 @@ import pathlib
 
 from isaaclab.app import AppLauncher
 
-parser = argparse.ArgumentParser(description="Verify fixture USD (D-016).")
+parser = argparse.ArgumentParser(description="Verify fixture USD.")
 parser.add_argument("--usd", type=str, required=True, help="Path to the fixture USD file.")
 parser.add_argument(
     "--nominal",
@@ -120,7 +120,7 @@ def main() -> None:
     print(f"[verify_fixture_usd] wrote {out_path}")
 
     ok = result["meters_per_unit_ok"] and result["up_axis_ok"] and not looks_mm_scaled
-    print(f"[verify_fixture_usd] D-016 invariants: {'PASS' if ok else 'FAIL'}")
+    print(f"[verify_fixture_usd] invariants: {'PASS' if ok else 'FAIL'}")
     contract_ok = ok and result["orientation_ok"] and result["self_contained_ok"]
     print(f"[verify_fixture_usd] orientation: {orientation}")
     internal_count = sum(1 for a in arcs if a["internal"])

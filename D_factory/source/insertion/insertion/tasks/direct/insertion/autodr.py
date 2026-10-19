@@ -45,9 +45,9 @@ TABLE_COLUMNS: tuple[str, ...] = (
     "joint_noise_3",
     "joint_noise_4",
     "joint_noise_5",    # 14
-    "grasp_obs_x",      # 15 grasp belief error, OBSERVATION only (D-183) --
-    "pocket_obs_yaw",   # 16 pocket-yaw belief error, OBSERVATION only (D-194)
-    "fixture_noise_z",  # 17 fixture_pos_noise_z (D-203/D-204 (4)) -- not adapted.
+    "grasp_obs_x",      # 15 grasp belief error, OBSERVATION only --
+    "pocket_obs_yaw",   # 16 pocket-yaw belief error, OBSERVATION only
+    "fixture_noise_z",  # 17 fixture_pos_noise_z -- not adapted.
 )
 COLUMN_INDEX: dict = {name: i for i, name in enumerate(TABLE_COLUMNS)}
 
@@ -146,18 +146,18 @@ class DimSpec:
         return replace(self, centre=c)
 
 
-_D178 = "[TESTWERT] Phase-5 ceiling, decided not derived -- D-178 (5)"
+_CEILING_NOTE = "[TESTWERT] Phase-5 ceiling, decided not derived"
 
 DR_DIMS: tuple[DimSpec, ...] = (
-    DimSpec("lat_r", "m", 0.0, 0.030, True, _D178),
-    DimSpec("yaw", "rad", -0.08726646259971648, 0.08726646259971648, False, _D178),
-    DimSpec("tilt", "rad", 0.0, 0.17453292519943295, True, _D178),
+    DimSpec("lat_r", "m", 0.0, 0.030, True, _CEILING_NOTE),
+    DimSpec("yaw", "rad", -0.08726646259971648, 0.08726646259971648, False, _CEILING_NOTE),
+    DimSpec("tilt", "rad", 0.0, 0.17453292519943295, True, _CEILING_NOTE),
     DimSpec("start_height", "m", 0.0, 0.270, True,
-            "[TESTWERT] hi = ceiling, decided not derived -- D-202 (was 0.120, D-179 (1)); "
-            "lo = the centre H_min, not yet measured -- D-179 (4)"),
+            "[TESTWERT] hi = ceiling, decided not derived; "
+            "lo = the centre H_min, not yet measured"),
     DimSpec("friction", "1", 0.08, 0.20, False,
             "DuPont PA66/POM table span, assumed PA6/POM pairing, "
-            "no PA6 value -- D-181 (2)"),
+            "no PA6 value"),
 )
 DR_DIM_NAMES: tuple[str, ...] = tuple(d.name for d in DR_DIMS)
 
@@ -824,7 +824,7 @@ class FixedWidth(_Provider):
 
 
 class FixedDR(AutoDR):
-    """The Fixed-DR training arm (D-192): AutoDR's start floor, then full width."""
+    """The Fixed-DR training arm: AutoDR's start floor, then full width."""
 
     FORMAT = "fixed-dr-1"
 

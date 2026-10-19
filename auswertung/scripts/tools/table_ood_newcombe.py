@@ -1,4 +1,4 @@
-r"""Appendix table: the T-ood blocks of the policies that learned the task (D-226),
+r"""Appendix table: the T-ood blocks of the policies that learned the task,
 each against its OWN main test, with the Newcombe interval of the difference.
 
 Two steps, because no one Python here has both libraries:

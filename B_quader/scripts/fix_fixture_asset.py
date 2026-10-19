@@ -20,7 +20,7 @@ parser.add_argument(
     nargs=3,
     default=[0.0, 0.0, 0.700],
     metavar=("X", "Y", "Z"),
-    help="Spawn translation used for the referenced-context check (D-022).",
+    help="Spawn translation used for the referenced-context check.",
 )
 parser.add_argument(
     "--expect-extents",

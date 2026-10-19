@@ -262,7 +262,7 @@ def _self_test() -> int:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Triangle-mesh topology and defect location (D-080)."
+        description="Triangle-mesh topology and defect location."
     )
     parser.add_argument("--self-test", action="store_true",
                         help="Prove the topology and the distances. No USD, no Isaac.")

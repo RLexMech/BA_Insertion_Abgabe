@@ -1,7 +1,7 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-"""The pure half of the asset-mesh export (D-080)."""
+"""The pure half of the asset-mesh export."""
 
 from __future__ import annotations
 
@@ -59,7 +59,7 @@ def require_triangles(counts: list) -> int:
         raise ValueError(
             "every face must be a triangle for a Warp mesh, but the asset carries "
             f"{rows}. Nothing was written. Re-export the asset triangulated, or "
-            "decide here how a face of that size is split -- that is a decision "
+            "decide here how a face of that size is split -- that is a design choice "
             "about the geometry, not a reformatting step."
         )
     return hist[3]
@@ -214,7 +214,7 @@ def _self_test() -> int:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Pure half of the asset-mesh export (D-080).")
+    parser = argparse.ArgumentParser(description="Pure half of the asset-mesh export.")
     parser.add_argument("--self-test", action="store_true",
                         help="Prove the arithmetic. Needs no USD and no Isaac.")
     args = parser.parse_args()

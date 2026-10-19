@@ -3,7 +3,7 @@ trials (successes and failures) per training condition, main test beside the
 T-ood blocks / the doubled observation errors.
 
 One row per test and condition, over its policies with >= 90 % in their own main
-test (D-226): range over the policies of the median and of the 95 % value of the
+test: range over the policies of the median and of the 95 % value of the
 peak filtered force, trials at the 30 N limit (summed over the policies), range of
 the median of the largest interpenetration. Every number comes from
 ``plot_kraft_durchdringung.data_h24`` / ``data_h23`` (nearest rank, counts held

@@ -6,7 +6,7 @@ r"""Plot trailing-window success and episode count per fixture-tilt bin.
 Read success_by_tilt_bin from JSON or the last matching table in a text log.
 Require five bins; preserve the run's recorded edges. Current edges are
 2/4/6/8/10 degrees with the last bin open above; older 3/6/9/12/15-degree
-tables must not be relabelled (D-037, D-178). Empty bins show a dash.
+tables must not be relabelled. Empty bins show a dash.
 Static fixture_tilt_noise_rad=5 degrees fills only the first three bins;
 AutoDR instead samples its tilt boundary and requires static noise zero.
 

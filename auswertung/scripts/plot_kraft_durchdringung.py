@@ -9,7 +9,7 @@ Auto-DR against Fixed-DR, the main test beside the robustness blocks.
        the boundary table's independent stream, ``make_eval_table.py`` kind ood),
        so the main test is a reference with other test cases.
 
-Both use the policies with >= 90 % in their own main test (D-226). Per policy and
+Both use the policies with >= 90 % in their own main test. Per policy and
 group, over ALL its trials: the peak filtered force (``force_max_filtered_n``, the
 signal the force abort reads) and the largest interpenetration over the episode
 (``ip_max_mm``): median, quartiles and the 5 / 95 % values by the env's nearest-rank

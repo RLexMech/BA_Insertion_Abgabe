@@ -10,16 +10,16 @@ policy boundary tests and outcome shares. F6: successful peak-force ECDF
 and success-by-step fraction of all episodes. F7-F10: training success,
 normalised AutoDR boundaries, lateral/tilt cells with counts, and success
 under penetration thresholds (IndustReal Fig. 3). F11/F12 compare range
-edges/OOD and OOD-minus-own-T-final (Newcombe per seed, D-208).
+edges/OOD and OOD-minus-own-T-final (Newcombe per seed).
 F7-F12 were added after the results were known; they are descriptive,
 not selection criteria. F2 contrasts use Welch and bootstrap intervals.
 
 H1-H4 compare arms with individual seeds (Peng 2018 Fig. 7,
 Weissgerber 2015, IndustReal Fig. 4, AutoMate S18). H5/H6 use iterations
-only when steps per iteration agree, with the factor labelled (D-195).
-H7/H8 supplement all-seed results with the policy selected by T-auswahl
-(D-213); best-of-five is a different algorithm (Agarwal 2021, D-210).
-H12 reads force-blind results from results/eval_rlgames_kraft (D-216).
+only when steps per iteration agree, with the factor labelled.
+H7/H8 supplement all-seed results with the policy selected by T-auswahl;
+best-of-five is a different algorithm (Agarwal 2021).
+H12 reads force-blind results from results/eval_rlgames_kraft.
 H14 uses all 15 policies in RT-264/265 tilt/friction sweeps.
 H15 reads training/penetration.csv at H15_EPOCHS: success below t1 and
 penetration >=t1 among successes; the latter requires success at every
@@ -31,13 +31,13 @@ use the PAIR_YAXIS truncation guard.
 
 Seed means use pointwise 95% percentile-bootstrap intervals; single-policy
 rates use Wilson intervals. Exceptions: H8 quartiles show spread, F5/H4
-stacks, F9 heatmap and F8 single-run lines (D-218). Show seeds as dots or
-thin lines (D-219); table/text SD remains a different summary (D-211).
+stacks, F9 heatmap and F8 single-run lines. Show seeds as dots or
+thin lines; table/text SD remains a different summary.
 
-Fixed-DR is included when T-nominal-F and T-final-F exist (D-192), except F8.
-Training axes use each run's agent/env YAML through run_axis (D-195).
+Fixed-DR is included when T-nominal-F and T-final-F exist, except F8.
+Training axes use each run's agent/env YAML through run_axis.
 For rl_games, --arm ARM=PREFIX selects runs; F8 additionally requires
-<prefix><N>_autodr_final.json (D-200). OOD figures require T-ood data.
+<prefix><N>_autodr_final.json. OOD figures require T-ood data.
 
 Usage:
     .venv-analysis/Scripts/python.exe scripts/eval_figures.py --extract-training rt_logs
@@ -75,7 +75,7 @@ def _load_module(name: str, path: pathlib.Path):
 
 ES = _load_module("eval_stats", REPO / "scripts" / "eval_stats.py")
 KEY = ES.KEY
-# D-195 CURVE AXIS: training curves over total env steps, one home for the rule.
+# CURVE AXIS: training curves over total env steps, one home for the rule.
 run_axis = _load_module("run_axis", REPO / "scripts" / "tools" / "run_axis.py")
 XLABEL_TRAINING = "Policy-Schritte in Mio."   # F7, F8
 
@@ -90,7 +90,7 @@ def _mio_axis(ax):
 # The code keeps its column name ``iteration``.
 def xlabel_epoch(factor: int) -> str:
     return f"Epoche (je {_thousands(factor)} Policy-Schritte)"
-# Colour follows the method (D-192). Fixed-DR uses #199e70 because the
+# Colour follows the method. Fixed-DR uses #199e70 because the
 # lighter #1baf7a has only 2.82:1 contrast on white. For the #199e70 / #D97706
 # pair, the checked colour-vision distances were 9.0 (protan) and 7.4 (tritan);
 # labels and distinct markers provide additional identification.
@@ -113,7 +113,7 @@ POLICY_DOT_LABEL = "Punkt: Policy je Seed"
 # validated with the dataviz validator, light mode: CVD dE 13.6, normal-vision
 # dE 26.3, contrast >= 3:1 (2026-10-03).
 ABLATION_COLOR = "#d55181"
-# D-216 (4): the two arms of the force-sensor test, (colour, line style, label).
+# the two arms of the force-sensor test, (colour, line style, label).
 FORCE_ARM_STYLE = {"autodr": (METHOD_COLOR["autodr"], "-", "Kraft in der Beobachtung"),
                    "autodr_nf": (ABLATION_COLOR, "--", "ohne Kraft (nur der Critic sieht sie)")}
 # The pre-registered pair; every figure needs both. Fixed-DR is optional: it
@@ -137,7 +137,7 @@ HEAT_CMAP = "Purples"   # one hue, light -> dark; neither method hue
 
 # The ten frozen policies (eval_plan.md "Kontext"; scripts/run_eval.ps1).
 TRAINING_RUNS = {(m, s): f"RT-{206 if m == 'autodr' else 207}s{s}" for m in METHODS for s in range(1, 6)}
-# The five Fixed-DR training runs (D-192, rt_logs/RT-231_expectation.md): F7
+# The five Fixed-DR training runs (rt_logs/RT-231_expectation.md): F7
 # only, extracted when all five folders exist, refused when some do.
 FIXED_RUNS = {("fixeddr", s): f"RT-231s{s}" for s in range(1, 6)}
 # H5's return: the env's undiscounted reward sum per episode, mean over the
@@ -206,7 +206,7 @@ def bin_index(values, edges) -> np.ndarray:
 def bin_lower(edges, i: int) -> float:
     """Lower edge of bin i. Every F3/F9 table is equal-width at its bottom, so
     bin 0 is as wide as bin 1: lateral, tilt and |yaw| start at 0, friction at
-    the band bottom 0.08 (D-212)."""
+    the band bottom 0.08."""
     return float(edges[i - 1]) if i > 0 else float(edges[0]) - (float(edges[1]) - float(edges[0]))
 
 
@@ -256,9 +256,9 @@ def arms_in(df: pd.DataFrame) -> tuple:
 
 
 def _arms_of(blocks: set) -> tuple:
-    """METHODS, plus Fixed-DR when BOTH of its blocks hold runs (D-192).
+    """METHODS, plus Fixed-DR when BOTH of its blocks hold runs.
     ``blocks``: the blocks Fixed-DR runs sit in. One block without the other
-    is refused, never drawn half. Only the two -F blocks decide: since D-208
+    is refused, never drawn half. Only the two -F blocks determine inclusion;
     Fixed-DR also plays T-auswahl, T-ood and (if selected) T-grenze."""
     blocks = set(blocks) & set(ARM_BLOCK.values())
     if not blocks:
@@ -299,7 +299,7 @@ def data_f2(summary: dict) -> list:
             raise FigError(f"F2: {kname} is not about {block}")
         rows.append({"block": block, "key": kname, "diff": k["diff"], "label": "Auto-DR − No-DR",
                      "welch": list(k["welch_ci"]), "boot": list(k["bootstrap_percentile_ci"])})
-    # K5 (D-192), only when the Fixed-DR blocks exist; eval_stats writes
+    # K5, only when the Fixed-DR blocks exist; eval_stats writes
     # {"missing": ...} otherwise, and an "error" is not drawn over.
     if arms_present(summary) == ARMS:
         for kname, block in (("K5_nominal", "T-nominal"), ("K5", "T-final")):
@@ -316,7 +316,7 @@ def data_f3(summary: dict) -> dict:
     out = {}
     for col, _label, fac in F3_PANELS:
         if col not in next(iter(bins.values())):
-            continue   # a summary.json from before D-212 holds no friction bins
+            continue   # a summary.json from older runs holds no friction bins
         edges = ES.BIN_EDGES[col]
         keys_of = {m: sorted(k for k in bins if k.startswith(m + "_s")) for m in arms_present(summary)}
         ns = None
@@ -356,7 +356,7 @@ def data_f4(summary: dict) -> dict:
             "wilson": [k3["blocks"][k]["wilson"] for k in K3_ORDER],
             "n": [k3["blocks"][k]["n"] for k in K3_ORDER],
             "overall": ov["rate"], "overall_wilson": ES.wilson(ov["k"], ov["n"]),
-            # K3's overall rate is the final policy's own T-final run (D-208:
+            # K3's overall rate is the final policy's own T-final run (
             # T-final-F for a Fixed-DR policy); the label names that block.
             "reference_block": ES.final_block(pol["method"]), "policy": pol}
 
@@ -373,14 +373,13 @@ def data_f5(summary: dict) -> list:
 
 
 def _final(df: pd.DataFrame) -> pd.DataFrame:
-    """T-final's rows, with Fixed-DR's from T-final-F (same table, D-192)."""
+    """T-final's rows, with Fixed-DR's from T-final-F (same table)."""
     return df[df["block"].isin(("T-final", ARM_BLOCK["T-final"])) & (df["tag"] == "")]
 
 
 def _mean_std(stack, fig: str):
     """Mean and sample standard deviation (ddof=1) over
-    axis 0 = the seeds. Since D-218 the figures draw the mean (and the seeds,
-    D-219), not the SD; the SD stays for the printed numbers and the tables."""
+    axis 0 = the seeds. The figures draw the mean and seeds, not the SD; the SD stays for the printed numbers and the tables."""
     a = np.asarray(stack, dtype=float)
     if a.shape[0] < 2:
         raise FigError(f"{fig}: {a.shape[0]} seed; the spread band needs two or more")
@@ -389,7 +388,7 @@ def _mean_std(stack, fig: str):
 
 def _boot_ci(stack, fig: str):
     """95 % percentile bootstrap interval of the mean over axis 0 = the seeds
-    (H2, H5, H6; D-218). Resamples, seed and level from eval_stats (one home).
+    (H2, H5, H6). Resamples, seed and level from eval_stats (one home).
     Columns where every seed is equal get that value as both bounds."""
     from scipy import stats as st
     a = np.asarray(stack, dtype=float)
@@ -444,7 +443,7 @@ def data_f6(df: pd.DataFrame) -> dict:
 
 def _seed_curves(curves: pd.DataFrame, col: str, fig: str) -> dict:
     """One ``curves.csv`` column per arm: the seeds' curves, their mean and
-    sample std (F7, H5, H6). ``x`` = total env steps (D-195), ``it`` = the
+    sample std (F7, H5, H6). ``x`` = total env steps, ``it`` = the
     iteration; the seeds of one arm must share one grid, arms may differ (each
     run its own factor). A seed with an empty cell is refused, never averaged."""
     out = {}
@@ -485,19 +484,19 @@ def data_h5(curves: pd.DataFrame) -> dict:
 
 def iteration_factor(curves: pd.DataFrame) -> int:
     """Env steps per iteration, ONE value over every run, or FigError. H5/H6
-    draw over the iteration (D-212); that axis is fair only when every run
-    collects the same samples per iteration -- D-195's reason for env steps.
+    draw over the iteration; that axis is fair only when every run
+    collects the same samples per iteration.
     rl_games writes ``env_steps = epoch x horizon_length x num_envs`` with the
     epoch from 1; rsl_rl's ``(it + 1) x F`` from it 0 is refused."""
     it = curves["iteration"].to_numpy(dtype=np.int64)
     st = curves["env_steps"].to_numpy(dtype=np.int64)
     if len(it) == 0 or (it < 1).any() or (st % np.maximum(it, 1)).any():
         raise FigError("H5/H6: env_steps is not iteration x one factor (rsl_rl counts (it + 1) x F); "
-                       "draw over env steps (D-195)")
+                       "draw over env steps")
     factors = sorted(set((st // it).tolist()))
     if len(factors) != 1:
         raise FigError(f"H5/H6: the runs collect {factors} env steps per iteration; "
-                       f"an iteration axis would compare unequal samples (D-195)")
+                       f"an iteration axis would compare unequal samples")
     return int(factors[0])
 
 
@@ -509,7 +508,7 @@ def data_f8(curves: pd.DataFrame, sidecars: dict) -> dict:
     for s, gs in g.groupby("seed", sort=True):
         side = sidecars.get(("autodr", int(s)))
         if side is None:
-            raise FigError(f"F8: no AutoDR state for autodr s{s} (D-200)")
+            raise FigError(f"F8: no AutoDR state for autodr s{s}")
         ad = side["autodr"]
         dims = {d["name"]: d for d in ad["dims"]}
         fl = ad["floor"]
@@ -559,7 +558,7 @@ def data_f10(df: pd.DataFrame, t1_mm: float) -> dict:
     taus =np.unique(np.concatenate([np.linspace(0.0, max(top, t1_mm) * 1.05, 400), [t1_mm]]))
     out = {"tau": taus, "t1": t1_mm, "methods": {}, "ci": {}}
     for m in arms_in(df):
-        # Per seed first, then the mean over the seeds and its interval (D-218):
+        # Per seed first, then the mean over the seeds and its interval:
         # the policies are not pooled into one sample.
         seeds = []
         for _s, g in fin[fin["method"] == m].groupby("seed", sort=True):
@@ -568,11 +567,11 @@ def data_f10(df: pd.DataFrame, t1_mm: float) -> dict:
             seeds.append(np.array([(ok & (ip < t)).sum() for t in taus]) / len(g))
         out["methods"][m] = np.mean(seeds, axis=0)
         out["ci"][m] = _boot_ci(seeds, "F10")
-        out.setdefault("seeds", {})[m] = seeds   # drawn as thin lines (D-219)
+        out.setdefault("seeds", {})[m] = seeds   # drawn as thin lines
     return out
 
 
-# F11/F12 (D-191, D-206 (3)): per dimension the scale into the tick unit, the unit, decimals.
+# F11/F12: per dimension the scale into the tick unit, the unit, decimals.
 F11_UNIT = {"lat_r": (1000.0, " mm", 0), "yaw": (180.0 / math.pi, "°", 1), "tilt": (180.0 / math.pi, "°", 0),
             "start_height": (1000.0, " mm", 0), "friction": (1.0, "", 2)}
 
@@ -584,7 +583,7 @@ def data_f11(summary: dict, sidecar: dict) -> dict:
     are judged against the policy's own T-final run (eval_stats.final_block);
     K3's and the OOD reference must be the same count, else one line cannot
     serve both. Ported from p6-TestAusserhalb 7d008ff1/db85986c; the OOD
-    numbers sit in the same summary.json here (D-206 B3)."""
+    numbers sit in the same summary.json here."""
     k3 = summary["K3"]
     if "blocks" not in k3:
         raise FigError(f"F11: K3 not computed: {k3}")
@@ -608,7 +607,7 @@ def data_f11(summary: dict, sidecar: dict) -> dict:
         c = sidecar["centres"][dim]
         edge = c + (b["physical"] - c) / b["factor"]
         scale, unit, nd = F11_UNIT[dim]
-        # A block whose factor is not the table's (start height x1.0, D-206 A2) says so on its own line.
+        # A block whose factor is not the table's (start height x1.0) says so on its own line.
         cap = "" if b["factor"] == sidecar["factor"] else f"\n(×{_num(b['factor'], '.1f')})"
         out["edge"].append(edge)
         out["physical"].append(b["physical"])
@@ -621,10 +620,10 @@ def data_f11(summary: dict, sidecar: dict) -> dict:
 
 
 def data_f12(summary: dict, sidecar: dict) -> dict:
-    """Every seed's T-ood block against ITS OWN T-final (D-191 (3), decision B):
+    """Every seed's T-ood block against ITS OWN T-final:
     the difference with its Newcombe interval, one dot per seed (F1's dot plot,
     Weissgerber 2015), and the mean of the seed differences as a short line.
-    One group per arm that played T-ood (D-208: AutoDR and Fixed-DR). All
+    One group per arm that played T-ood (AutoDR and Fixed-DR). All
     numbers are summary.json's `OOD` (eval_stats), none recomputed."""
     o = summary.get("OOD", {})
     across = o.get("across_seeds", {})
@@ -654,7 +653,7 @@ def data_f12(summary: dict, sidecar: dict) -> dict:
 
 
 # H18 (thesis 5.2.2): the T-ood blocks outside the Prüfbereich.
-# The start-height block stays at factor 1.0 (D-206 Bauplan A2), so it is not
+# The start-height block stays at factor 1.0, so it is not
 # outside and is left out. Words as F3_PANELS.
 H18_KEYS = tuple(k for k in K3_ORDER if k != "start_height_hi")
 # "Start-/versatz" in two lines: at 12 pt it ran into its neighbours under seven bars.
@@ -665,9 +664,8 @@ H18_ARMS = ("autodr", "fixeddr")
 def data_h18(summary: dict, sidecar: dict) -> dict:
     """H18: per T-ood block outside the Prüfbereich (H18_KEYS) each seed's
     ABSOLUTE success rate, the mean over the seeds and its 95 % percentile
-    bootstrap interval (D-218), for Auto-DR and Fixed-DR; per arm the mean of
-    its seeds' own main-test rate (the OOD reference, T-final / T-final-F,
-    D-208). Rates are summary.json's `OOD` (eval_stats), none recomputed.
+    bootstrap interval, for Auto-DR and Fixed-DR; per arm the mean of
+    its seeds' own main-test rate (the OOD reference, T-final / T-final-F). Rates are summary.json's `OOD` (eval_stats), none recomputed.
     Refused: a block not at factor 1.5, an arm or seed missing, unequal
     test-case counts (the figure names ONE count)."""
     o = summary.get("OOD", {})
@@ -707,7 +705,7 @@ def data_h18(summary: dict, sidecar: dict) -> dict:
     return out
 
 
-# H19/H20 (D-226): T-ood and the doubled observation errors, only the policies
+# H19/H20: T-ood and the doubled observation errors, only the policies
 # that learned the task. The rule reads each policy's OWN main test, never the
 # block shown. Arms with fewer than five such policies
 # get no mean and no interval (2-4 runs individually).
@@ -723,7 +721,7 @@ def data_learned(policies: dict, keys, labels, fig: str, min_rate: float = LEARN
     """H19/H20: per arm (H18_ARMS) the policies whose own main-test rate
     (``reference``: T-final, Fixed-DR T-final-F) is >= min_rate (LEARNED_MIN), sorted by
     seed; per block their rate and Wilson interval as summary.json holds them;
-    the mean over the seeds and its bootstrap interval (D-218) only for an arm
+    the mean over the seeds and its bootstrap interval only for an arm
     with >= LEARNED_MEAN_MIN_N such policies. ``left_out`` names the others with
     their main-test rate, ``ref_range`` spans the shown policies' main tests.
     Refused: an arm missing or without a learned policy, a policy without a
@@ -865,15 +863,14 @@ def data_h4(summary: dict) -> list:
 H7_NOISE = (("pn2", "Lage\nTasche"), ("gx2", "Greif-\nversatz"), ("py2", "Gier\nTasche"))
 # H8 draws the best policy of the arms that learn the task. No-DR's best (RT-246:
 # 163 of 1000 on T-auswahl) succeeds mostly on the easy rows, so its successes'
-# force is a selected subset, not comparable (D-213).
+# force is a selected subset, not comparable.
 H8_ARMS = ("autodr", "fixeddr")
 
 
 def best_policies(summary: dict) -> dict:
     """{arm: seed}: the pre-registered selection rule (eval_stats.select_final: highest T-auswahl rate, then smaller force p95,
-    then smaller seed) applied to ONE arm's runs. A supplementary view (D-213):
-    the best of five is another algorithm than the method (Agarwal et al. 2021;
-    D-210), so it never replaces the all-seed comparison (H1, H2)."""
+    then smaller seed) applied to ONE arm's runs. A supplementary view:
+    the best of five is another algorithm than the method (Agarwal et al. 2021), so it never replaces the all-seed comparison (H1, H2)."""
     out = {}
     for m in ARMS:
         mine = [p for p in summary["policies"] if p["method"] == m]
@@ -969,14 +966,14 @@ def data_h8(df: pd.DataFrame, policies: dict) -> dict:
     return out
 
 
-# D-216 (4): H12's two conditions, the FORCE block labels of eval_stats.
+# H12's two conditions, the FORCE block labels of eval_stats.
 H12_CONDITION = (("T-final", "Lagefehler wie im Training"), ("pn2", "Lagefehler ×2"))
 
 
 def data_h12(summary: dict) -> dict:
-    """H12 (D-216): per force arm and block the per-seed rates and the arm mean,
+    """H12: per force arm and block the per-seed rates and the arm mean,
     read from summary.json ``FORCE`` (eval_stats.force_blocks); only the
-    bootstrap interval of the mean is computed here (D-218). A summary without
+    bootstrap interval of the mean is computed here. A summary without
     ``FORCE``, or a block it marks missing, is refused."""
     fo = summary.get("FORCE")
     if not isinstance(fo, dict) or "blocks" not in fo:
@@ -995,7 +992,7 @@ def data_h12(summary: dict) -> dict:
     return out
 
 
-# H13 (D-221): the doubled observation errors (D-206 (3), D-208) for every
+# H13: the doubled observation errors for every
 # policy that played them, in H1's form: per arm each seed's own untagged main
 # test (hollow; Fixed-DR: T-final-F) once, then the blocks (filled).
 # Replaces the thesis' hand-made figure 5-7 (BA_Anpassungen_Statistik.md A8).
@@ -1005,7 +1002,7 @@ def data_h13(summary: dict) -> dict:
     """H13: per arm and noise block (H7_NOISE) the per-seed rates beside the
     rates of each seed's own untagged main test, read from summary.json
     ``NOISE`` (eval_stats.noise_blocks); only the mean and its bootstrap
-    interval are computed here (D-218). A summary without ``NOISE``, or a
+    interval are computed here. A summary without ``NOISE``, or a
     policy without one of the three blocks, is refused."""
     nz = summary.get("NOISE")
     if not isinstance(nz, dict) or "policies" not in nz:
@@ -1033,7 +1030,7 @@ def data_h13(summary: dict) -> dict:
 # H14 (RT-264/265): the robustness curve -- every final-study policy over the
 # tilt sweep and the friction sweep (8 steps each, the same 125 rows in every
 # step, only the swept quantity nailed; own root results/eval_rlgames_sweep/).
-# F7's curve form (D-218, D-219) over the steps; the test range (centre to the
+# F7's curve form over the steps; the test range (centre to the
 # factor-1.0 steps of the sweep sidecar) shaded. Panel: block, column, unit of
 # the sidecar's physical value -> axis unit, axis label.
 H14_PANELS = (("T-sweep-tilt", "tilt_deg", math.degrees, "Kippung in °"),
@@ -1089,7 +1086,7 @@ def data_h15(pen: pd.DataFrame, block: int = H15_EPOCHS) -> dict:
     never across seeds): ``clean`` = successes below t1 / episodes, ``share_ge`` =
     successes at or above t1 / successes (NaN where the block has no success).
     ``x`` = the block's last epoch. Every seed must cover the same epochs.
-    Per arm then the mean over the seeds and its bootstrap interval (D-218):
+    Per arm then the mean over the seeds and its bootstrap interval:
     ``clean`` over every seed; ``share`` over the seeds with a success at EVERY
     point (as F6: a seed without one has no share), the others in ``left_out``."""
     t1 = sorted(set(pen["t1_mm"].astype(float)))
@@ -1157,7 +1154,7 @@ def extract_training(src: pathlib.Path, out: pathlib.Path) -> dict:
     nodr_env = {}
 
     def _curve(m, s, run):
-        # D-195: each run's own factor, from the params files beside its scalars.csv.
+        # each run's own factor, from the params files beside its scalars.csv.
         agent = src / run / f"{run}_agent.yaml"
         factor = (run_axis.read_factor(agent, src / run / f"{run}_env.yaml") if agent.is_file()
                   else _log_factor(src / run, run))
@@ -1211,7 +1208,7 @@ def _write_training(out: pathlib.Path, rows: list, nodr_env: dict, source: str) 
     for k in ("fixture_yaw_noise_rad", "fixture_tilt_noise_rad"):
         if float(first[k]) != 0.0:
             raise FigError(f"No-DR trained with {k} = {first[k]}: the F3 marker would be a band, not a value")
-    # Friction of No-DR (D-212): the value its provider held, as logged
+    # Friction of No-DR: the value its provider held, as logged
     # (dr/friction_mean, rl_games runs); one value over every row or refused.
     fr = sorted({float(r["dr/friction_mean"]) for r in rows
                  if r["method"] == "nodr" and r.get("dr/friction_mean") not in ("", None)})
@@ -1240,7 +1237,7 @@ def read_rl_games_run(folder: pathlib.Path, run: str) -> list:
     in ``folder``): one row per ``Episode/success_rate`` row, in epoch order.
     ``iteration`` = the scalars step, which for rl_games' ``Episode/*`` tags is
     the epoch counted from 1; ``env_steps`` by tools/run_axis.py's rl_games rule
-    (D-195; every TRAINING_TAGS column is an ``Episode/*`` tag). A tag the run
+    (every TRAINING_TAGS column is an ``Episode/*`` tag). A tag the run
     did not log (No-DR has no lat/yaw/tilt/friction boundary) stays "". The one
     home of the per-run reading; plot_seed_curves.py calls it too."""
     try:
@@ -1277,7 +1274,7 @@ def _rl_games_runs(folder: pathlib.Path, prefix: str) -> list:
 
 
 def extract_training_rl_games(src: pathlib.Path, out: pathlib.Path, arms: dict) -> dict:
-    """rl_games seed chains (D-200). ``arms`` = {arm: run prefix}, e.g. autodr
+    """rl_games seed chains. ``arms`` = {arm: run prefix}, e.g. autodr
     RT-242s, nodr RT-244s, fixeddr RT-243s (their PC-side home is
     rl_games/run_eval.ps1); seed N's files are ``src/<prefix>/<prefix>N_*``.
     AutoDR and No-DR are required (F7, F8, F3's marker), Fixed-DR optional.
@@ -1348,8 +1345,7 @@ def extract_penetration(src: pathlib.Path, out: pathlib.Path, arms: dict) -> int
 
 def copy_rl_games_sidecars(folder: pathlib.Path, out: pathlib.Path, prefix: str, last_epoch: dict) -> list:
     """F8's AutoDR state per seed: ``<prefix><N>_autodr_final.json`` = the
-    checkpoint's ``env_state`` plus its file name under ``checkpoint``
-    (D-200).
+    checkpoint's ``env_state`` plus its file name under ``checkpoint``.
     All seeds or none; each must name its own run and the epoch its curve ends
     on. Copied as ``autodr_s<N>_autodr_ep<E>.json``, never under rsl_rl's
     ``_1499`` name. Returns the copies; none -> [] (F8 waits)."""
@@ -1426,12 +1422,12 @@ def _legend_methods(fig, loc="lower center", extra=(), marker=True, methods=METH
 
 
 # Two columns below a curve figure: the arms, then the thin line and the band.
-# Three or more ran past the 6.3 in figure width (D-219, PNG 2503 px wide).
+# Three or more ran past the 6.3 in figure width (PNG 2503 px wide).
 CURVE_LEGEND_NCOL = 2
 
 
 def _curve_extra(n_seeds: int) -> tuple:
-    """D-219: the two legend entries every mean-over-seeds curve figure adds --
+    """the two legend entries every mean-over-seeds curve figure adds --
     what a thin line is and what the band is (pointwise)."""
     return (_seed_line_handle(), _band_patch(n_seeds))
 
@@ -1439,7 +1435,7 @@ def _curve_extra(n_seeds: int) -> tuple:
 def _title(target, what: str, n_seeds: int):
     """Short title for an axes or a figure containing several panels."""
     # Keep the title clear of the axis labels and plot.
-    # D-219: the figure draws the seeds themselves too (_seed_lines).
+    # the figure draws the seeds themselves too (_seed_lines).
     text = f"{what} — {n_seeds} Seeds und ihr Mittel mit 95-%-KI"
     if hasattr(target, "suptitle"):
         target.suptitle(text, fontsize=10, fontweight="bold", color=INK)
@@ -1524,7 +1520,7 @@ def draw_f3(plt, d, nodr):
             v = nodr[col]
             ax.axvline(v, color=INK_MUTED, linewidth=1.0, linestyle="--")
             ax.text(v, 3, " No-DR-Training", fontsize=7, color=INK_MUTED, va="bottom")
-        # The seeds first (D-219), then all bands, then all means (as F7).
+        # The seeds first, then all bands, then all means (as F7).
         for m in p["methods"]:
             _seed_lines(ax, p["x"], p["methods"][m]["seeds"], METHOD_COLOR[m])
         for m in p["methods"]:
@@ -1541,7 +1537,7 @@ def draw_f3(plt, d, nodr):
     _title(fig, "Erfolgsrate je Störgröße", n_seeds)
     # No panel has a free corner (AutoDR runs along the top, No-DR and the
     # training marks along the bottom); inside the middle of a panel read badly
-    # below the panels in two columns (D-219), or the free sixth cell.
+    # below the panels in two columns, or the free sixth cell.
     extra = _curve_extra(n_seeds)
     if spare is not None:
         # The sixth cell is narrow: the band text breaks before "des" (as H2).
@@ -1621,7 +1617,7 @@ def draw_f5(plt, rows):
 
 def draw_f6(plt, d):
     fig, (a1, a2) = plt.subplots(1, 2, figsize=(FIG_W, 3.1))
-    # Both panels as F7: the seeds first (D-219), then all bands, then all
+    # Both panels as F7: the seeds first, then all bands, then all
     # means, using thinner lines for the individual seeds.
     for ax, part, x in ((a1, "ecdf", "x"), (a2, "cum", "k")):
         for m in d[part]:
@@ -1658,14 +1654,14 @@ def draw_f6(plt, d):
 
 def _band(ax, x, ci, colour, rate=True):
     """The 95 % bootstrap interval of the seed mean (``_boot_ci``) as a shaded
-    band (D-218). A rate is drawn in %;
+    band. A rate is drawn in %;
     ``rate=False`` (a return, a length) draws the band as it is."""
     lo, hi = (np.asarray(v, dtype=float) for v in ci)
     k = 100.0 if rate else 1.0
     ax.fill_between(x, k * lo, k * hi, color=colour, alpha=0.2, linewidth=0)
 
 
-# D-219: every mean over the seeds shows its seeds too -- thin lines for a curve,
+# every mean over the seeds shows its seeds too -- thin lines for a curve,
 # small dots for a per-bin value (Colas et al. 2019: below ten runs, show every
 # run beside the mean; Weissgerber et al. 2015 for the dots). Drawn first, so the
 # band and the mean lie on top.
@@ -1736,7 +1732,7 @@ H2_ARMS = ("nodr", "fixeddr")
 
 
 def _seed_dots(ax, x, seeds, colour):
-    """H2 (D-219): one dot per seed and bin at the bin centre ``x`` -- every value
+    """H2: one dot per seed and bin at the bin centre ``x`` -- every value
     where it belongs, overlaps accepted -- so a mean between two
     groups of runs shows where the runs really are. Nearly opaque ("vollere Farbe")."""
     for v in seeds.values():
@@ -1765,15 +1761,15 @@ def _bar_handle(label: str, color: str = INK_MUTED):
                   label=label)
 
 
-# H2/H5/H6 legend: the interval's name (D-218), one home for both forms. A band
-# over a curve holds point by point, not for the whole curve at once (D-219).
+# H2/H5/H6 legend: the interval's name, one home for both forms. A band
+# over a curve holds point by point, not for the whole curve at once.
 CI_LABEL = "95-%-KI des Mittelwerts (Bootstrap)"   # KI, not spelled out
 CI_LABEL_CURVE = CI_LABEL.replace("(Bootstrap)", "(Bootstrap, punktweise)")
 SEED_LINE_LABEL = "dünne Linie: ein Trainingslauf (Seed)"
 
 
 def _band_patch(n_seeds: int):
-    """Legend entry of ``_band`` (F3, F6, F7, F10, H5/H6, H9/H11 in plot_mlp_vs_lstm.py; D-218, D-219)."""
+    """Legend entry of ``_band`` (F3, F6, F7, F10, H5/H6, H9/H11 in plot_mlp_vs_lstm.py)."""
     from matplotlib.patches import Patch
     # short form; method and "punktweise" go to the caption.
     # Two lines: at 12 pt one line runs past the 6.3 in figure width.
@@ -1820,13 +1816,13 @@ def _legend_room(fig, leg, ax=None, axes_h=None):
 
 
 def _wilson_handle():
-    """Legend entry of the Wilson bars on one policy's rates (H3, H7; D-218)."""
+    """Legend entry of the Wilson bars on one policy's rates (H3, H7)."""
     return _bar_handle("Strich: 95-%-KI (Wilson)", INK)   # the strokes are INK (H3, H7)
 
 
 def draw_f7(plt, d):
     fig, ax = plt.subplots(figsize=(FIG_W, 3.0))
-    # The seeds first (D-219; only SEED_LINE_ARMS), then all bands,
+    # The seeds first (only SEED_LINE_ARMS), then all bands,
     # then all means: no method's band may cover the other method's mean.
     for m in d:
         if m in SEED_LINE_ARMS:
@@ -1839,7 +1835,7 @@ def draw_f7(plt, d):
     _style(ax, YLABEL_TRAINING_RATE, XLABEL_TRAINING)
     _mio_axis(ax)
     # No title in the figure: the caption carries it.
-    # Below the figure in two columns (D-219), as F6: inside, lower right was empty only
+    # Below the figure in two columns, as F6: inside, lower right was empty only
     # while every curve sat above 40 %; Fixed-DR's band reaches 5 % (RT-231).
     leg = _legend_methods(fig, methods=tuple(d), extra=_training_extra(d, "F7"), ncol=CURVE_LEGEND_NCOL)
     _legend_room(fig, leg, ax, CURVE_AXES_H)
@@ -1921,7 +1917,7 @@ def draw_f9(plt, d):
 
 def draw_f10(plt, d):
     fig, ax = plt.subplots(figsize=(FIG_W, 2.8))
-    # The seeds first (D-219), then all bands, then all means (as F7).
+    # The seeds first, then all bands, then all means (as F7).
     for m in d["methods"]:
         _seed_lines(ax, d["tau"], d["seeds"][m], METHOD_COLOR[m])
     for m in d["methods"]:
@@ -2019,7 +2015,7 @@ def _h_legend(fig, handles, ncol, **kw):
 def _mean_bar(ax, x, r, c, ls, filled, w, y_num=104):
     """H1's bar: the mean over the seeds (``r``: {"rates", "mean", "ci"}) as a
     hollow or filled bar, one dot per seed, the bootstrap interval of the mean
-    beside the dots (D-218), the mean as a number in one row above the plot (a
+    beside the dots, the mean as a number in one row above the plot (a
     number on the bar top ran into the seed dots above a low mean). ``r["mean"]``
     None (an arm below LEARNED_MEAN_MIN_N policies): the dots only, no
     bar, interval or number."""
@@ -2158,7 +2154,7 @@ def draw_h1(plt, d):
 
 def draw_h2(plt, d, nodr):
     """Mean over the seeds as a line (markers at the bin centres), the 95 %
-    percentile bootstrap interval of that mean as a band (D-218, D-213). Line, band and one dot per seed (D-219) all at the bin centre,
+    percentile bootstrap interval of that mean as a band. Line, band and one dot per seed all at the bin centre,
     no arm shifted. Only H2_ARMS
     (Auto-DR: its own table)."""
     from matplotlib.lines import Line2D
@@ -2207,13 +2203,13 @@ def draw_h3(plt, d):
     for xi, g, o in zip(x, d["grenze"], d["ood"]):
         for e, dx, face in ((g, -(w + 0.04) / 2, "white"), (o, (w + 0.04) / 2, c)):
             ax.bar(xi + dx, 100 * e["rate"], width=w, color=face, edgecolor=c, linewidth=1.4, zorder=2)
-            # D-218: one policy's rate carries its Wilson interval.
+            # one policy's rate carries its Wilson interval.
             ax.errorbar(xi + dx, 100 * e["rate"], yerr=_yerr(e["rate"], e["wilson"]), fmt="none", ecolor=INK,
                         elinewidth=0.9, capsize=2.0, zorder=3)
         # Only the bars that carry the message are numbered: the ones beyond the range.
         ax.text(xi + (w + 0.04) / 2, 100 * o["wilson"][1] + 1.5, f"{_num(100 * o['rate'], '.1f')} %", ha="center",
                 va="bottom", fontsize=7.5, color=INK)
-    # A block that keeps factor 1,0 (start height, D-206 Bauplan A2) says so in words.
+    # A block that keeps factor 1,0 (start height) says so in words.
     labels = [lab.split("\n(×")[0] + ("" if f == d["factor"] else "\n(nicht erweitert)")
               for lab, f in zip(d["labels"], d["factors"])]
     ax.set_xticks(x, labels)
@@ -2260,8 +2256,8 @@ def _thousands(n: int) -> str:
 
 def _draw_training(plt, d, factor: int, ylabel: str, rate: bool):
     """H5/H6: per arm the mean over the seeds as a line, the 95 % percentile
-    bootstrap interval of that mean as a band (D-218), over the
-    training iteration (D-212). The seeds first as thin lines (D-219), then
+    bootstrap interval of that mean as a band, over the
+    training iteration. The seeds first as thin lines, then
     all bands, then all means (as F7)."""
     from matplotlib.lines import Line2D
     fig, ax = plt.subplots(figsize=(FIG_W, 3.0))
@@ -2315,7 +2311,7 @@ def draw_h7(plt, d):
             xs = x + (j - (len(arms) - 1) / 2) * w
             ax.bar(xs, [100 * r for r in v[j]], width=w * 0.92, color=METHOD_COLOR[m], zorder=2)
             for xi, r, wi in zip(xs, v[j], wl[j]):
-                # D-218: each rate with its Wilson interval, the number above the bar's top.
+                # each rate with its Wilson interval, the number above the bar's top.
                 ax.errorbar(xi, 100 * r, yerr=_yerr(r, wi), fmt="none", ecolor=INK, elinewidth=0.9, capsize=1.8,
                             zorder=3)
                 ax.text(xi, 100 * wi[1] + 1.0, _num(100 * r, ".0f"), ha="center", va="bottom", fontsize=6.5,
@@ -2370,7 +2366,7 @@ def draw_h8(plt, d):
 
 
 def draw_h12(plt, d):
-    """H1's form for the force-sensor test (D-216): per arm the pocket belief
+    """H1's form for the force-sensor test: per arm the pocket belief
     error as in training (hollow) beside the doubled one (filled). The arms
     carry the H11 pair (FORCE_ARM_STYLE): colour, and a dashed edge for the
     ablation."""
@@ -2385,7 +2381,7 @@ def draw_h13(plt, d, labels):
 
 
 def draw_h14(plt, d):
-    """F7's form per sweep panel (seeds, band, mean; D-218, D-219), one marker
+    """F7's form per sweep panel (seeds, band, mean), one marker
     per step, the test range shaded. One title, one legend below."""
     from matplotlib.patches import Patch
     fig, axes = plt.subplots(1, len(d), figsize=(FIG_W, 3.0), sharey=True)
@@ -2418,7 +2414,7 @@ H18_MARKER = METHOD_MARKER   # old name, read by plot_kraft_durchdringung.py
 
 
 def draw_h15(plt, d, factor: int):
-    """H6's form (seeds as thin lines, 95 % band, mean line; D-218, D-219), two
+    """H6's form (seeds as thin lines, 95 % band, mean line), two
     panels over the epoch. The share panel draws only the seeds its mean uses; a
     note names an arm whose share stands on fewer seeds."""
     from matplotlib.lines import Line2D
@@ -2468,9 +2464,9 @@ NAMES = {"F1": "F1_erfolg_je_seed", "F2": "F2_differenz", "F3": "F3_stoergroesse
          "H15": "H15_durchdringung_im_training", "H18": "H18_ausserhalb_pruefbereich",
          "H19": "H19_ausserhalb_gelernte_policies", "H20": "H20_beobachtungsfehler_gelernte_policies",
          "H22": "H22_beobachtungsfehler_alle_policies"}
-# D-216: the force-ablation root (results/eval_rlgames_kraft/) holds the T-final
+# the force-ablation root (results/eval_rlgames_kraft/) holds the T-final
 # runs of two AutoDR arms only; there H12 is the one figure.
-FORCE_ROOT_ONLY = "force-ablation root (D-216): only H12"
+FORCE_ROOT_ONLY = "force-ablation root: only H12"
 
 
 def t1_from_results(results: pathlib.Path) -> float:
@@ -2555,7 +2551,7 @@ def draw_all(results: pathlib.Path, training: pathlib.Path, out: pathlib.Path, o
           if episodes.is_file() else None)
     force_root = "FORCE" in summary
     if force_root:
-        # D-216: no training curves belong to this root; nothing below reads them.
+        # no training curves belong to this root; nothing below reads them.
         curves, sidecars, nodr, factor, why_not_h56 = None, {}, None, None, FORCE_ROOT_ONLY
     else:
         curves, sidecars, nodr = load_training(training)
@@ -2602,7 +2598,7 @@ def draw_all(results: pathlib.Path, training: pathlib.Path, out: pathlib.Path, o
         available = {k: ("" if k == "H12" else FORCE_ROOT_ONLY) for k in NAMES}
     else:
         if not sidecars:
-            available["F8"] = f"no AutoDR state in {training} (D-200)"
+            available["F8"] = f"no AutoDR state in {training}"
         if not (results / "T-ood").is_dir():
             available["F11"] = available["F12"] = available["H3"] = available["H7"] = available["H18"] = (
                 available["H19"]) = f"no T-ood block in {results}"
@@ -2610,10 +2606,10 @@ def draw_all(results: pathlib.Path, training: pathlib.Path, out: pathlib.Path, o
             available["H7"] = available["H8"] = f"no T-auswahl block in {results}: no best policy per arm"
         available["H5"] = available["H6"] = why_not_h56
         if RETURN_TAG not in curves.columns:
-            available["H5"] = f"no {RETURN_TAG} column in {training / 'curves.csv'} (extracted before D-212)"
-        available["H12"] = "no FORCE key in summary.json (no autodr_nf runs, D-216)"
+            available["H5"] = f"no {RETURN_TAG} column in {training / 'curves.csv'} (older extraction)"
+        available["H12"] = "no FORCE key in summary.json (no autodr_nf runs)"
         if "NOISE" not in summary:
-            available["H13"] = available["H20"] = available["H22"] = "no NOISE key in summary.json (no pn2/gx2/py2 runs, D-206 (3))"
+            available["H13"] = available["H20"] = available["H22"] = "no NOISE key in summary.json (no pn2/gx2/py2 runs)"
         if sweep is None or not (sweep / "episodes_all.csv").is_file():
             available["H14"] = f"no episodes_all.csv in the sweep root --sweep {sweep} (RT-264/265)"
         available["H15"] = why_not_h56
@@ -2634,7 +2630,7 @@ def draw_all(results: pathlib.Path, training: pathlib.Path, out: pathlib.Path, o
 
 
 # ---------------------------------------------------------------------------
-# Self-test (D-080): checks on built data; each mutation of THIS file's source
+# Self-test: checks on built data; each mutation of THIS file's source
 # must flip exactly its declared checks.
 # ---------------------------------------------------------------------------
 
@@ -2655,11 +2651,11 @@ def _synthetic():
                              "success_train": ok, "success_strict": ok, "force_abort": abort,
                              "steps": 10 + i if ok else 256, "force_max_filtered_n": 5.0 + i,
                              "force_max_raw_n": 5.0 + i, "ip_max_mm": 0.01 * i, "force_limit_n": 30.0,
-                             # lat 0..28.5 mm, tilt 0..9.5 deg; start height 0.030..0.258 m, i.e. the five 50 mm bins above H_min (D-204), none below
-                             # friction 0.081..0.195: four rows in each of the five D-212 bins
+                             # lat 0..28.5 mm, tilt 0..9.5 deg; start height 0.030..0.258 m, i.e. the five 50 mm bins above H_min, none below
+                             # friction 0.081..0.195: four rows in each of the five bins
                              "lat_r_mm": 1.5 * i, "yaw_abs_deg": 0.25 * i, "tilt_deg": 0.5 * i,
                              "start_height_m": 0.03 + 0.012 * i, "friction": 0.081 + 0.006 * i})
-    # Fixed-DR (D-192) in its own blocks: T-final-F 12/20 and 10/20, T-nominal-F 17/20 and 16/20.
+    # Fixed-DR in its own blocks: T-final-F 12/20 and 10/20, T-nominal-F 17/20 and 16/20.
     for s, k in ((1, 12), (2, 10)):
         for block, kk in (("T-final-F", k), ("T-nominal-F", 18 - s)):
             for i in range(n):
@@ -2685,7 +2681,7 @@ def _synthetic():
 
 def _synthetic_curves():
     rows = []
-    for m in ARMS:   # Fixed-DR curves too (D-192); F8 reads autodr only
+    for m in ARMS:   # Fixed-DR curves too; F8 reads autodr only
         for s in (1, 2):
             for it in range(3):
                 rows.append({"method": m, "seed": s, "iteration": it, "env_steps": (it + 1) * 64,
@@ -2705,7 +2701,7 @@ def _synthetic_curves():
     return pd.DataFrame(rows), {("autodr", s): side for s in (1, 2)}
 
 
-# D-195: each arm's synthetic num_steps_per_env, all with num_envs 4.
+# each arm's synthetic num_steps_per_env, all with num_envs 4.
 ARM_STEPS = {"autodr": 16, "nodr": 128, "fixeddr": 32}
 
 
@@ -2727,13 +2723,13 @@ def _write_rt_logs(root: pathlib.Path, bad_seed: int | None = None, runs=None):
         (d / f"{run}_agent.yaml").write_text(f"seed: {s}\nnum_steps_per_env: {ARM_STEPS[m]}\n", encoding="utf-8")
 
 
-# rl_games fixture (D-200): each arm its own horizon_length, all with 4 envs.
+# rl_games fixture: each arm its own horizon_length, all with 4 envs.
 RLG_HORIZON = {"autodr": 8, "nodr": 16, "fixeddr": 32}
 RLG_PREFIX = {"autodr": "RA", "nodr": "RN", "fixeddr": "RF"}
 
 
 def _rlg_value(tag: str, e: int, s: int, m: str = "autodr", nodr_friction_step: float = 0.0) -> float:
-    if tag == "dr/friction_mean":   # No-DR's provider holds the centre (D-212); the others move
+    if tag == "dr/friction_mean":   # No-DR's provider holds the centre; the others move
         return 0.14 + (nodr_friction_step * e if m == "nodr" else 0.001 * e)
     return {"Episode/success_rate": 0.1 * e + 0.05 * s, "dr/lat_r_hi": 0.01 * e, "dr/yaw_lo": -0.02 * e,
             "dr/yaw_hi": 0.02 * e, "dr/tilt_hi": 0.05 * e, "dr/start_height_hi": 0.02 + 0.05 * e,
@@ -2794,41 +2790,41 @@ CHECKS = (
     "F10: Fixed-DR curve from T-final-F: rate at the largest tau = 0.55, at tau 0 = 0",
     "extraction takes all five Fixed-DR runs (RT-231s1..s5) and refuses four",
     "F7: Fixed-DR mean curve when its curves exist; without them F7 keeps the pair",
-    "F7: stored sample std over the seeds (ddof=1; printed, not drawn since D-218)",
+    "F7: stored sample std over the seeds (ddof=1; printed, not drawn)",
     "F3: stored sample std over the seeds (ddof=1), lateral bin 24-30 mm autodr",
     "F6: stored sample std over the seeds (ddof=1), force ECDF and share by step k",
     "F1/F4 error bar: Wilson rounding at 0 of n (2.2e-19) draws length 0; a bound beyond the rate is refused",
     "F6: a Fixed-DR seed with no success leaves (a), is named there, and stays in (b) at share 0",
-    "extraction: every arm's env_steps = (iteration + 1) x its own num_steps_per_env x num_envs (D-195)",
+    "extraction: every arm's env_steps = (iteration + 1) x its own num_steps_per_env x num_envs",
     "F7: two seeds of one arm on different env-step grids are refused",
-    "D-208: Fixed-DR runs in T-auswahl and T-ood beside its two blocks still draw three arms",
+    "Fixed-DR runs in T-auswahl and T-ood beside its two blocks still draw three arms",
     "F11: x1.0 value = centre + (physical - centre) / the block's own factor; tilt 3/4 beside 2/4; "
     "two different T-final references are refused",
     "F12: per arm one dot per seed = its OOD difference with ITS Newcombe interval; line = across-seed "
-    "diff mean; Fixed-DR beside AutoDR (D-208)",
+    "diff mean; Fixed-DR beside AutoDR",
     "F11/F12: T-ood runs that played another table than the sidecar, or none, are refused",
     "rl_games extraction: env_steps = epoch x horizon_length x num_envs; Episode/dr/* read as dr/*; "
     "No-DR start height = its last [floor, hi]; info/epochs off the factor refused",
     "rl_games AutoDR state: all seeds or none, each naming its own run and the curve's last epoch; copied as _ep<E>",
     "load_training finds rsl_rl (_1499) and rl_games (_ep<E>) AutoDR states; F8 names a seed without one",
     "--only naming a figure without input or an unknown key is refused; without --only it is left out",
-    "F4: the reference line names the final policy's own T-final block (T-final-F for Fixed-DR, D-208)",
+    "F4: the reference line names the final policy's own T-final block (T-final-F for Fixed-DR)",
     "H4: one bar per arm = F5's counts summed over its seeds (AutoDR 34 of 40, Fixed-DR 22 of 40)",
-    # D-212: the final result figures H5/H6 and the friction panel.
+    # the final result figures H5/H6 and the friction panel.
     "H5: mean return = mean of the seeds (-45, 55, 155), sample std 10 / sqrt(2), negative values kept",
     "H5/H6: iteration axis needs ONE env-step factor over every run (epoch x F); two factors or rsl_rl's "
     "(it + 1) x F are refused",
     "F3/H2 friction panel: five bins of eval_stats' edges, bin 0 from 0.08 (not 0), x = midpoints, 4 rows each",
     "rl_games extraction: No-DR friction marker = its one logged dr/friction_mean (0.14); a second value is refused",
-    # D-213: best policy per arm (H7, H8).
+    # best policy per arm (H7, H8).
     "best_policies: the pre-registered rule on EACH arm's T-auswahl runs (autodr s1, nodr s1); no T-auswahl, no entry",
     "H7: each arm's best policy reads its own NOISE / OOD blocks; an arm without such runs is left out and named",
     "H8: per bin the nearest-rank median and quartiles of the SUCCESSES' peak force (lat 0-6: 6 N; 24-30: 21 N)",
-    # D-216: H12, the force-sensor test.
+    # H12, the force-sensor test.
     "H12: per arm and block the seed rates and the arm mean of summary's FORCE (autodr_nf pn2 mean "
     "(0.85 + 0.80 + 0.88) / 3); the arms carry the H11 pair (Auto-DR blue solid, #d55181 dashed)",
     "H12: a summary without FORCE, or with a FORCE block marked missing, is refused",
-    # D-218: H2/H5/H6 draw the bootstrap interval of the seed mean.
+    # H2/H5/H6 draw the bootstrap interval of the seed mean.
     "bootstrap interval: five seeds (0, 0, 0.993, 0.996, 0.056) = own percentile reference within 0.01; "
     "a column of equal seeds gets that value",
     "H2/H5/H6 read the interval: two seeds -> [lower seed, upper seed] (H6, H5 autodr; H2 lateral bin 24-30 mm)",
@@ -2836,9 +2832,9 @@ CHECKS = (
     "blocks their own)",
     "F1/F6/F10/H12: the seed mean carries its bootstrap interval (F1 and F6(b) autodr two seeds -> [0.8, 0.9]; "
     "F10 Fixed-DR and H12 inside [lowest, highest seed] around the mean)",
-    # D-219: the seeds themselves are drawn beside the mean.
+    # the seeds themselves are drawn beside the mean.
     "F10: one curve per seed is kept for the thin lines; their mean = the drawn mean (AutoDR, Fixed-DR)",
-    # D-221: H13, the doubled observation errors.
+    # H13, the doubled observation errors.
     "H13: per arm (ARMS order) the seeds sorted, each seed's own reference beside its pn2/gx2/py2 rate "
     "(fixeddr s1, s2: ref [0.0, 0.9], gx2 [0.01, 0.81]); a policy without a block, or no NOISE, is refused",
     # RT-264/265: H14, the robustness curve.
@@ -2849,7 +2845,7 @@ CHECKS = (
     "H15: per seed and 10 epochs, clean = (successes - successes >= t1) / episodes (autodr s1 0.6), share = "
     "successes >= t1 / successes (0.25), no success -> NaN (nodr s2 block 2); the share mean leaves that seed "
     "out and names it (nodr: 2 of 3, left_out [2]), clean keeps it; two t1 values are refused",
-    # D-226: H19/H20, only the learned policies.
+    # H19/H20, only the learned policies.
     "H19/H20: data_learned keeps the policies whose own main test is >= 0.90 (autodr s1-s5 incl. s4 at "
     "exactly 0.90; fixeddr s2, s4, not s1 0.0 / s3 0.5), sorted by seed, rule on the reference not on the "
     "block (autodr s5 block 0.6 stays); mean only for autodr (5), none for fixeddr (2); left_out and ref_range "
@@ -3331,7 +3327,7 @@ def _run_checks(ns) -> dict:
                 and p["median"][-1] == 21.0 and p["n"][0] == 4 and p["n"][-1] == 2)
 
     _check(48, c48)
-    # D-216: eval_stats' own force-root frame (seeds 1-3 per arm, T-final and pn2).
+    # eval_stats' own force-root frame (seeds 1-3 per arm, T-final and pn2).
     s_force = ES.summarize(ES._force_frame())
     s_force_untagged = ES.summarize(ES._force_frame(tags=("",)))
 
@@ -3602,14 +3598,14 @@ def _run_checks(ns) -> dict:
             res[CHECKS[12]] = res[CHECKS[12]] and got["rows"] == 2 * len(TRAINING_RUNS)
         except Exception:   # noqa: BLE001
             res[CHECKS[12]] = False
-        # Fixed-DR training runs (D-192): all five -> extracted; four -> refused.
+        # Fixed-DR training runs: all five -> extracted; four -> refused.
         _write_rt_logs(t / "rt_f", runs={**TRAINING_RUNS, **FIXED_RUNS})
         try:
             got = ns["extract_training"](t / "rt_f", t / "out_f")
             res[CHECKS[23]] = got["rows"] == 2 * (len(TRAINING_RUNS) + len(FIXED_RUNS))
         except Exception:   # noqa: BLE001
             res[CHECKS[23]] = False
-        # D-195: three arms, three factors (ARM_STEPS x 4 envs); each row on its own.
+        # three arms, three factors (ARM_STEPS x 4 envs); each row on its own.
         try:
             cv = pd.read_csv(t / "out_f" / "curves.csv")
             want = (cv["iteration"] + 1) * cv["method"].map(ARM_STEPS) * 4
@@ -3660,7 +3656,7 @@ MUTATIONS = (
     ("figure-numbers-keep-the-point", 'return s.replace(".", ",")', "return s", (CHECKS[13],)),
     ("style-keeps-the-default-tick-formatter", "            axis.set_major_formatter(_de_formatter())\n",
      "            pass\n", (CHECKS[13],)),
-    # Fixed-DR (D-192): its own blocks, optional, both or none.
+    # Fixed-DR: its own blocks, optional, both or none.
     # data_f1 then finds no Fixed-DR run and raises: both F1 checks go red.
     ("f1-reads-fixed-dr-from-the-pair-block", "_policies(summary, ARM_BLOCK[block])", "_policies(summary, block)",
      (CHECKS[0], CHECKS[14], CHECKS[19], CHECKS[41], CHECKS[54])),
@@ -3668,7 +3664,7 @@ MUTATIONS = (
      (CHECKS[15], CHECKS[17])),
     ("half-fixed-dr-accepted", "    if blocks == set(ARM_BLOCK.values()):", "    if blocks:",
      (CHECKS[16],)),
-    # D-208: a Fixed-DR run in T-auswahl / T-ood would count as a third -F block.
+    # a Fixed-DR run in T-auswahl / T-ood would count as a third -F block.
     ("selection-block-counts-as-fixed-dr-block", "    blocks = set(blocks) & set(ARM_BLOCK.values())",
      "    blocks = set(blocks)", (CHECKS[32],)),
     ("f2-k5-rows-swapped", '(("K5_nominal", "T-nominal"), ("K5", "T-final"))',
@@ -3678,10 +3674,6 @@ MUTATIONS = (
     ("f5-ignores-fixed-dr", "    for p in _arm_policies(summary, \"T-final\"):", "    for p in _policies(summary, \"T-final\"):",
      (CHECKS[19], CHECKS[41])),
     ("final-ignores-the-fixed-dr-block", 'df["block"].isin(("T-final", ARM_BLOCK["T-final"]))',
-     # Fixed-DR then has no T-final rows: data_f6 refuses the seedless arm
-     # (_mean_std), so every F6 check goes red with it.
-     # Since D-218 data_f10 works per seed and refuses the seedless arm too (was NaN).
-     # D-219: check 55 reads data_f10's seeds, so it goes red with it.
      'df["block"].isin(("T-final",))',
      (CHECKS[6], CHECKS[10], CHECKS[20], CHECKS[21], CHECKS[22], CHECKS[27], CHECKS[29], CHECKS[54], CHECKS[55])),
     ("f9-ignores-fixed-dr", 'list(te), "methods": {}}\n    for m in arms_in(df):', 'list(te), "methods": {}}\n    for m in METHODS:',
@@ -3696,7 +3688,7 @@ MUTATIONS = (
      (CHECKS[28],)),
     ("f6-refuses-a-seed-without-success", "                no_success.append(int(s))\n                continue",
      '                raise FigError("F6: no success")', (CHECKS[29],)),
-    # D-195: No-DR and Fixed-DR read the AutoDR run's params files.
+    # No-DR and Fixed-DR read the AutoDR run's params files.
     ("one-arm-with-the-other-arms-factor",
      'factor = (run_axis.read_factor(agent, src / run / f"{run}_env.yaml") if agent.is_file()',
      'factor = (run_axis.read_factor(*(src / TRAINING_RUNS[("autodr", s)] / f"{TRAINING_RUNS[(\'autodr\', s)]}_{k}.yaml"'
@@ -3716,7 +3708,7 @@ MUTATIONS = (
     ("f12-drops-fixed-dr", "arms = [m for m in ARMS if m in across]", "arms = [m for m in METHODS if m in across]",
      (CHECKS[34],)),
     ("ood-table-guard-off", 'if shas != {sidecar["sha256"]}:', "if False:", (CHECKS[35],)),
-    # rl_games extraction (D-200): rsl_rl's (it + 1) x F applied to an epoch.
+    # rl_games extraction: rsl_rl's (it + 1) x F applied to an epoch.
     ("rlg-x-by-rsl-rl-rule", 'run_axis.rl_games_x("Episode/success_rate", step, frames)', "(step + 1) * frames",
      (CHECKS[36],)),
     # Without the Episode/ candidate No-DR's start height reads "" and the extraction raises.
@@ -3736,19 +3728,19 @@ MUTATIONS = (
      (CHECKS[40],)),
     ("h4-takes-the-first-seed-only", 'rs = [r for r in rows if r["method"] == m]',
      'rs = [r for r in rows if r["method"] == m][:1]', (CHECKS[41],)),
-    # D-212: H5/H6 and the friction panel.
+    # H5/H6 and the friction panel.
     ("h5-band-clipped-like-a-rate", '    return _seed_curves(curves, RETURN_TAG, "H5")',
      '    return {m: dict(v, mean=np.clip(v["mean"], 0.0, 1.0)) for m, v in _seed_curves(curves, RETURN_TAG, "H5").items()}',
      (CHECKS[42],)),
     ("iteration-axis-accepts-two-factors", "    if len(factors) != 1:", "    if False:", (CHECKS[43],)),
     ("bin-zero-starts-at-0", "else float(edges[0]) - (float(edges[1]) - float(edges[0]))", "else 0.0", (CHECKS[44],)),
     ("nodr-friction-band-accepted", "        if len(fr) > 1:", "        if False:", (CHECKS[45],)),
-    # D-213: the best of all 15 runs handed to every arm (Fixed-DR then gets autodr's seed 1).
+    # the best of all 15 runs handed to every arm (Fixed-DR then gets autodr's seed 1).
     ("best-policy-over-all-arms", '        mine = [p for p in summary["policies"] if p["method"] == m]',
      '        mine = list(summary["policies"])', (CHECKS[46], CHECKS[47])),
     ("h7-reads-the-next-seed", '        pkey = f"{m}_s{seed}"', '        pkey = f"{m}_s{seed + 1}"', (CHECKS[47], CHECKS[53])),
     ("h8-counts-failures", "            won = g[g[KEY] == 1]", "            won = g", (CHECKS[48],)),
-    # D-216: H12.
+    # H12.
     # The other arm's mean then lies outside this arm's interval: check 54 sees it too.
     ("h12-mean-of-the-other-arm", '"mean": b[f"mean_{arm}"],', '"mean": b[f"mean_{ES.FORCE_ARMS[0]}"],',
      (CHECKS[49], CHECKS[54])),
@@ -3759,7 +3751,7 @@ MUTATIONS = (
      '        if False:\n            raise FigError(f"H12', (CHECKS[50],)),
     ("h12-ablation-takes-the-autodr-blue", 'ABLATION_COLOR = "#d55181"', 'ABLATION_COLOR = METHOD_COLOR["autodr"]',
      (CHECKS[49],)),
-    # D-218: the bootstrap interval.
+    # the bootstrap interval.
     ("boot-ci-at-90-percent", 'confidence_level=1.0 - ES.ALPHA, method="percentile"',
      'confidence_level=0.90, method="percentile"', (CHECKS[51],)),
     ("h2-ci-is-mean-plus-sd", 'lo, hi = _boot_ci([seeds[k] for k in keys], "H2")', "lo, hi = mean - std, mean + std",
@@ -3780,7 +3772,7 @@ MUTATIONS = (
      (CHECKS[54],)),
     ("f10-keeps-only-the-first-seed", 'out.setdefault("seeds", {})[m] = seeds   #',
      'out.setdefault("seeds", {})[m] = seeds[:1]   #', (CHECKS[55],)),
-    # D-221: H13.
+    # H13.
     ("h13-reference-is-the-pn2-block", '"ref": one([p["reference"]["rate"] for p in ps])',
      '"ref": one([p["blocks"]["pn2"]["rate"] for p in ps])', (CHECKS[56],)),
     ("h13-seeds-in-file-order", 'ps = sorted(per[m], key=lambda p: p["policy"]["seed"])', "ps = per[m]",
@@ -3796,7 +3788,7 @@ MUTATIONS = (
     ("h15-share-over-episodes", "np.divide(kg, k, out=", "np.divide(kg, n, out=", (CHECKS[58],)),
     ("h15-share-keeps-seeds-without-success", 'used = [s for s, v in seeds.items() if np.isfinite(v["share_ge"]).all()]',
      "used = list(seeds)", (CHECKS[58],)),
-    # D-226: H19/H20.
+    # H19/H20.
     ("learned-rule-strict", 'keep = [p for p in ps if p["reference"]["rate"] >= min_rate]',
      'keep = [p for p in ps if p["reference"]["rate"] > min_rate]', (CHECKS[59], CHECKS[60])),
     ("learned-rule-reads-the-block", 'keep = [p for p in ps if p["reference"]["rate"] >= min_rate]',
@@ -3820,7 +3812,7 @@ MUTATIONS = (
      'low = min(r["rates"])', (CHECKS[62],)),
     ("pair-floor-never-refuses", "if 100 * low < ymin:", "if False:", (CHECKS[62],)),
 )
-_SELF_TEST_MARKER = "# Self-test (D-080): checks on built data"
+_SELF_TEST_MARKER = "# Self-test: checks on built data"
 
 
 def self_test() -> int:

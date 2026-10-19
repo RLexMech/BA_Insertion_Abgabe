@@ -60,7 +60,7 @@ parser.add_argument(
     "--memory-reset-every-step",
     action="store_true",
     default=False,
-    help="D-195 test condition: clear the recurrent policy's memory for EVERY env "
+    help="test condition: clear the recurrent policy's memory for EVERY env "
     "after every step (default: only for envs whose episode ended). Shows whether "
     "an LSTM policy uses its memory, with no extra training. No effect on an MLP. "
     "An evaluation names it in eval_manifest.json (action_mode); give it its own --eval-tag.",
@@ -95,7 +95,7 @@ parser.add_argument(
     "--eval-ood",
     action="store_true",
     default=False,
-    help="Out-of-distribution table (D-206 (3), D-055/D-191): lets the env "
+    help="Out-of-distribution table: lets the env "
     "accept table values outside [0, 1] (env.dr_table_allow_outside). Only with "
     "--eval-table; where a value may leave [0, 1] is checked afterwards against "
     "the table's sidecar (check_eval_conditions.py G3e).",

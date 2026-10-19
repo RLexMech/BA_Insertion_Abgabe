@@ -45,7 +45,6 @@ def _pocket_from_env(default_mm: float = 32.0) -> float:
 
 
 POCKET_SIDE = _pocket_from_env()
-"""Square pocket edge length [m] -- the curriculum variable (D-033)."""
 POCKET_DEPTH = 0.035
 SUCCESS_DEPTH = 0.025
 
@@ -146,7 +145,7 @@ TOOL_ROBOT_USD_NAME = "ur5e_tool.usd"
 
 
 def default_tool_usd_path() -> str:
-    """Where the CAD import of gripper + part lives (D-067, RT-8 .. RT-12)."""
+    """Where the CAD import of gripper + part lives (RT-8 .. RT-12)."""
     return os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "assets", "Werkzeug", TOOL_USD_NAME
     )
@@ -170,7 +169,7 @@ def resolve_tool_usd_path() -> str:
         "Tool assembly USD not found. Tried: "
         + "; ".join(candidates)
         + ". Import CAD/Step/Greifer_Bauteil/greifer_bauteil_asm.stp in Isaac Sim "
-        "and repair the units (D-067), or set INSERTION_TOOL_USD."
+        "and repair the units, or set INSERTION_TOOL_USD."
     )
 
 
@@ -178,7 +177,7 @@ POCKET_USD_NAME = "Aufnahme_real_v1_mm.usd"
 
 
 def default_pocket_usd_path() -> str:
-    """Where the imported fixture cut-out lives (D-067, RT-27 .. RT-36)."""
+    """Where the imported fixture cut-out lives (RT-27 .. RT-36)."""
     return os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "assets", "Werkzeug", POCKET_USD_NAME
     )
@@ -195,7 +194,7 @@ def resolve_pocket_usd_path() -> str:
         "Fixture cut-out USD not found. Tried: "
         + "; ".join(candidates)
         + ". Convert CAD/Aufnahme_real_v1_mm.stp (NOT Aufnahme_real_v1.stp -- it "
-        "declares INCH, D-083), repair it with scripts/fix_stage_units.py and "
+        "declares INCH), repair it with scripts/fix_stage_units.py and "
         "scripts/fix_fixture_asset.py, give it a collider with "
         "scripts/add_fixture_collision.py, or set INSERTION_POCKET_USD."
     )
@@ -232,7 +231,6 @@ class FixedAssetCfg:
 
     usd_path: str = ""
     side: float = POCKET_SIDE
-    """Square pocket edge length [m]."""
     depth: float = POCKET_DEPTH
     """Blind-pocket depth [m]; the bottom is a physical stop.
 
@@ -248,7 +246,7 @@ class FixedAssetCfg:
     """Insertion depth counted as success [m].
 
     The DEFAULT is the proxy's 25 mm. The env overrides it with
-    SEATED_SUCCESS_DEPTH (D-106 (1)) at the one place this class is
+    SEATED_SUCCESS_DEPTH at the one place this class is
     instantiated, for the same ordering reason as ``depth`` above.
     """
     friction: float = 0.75
@@ -360,9 +358,9 @@ POCKET_LOCAL_Z_RANGE = (POCKET_ASSET_BOTTOM_Z, POCKET_RIM_Z)
 
 POCKET_SEAT_DEPTH = -POCKET_FLOOR_Z
 
-D106_DEPTH_BAND = 0.003
+SUCCESS_DEPTH_BAND = 0.003
 
-SEATED_SUCCESS_DEPTH = POCKET_SEAT_DEPTH - D106_DEPTH_BAND
+SEATED_SUCCESS_DEPTH = POCKET_SEAT_DEPTH - SUCCESS_DEPTH_BAND
 
 POCKET_OPENING_X = 2.0 * POCKET_WALL_X
 POCKET_OPENING_Y = 2.0 * POCKET_WALL_Y
@@ -554,24 +552,13 @@ PLAY_Y = POCKET_OPENING_Y - PART_BBOX_M[1]
 
 POCKET_HOLE_MIN_Y = 0.0796347
 HOLE_REACH_OFFSET_Y = POCKET_HOLE_MIN_Y - PART_BBOX_M[1] / 2.0
-"""Lateral +y offset [m] at which the part reaches the D-153 hole: 0.0078847.
-
-Read against what each pocket stage allows the part centre to do:
-stage 2 allows PLAY_Y / 2 = 0.8 mm, so the seated state is clear by 7.0847 mm;
-stage 1 allows POCKET_STAGE1_Y_RANGE[1] - PART_BBOX_M[1] / 2 = 8.7000 mm,
-which is MORE than this offset. That gap is the open exposure D-153 names,
-and `insertion_env._max_stage1_lat_y` is the instrument that measures it."""
-"""Total lateral play [m]: X=0.0005876, Y=0.00160 (D-088).
-SAPU threshold and fine kernel width derive from PLAY_X (D-106, D-109).
-Yaw/across-tilt wall constraints are documented but not checked in code.
-"""
 
 
 INTERPEN_THRESH = 0.5 * PLAY_X
 
 KERNEL_MARGIN_COARSE = 0.17321
 KERNEL_A_COARSE = math.acosh(10.0) / KERNEL_MARGIN_COARSE
-KERNEL_A_MID = math.acosh(10.0) / D106_DEPTH_BAND
+KERNEL_A_MID = math.acosh(10.0) / SUCCESS_DEPTH_BAND
 KERNEL_A_FINE = math.acosh(10.0) / PLAY_X
 KERNEL_B_COARSE = 2.0
 KERNEL_B_MID = 2.0

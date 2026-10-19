@@ -3,29 +3,29 @@
 
 r"""Check SDF sign and penetration on the real meshes; test pure math offline.
 
---self-test uses the NumPy torch shim and mutation tests (D-080), no GPU.
+--self-test uses the NumPy torch shim and mutation tests, no GPU.
 Default mode uses standalone Warp, without an Isaac stage. Move samples
 outside the query mesh's bounding box: distances must be positive. RT-87
 found 380 unpaired part edges; watertightness is not assumed.
 --mutate-sign must fail P2/P5 while preserving P4.
 
 Default one-mesh mode tests the goal-pose reward (RT-90). P4 checks the
-99th percentile of identity distances (D-155, RT-98). With --query-obj,
-test part samples against the fixture (SAPU, D-109): skip P4, size offsets
+99th percentile of identity distances (RT-98). With --query-obj,
+test part samples against the fixture (SAPU): skip P4, size offsets
 from both meshes, and assert only measured-disjoint rows. Fail if no row
 is disjoint. P3 uses asserted rows only: crossing the fixture can first
 reduce distance (RT-92). judge_ladder and judge_identity define the rules.
 
 --bench reports build time, query time, memory and returned sample count;
-it does not issue a sign verdict (D-122, RT-97). Far-field tests do not
-validate sign at open edges (D-152); check_fixture_mesh.py locates them
+it does not issue a sign verdict (RT-97). Far-field tests do not
+validate sign at open edges; check_fixture_mesh.py locates them
 relative to the swept volume (RT-91).
 
 --pose-ladder uses the environment's part-to-fixture transform. RT-184
 tested separated rim poses; the fixture is not watertight (RT-64).
 Probe floor offsets -1..+2 mm around seat depth, x/y offsets at the lower
 success boundary, and a measured-disjoint far pose. Q1: penetration must
-not decrease beyond 0.03 mm tolerance (D-152). Q2: each direction's maximum
+not decrease beyond 0.03 mm tolerance. Q2: each direction's maximum
 offset must exceed that tolerance. Q3: the far pose must read zero;
 negating the sign must fail Q3 (RT-208, RT-208m).
 
@@ -114,7 +114,7 @@ IDENTITY_CASES = {
 
 
 def run_identity_cases() -> int:
-    """Run IDENTITY_CASES against D-152's tolerance. Returns the mismatches."""
+    """Run IDENTITY_CASES against the configured tolerance. Returns the mismatches."""
     bad = 0
     for name, (vals, want) in IDENTITY_CASES.items():
         v = judge_identity(vals, ON_SURFACE_TOL_M)
@@ -432,14 +432,14 @@ SPACING_CASES = {
 
 
 def run_spacing_cases() -> int:
-    """Reproduce D-122's published table. Returns the number of mismatches."""
+    """Check the reference spacing table. Returns the number of mismatches."""
     area = box_area_m2(BOX_PART_M)
     bad = 0
     for name, (n, want_mm) in SPACING_CASES.items():
         got_mm = spacing_from_area(area, n) * 1000.0
         if abs(got_mm - want_mm) <= 0.01:
             print(f"[check_insertion_sdf]   spacing {name}: PASS "
-                  f"({got_mm:.4f} mm against D-122's {want_mm} mm)")
+                  f"({got_mm:.4f} mm against {want_mm} mm)")
         else:
             print(f"[check_insertion_sdf]   spacing {name}: FAIL -- "
                   f"expected {want_mm} mm, got {got_mm:.4f} mm")
@@ -462,7 +462,7 @@ def run_bench(args) -> int:
     envs = int(args.bench_envs)
 
     print(f"[check_insertion_sdf] marker: {SCRIPT_MARKER}")
-    print("[check_insertion_sdf] MODE: BENCH -- D-122's missing half, the COST. "
+    print("[check_insertion_sdf] MODE: BENCH -- mesh-query cost. "
           "Nothing is asserted here and there is no verdict; this run measures.")
     print(f"[check_insertion_sdf] sampled obj: {obj_path}")
     print(f"[check_insertion_sdf] queried obj: {query_obj if two_meshes else '(the same file)'}")
@@ -470,7 +470,7 @@ def run_bench(args) -> int:
           f"warm-up {args.bench_warmup}, timed repeats {args.bench_repeats}")
 
     box_a = box_area_m2(BOX_PART_M)
-    print(f"[check_insertion_sdf] D-122's box area {box_a * 1e4:.1f} cm2 "
+    print(f"[check_insertion_sdf] box area {box_a * 1e4:.1f} cm2 "
           f"(90.00 x 143.50 x 50.506 mm), cross play {PLAY_X_M * 1000:.4f} mm")
 
     cuda = torch.cuda.is_available()
@@ -534,10 +534,10 @@ def run_bench(args) -> int:
             torch.cuda.empty_cache()
 
     print(f"[check_insertion_sdf] mesh area MEASURED: {mesh_a * 1e4:.1f} cm2 "
-          f"against D-122's box lower bound {box_a * 1e4:.1f} cm2 "
+          f"against box lower bound {box_a * 1e4:.1f} cm2 "
           f"(ratio {mesh_a / box_a:.3f})")
-    print("[check_insertion_sdf] BENCH DONE -- no verdict by design (D-122's "
-          "count is a decision, and this run supplies its cost column).")
+    print("[check_insertion_sdf] BENCH DONE -- no verdict by design ("
+          "sample count is configurable; this run measures its cost).")
     return 0
 
 
@@ -992,7 +992,7 @@ def main() -> int:
     parser.add_argument("--query-obj", type=str, default=None,
                         help="Mesh that is QUERIED. Default: the sampled one, which is the "
                              "SDF reward term. Point it at the fixture OBJ for the SAPU "
-                             "configuration (D-109 (10)): the part's points against the "
+                             "configuration: the part's points against the "
                              "fixture's surface. P4 is then skipped and the ladder steps "
                              "along the fixture.")
     parser.add_argument("--num-sample-points", type=int, default=NUM_SAMPLE_POINTS,
@@ -1007,7 +1007,7 @@ def main() -> int:
                              "own surface at the identity transform. Default is the "
                              "success-depth uncertainty, see ON_SURFACE_TOL_M.")
     parser.add_argument("--mutate-sign", action="store_true",
-                        help="D-080 counter-proof: negate every distance. P2 and P5 "
+                        help="counter-proof: negate every distance. P2 and P5 "
                              "must fail, P4 must not.")
     parser.add_argument("--pose-ladder", action="store_true",
                         help="Training PC: the part against the FIXTURE at known separated and "
@@ -1016,7 +1016,7 @@ def main() -> int:
     parser.add_argument("--bench", action="store_true",
                         help="MEASUREMENT mode, no verdict: time signed_distances over a "
                              "ladder of sample counts at our env count. Supplies the cost "
-                             "column D-122 says its decision needs.")
+                             "query cost.")
     parser.add_argument("--bench-points", type=str, default=None,
                         help="Comma-separated sample counts for --bench. Default: "
                              f"{','.join(str(v) for v in BENCH_POINTS)} -- the last rung is "

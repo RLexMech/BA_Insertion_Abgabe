@@ -1,7 +1,7 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-"""End an Isaac script with an exit code that survives the shutdown (D-081)."""
+"""End an Isaac script with an exit code that survives the shutdown."""
 
 from __future__ import annotations
 

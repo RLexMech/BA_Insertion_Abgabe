@@ -11,7 +11,7 @@ import traceback
 
 from isaaclab.app import AppLauncher
 
-parser = argparse.ArgumentParser(description="Add the D-017 bore task frame to a fixture USD.")
+parser = argparse.ArgumentParser(description="Add the bore task frame to a fixture USD.")
 parser.add_argument("--usd", type=str, required=True, help="Path to the fixture USD file (edited in place).")
 parser.add_argument(
     "--parent-path",

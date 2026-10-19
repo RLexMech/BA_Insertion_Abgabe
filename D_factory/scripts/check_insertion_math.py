@@ -151,7 +151,7 @@ def _rewards(ns, sdf, interpen=0.0, engaged=False, success=False, force_abort=Fa
              time_penalty=0.0, action_rate_scale=0.0,
              depth_progress=0.0, w_progress=0.0,
              tilt_phi=0.0, tilt_phi_prev=0.0, gamma=0.0):
-    """One call of compute_rewards_insertion with the D-109 constants."""
+    """One call of compute_rewards_insertion with the configured constants."""
     one = torch.tensor([1.0])
     zero = torch.tensor([0.0])
     return ns["compute_rewards_insertion"](
@@ -365,7 +365,7 @@ def build_checks(ns, cfg_mutations: tuple = ()) -> list[tuple[str, bool, str]]:
 
     _old_tip = bi_pos + torch.matmul(axes_from_quat(bi_quat), bi_off3) - bi_org
     _old_rel = rotate_into_frame(bi_rot, _old_tip - bi_ent)
-    check("the (3,) path is bit-identical to the pre-D-183 bare matmul",
+    check("the (3,) path is bit-identical to the previous bare matmul",
           bool((_arr(bi_shared[0]) == _arr(_old_rel)).all()),
           f"max |d| {_maxabs(bi_shared[0], _old_rel):.3e}")
 
@@ -672,7 +672,7 @@ def build_checks(ns, cfg_mutations: tuple = ()) -> list[tuple[str, bool, str]]:
     phi_up = _phi(0.0)
     check("Phi is w upright", abs(phi_up - PROBE_W_TILT) < 1e-12, f"{phi_up:.12f}")
     phi_margin = _phi(PROBE_TILT_MARGIN_RAD)
-    check("Phi is 0.1 w at the margin (the D-109 (9) rule)",
+    check("Phi is 0.1 w at the margin (the rule)",
           abs(phi_margin - 0.1 * PROBE_W_TILT) < 1e-9, f"{phi_margin:.9f}")
     worst_sech = 0.0
     for deg in (5.42, 8.52):
@@ -904,7 +904,7 @@ def build_checks(ns, cfg_mutations: tuple = ()) -> list[tuple[str, bool, str]]:
     check("channels 28:34 carry prev_action",
           bool((pobs[:, 28:34] == prev_marker).all()), f"first value {_f(pobs[:, 28:34])}")
 
-    # -- yaw encoding: cos phi / sin phi, NOT cos 4 phi (D-107 point 2) -----
+    # -- yaw encoding: cos phi / sin phi, NOT cos 4 phi -----
     ycs = ns["yaw_cos_sin"]
     e0 = ycs(torch.tensor([[1.0, 0.0, 0.0]]))
     check("yaw of an unrotated x-axis is (1, 0)",
@@ -1193,7 +1193,7 @@ def build_checks(ns, cfg_mutations: tuple = ()) -> list[tuple[str, bool, str]]:
           not _r(depth_max + 0.001))
     check("both band edges are inclusive", _r(depth_min) and _r(depth_max))
     check("a tunnelled seat is NOT a success", not _r(0.0215, INTERPEN_THRESH * 2.0))
-    check("in the band but OUTSIDE the pocket is NOT a success (D-157)",
+    check("in the band but OUTSIDE the pocket is NOT a success",
           not _r(0.0215, in_pocket=False))
 
     def _e(depth, in_pocket=True):
@@ -1202,7 +1202,7 @@ def build_checks(ns, cfg_mutations: tuple = ()) -> list[tuple[str, bool, str]]:
 
     check("engaged is a depth threshold inside the pocket",
           _e(engaged_depth) and not _e(engaged_depth * 0.5))
-    check("engaged does NOT fire outside the pocket (D-157)",
+    check("engaged does NOT fire outside the pocket",
           not _e(engaged_depth, in_pocket=False))
 
     hack_pocket = cross(torch.tensor([[0.0, hack_y, 0.0]]), wall_x, wall_y)
@@ -1893,7 +1893,7 @@ def build_checks(ns, cfg_mutations: tuple = ()) -> list[tuple[str, bool, str]]:
           f"episode_length_s {_c.episode_length_s:.6f}")
     _c = _mode_cfg("joint_pd")
     _got = resolve_mode(_c)
-    check("joint_pd mode leaves the D-024 rate fields untouched",
+    check("joint_pd mode leaves the rate fields untouched",
           _got == "joint_pd" and _c.decimation == 2 and _c.sim.render_interval == 2
           and abs(_c.episode_length_s - 256 / 60) < 1e-12)
     try:
@@ -1918,8 +1918,8 @@ def build_checks(ns, cfg_mutations: tuple = ()) -> list[tuple[str, bool, str]]:
           and resolve_lat(0) == 0.0 and isinstance(resolve_lat(0), float)
           and resolve_lat(0.0) == 0.0,
           f"{resolve_lat(0.006)!r}, {resolve_lat(0)!r}")
-    check("a pair or a hydra list is refused, with a pointer to D-178",
-          all("D-178" in _lat_refusal(v)
+    check("a pair or a hydra list is refused, with the scalar-radius requirement",
+          all("ONE radius in metres" in _lat_refusal(v)
               for v in ([0.002, 0.001], (0.002, 0.001), [0.006])),
           _lat_refusal([0.002, 0.001])[:70])
     check("a negative radius is refused",
@@ -2118,7 +2118,7 @@ MUTATIONS: tuple[tuple[str, tuple[tuple[str, str], ...], tuple[str, ...]], ...] 
           "    tip_local = body_pos + tip_offset_local - env_origins"),),
         (
             "the tip offset rotates with the part",
-            "the (3,) path is bit-identical to the pre-D-183 bare matmul",
+            "the (3,) path is bit-identical to the previous bare matmul",
             "the goal pose reports exactly seat depth through part_tip_pose",
             "the goal tip offset rotates with the pocket",
             "a yawed and tilted pocket still seats the goal exactly",
@@ -2143,7 +2143,7 @@ MUTATIONS: tuple[tuple[str, tuple[tuple[str, str], ...], tuple[str, ...]], ...] 
           ").reshape(-1, 3)\n"),),
         (
             "the env origin is subtracted",
-            "the (3,) path is bit-identical to the pre-D-183 bare matmul",
+            "the (3,) path is bit-identical to the previous bare matmul",
         ),
     ),
     (
@@ -2569,7 +2569,7 @@ MUTATIONS: tuple[tuple[str, tuple[tuple[str, str], ...], tuple[str, ...]], ...] 
         (("return deep_enough & not_too_deep & clean & in_pocket",
           "return deep_enough & not_too_deep & clean"),),
         (
-            "in the band but OUTSIDE the pocket is NOT a success (D-157)",
+            "in the band but OUTSIDE the pocket is NOT a success",
             "RT-107 replay: seat depth 109 mm BESIDE the pocket is no success",
         ),
     ),
@@ -2577,7 +2577,7 @@ MUTATIONS: tuple[tuple[str, tuple[tuple[str, str], ...], tuple[str, ...]], ...] 
         "engaged-drops-the-pocket-gate",
         (("return (depth >= engaged_depth) & in_pocket", "return depth >= engaged_depth"),),
         (
-            "engaged does NOT fire outside the pocket (D-157)",
+            "engaged does NOT fire outside the pocket",
             "RT-107 replay: seat depth 109 mm BESIDE the pocket is not engaged",
         ),
     ),
@@ -2747,7 +2747,7 @@ MUTATIONS: tuple[tuple[str, tuple[tuple[str, str], ...], tuple[str, ...]], ...] 
           "    return w_tilt * squash(theta, a_tilt, 0.0)\n"),),
         (
             "Phi is w upright",
-            "Phi is 0.1 w at the margin (the D-109 (9) rule)",
+            "Phi is 0.1 w at the margin (the rule)",
             "Phi is sech(a * theta) at 5.42 and 8.52 deg",
         ),
     ),
@@ -2814,7 +2814,7 @@ CFG_MUTATIONS: tuple[tuple[str, tuple[tuple[str, str], ...], tuple[str, ...]], .
         (("    if isinstance(value, (list, tuple)):\n        raise ValueError(\n",
           "    if isinstance(value, (list, tuple)):\n        value = value[0]\n"
           "    if False:\n        raise ValueError(\n"),),
-        ("a pair or a hydra list is refused, with a pointer to D-178",),
+        ("a pair or a hydra list is refused, with the scalar-radius requirement",),
     ),
     (
         "a-negative-radius-passes",
@@ -3044,7 +3044,7 @@ def _run(mutations=(), cfg_mutations=()) -> dict[str, bool]:
 
 def _self_test() -> int:
     """Break the source one way at a time; require exactly the named flips."""
-    print("[check_insertion_math] counter-proof (D-080)")
+    print("[check_insertion_math] counter-proof")
     baseline = _run()
     rc = 0
     if not all(baseline.values()):

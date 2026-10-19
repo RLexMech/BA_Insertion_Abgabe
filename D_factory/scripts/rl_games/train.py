@@ -95,7 +95,7 @@ logger = logging.getLogger(__name__)
 
 
 def _run_folder_name(env_cfg, seed) -> str:
-    """D-200 (2): ``<mm-dd_HH-MM-SS>__<RT_NAME>_<tags>``, the name ``scripts/rsl_rl/train.py`` gives (its lines 288-462, code copied without the comments; the reasons live there)."""
+    """``<mm-dd_HH-MM-SS>__<RT_NAME>_<tags>``, the name ``scripts/rsl_rl/train.py`` gives (its lines 288-462, code copied without the comments; the reasons live there)."""
     parts = []
     if hasattr(env_cfg, "dr_mode") and str(env_cfg.dr_mode) != "off":
         parts.append(str(env_cfg.dr_mode))

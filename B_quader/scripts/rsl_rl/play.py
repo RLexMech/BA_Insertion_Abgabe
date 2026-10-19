@@ -48,7 +48,7 @@ parser.add_argument(
     default=None,
     metavar="DEG",
     help="Tilt the fixture (and with it the pocket) by DEG degrees about the env y "
-    "axis through the pocket centre; positive tips the +x plate side down (D-036). "
+    "axis through the pocket centre; positive tips the +x plate side down. "
     "Generalisation probe: the pocket opening is no longer parallel to the ground. "
     "Gate, depth and observation are measured in the pocket frame. Max 15 deg.",
 )
@@ -58,7 +58,7 @@ parser.add_argument(
     default=None,
     metavar="DEG",
     help="Rotate the fixture (and with it the pocket) by DEG degrees about the env z "
-    "axis through the pocket centre (D-038). Generalisation probe: the square "
+    "axis through the pocket centre. Generalisation probe: the square "
     "pocket's walls are no longer axis-aligned; phi, gate and observation are "
     "measured in the yawed pocket frame. The pocket repeats every 90 deg (C4), so "
     "+-45 deg already covers every distinct pose -- larger values are rejected. "

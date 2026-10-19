@@ -10,8 +10,8 @@ Without external log/filehash evidence G1 is incomplete, never PASS.
 G2: exactly one episode==0 per env, N table rows/envs, all first episodes done.
 G3: independently map table rows with float64 math, tolerance 1e-6; compare
 configured and recorded ranges. Noise tags pn2/gx2/py2 double their named
-widths (D-191, D-206). Values outside [0,1] require matching OOD/wide
-sidecar authorisation and run switch (D-227).
+widths. Values outside [0,1] require matching OOD/wide
+sidecar authorisation and run switch.
 
 The mapping does not reuse environment math. Stdlib-only; --self-test
 uses synthetic runs.
@@ -56,9 +56,9 @@ APPLIED_COLUMNS = (
 )
 FRICTION_READBACKS = APPLIED_COLUMNS[15:]
 
-# Parameter sources ( autodr.DR_DIMS, D-178/179/181). `nominal`:
+# Parameter sources ( autodr.DR_DIMS). `nominal`:
 # everything but the start height sits on its centre; friction centre 0.140 is
-# D-111's CONTACT_FRICTION, read back in RT-207s1.
+# CONTACT_FRICTION, read back in RT-207s1.
 BANDS = {
     "target": {
         "lat_r": (0.0, 0.030),
@@ -75,12 +75,12 @@ BANDS = {
         "friction": (0.140, 0.140),
     },
 }
-FIXTURE_NOISE_XY_M = 0.05    # cfg fixture_pos_noise_xy (D-203/D-204)
-FIXTURE_NOISE_Z_M = 0.05     # cfg fixture_pos_noise_z (D-204 (4))
-GRASP_OBS_X_M = 0.003        # D-183
-POCKET_OBS_YAW_RAD = 0.0223402   # D-194, Belege_Streuwerte B6 (the run's value)
+FIXTURE_NOISE_XY_M = 0.05    # cfg fixture_pos_noise_xy
+FIXTURE_NOISE_Z_M = 0.05     # cfg fixture_pos_noise_z
+GRASP_OBS_X_M = 0.003
+POCKET_OBS_YAW_RAD = 0.0223402   # Belege_Streuwerte B6 (the run's value)
 POCKET_OBS_NOISE_M = 0.005   # cfg obs_noise_pocket_pos_std_m (uniform half width, Belege B4a)
-# D-191 (3) / D-206 (3): the observation-noise blocks, x2 of ONE training value
+# the observation-noise blocks, x2 of ONE training value
 # each (IndustReal Table X; Belege_Streuwerte F3). The run's --eval-tag names the
 # block. `scripts/rl_games/run_eval.ps1` `$NoiseOverride` hands the same values to
 # the env; the self-test holds the two against each other.
@@ -110,14 +110,12 @@ CHECK_NAMES = (
     "G3b the env's bands are the plan's bands for this width",
     "G3c every applied value = the table row mapped, within 1e-6",
     "G3d friction read back from PhysX = commanded, on both assets",
-    # D-206 (3), from p6-TestAusserhalb 019ae3d8: a plain table passes this
-    # one by construction.
     "G3e values outside [0, 1] only where an OOD sidecar nails or a wide sidecar stretches, and the run's switch matches",
 )
 
 
 # The table kinds whose nailed cells may leave [0, 1] (make_eval_table.py):
-# ``ood`` (D-206 (3)) and ``sweep`` (RT-264), one sidecar schema.
+# ``ood`` and ``sweep`` (RT-264), one sidecar schema.
 OUTSIDE_KINDS = ("ood", "sweep")
 
 
@@ -134,7 +132,7 @@ def ood_cells(sidecar: dict) -> dict:
 
 
 def wide_ranges(sidecar: dict) -> dict:
-    """``{column: (unit_lo, unit_hi)}`` a wide sidecar stretches (D-227,
+    """``{column: (unit_lo, unit_hi)}`` a wide sidecar stretches (
     ``make_eval_table.py --kind wide``); {} for any other kind."""
     if sidecar.get("kind") != "wide":
         return {}
@@ -188,7 +186,7 @@ def judge(table, sidecar, table_sha, log_shas, filehash, ep_header, ep_rows,
     ``applied_meta.json`` AND in the manifest's ``noise``, pocket noise in the
     manifest's ``noise`` (torch draws it, no applied column). G3c maps the table
     with the expected grasp and yaw widths. So a x2 run passes only under its
-    own tag (D-191 (3), D-206 (3))."""
+    own tag."""
     want_noise = expected_noise(manifest.get("tag"))
     grasp_x_m = want_noise["grasp_obs_offset_x_m"]
     yaw_rad = want_noise["pocket_obs_yaw_rad"]
@@ -268,7 +266,7 @@ def judge(table, sidecar, table_sha, log_shas, filehash, ep_header, ep_rows,
 
     # G3e: every cell outside [0, 1] is one the OOD sidecar nails, with its
     # value, or lies in a column a wide sidecar stretches, inside its range
-    # (D-227); every nailed cell holds it; and the env ran with the switch ON
+    # Every constrained cell holds it; and the env ran with the switch ON
     # exactly when the table is an OOD, sweep or wide table (applied_meta, env
     # cfg dr_table_allow_outside). A record without the key reads as off.
     nailed = ood_cells(sidecar)
@@ -317,7 +315,7 @@ def log_hashes(path: pathlib.Path) -> list:
 
 
 # ---------------------------------------------------------------------------
-# Self-test: a built run, each broken one way (D-080)
+# Self-test: a built run, each broken one way
 # ---------------------------------------------------------------------------
 
 def _good(width: str = "target"):
@@ -394,7 +392,7 @@ def _ood_then(fn):
 
 
 def _make_wide(g):
-    """A legal wide run (D-227): lat_r and yaw stretched to their x1.5 edges,
+    """A legal wide run: lat_r and yaw stretched to their x1.5 edges,
     one value outside [0, 1] in each, the switch on."""
     g["sidecar"].update(kind="wide", columns=[
         {"key": "lat_r", "column": 0, "unit_lo": 0.0, "unit_hi": 2.25},
@@ -449,7 +447,6 @@ def _pocket(width_m: float):
 
 
 CASES = (
-    # D-206 (3), from p6-TestAusserhalb 019ae3d8: G3e.
     ("ood-table-with-its-sidecar-and-switch", _make_ood, ()),
     ("ood-value-in-a-cell-the-sidecar-does-not-nail", _ood_then(_stray_cell), ("G3e",)),
     ("ood-run-without-the-switch",
@@ -461,14 +458,14 @@ CASES = (
     ("sweep-table-with-its-sidecar-and-switch", lambda g: (_make_ood(g), g["sidecar"].update(kind="sweep")), ()),
     ("outside-values-under-an-unknown-kind", lambda g: (_make_ood(g), g["sidecar"].update(kind="other")), ("G3e",)),
     ("plain-table-with-a-value-outside", _stray_cell, ("G3e",)),
-    # D-227: a wide sidecar allows its stretched columns, inside their range.
+    # a wide sidecar allows its stretched columns, inside their range.
     ("wide-table-with-its-sidecar-and-switch", _make_wide, ()),
     ("wide-value-beyond-its-column-range",
      _wide_then(lambda g: (g["table"][2].__setitem__(0, 2.3), _rebuild_applied(g))), ("G3e",)),
     ("wide-value-in-a-column-not-stretched", _wide_then(_stray_cell), ("G3e",)),
     ("wide-run-without-the-switch",
      _wide_then(lambda g: g["meta"]["table"].update(allow_outside=False)), ("G3e",)),
-    # D-191 (3) (a766ae9e) and D-206 (3): the observation-noise x2 blocks. The
+    # (a766ae9e) and the observation-noise x2 blocks. The
     # expected widths come from the manifest tag and are read back from the
     # run's records.
     ("gx2-run-tagged-gx2", _tag(_grasp_run(2.0 * GRASP_OBS_X_M), "gx2"), ()),
@@ -510,7 +507,7 @@ CASES = (
     ("an-env-has-no-first-episode", lambda g: g["ep_rows"].pop(0), ("G2a",)),
     ("an-env-id-twice", lambda g: g["ep_rows"][1].update(env_id="0"), ("G2a",)),
     ("one-env-never-finished", lambda g: g["manifest"].update(envs_finished_first_episode=5), ("G2b",)),
-    # D-194: the evaluation ran without `env.pocket_obs_yaw_rad` (default 0.0 = off).
+    # the evaluation ran without `env.pocket_obs_yaw_rad` (default 0.0 = off).
     ("yaw-belief-error-was-off",
      lambda g: [r.update(pocket_obs_yaw_rad="0") for r in g["ap_rows"]], ("G3c",)),
     # ... and the env says so itself, in applied_meta.json.
@@ -533,7 +530,7 @@ def _applied_columns_vs_env() -> tuple[bool, str]:
 
 
 def _yaw_belief_example() -> tuple[bool, str]:
-    """D-194 worked example, not recomputed: Belege_Streuwerte B6 says uniform in
+    """worked example, not recomputed: Belege_Streuwerte B6 says uniform in
     +-0.0223402 rad, and the env maps the column like ``grasp_obs_x``
     (``insertion_env._reset_idx``). Unit 0 / 0.5 / 1 -> lower edge / 0 / upper
     edge, at every width (a belief error has no band)."""
@@ -630,12 +627,12 @@ def self_test() -> int:
     print(f"[check_eval_conditions]   oracle = production math on the seed-20 table: "
           f"{'PASS' if ok else 'FAIL'} ({detail})")
     bad += not ok
-    # D-206 (3): the same comparison where the unit values leave [0, 1].
+    # the same comparison where the unit values leave [0, 1].
     ok, detail = _oracle_vs_production("eval_table_ood_seed10_c18.csv", 1050)
     print(f"[check_eval_conditions]   oracle = production math on the OOD table: "
           f"{'PASS' if ok else 'FAIL'} ({detail})")
     bad += not ok
-    # D-227: and on the wide table (four columns stretched at once).
+    # and on the wide table (four columns stretched at once).
     ok, detail = _oracle_vs_production("eval_table_wide_seed10_c18.csv", 1000)
     print(f"[check_eval_conditions]   oracle = production math on the wide table: "
           f"{'PASS' if ok else 'FAIL'} ({detail})")

@@ -151,9 +151,9 @@ class ProxytaskEnv(DirectRLEnv):
                     "a deterministic pocket angle (fixture_tilt_rad / fixture_yaw_rad) is "
                     "set together with a noise range (fixture_tilt_noise_rad / "
                     "fixture_yaw_noise_rad): one run cannot be a deterministic probe "
-                    "(one fixed pose, all envs, the instrument the D-036 baseline was "
+                    "(one fixed pose, all envs, the instrument the baseline was "
                     "measured with) and a randomised curriculum rung at the same time. "
-                    "Set exactly one side (D-037/D-038)."
+                    "Set exactly one side."
                 )
             half_tilt = 0.5 * float(cfg.fixture_tilt_rad)
             half_yaw = 0.5 * float(cfg.fixture_yaw_rad)
@@ -709,15 +709,15 @@ class ProxytaskEnv(DirectRLEnv):
         print(f"fixture usd: {self._fixture_usd_path}")
         print(f"robot usd:   {self._robot_usd_path}")
         print(f"fixture spawn translation: {cfg.fixture_pos}  (asset origin = opening plane at pocket centre)")
-        print(f"fixture tilt (D-036 probe): {math.degrees(cfg.fixture_tilt_rad):+.2f} deg about env y through the pocket centre "
+        print(f"fixture tilt (probe): {math.degrees(cfg.fixture_tilt_rad):+.2f} deg about env y through the pocket centre "
               f"({'ACTIVE -- one fixed angle in every env' if cfg.fixture_tilt_rad != 0.0 else 'inactive'})")
-        print(f"fixture yaw (D-038 probe): {math.degrees(cfg.fixture_yaw_rad):+.2f} deg about env z through the pocket centre "
+        print(f"fixture yaw (probe): {math.degrees(cfg.fixture_yaw_rad):+.2f} deg about env z through the pocket centre "
               f"({'ACTIVE -- one fixed angle in every env' if cfg.fixture_yaw_rad != 0.0 else 'inactive'})")
-        print(f"fixture tilt noise (D-037): magnitude 0..{math.degrees(cfg.fixture_tilt_noise_rad):.2f} deg, "
+        print(f"fixture tilt noise: magnitude 0..{math.degrees(cfg.fixture_tilt_noise_rad):.2f} deg, "
               "direction uniform over 360 deg, resampled per episode "
               f"({'ACTIVE -- per-env pocket orientation' if cfg.fixture_tilt_noise_rad > 0.0 else 'inactive'})")
         print(f"pocket-frame measurement: {'ON -- gate/depth/alignment/phi and obs 12:15 in the pocket frame' if self._tilt_active else 'OFF -- pocket upright, env-local measurement'}")
-        print(f"fixture pose noise (D-034): xy +-{cfg.fixture_pos_noise_xy:.3f} m, "
+        print(f"fixture pose noise: xy +-{cfg.fixture_pos_noise_xy:.3f} m, "
               f"yaw +-{cfg.fixture_yaw_noise_rad:.4f} rad "
               f"({'ACTIVE -- kinematic fixture teleported per reset' if (cfg.fixture_pos_noise_xy > 0.0 or cfg.fixture_yaw_noise_rad > 0.0) else 'inactive -- fixture stays at the spawn pose'})")
         print(f"robot base sits on the plate top: base z {cfg.robot_base_pos[2]:.4f} "
@@ -751,9 +751,9 @@ class ProxytaskEnv(DirectRLEnv):
         resting_speed = torch.linalg.norm(joint_vel_fd[: min(2, self.num_envs)], dim=-1)
         print(f"resting FD joint speed (env 0..1): {resting_speed.tolist()} rad/s  (expect ~0.000 after reset)")
         print("observation layout (25-dim): 0:6 joint_pos | 6:12 joint_vel (finite-diff) | "
-              f"12:15 peg tip - pocket entrance ({'POCKET frame, D-036' if self._tilt_active else 'env-local'}) | "
+              f"12:15 peg tip - pocket entrance ({'POCKET frame' if self._tilt_active else 'env-local'}) | "
               "15:19 EE quat (wxyz) | 19:21 (cos 4 phi, sin 4 phi) | "
-              "21:25 POCKET quat (wxyz, w >= 0, D-037)")
+              "21:25 POCKET quat (wxyz, w >= 0)")
         for e in range(min(2, self.num_envs)):
             root_local = self.robot.data.root_pos_w[e] - origins[e]
             ee_pos_w = self.robot.data.body_pos_w[e, self._ee_body_idx]
@@ -860,7 +860,7 @@ class ProxytaskEnv(DirectRLEnv):
                 print(f"  peg origin env-local:  {(peg_pos_w - origins[e]).tolist()}")
                 print(f"  peg TIP env-local:     {tip_local.tolist()}")
                 print(f"  peg TIP rel. entrance: {[round(v, 6) for v in tip_rel_e.tolist()]}  "
-                      f"({'POCKET frame (D-036)' if self._tilt_rot is not None else 'env-local; pocket upright'}"
+                      f"({'POCKET frame' if self._tilt_rot is not None else 'env-local; pocket upright'}"
                       f" -- this is observation channels 12:15)")
                 print(f"  flange -> peg origin:  {torch.linalg.norm(peg_pos_w - ee_pos_w).item():.6f} m"
                       f"  (expect 0.000000)")

@@ -108,15 +108,15 @@ def judge_run(
         point(f"L3 the projected depth is INSIDE the {lo:.1f}-{hi:.1f} mm band "
               f"(the hack pose, or nothing is exercised)",
               not shy, f"outside: {[round(d, 3) for d in shy]}")
-        point("L4 the success predicate does NOT fire beside the pocket (D-157)",
+        point("L4 the success predicate does NOT fire beside the pocket",
               not any(in_region), f"{sum(map(bool, in_region))}/{len(in_region)} in region")
-        point("L5 the engaged bonus does NOT fire beside the pocket (D-157)",
+        point("L5 the engaged bonus does NOT fire beside the pocket",
               not any(engaged), f"{sum(map(bool, engaged))}/{len(engaged)} engaged")
         booked = [d for d in (max_depth_mm or []) if d > 0.0]
         point("L6 the depth metric books nothing beside the pocket",
               not booked, f"booked: {[round(d, 4) for d in booked]}")
         ok_id, detail = identity("lateral reward")
-        point("L7 the paid reward equals the D-109 formula on the printed numbers",
+        point("L7 the paid reward equals the formula on the printed numbers",
               ok_id, detail)
         heavy = [f for f in (force_n or []) if abs(f) > free_air_force_tol_n]
         point(f"L8 the force in FREE AIR is under {free_air_force_tol_n:.1f} N "
@@ -147,7 +147,7 @@ def judge_run(
               f"(band_max - depth + {sdf_slack_mm:.1f} mm)",
               not over, "; ".join(over))
         ok_id, detail = identity("seated reward")
-        point("P8 the paid reward equals the D-109 formula on the printed numbers",
+        point("P8 the paid reward equals the formula on the printed numbers",
               ok_id, detail)
     else:
         deep = [d for d in depths_mm if d >= lo]
@@ -161,7 +161,7 @@ def judge_run(
         point(f"S5 the reward stays below {ceiling:.2f} (no success bonus outside the band)",
               not rich, f"at or above: {[round(r, 4) for r in rich]}")
         ok_id, detail = identity("shallow reward")
-        point("S6 the paid reward equals the D-109 formula on the printed numbers",
+        point("S6 the paid reward equals the formula on the printed numbers",
               ok_id, detail)
 
     return all(ok for _, ok, _ in points), points
@@ -234,7 +234,7 @@ LATERAL_CLAMP_CASES: tuple = (
 
 
 def _guard_self_test() -> bool:
-    """Run GUARD_CASES, then the mutation that must break the rule (D-080)."""
+    """Run GUARD_CASES, then the mutation that must break the rule."""
     ok = True
     for name, y_mm, expect_ok in GUARD_CASES:
         got_ok = lateral_probe_y_error(y_mm, _GUARD_BLOCK_Y_M, _GUARD_PART_Y_M) is None
@@ -406,7 +406,7 @@ CURVE_X_CLAMP_CASES: tuple = (
 
 
 def _curve_x_self_test() -> bool:
-    """CURVE_X_CASES and CURVE_X_CLAMP_CASES, then both mutations (D-080)."""
+    """CURVE_X_CASES and CURVE_X_CLAMP_CASES, then both mutations."""
     ok = True
     for name, heights, laterals_x, expect_ok in CURVE_X_CASES:
         got_ok = curve_lateral_error(heights, [0.0], None, laterals_x) is None
@@ -454,7 +454,7 @@ def _curve_x_self_test() -> bool:
 
 
 def _curve_clamp_self_test() -> bool:
-    """CURVE_CLAMP_CASES, then the mutation (D-080)."""
+    """CURVE_CLAMP_CASES, then the mutation."""
     ok = True
     for name, laterals, clamp, expect_ok in CURVE_CLAMP_CASES:
         got_ok = curve_lateral_error([16.0, 30.0], laterals, clamp) is None
@@ -491,7 +491,7 @@ def _curve_clamp_self_test() -> bool:
 
 
 def _curve_grid_self_test() -> bool:
-    """CURVE_GRID_CASES, the grid order, then the mutation (D-080)."""
+    """CURVE_GRID_CASES, the grid order, then the mutation."""
     ok = True
     for name, heights, laterals, expect_ok in CURVE_GRID_CASES:
         got_ok = curve_lateral_error(heights, laterals) is None
@@ -625,7 +625,7 @@ JUDGE_CASES: tuple = (
      {**_SEATED, "steps_remaining": [_FIXTURE_REMAINING, _FIXTURE_REMAINING - 1.0]}, False),
     ("a seated run paid WITHOUT the payout FAILS (P8)",
      {**_SEATED, "rewards": _paid(_SEATED_SDF, _SEATED_INT, True, True, 0.0)}, False),
-    ("a reward off the D-109 formula by 0.01 FAILS (P8)",
+    ("a reward off the formula by 0.01 FAILS (P8)",
      {**_SEATED, "rewards": [_SEATED["rewards"][0], _SEATED["rewards"][1] + 0.01]}, False),
     ("a reward missing the engaged bonus FAILS (P8 catches it without a window)",
      {**_SEATED, "rewards": [_SEATED["rewards"][0], _SEATED["rewards"][1] - 1.0]}, False),
@@ -721,7 +721,7 @@ def _cross_check_against_insertion_math() -> bool:
 
 
 def _curve_decay_self_test() -> bool:
-    """The reward-curve mode's OWN claim, pinned offline (D-080)."""
+    """The reward-curve mode's OWN claim, pinned offline."""
     p = dict(_PARAMS)
     at_seat = kernel_sum_mm(0.0, p)
     at_home = kernel_sum_mm(165.0, p)
@@ -806,7 +806,7 @@ parser.add_argument(
 parser.add_argument(
     "--shallow", action="store_true", default=False,
     help=(
-        "The PAID COUNTER-PROOF (D-080): teleport to 15 mm instead of the "
+        "The PAID COUNTER-PROOF: teleport to 15 mm instead of the "
         "seat. The predicate must NOT fire and the reward must stay low; a "
         "green seated run without this run proves nothing."
     ),
@@ -814,7 +814,7 @@ parser.add_argument(
 parser.add_argument(
     "--lateral", action="store_true", default=False,
     help=(
-        "THE SECOND PAID COUNTER-PROOF (D-080, D-157): teleport to the SEATED "
+        "THE SECOND PAID COUNTER-PROOF: teleport to the SEATED "
         "depth but beside the pocket, so the axis projection reads a perfect "
         "seat. Both paying predicates must stay silent and the depth metric "
         "must book nothing. It reproduces the MECHANISM of RT-107's hack, not "
@@ -829,12 +829,12 @@ parser.add_argument(
         "series of heights above the pocket entrance and print, per height, "
         "the SDF distance, the kernel term alone, both bonus predicates and "
         "the reward the env actually pays. It answers ONE question -- how far "
-        "from the seat does the D-109 shaping signal still have a magnitude a "
+        "from the seat does the shaping signal still have a magnitude a "
         "policy could follow? Compare the results with expectations defined "
         "before the run."
     ),
 )
-probe = parser.add_argument_group("probe (measurement settings, not task decisions)")
+probe = parser.add_argument_group("probe (measurement settings)")
 probe.add_argument(
     "--lateral-y-mm", type=float, default=None,
     help=(
@@ -920,7 +920,7 @@ probe.add_argument(
         "(`scripted_policy.TILT_AXES`): x is the SHORT pocket axis, so the "
         "part leans along its LONG side; y is the LONG axis, so the part "
         "leans ACROSS its width -- the lean the RT-141p screenshot shows and "
-        "the one with the 0.5876 mm play (D-106: across-tilt bound 0.46 deg, "
+        "the one with the 0.5876 mm play (across-tilt bound 0.46 deg, "
         "long-tilt bound ~2.5 deg at full depth). Default y."
     ),
 )
@@ -940,14 +940,14 @@ probe.add_argument(
 probe.add_argument(
     "--curve-coarse-margin-mm", type=float, default=None,
     help=(
-        "THE PAID COUNTER-PROOF for --reward-curve (D-080). Overrides the "
+        "THE PAID COUNTER-PROOF for --reward-curve. Overrides the "
         "COARSE kernel width on the env config only, before the env is built: "
         "a = acosh(10)/margin. TURNED AROUND 2026-09-01: the shipped margin is "
         "the measured travel reach (173.21 mm), so the counter-proof is now "
         "NARROWING it back to the superseded 10, which MUST collapse the value "
         "at the 165 mm reset stand-off into the ~1e-22 range. If that does not "
         "happen, the curve is not measuring what it claims to measure. A "
-        "measurement setting, never a task decision -- "
+        "measurement setting -- "
         "KERNEL_MARGIN_COARSE keeps its home in insertion_tasks_cfg.py."
     ),
 )
@@ -1000,7 +1000,7 @@ def _slice(obs: torch.Tensor, name: str) -> torch.Tensor:
 
 def _run_reward_curve(*, env, unwrapped, solve_to, zero_action, reward_params,
                       curve_margin_mm, env_cfg, num_envs, tilt_baseline_rad) -> int:
-    """Measure the D-109 reward against distance from the seat."""
+    """Measure the reward against distance from the seat."""
     heights_mm = [float(h) for h in args_cli.curve_heights_mm]
     laterals_mm = [float(y) for y in args_cli.curve_lateral_y_mm]
     laterals_x_mm = [float(x) for x in args_cli.curve_lateral_x_mm]

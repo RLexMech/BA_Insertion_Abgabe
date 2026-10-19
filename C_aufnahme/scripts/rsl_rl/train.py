@@ -35,7 +35,7 @@ parser.add_argument(
     help="Stop training once the trailing-window success rate reaches this value (e.g. 0.99) "
     "instead of always running --max_iterations. Checked between blocks of "
     "--stop-check-every iterations; --max_iterations stays the backstop. Note under a "
-    "randomised pocket tilt (D-037) this is the MEAN over the whole angle range and can be "
+    "randomised pocket tilt this is the MEAN over the whole angle range and can be "
     "reached while the largest angles lag -- read success_by_tilt_bin in demo_metrics.json "
     "before calling a rung done.",
 )
@@ -129,7 +129,7 @@ from isaaclab_tasks.utils import get_checkpoint_path
 
 
 def _checkpoint_width_refusal(path: str, env_unwrapped) -> str | None:
-    """D-188: the one line that refuses a checkpoint of the other observation width, or ``None``."""
+    """the one line that refuses a checkpoint of the other observation width, or ``None``."""
     mode = getattr(getattr(env_unwrapped, "cfg", None), "obs_wrench_mode", None)
     if mode is None:
         return None
@@ -409,7 +409,7 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     _dr_bar = args_cli.stop_when_dr_max
 
     def _criterion_success_rate():
-        """D-037's rule, unchanged: the trailing window over EVERY episode."""
+        """rule, unchanged: the trailing window over EVERY episode."""
         recent = getattr(env.unwrapped, "_recent_successes", None)
         if recent is None:
             return "abandon", "[stop-criterion] env exposes no success window; running to max_iterations."

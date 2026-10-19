@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 r"""Locate fixture OBJ open edges and their clearance to the part's swept volumes
-(RT-91, D-109). Runs offline without Isaac or a GPU.
+(RT-91). Runs offline without Isaac or a GPU.
 
 Warp queries the as-authored OBJ, not a welded USD. Compare both OBJ
 topologies: RT-61 found nine welded USD edges on the outer +Y rim;
@@ -380,7 +380,7 @@ def _self_test() -> int:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--self-test", action="store_true",
-                        help="Offline counter-proof of the decisions. Needs no OBJ.")
+                        help="Offline mutation tests. Needs no OBJ.")
     parser.add_argument("--obj", type=str, default=None,
                         help="Fixture OBJ. Default: insertion_paths.resolve_pocket_obj_path().")
     parser.add_argument("--expect-vertices", type=int, default=EXPECT_VERTICES,

@@ -367,7 +367,7 @@ def _self_test() -> int:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--self-test", action="store_true",
-                        help="Offline counter-proof of the decisions. Needs no OBJ.")
+                        help="Offline mutation tests. Needs no OBJ.")
     parser.add_argument("--obj", type=str, default=None,
                         help="Fixture OBJ. Default: insertion_paths.resolve_pocket_obj_path().")
     parser.add_argument("--expect-vertices", type=int, default=EXPECT_VERTICES,

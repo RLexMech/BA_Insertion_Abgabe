@@ -1,5 +1,5 @@
 """H25: Experiment D, the three Fixed-DR seeds that had not learned in 100 epochs
-(s1, s2, s5), resumed from `ep_100` to epoch 250 (RT-253, D-209, exploratory,
+(s1, s2, s5), resumed from `ep_100` to epoch 250 (RT-253, exploratory,
 outside the method comparison). Training success rate over the epoch, as H6.
 
 Sources: epochs 1..100 = RT-243s1/s2/s5, read from the tracked
@@ -37,7 +37,7 @@ CURVES = REPO / "results" / "training_rlgames" / "curves.csv"
 DATA = REPO / "results" / "training_rlgames" / "fortsetzung_RT-253.csv"
 OUT = REPO / "docs" / "figures" / "eval_rlgames"
 COLUMNS = ("method", "seed", "iteration", "env_steps", "Episode/success_rate")
-RESUME_AT = 100     # last epoch of the final study; RT-253 resumes from ep_100 (D-209)
+RESUME_AT = 100     # last epoch of the final study; RT-253 resumes from ep_100
 LAST_EPOCH = 250    # --max_iterations 250 (RT-253 expectation)
 
 

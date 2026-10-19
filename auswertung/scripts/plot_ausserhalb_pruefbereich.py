@@ -7,7 +7,7 @@ Outside: the T-ood block at 1.5x the range limit (|yaw| pools yaw_lo and yaw_hi)
 and, for tilt and friction, the steps of the sweep (RT-264/265, ``data_h14``)
 that lie outside the range. Start height has no point outside (the controller's
 z range, Kapitel 4.3.2) and no row. Every mean over the five seeds carries its
-95 % percentile bootstrap interval (D-218) and shows the seeds (D-219).
+95 % percentile bootstrap interval and shows the seeds.
 
 Inputs (final study, Experiment D, RT-242/243/244): ``results/eval_rlgames/``
 (summary.json, T-ood manifests) and ``results/eval_rlgames_sweep/``. Reuses
@@ -33,7 +33,7 @@ import eval_figures as EF  # noqa: E402
 from eval_figures import FigError  # noqa: E402
 
 NAME = "H17_ausserhalb_pruefbereich"
-ARMS = ("autodr", "fixeddr")   # the arms that played T-ood (D-208)
+ARMS = ("autodr", "fixeddr")   # the arms that played T-ood
 # Row: F3 bin column, T-ood key groups (one point per group; two keys are pooled),
 # sweep block or None, factor sidecar unit -> axis unit, axis label (F3's wording).
 PANELS = (

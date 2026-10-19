@@ -47,7 +47,7 @@ parser.add_argument(
     default=None,
     metavar="DEG",
     help="Tilt the fixture (and with it the pocket) by DEG degrees about the env y "
-    "axis through the pocket centre; positive tips the +x plate side down (D-036). "
+    "axis through the pocket centre; positive tips the +x plate side down. "
     "Since the 2026-08-19 frame rotation env y is the LATERAL axis, so this pitches "
     "the back-wall side of the fixture down. "
     "Generalisation probe: the pocket opening is no longer parallel to the ground. "
@@ -59,7 +59,7 @@ parser.add_argument(
     default=None,
     metavar="DEG",
     help="Rotate the fixture (and with it the pocket) by DEG degrees about the env z "
-    "axis through the pocket centre (D-038). Generalisation probe: the square "
+    "axis through the pocket centre. Generalisation probe: the square "
     "pocket's walls are no longer axis-aligned; phi, gate and observation are "
     "measured in the yawed pocket frame. The pocket repeats every 90 deg (C4), so "
     "+-45 deg already covers every distinct pose -- larger values are rejected. "
@@ -193,7 +193,7 @@ import insertion.tasks  # noqa: F401
 
 
 def _checkpoint_width_refusal(path: str, env_unwrapped) -> str | None:
-    """D-188: the one line that refuses a checkpoint of the other observation width, or ``None``."""
+    """the one line that refuses a checkpoint of the other observation width, or ``None``."""
     mode = getattr(getattr(env_unwrapped, "cfg", None), "obs_wrench_mode", None)
     if mode is None:
         return None

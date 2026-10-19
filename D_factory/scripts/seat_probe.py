@@ -37,7 +37,7 @@ parser.add_argument(
     help="Metrics file. Numbers are read from files, never from prose.",
 )
 
-probe = parser.add_argument_group("probe (measurement settings, not task decisions)")
+probe = parser.add_argument_group("probe (measurement settings)")
 probe.add_argument(
     "--depths-mm",
     type=float,
@@ -196,7 +196,7 @@ def main() -> None:
           f"solve {args_cli.solve_steps} teleport iterations, "
           f"settle {args_cli.settle_steps} control steps with a ZERO action")
     print("[seat_probe] NOTE: this run sets NO force threshold. What counts as an acceptable "
-          "force at a seated pose is a decision, not a measurement.")
+          "force at a seated pose is a design choice, not a measurement.")
 
     zero_action = torch.zeros(num_envs, unwrapped.cfg.action_space, device=device)
     rungs = []
@@ -312,7 +312,7 @@ def main() -> None:
     print("[seat_probe] READ IT LIKE THIS: an achieved depth that tracks the commanded one at a low "
           "force means the geometry ACCEPTS the seat and the jam is in the descent. An achieved "
           "depth that stops following, at a force that climbs, means the COLLIDER forbids it and no "
-          "controller can pass the D-108 gate as the asset stands.")
+          "controller can pass the gate as the asset stands.")
 
     env.close()
 

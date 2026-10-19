@@ -46,7 +46,7 @@ def resolve_proxy_tisch_usd_path() -> str:
         f"INSERTION_TISCH_USD to a table whose pocket really is {pocket_mm:g} mm. "
         "A size-less tisch_square.usd and the round tisch.usd are NOT "
         "accepted; the pocket size is part of the filename because it is the curriculum "
-        "variable (D-033)."
+        "variable."
     )
 
 
@@ -224,7 +224,7 @@ RL_PENDING: tuple[str, ...] = (
 )
 
 RL_PENDING_MARKS: dict = {
-    "rung_step_sizes": "[open] D-110 (3) -- from our own learning curves",
+    "rung_step_sizes": "[open] Set from learning curves",
 }
 
 CURRICULUM_PENDING: tuple[str, ...] = (
@@ -235,21 +235,21 @@ RL_PLACEHOLDERS: dict = {
     "force_abort_f_max_n": (
         "[placeholder] Chosen simulation force-abort limit in N, not a measured real-part damage "
         "limit. RT-157 (one policy, two heights): the original limit aborted no successful "
-        "insertions; the D-166 search force would abort about half. The limit was lowered below "
-        "RT-201 force p95 and can now abort successful insertions; D-167's lowering condition was "
+        "insertions; the search force would abort about half. The limit was lowered below "
+        "RT-201 force p95 and can now abort successful insertions; the lowering condition was "
         "not met. Keep above the force needed for clean insertion. The rigid tool chain cannot "
-        "validate a suction-cup limit. Inspect force p95 and abort rate (D-114, D-169)."
+        "validate a suction-cup limit. Inspect force p95 and abort rate."
     ),
     "engaged_depth_m": (
         "[placeholder] Ad hoc seat-depth fraction used only by the engaged display bonus. RT-129 "
         "measured the scripted controller's tilt ramp, not a validated capture depth. A "
         "learned-policy threshold based on lateral offset below half the cross play remains "
-        "unadopted (D-071). Factory's fraction lies inside this task's success band."
+        "unadopted. Factory's fraction lies inside this task's success band."
     ),
     "abort_payment": (
-        "[placeholder] Fixed negative abort reward (Beltran-Hernandez, D-114), scaled to one "
+        "[placeholder] Fixed negative abort reward (Beltran-Hernandez), scaled to one "
         "shaping-kernel peak independently of F_max. The magnitude is a design choice, not "
-        "measured; the remaining return is also forfeited. D-109 provides a sensitivity-check "
+        "measured; the remaining return is also forfeited. Use a sensitivity-check "
         "template."
     ),
     "osc_kp_pos": (
@@ -264,49 +264,49 @@ RL_PLACEHOLDERS: dict = {
     ),
     "osc_pos_step_limit_m": (
         "[placeholder] Maximum tool translation per action in metres: Factory "
-        "pos_action_threshold with action EMA (D-197), replacing D-196 (B). A task-specific "
+        "pos_action_threshold with action EMA. A task-specific "
         "allowed tool speed has not been established."
     ),
     "osc_rot_step_limit_rad": (
-        "[placeholder] Maximum tool rotation per action in radians: Factory rot_action_threshold "
-        "(D-197). A task-specific allowed angular speed has not been established."
+        "[placeholder] Maximum tool rotation per action in radians: Factory rot_action_threshold"
+        ". A task-specific allowed angular speed has not been established."
     ),
     "action_ema_factor": (
         "[placeholder] Weight of the new clamped action in the applied action EMA. Inherited from "
-        "Factory CtrlCfg.ema_factor with its action thresholds (D-197); not independently "
+        "Factory CtrlCfg.ema_factor with its action thresholds; not independently "
         "validated."
     ),
     "osc_pos_clamp_m": (
         "[placeholder] Horizontal workspace half-width in m: lateral radius plus maximum-tilt tip "
         "swing, one action step and clearance. Derived from autodr.bounds_max(); check_env_wiring "
-        "checks required coverage and excess clearance (D-180, D-197, D-204)."
+        "checks required coverage and excess clearance."
     ),
     "osc_pos_clamp_z_m": (
         "[placeholder] Vertical workspace half-width in m: maximum start-height reach including "
         "tilt and lateral offset, one action step and clearance. check_env_wiring checks "
-        "world-frame coverage and home-tip standoff (D-180, D-197, D-204). Factory's "
+        "world-frame coverage and home-tip standoff. Factory's "
         "non-axis-specific clamp does not cover this reset band."
     ),
     "osc_yaw_clamp_rad": (
         "[placeholder] Yaw half-width about the episode's seated orientation: worst start yaw "
-        "plus observation error (D-194) and one rotation step. Task-specific extension, checked "
-        "by check_env_wiring (D-196 A)."
+        "plus observation error and one rotation step. Task-specific extension, checked "
+        "by check_env_wiring."
     ),
     "osc_decimation": (
         "[placeholder] Physics steps per policy step, inherited from Factory. Policy rate = "
-        "physics rate / decimation (D-024). The fixed episode step count determines duration "
-        "(D-113); duration is not independently validated."
+        "physics rate / decimation. The fixed episode step count determines duration"
+        "; duration is not independently validated."
     ),
     "obs_noise_pocket_pos_std_m": (
         "[placeholder] Half-width in m of a per-episode uniform pocket-position observation bias, "
         "despite the std suffix. TacSL Appendix C, Table V supports uniform noise; per-episode "
         "sampling is a modelling assumption. Its sigma exceeds FORGE's reported unstable-training "
-        "value (D-182)."
+        "value."
     ),
     "force_obs_noise_std_n": (
         "[placeholder] Per-step Gaussian force-observation noise in N. Treating UR5e datasheet "
         "precision as a standard deviation is an assumption; the datasheet does not define it "
-        "that way. FORGE uses a smaller sigma (D-182)."
+        "that way. FORGE uses a smaller sigma."
     ),
     "torque_obs_noise_std_nm": (
         "[placeholder] Per-step Gaussian torque-observation noise in Nm for wrench mode; disabled "
@@ -316,36 +316,35 @@ RL_PLACEHOLDERS: dict = {
     "grasp_obs_offset_x_m": (
         "[placeholder] Half-width in m of uniform observation-only grasp offset along the part's "
         "short axis. Magnitude follows Factory and FORGE Table II; its applicability here is a "
-        "CAD-based estimate, not a measurement (D-183)."
+        "CAD-based estimate, not a measurement."
     ),
     "pocket_obs_yaw_rad": (
         "[placeholder] Half-width in rad of uniform observation-only pocket-yaw error; off by "
-        "default. Derived from Litvak et al.'s mean camera error, not measured on this cell "
-        "(D-194)."
+        "default. Derived from Litvak et al.'s mean camera error, not measured on this cell"
+        "."
     ),
 }
 
 PROXY_TASK_VALUES: dict = {
     "cfg.w_depth_progress": (
         "[proxy] the square-peg proxy's reward_w_depth, paid per metre of "
-        "NEW gated max depth (D-165). The proxy solved 1 mm clearance with it "
+        "NEW gated max depth. The proxy solved 1 mm clearance with it "
         "at 100; nothing on this task has sized it. Zero switches the term "
-        "off and reproduces the pre-D-165 reward."
+        "off and reproduces the previous reward."
     ),
     "cfg.held_asset.side": (
         "[proxy] the held body modelled as a SQUARE of this side. The real "
         "part is rectangular with lugs (PART_BODY_X / PART_BBOX_M). Read by "
-        "the four-corner gate; moves with the SDF rework (D-109), not alone."
+        "the four-corner gate; moves with the SDF rework, not alone."
     ),
     "cfg.fixed_asset.side": (
         "[proxy] the square pocket edge the gate tests against. The real "
         "opening is POCKET_OPENING_X x POCKET_OPENING_Y and is not square. "
-        "Read by the four-corner gate; moves with the SDF rework (D-109)."
+        "Read by the four-corner gate; moves with the SDF rework."
     ),
     "cfg.gate_min_alignment": (
         "[proxy] tool-axis alignment floor, calibrated on the square peg. "
-        "The real bound is D-106's across-tilt limit, which D-121 reopened "
-        "and has not been recomputed."
+        "The across-tilt limit has not been recomputed."
     ),
     "tasks.SIDE_CLEARANCE": (
         "[proxy] half-clearance per axis of the square pair. The real task "
@@ -355,8 +354,8 @@ PROXY_TASK_VALUES: dict = {
     ),
     "tasks.YAW_WINDOW_RAD": (
         "[proxy] the C4 free-yaw window of a square in a square. The real "
-        "part fits ONE way round, so there is no equivalent; D-106's yaw "
-        "bound was reopened by D-121 and is not recomputed. The report no "
+        "part fits ONE way round, so there is no equivalent; the yaw "
+        "bound has not been recomputed. The report no "
         "longer prints it. Kept only because compare_runs.py reads the "
         "metrics key yaw_window_deg."
     ),
@@ -411,14 +410,14 @@ def resolve_start_lateral_offset(value) -> float:
     """``cfg.start_lateral_offset`` as the RADIUS of the start disk, in metres."""
     if isinstance(value, (list, tuple)):
         raise ValueError(
-            f"start_lateral_offset={value!r}: the (x, y) half-width pair of D-176 is "
-            "withdrawn. Since D-178 (3) the lateral start offset is a disk and this "
+            f"start_lateral_offset={value!r}: the (x, y) half-width pair is "
+            "unsupported. The lateral start offset is a disk and this "
             "field is ONE radius in metres: env.start_lateral_offset=<radius>."
         )
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise ValueError(
             f"start_lateral_offset={value!r} ({type(value).__name__}) is not a number: "
-            "expected ONE radius in metres (D-178 (3))."
+            "expected ONE radius in metres."
         )
     radius = float(value)
     if radius < 0.0:
@@ -447,14 +446,14 @@ def resolve_control_mode(cfg) -> str:
 
 
 def resolve_obs_layout(cfg) -> str:
-    """Derive ``observation_space`` from ``cfg.obs_wrench_mode`` and return the mode (D-188)."""
+    """Derive ``observation_space`` from ``cfg.obs_wrench_mode`` and return the mode."""
     mode = str(cfg.obs_wrench_mode)
     try:
         width = insertion_math.obs_dim(mode)
     except ValueError as exc:
         raise RlConfigIncomplete(
             f"obs_wrench_mode is {mode!r}; the only modes are "
-            f"{insertion_math.OBS_MODES} (D-188)."
+            f"{insertion_math.OBS_MODES}."
         ) from exc
     cfg.observation_space = width
     cfg.state_space = width
@@ -575,7 +574,7 @@ def validate_rl_config(cfg) -> None:
             f"the decided rule is R_time = -1/T = {want_time!r} at T = {steps} "
             "steps (Brahmbhatt et al., ICRA 2023, arXiv:2301.12587 Sec. III). A "
             "time penalty that is not -1/T no longer sums to one abort payment "
-            "over an episode, and the decision's two safety inequalities are "
+            "over an episode, and the two safety inequalities are "
             "stated for -1/T alone."
         )
     if float(cfg.action_rate_scale) < 0.0:

@@ -476,7 +476,7 @@ def self_test() -> int:
                                                          [("success", 1.0)] * 3 + [("timeout", 1.0)])
         runs_k[("T-final", f"autodr_nf_s{s}_pn2")] = _noise(runs_k[("T-final", f"autodr_nf_s{s}")], "pn2")
     rows_k, problems_k, _ = collect(runs_k, tables)
-    checks.append(("D-216: autodr_nf s1, s2 (untagged + pn2) are collected beside autodr in one root",
+    checks.append(("autodr_nf s1, s2 (untagged + pn2) are collected beside autodr in one root",
                    problems_k == [] and sum(r["method"] == "autodr_nf" for r in rows_k) == 16
                    and {r["tag"] for r in rows_k if r["method"] == "autodr_nf"} == {"", "pn2"}))
     for tag in CEC.NOISE_TAGS:

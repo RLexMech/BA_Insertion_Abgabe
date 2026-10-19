@@ -1,7 +1,7 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-r"""Every number of the evaluation, from ``episodes_all.csv``, generated offline in ``.venv-analysis`` (D-189).
+r"""Every number of the evaluation, from ``episodes_all.csv``, generated offline in ``.venv-analysis``.
 
 Headline key is ``success_train``. Library functions, no own interval code:
 
@@ -49,7 +49,7 @@ KEY = "success_train"
 # Bin edges: COPIES of the env's tuples (Belege_Streuwerte.md section D), same
 # rule as `insertion_env._rate_by_bin`: bin i = first edge the value is below;
 # the last bin also takes everything at or above the last edge. Friction has no
-# env tuple: its edges are OWN CONSTRUCTION (D-212, Belege_Streuwerte.md D5,
+# env tuple: its edges are OWN CONSTRUCTION (Belege_Streuwerte.md D5,
 # 2026-10-02) -- five equal bins over the band 0.08..0.20 (autodr.py DR_DIMS
 # friction), last edge = band top, the rule of the three tuples above.
 BIN_EDGES = {
@@ -71,9 +71,9 @@ def _load_module(name: str, path: pathlib.Path):
 
 # The noise tags and their widths have ONE home: check_eval_conditions.NOISE_TAGS.
 CEC = _load_module("check_eval_conditions", pathlib.Path(__file__).resolve().parent / "check_eval_conditions.py")
-# D-206 B3: the reference of the OOD and noise blocks is the policy's UNTAGGED
+# the reference of the OOD and noise blocks is the policy's UNTAGGED
 # T-final run of the same results folder -- one code commit for the whole
-# rl_games evaluation (was the tagged repeat "p6" on p6-TestAusserhalb, D-191 (5)).
+# rl_games evaluation (was the tagged repeat "p6" on p6-TestAusserhalb).
 NOISE_REFERENCE_TAG = ""
 
 
@@ -190,7 +190,7 @@ def method_rates(pol: list, block: str) -> tuple[list, list]:
     return seed_rates(pol, block, "autodr"), seed_rates(pol, block, "nodr")
 
 
-# K5 (D-192): AutoDR's rates from
+# K5: AutoDR's rates from
 # the block K1/K2 already read, Fixed-DR's from its own -F block (same table).
 K5_BLOCKS = (("K5", "T-final", "T-final-F"), ("K5_nominal", "T-nominal", "T-nominal-F"))
 
@@ -248,7 +248,7 @@ def bonferroni(pol: list, out: dict) -> dict:
 
 def final_block(method: str) -> str:
     """The block in which ``method`` plays the T-final table: Fixed-DR in its own
-    T-final-F (D-192), the other two in T-final. Since D-208 Fixed-DR is a
+    T-final-F, the other two in T-final. Fixed-DR is a
     candidate and plays T-grenze, T-ood and the noise blocks, so its K3, OOD and
     noise reference is its untagged T-final-F run."""
     return "T-final-F" if method == "fixeddr" else "T-final"
@@ -257,7 +257,7 @@ def final_block(method: str) -> str:
 def select_final(pol: list) -> dict:
     """On T-auswahl: highest rate; tie -> smaller force
     p95 over the successes; tie -> smaller seed number. Candidates are every
-    method that played T-auswahl (D-208: AutoDR, No-DR AND Fixed-DR). A tie that
+    method that played T-auswahl (AutoDR, No-DR AND Fixed-DR). A tie that
     survives all three (same seed number in two methods) is not settled by the plan."""
     cand = [p for p in pol if p["block"] == "T-auswahl" and p["tag"] == ""]
     if not cand:
@@ -293,12 +293,12 @@ def k3_blocks(df: pd.DataFrame, final: dict) -> dict:
 
 
 def ood_blocks(df: pd.DataFrame) -> dict:
-    """D-206 (3) / D-191 (ported from p6 db85986c): each OOD block against the
+    """each OOD block against the
     SAME policy's untagged T-final rate, Newcombe difference (block - T-final).
-    DESCRIPTIVE: D-055 asks whether performance degrades gracefully or
+    DESCRIPTIVE: check whether performance degrades gradually or
     collapses beyond the band; there is no pass line, so there is no `met`.
 
-    Every T-ood policy is judged alone (the five AutoDR seeds and, since D-208,
+    Every T-ood policy is judged alone (the five AutoDR seeds and
     the five Fixed-DR seeds, whose reference is T-final-F, ``final_block``). Across the
     seeds of one method: the per-seed rates with mean, SD (ddof=1), min and
     max -- K4's form and IndustReal's "mean +- SD over 5 seeds". No interval
@@ -329,12 +329,12 @@ def ood_blocks(df: pd.DataFrame) -> dict:
 
 
 def noise_blocks(df: pd.DataFrame) -> dict:
-    """D-206 (3) / D-191 (3) (ported from p6 a766ae9e): each observation-noise
+    """each observation-noise
     x2 run (T-final table, tag in ``CEC.NOISE_TAGS``) against the SAME
     policy's T-final run tagged ``NOISE_REFERENCE_TAG`` (untagged) -- same
     table, same commit, only the noise differs. Newcombe difference per seed,
     the across-seed form of ``ood_blocks``. DESCRIPTIVE, no pass line.
-    Fixed-DR's noise runs and their reference sit in T-final-F (D-208,
+    Fixed-DR's noise runs and their reference sit in T-final-F (
     ``final_block``)."""
     f = df[df["block"].isin(("T-final", "T-final-F"))]
     noisy = f[f["tag"].isin(list(CEC.NOISE_TAGS))]
@@ -384,9 +384,9 @@ def _across_seeds(per: dict) -> dict:
     return across
 
 
-# D-216 (5): the force-sensor ablation root (results/eval_rlgames_kraft/). The
+# the force-sensor ablation root (results/eval_rlgames_kraft/). The
 # two arms, with force minus without; the blocks are the T-final table untagged
-# and tagged pn2 (D-216 (2)).
+# and tagged pn2.
 FORCE_ARMS = ("autodr", "autodr_nf")
 FORCE_BLOCKS = (("T-final", ""), ("pn2", "pn2"))
 
@@ -396,7 +396,7 @@ def force_root(df: pd.DataFrame) -> bool:
 
 
 def force_blocks(pol: list) -> dict:
-    """D-216 (5): per block the per-seed rates of both arms with Wilson, the
+    """per block the per-seed rates of both arms with Wilson, the
     difference of the arm means ``autodr - autodr_nf`` in K1's form (Welch over
     the SEED rates, bootstrap beside it, ``method_diff``), and per seed the loss
     T-final -> pn2 (rate pn2 - rate T-final, the ``diff_vs_final`` of NOISE
@@ -452,7 +452,7 @@ def summarize(df: pd.DataFrame, t1_mm: float | None = None) -> dict:
             out[kname] = {"missing": f"no {block} runs"}
             continue
         if force_root(df):
-            out[kname] = {"missing": "force-ablation root (D-216): no nodr arm; see FORCE"}
+            out[kname] = {"missing": "force-ablation root: no nodr arm; see FORCE"}
             continue
         a, b = method_rates(pol, block)
         try:
@@ -491,14 +491,14 @@ def summarize(df: pd.DataFrame, t1_mm: float | None = None) -> dict:
         except StatsError as exc:
             out["FORCE"] = {"error": str(exc)}
     k4 = {}
-    # K4 per method, Fixed-DR from its T-final-F (D-208).
+    # K4 per method, Fixed-DR from its T-final-F.
     for m in ("autodr", "nodr", "fixeddr"):
         r = [p[KEY] for p in pol if p["block"] == final_block(m) and p["tag"] == "" and p["method"] == m]
         if r:
             k4[m] = {"rates": r, "min": min(r), "max": max(r),
                      "sd": float(np.std(r, ddof=1)) if len(r) > 1 else None}
     out["K4"] = k4
-    # Fixed-DR plays T-final's table in its own block T-final-F (D-192); eval_collect
+    # Fixed-DR plays T-final's table in its own block T-final-F; eval_collect
     # keeps each method in its own block, so the keys stay unique.
     fin = df[df["block"].isin(("T-final", "T-final-F")) & (df["tag"] == "")]
     out["bins_T_final"] = {
@@ -518,14 +518,14 @@ def write_outputs(results: pathlib.Path, summary: dict) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Self-test (D-080): checks on built data; each mutation of THIS file's source
+# Self-test: checks on built data; each mutation of THIS file's source
 # must flip exactly its declared checks.
 # ---------------------------------------------------------------------------
 
 N_EP = 100
 K_AUTODR = (90, 92, 94, 96, 98)       # mean 0.94
 K_NODR = (40, 42, 44, 46, 90)         # mean 0.524, skewed: Welch != pooled, BCa != percentile
-# Fixed-DR (D-192): T-final-F mean 0.74 -> K5 interval wholly above 0;
+# Fixed-DR: T-final-F mean 0.74 -> K5 interval wholly above 0;
 # T-nominal-F mean 0.928 -> K5_nominal interval contains 0.
 K_FIXED = {"T-final-F": (70, 72, 74, 76, 78), "T-nominal-F": (80, 90, 95, 99, 100)}
 # Friction 0.08..0.20 in 0.01 steps (T-final's band); 0.20 is the last edge itself.
@@ -569,8 +569,8 @@ def _frame() -> pd.DataFrame:
                      "success_train": int(j < 45 or j >= 50), "success_strict": int(j < 45 or j >= 50),
                      "force_abort": 0, "steps": 50, "force_max_filtered_n": 10.0,
                      "lat_r_mm": 30.0, "yaw_abs_deg": 0.0, "tilt_deg": 0.0, "start_height_m": 0.05, "ip_max_mm": 0.0})
-    # OOD blocks (D-206 (3)): autodr s5 lat_r_hi 40/50, yaw_lo 50/50; autodr s4
-    # lat_r_hi 30/50, yaw_lo 45/50 (two seeds stand for the five). D-208: fixeddr
+    # OOD blocks: autodr s5 lat_r_hi 40/50, yaw_lo 50/50; autodr s4
+    # lat_r_hi 30/50, yaw_lo 45/50 (two seeds stand for the five). fixeddr
     # s2 lat_r_hi 20/50, yaw_lo 40/50, against its T-final-F 72/100.
     for method, seed, k_lat, k_yaw in (("autodr", 5, 40, 50), ("autodr", 4, 30, 45), ("fixeddr", 2, 20, 40)):
         for j in range(100):
@@ -584,10 +584,10 @@ def _frame() -> pd.DataFrame:
 
 
 def _noise_frame(df: pd.DataFrame, drop_ref_seed: int | None = None) -> pd.DataFrame:
-    """The rl_games T-final folder (D-206 (3)): beside each autodr seed 4, 5's
+    """The rl_games T-final folder: beside each autodr seed 4, 5's
     untagged run (96/100, 98/100 in _frame) three x2 runs of 100 rows:
     s4 pn2 80, gx2 96, py2 85; s5 pn2 90, gx2 95, py2 93 (no force violations).
-    D-208: fixeddr s2 pn2 60 in T-final-F, beside its untagged 72/100 there.
+    fixeddr s2 pn2 60 in T-final-F, beside its untagged 72/100 there.
     ``drop_ref_seed`` removes that seed's untagged T-final run."""
     out = df
     if drop_ref_seed is not None:
@@ -612,7 +612,7 @@ def _noise_frame(df: pd.DataFrame, drop_ref_seed: int | None = None) -> pd.DataF
 
 
 def _fixed_final_frame(df: pd.DataFrame) -> pd.DataFrame:
-    """D-208: fixeddr s3 plays T-auswahl at 99/100 (above autodr s5's 98) and
+    """fixeddr s3 plays T-auswahl at 99/100 (above autodr s5's 98) and
     T-grenze as the final policy (lat_r_hi 45/50, yaw_lo 50/50); its overall
     T-final rate is its T-final-F run, 74/100 in _frame."""
     rows = []
@@ -632,7 +632,7 @@ def _fixed_final_frame(df: pd.DataFrame) -> pd.DataFrame:
     return pd.concat([df, pd.DataFrame(rows)], ignore_index=True)
 
 
-# D-216: the force-ablation root, T-final table only, seeds 1-3 per arm.
+# the force-ablation root, T-final table only, seeds 1-3 per arm.
 K_FORCE = {("autodr", ""): (99, 98, 97), ("autodr", "pn2"): (95, 94, 90),
            ("autodr_nf", ""): (98, 99, 96), ("autodr_nf", "pn2"): (85, 80, 88)}
 
@@ -693,7 +693,6 @@ CHECKS = (
     "K5 diff = autodr T-final - fixeddr T-final-F = 0.20 and Welch CI = reference formula",
     "K5 reading follows the Welch CI: above_0 on T-final, contains_0 on T-nominal, below_0 on (-0.3, -0.1)",
     "bins_T_final holds Fixed-DR's T-final-F bins beside AutoDR/No-DR (same table)",
-    # D-206 (3): the OOD and noise blocks (ported from p6 db85986c / a766ae9e).
     "OOD: autodr s5 lat_r_hi 40/50 vs its untagged T-final 98/100 -> Newcombe = library call, no 'met'",
     "OOD per seed: autodr s4 lat_r_hi 30/50 vs ITS OWN T-final 96/100 -> Newcombe = library call",
     "OOD across seeds: lat_r_hi rates [0.6, 0.8] -> mean, SD (ddof=1), min, max, diff mean = numpy reference",
@@ -702,23 +701,23 @@ CHECKS = (
     "NOISE across seeds: pn2 rates [0.8, 0.9] -> mean, SD (ddof=1), diff mean = numpy reference",
     "NOISE refuses a policy whose untagged T-final is missing (s4), it is not skipped",
     "noise-tagged T-final runs change neither K1 nor the OOD reference",
-    # D-208: Fixed-DR is a candidate and plays T-grenze, T-ood and the noise blocks.
-    "D-208: a Fixed-DR seed that tops T-auswahl (99/100) is the final policy; K3 reads its T-final-F 74/100",
-    "D-208 OOD: fixeddr s2 lat_r_hi 20/50 vs ITS T-final-F 72/100 -> Newcombe = library call",
-    "D-208 NOISE: fixeddr s2 pn2 60/100 vs its untagged T-final-F 72/100 -> Newcombe = library call",
-    "D-208 K4: Fixed-DR's five T-final-F rates beside AutoDR / No-DR",
-    # D-212: friction bins, own construction.
+    # Fixed-DR is a candidate and plays T-grenze, T-ood and the noise blocks.
+    "a Fixed-DR seed that tops T-auswahl (99/100) is the final policy; K3 reads its T-final-F 74/100",
+    "OOD: fixeddr s2 lat_r_hi 20/50 vs ITS T-final-F 72/100 -> Newcombe = library call",
+    "NOISE: fixeddr s2 pn2 60/100 vs its untagged T-final-F 72/100 -> Newcombe = library call",
+    "K4: Fixed-DR's five T-final-F rates beside AutoDR / No-DR",
+    # friction bins, own construction.
     "friction bins: five equal bins over 0.08..0.20 (width 0.024), 0.20 lands in the LAST bin",
     # 2026-10-02: interpenetration over the episode, successes only (thesis Tab. 4.3).
     "successes_ip_max_mm: nodr s1 T-final (40/100, ip 0.00..0.39 on the successes) -> median 0.195, "
     "p95 0.37, max 0.39, n_ge_t1 10; t1_mm in the summary",
-    # D-216: the force-sensor ablation (autodr - autodr_nf, T-final and pn2).
+    # the force-sensor ablation (autodr - autodr_nf, T-final and pn2).
     "FORCE T-final: per-seed k/n + Wilson = reference; diff = mean(autodr) - mean(autodr_nf); "
     "Welch = reference formula over the SEED rates; bootstrap = own reference within 0.005",
     "FORCE pn2: diff = 0.93 - 0.8433 and Welch = reference formula over the seed rates of tag pn2",
     "FORCE loss T-final -> pn2 per seed = rate pn2 - rate T-final, equal to NOISE diffs_vs_final",
     "FORCE root: K1 and K2 are 'missing' (no nodr arm), not an error; NOISE holds both arms",
-    "a root without autodr_nf has no FORCE key (summary.json as before D-216)",
+    "a root without autodr_nf has no FORCE key (standard summary.json)",
     "FORCE with untagged runs only: pn2 'missing', T-final computed, no loss",
     # Patterson et al. 2024 Sec. 4.5: Bonferroni cross-check of the method differences.
     "BONFERRONI: family K1, K2, K5, K5_nominal (k = 4); each Welch CI = reference formula at ALPHA / 4, "
@@ -881,12 +880,12 @@ MUTATIONS = (
     ("rate-denominator-n-minus-1",
      '"success_train": k / n, "success_train_k"', '"success_train": k / (n - 1), "success_train_k"',
      # The selection keeps its order (every rate scales by the same 100/99).
-     # D-216: FORCE reads the same policy rates; so does BONFERRONI.
+     # FORCE reads the same policy rates; so does BONFERRONI.
      (CHECKS[1], CHECKS[2], CHECKS[3], CHECKS[5], CHECKS[11], CHECKS[25],
       CHECKS[28], CHECKS[29], CHECKS[30], CHECKS[34])),
     ("welch-pooled-variance",
      "welch = st.ttest_ind(a, b, equal_var=False)", "welch = st.ttest_ind(a, b, equal_var=True)",
-     # D-216: FORCE goes through the same method_diff.
+     # FORCE goes through the same method_diff.
      (CHECKS[2], CHECKS[28], CHECKS[29])),
     ("bootstrap-falls-back-to-bca",
      '                        method="percentile", rng=', "                        rng=",
@@ -898,7 +897,7 @@ MUTATIONS = (
       CHECKS[14], CHECKS[15], CHECKS[16], CHECKS[18], CHECKS[19], CHECKS[34])),
     ("wilson-becomes-normal",
      'alpha=ALPHA, method="wilson")', 'alpha=ALPHA, method="normal")',
-     # D-216: FORCE's per-seed Wilson is the policy row's.
+     # FORCE's per-seed Wilson is the policy row's.
      (CHECKS[0], CHECKS[28])),
     ("k3-compares-the-wrong-way",
      'k, n, k_all, n_all, method="newcomb"', 'k_all, n_all, k, n, method="newcomb"',
@@ -921,7 +920,7 @@ MUTATIONS = (
      "int(math.ceil(q * len(v))) - 1", "int(q * len(v))",
      # The ip p95 of 40 successes moves from index 37 to 38.
      (CHECKS[9], CHECKS[27])),
-    # K5 (D-192).
+    # K5.
     ("k5-swaps-the-arms",
      "d = method_diff(a, f, names=", "d = method_diff(f, a, names=",
      (CHECKS[11], CHECKS[12])),
@@ -943,7 +942,7 @@ MUTATIONS = (
      'fin = df[df["block"].isin(("T-final", "T-final-F")) & (df["tag"] == "")]',
      'fin = df[(df["block"] == "T-final") & (df["tag"] == "")]',
      (CHECKS[13],)),
-    # D-206 (3): the OOD and noise blocks.
+    # the OOD and noise blocks.
     ("ood-compares-the-wrong-way",
      'k, n, k_all, n_all, compare="diff"', 'k_all, n_all, k, n, compare="diff"',
      (CHECKS[14], CHECKS[15], CHECKS[23])),
@@ -966,12 +965,11 @@ MUTATIONS = (
      (CHECKS[16], CHECKS[19])),
     ("noise-reference-pools-the-tags",
      'ref = g[g["tag"] == NOISE_REFERENCE_TAG]', "ref = g",
-     # D-216: FORCE's loss is held against NOISE's diffs_vs_final.
+     # FORCE's loss is held against NOISE's diffs_vs_final.
      (CHECKS[18], CHECKS[19], CHECKS[20], CHECKS[24], CHECKS[30])),
     ("noise-compares-the-wrong-way",
      'k, n, k_all, n_all, alpha=ALPHA', 'k_all, n_all, k, n, alpha=ALPHA',
      (CHECKS[18], CHECKS[24])),
-    # D-208: the bug this entry corrects -- only AutoDR / No-DR as candidates.
     ("selection-leaves-out-fixed-dr",
      'cand = [p for p in pol if p["block"] == "T-auswahl" and p["tag"] == ""]',
      'cand = [p for p in pol if p["block"] == "T-auswahl" and p["tag"] == "" and p["method"] != "fixeddr"]',
@@ -997,7 +995,7 @@ MUTATIONS = (
     ("ip-stats-over-all-episodes",
      'ip = ok["ip_max_mm"]', 'ip = g["ip_max_mm"]',
      (CHECKS[27],)),
-    # D-216 (5c): the unit of the arm comparison is the SEED; pooled episodes
+    # the unit of the arm comparison is the SEED; pooled episodes
     # (0/1 per row) give the same mean but a far narrower Welch interval.
     ("force-welch-over-pooled-episodes",
      "d = method_diff([p[KEY] for p in per[label][FORCE_ARMS[0]]], [p[KEY] for p in per[label][FORCE_ARMS[1]]],",
@@ -1018,7 +1016,7 @@ MUTATIONS = (
      '        if force_root(df):\n            out[kname] = {"missing"',
      '        if False:\n            out[kname] = {"missing"',
      (CHECKS[31],)),
-    # D-216 (5d): FORCE in every root -> summary.json without autodr_nf changes.
+    # FORCE in every root -> summary.json without autodr_nf changes.
     ("force-key-in-every-root",
      '    if force_root(df):\n        try:\n            out["FORCE"]',
      '    if True:\n        try:\n            out["FORCE"]',
@@ -1030,7 +1028,7 @@ MUTATIONS = (
 )
 # Mutations apply to the code ABOVE this marker only -- the table itself
 # carries every anchor a second time.
-_SELF_TEST_MARKER = "# Self-test (D-080): checks on built data"
+_SELF_TEST_MARKER = "# Self-test: checks on built data"
 
 
 def self_test() -> int:

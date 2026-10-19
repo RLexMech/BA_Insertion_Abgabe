@@ -38,7 +38,7 @@ def resolve_fixture_usd_path() -> str:
         "(or set PROXYTASK_TISCH_USD to a table whose pocket really is "
         f"{pocket_mm:g} mm). A size-less tisch_square.usd and the round tisch.usd are NOT "
         "accepted; the pocket size is part of the filename because it is the curriculum "
-        "variable (D-033)."
+        "variable."
     )
 
 

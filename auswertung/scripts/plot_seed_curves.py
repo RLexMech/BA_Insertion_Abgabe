@@ -2,14 +2,13 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 r"""F7 of ``eval_figures.py`` (training success over total env steps, mean line,
-95 % bootstrap interval of the mean as band, D-218, each seed as a thin line,
-D-219) for rl_games seed chains,
-BEFORE any evaluation exists. Laptop only, in ``.venv-analysis`` (D-189).
+95 % bootstrap interval of the mean as band, each seed as a thin line) for rl_games seed chains,
+BEFORE any evaluation exists. Laptop only, in ``.venv-analysis``.
 
 A thin caller: the band numbers (``_mean_std``, ``_boot_ci``), the drawing (``draw_f7``),
 the font setup, the arm colours and the per-run reading
 (``read_rl_games_run``: ``rt_logs/<prefix>/<prefix><N>_scalars.csv`` with its
-``_agent.yaml`` / ``_env.yaml``, x axis by ``tools/run_axis.py``, D-195) are
+``_agent.yaml`` / ``_env.yaml``, x axis by ``tools/run_axis.py``) are
 ``eval_figures.py``'s. For the evaluation's figure set use
 ``eval_figures.py --extract-training rt_logs --arm ...``; this caller draws
 one F7 beside a run report without an extraction.

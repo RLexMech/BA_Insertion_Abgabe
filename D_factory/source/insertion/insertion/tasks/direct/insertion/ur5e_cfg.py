@@ -65,7 +65,7 @@ UR5E_HOME_CFG = ArticulationCfg(
 )
 """UR5e articulation, bare arm, home pose from the IK screener, drives from the USD.
 
-Asset structure as probed, for whoever wires the gripper next (D-064):
+Asset structure:
 
   - 7 rigid bodies, ``base_link`` .. ``wrist_3_link``. There is NO ``ee_link``,
     so the flange body to weld against is ``wrist_3_link``.

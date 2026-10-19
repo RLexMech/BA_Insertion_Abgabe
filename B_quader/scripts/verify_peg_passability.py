@@ -102,7 +102,7 @@ def main() -> None:
         fx, fy, fz = cfg.fixture_pos
         cfg.fixture_pos = (fx + dx, fy + dy, fz)
         cfg.opening_entrance_pos = cfg.fixture_pos
-        print(f"[passability] fixture offset (D-034 probe): ({dx:+.3f}, {dy:+.3f}) m -> {cfg.fixture_pos}")
+        print(f"[passability] fixture offset (probe): ({dx:+.3f}, {dy:+.3f}) m -> {cfg.fixture_pos}")
     cfg.fixture_pos_noise_xy = 0.0
     cfg.fixture_yaw_noise_rad = 0.0
     env = ProxytaskEnv(cfg)
@@ -417,7 +417,7 @@ def judge(result: dict) -> dict:
         sealed_hint = ""
         if deepest_clean < 0.001:
             sealed_hint = (
-                ". A reaction from ~0 mm depth is the signature of a SEALED pocket. Since D-033 "
+                ". A reaction from ~0 mm depth is the signature of a SEALED pocket. "
                 "the table is composed of box colliders, where that is impossible by construction, "
                 "so suspect the asset rather than the approximation: check that the loaded USD is "
                 f"the generated {geom.default_fixture_usd_name()} and that its own author-time "

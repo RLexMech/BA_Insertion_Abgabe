@@ -46,7 +46,7 @@ class PPORunnerCfg(RslRlOnPolicyRunnerCfg):
 
 @configclass
 class PPORunnerMlpAblationCfg(PPORunnerCfg):
-    """D-195's MLP ablation arm, `--agent rsl_rl_mlp_ablation_cfg_entry_point`."""
+    """MLP ablation arm, `--agent rsl_rl_mlp_ablation_cfg_entry_point`."""
 
     num_steps_per_env = 128
     max_iterations = 400
@@ -59,7 +59,7 @@ class PPORunnerMlpAblationCfg(PPORunnerCfg):
 
 @configclass
 class PPORunnerLstmCfg(PPORunnerMlpAblationCfg):
-    """D-195's recurrent actor-critic, `--agent rsl_rl_rnn_cfg_entry_point`."""
+    """recurrent actor-critic, `--agent rsl_rl_rnn_cfg_entry_point`."""
 
     def __post_init__(self):
         super().__post_init__()

@@ -125,7 +125,7 @@ def kernel_sum(
 
 @torch.jit.script
 def sapu_reward_scale(interpen_dist: torch.Tensor, interpen_thresh: float) -> torch.Tensor:
-    """SAPU: scale the return by interpenetration (D-109 point (10))."""
+    """SAPU: scale the return by interpenetration."""
     scale = 1.0 - torch.tanh(interpen_dist / interpen_thresh)
     return torch.where(interpen_dist >= interpen_thresh, torch.zeros_like(scale), scale)
 
@@ -260,7 +260,7 @@ OBS_SLICES: dict = {
     "ee_quat": (15, 19),
     "yaw_cos_sin": (19, 21),
     "pocket_quat": (21, 25),
-    "force": (25, 28),        # three force components, EMA-smoothed, D-114
+    "force": (25, 28),        # three force components, EMA-smoothed
 }
 OBS_DIM: int = 28
 
@@ -296,7 +296,7 @@ def noise_masks(
     mode: str = "force",
     device: str = "cpu",
 ) -> tuple[torch.Tensor, torch.Tensor]:
-    """The two per-channel sigma vectors of the observation noise (D-182)."""
+    """The two per-channel sigma vectors of the observation noise."""
     slices = obs_slices(mode)
     if "torque" not in slices and torque_std_nm != 0.0:
         raise ValueError(
@@ -319,14 +319,14 @@ def noise_masks(
 
 @torch.jit.script
 def canonicalize_quat(q: torch.Tensor) -> torch.Tensor:
-    """Force ``w >= 0`` on a wxyz quaternion batch (D-037)."""
+    """Force ``w >= 0`` on a wxyz quaternion batch."""
     flip = q[:, 0:1] < 0.0
     return torch.where(flip, -q, q)
 
 
 @torch.jit.script
 def yaw_cos_sin(x_axis: torch.Tensor) -> torch.Tensor:
-    """Encode the part's yaw as ``(cos phi, sin phi)`` -- D-107 point (2)."""
+    """Encode the part's yaw as ``(cos phi, sin phi)``."""
     phi = torch.atan2(x_axis[:, 1], x_axis[:, 0])
     return torch.stack((torch.cos(phi), torch.sin(phi)), dim=-1)
 
@@ -364,7 +364,7 @@ def assemble_observation_wrench(
     force: torch.Tensor,
     torque: torch.Tensor,
 ) -> torch.Tensor:
-    """The ``wrench`` layout (D-188): the ``force`` layout with the three torque components APPENDED."""
+    """The ``wrench`` layout: the ``force`` layout with the three torque components APPENDED."""
     return torch.cat(
         (assemble_observation(joint_pos, joint_vel, tip_rel, ee_quat, yaw_cs, pocket_quat, force),
          torque),
@@ -394,7 +394,7 @@ def gravity_tare_torque(
     lever_w: torch.Tensor,
     enabled: bool,
 ) -> torch.Tensor:
-    """Remove the welded tool's OWN WEIGHT MOMENT from the joint reaction torque (D-188) -- the torque twin of ``gravity_tare``."""
+    """Remove the welded tool's OWN WEIGHT MOMENT from the joint reaction torque -- the torque twin of ``gravity_tare``."""
     if not enabled:
         return torque_raw
     hold = hold_force_w.reshape(1, 3) * torch.ones_like(torque_raw)
@@ -404,7 +404,7 @@ def gravity_tare_torque(
 
 @torch.jit.script
 def force_magnitude(force: torch.Tensor) -> torch.Tensor:
-    """``||F||`` from the three force components (D-114)."""
+    """``||F||`` from the three force components."""
     return torch.linalg.norm(force, dim=-1)
 
 
@@ -416,7 +416,7 @@ def compute_dones(
     f_max: float,
     success_now: torch.Tensor,
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-    """The exits: TWO terminal sources and the timeout (D-113 point (6))."""
+    """The exits: TWO terminal sources and the timeout."""
     force_abort = force_norm >= f_max
     timeout = episode_length_buf >= max_episode_length - 1
     terminated = success_now
@@ -462,7 +462,7 @@ def interpen_unclean(interpen_dist: torch.Tensor, interpen_thresh: float) -> tor
 
 @torch.jit.script
 def is_engaged(depth: torch.Tensor, engaged_depth: float, in_pocket: torch.Tensor) -> torch.Tensor:
-    """The \"engaged\" display bonus predicate (D-109 point (5))."""
+    """The \"engaged\" display bonus predicate."""
     return (depth >= engaged_depth) & in_pocket
 
 

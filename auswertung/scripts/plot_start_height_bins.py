@@ -4,7 +4,7 @@
 r"""Plot trailing-window success and episode counts for six start-height bins.
 
 Read success_by_start_height_bin from JSON or the last table in a text log.
-Require six bins and preserve recorded edges (D-165). Current bins span
+Require six bins and preserve recorded edges. Current bins span
 10 mm each above the opening. Failure at +30 mm despite success inside the
 opening can indicate partial-insertion overfitting (IndustReal).
 Offline JSON + matplotlib; --self-test uses temporary synthetic data.

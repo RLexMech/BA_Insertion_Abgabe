@@ -5,7 +5,7 @@ r"""Plot reward, success, depth and force-abort curves as PNG and PDF.
 
 Read wide scalars.csv; resolve the first available candidate tag and report
 missing curves. --reward-tag overrides the reward tag. Each main/reference
-run uses its own YAML-derived total-step factor (tools/run_axis.py, D-195).
+run uses its own YAML-derived total-step factor (tools/run_axis.py).
 --smooth counts logged points, not environment steps. Report wall time
 separately. --ref adds a labelled comparison; --no-title omits the title.
 Offline CSV + matplotlib; --self-test uses temporary synthetic outputs.
@@ -194,7 +194,7 @@ def plot_all(scalars: pathlib.Path, run: str, factor: tuple[int, int], out_dir: 
 # self-test
 # --------------------------------------------------------------------------
 
-# D-195 axis self-test: main() on a synthetic yaml pair
+# axis self-test: main() on a synthetic yaml pair
 AXIS_CHECKS = (
     "main run: first x = (0 + 1) * 128 * 4 = 512",
     "main run: every x = (step + 1) * 128 * 4",
@@ -206,7 +206,7 @@ AXIS_MUTATIONS = (
     ("reference-drawn-with-the-main-factor", "load_run(ref, ref_run, ref_factor)", "load_run(ref, ref_run, factor)",
      (AXIS_CHECKS[2],)),
 )
-_SELF_TEST_MARKER = "# D-195 axis self-test: main() on a synthetic yaml pair"
+_SELF_TEST_MARKER = "# axis self-test: main() on a synthetic yaml pair"
 
 
 def _axis_checks(text: str, root: pathlib.Path) -> dict[str, bool]:
@@ -352,7 +352,7 @@ def main(argv: list[str] | None = None) -> int:
     if a.scalars is None or not a.run or a.agent_yaml is None or a.env_yaml is None:
         ap.error("--scalars, --run, --agent-yaml and --env-yaml are required (or --self-test)")
     if a.ref is not None and (a.ref_agent_yaml is None or a.ref_env_yaml is None):
-        ap.error("--ref needs --ref-agent-yaml and --ref-env-yaml: each run is drawn with its own factor (D-195)")
+        ap.error("--ref needs --ref-agent-yaml and --ref-env-yaml: each run is drawn with its own factor")
     which = [w.strip() for w in a.which.split(",") if w.strip()]
     unknown = [w for w in which if w not in CURVES]
     if unknown:

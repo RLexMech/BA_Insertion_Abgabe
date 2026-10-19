@@ -25,7 +25,7 @@ expected to carry a SUMMARY block of its own -- `check_seated_success.py`
 reward curve does since 2026-09-05).
 
 Stdlib only; runs without the simulator. `--self-test` builds a synthetic log and
-applies the D-080 mutations (a repeat report that must vanish, a Traceback
+applies the mutations (a repeat report that must vanish, a Traceback
 inside noise that must survive, a `[rt_log]` line that must never drop).
 The noise/anomaly/divider rules are IMPORTED from `filter_rt_log.py`, the
 one home for them -- this file adds only the keep/drop precedence.
@@ -213,8 +213,8 @@ def _synthetic_log() -> list[str]:
         "INSERTION STARTUP REPORT -- REAL geometry",
         f"step {step} of (2, 60, 180, 258), t = 0.1 s after reset",
         "kp:           pos 100.0 N/m",
-        f"observation bias env0..3 (D-182, tip_rel 12:15): [[0.00{step:03d}]]",
-        f"grasp belief error env0..3 (D-183): [0.00{step:03d}]",
+        f"observation bias env0..3 (tip_rel 12:15): [[0.00{step:03d}]]",
+        f"grasp belief error env0..3: [0.00{step:03d}]",
         "[INFO]: noise inside the report",
         "=" * 72,
     ]
@@ -258,9 +258,9 @@ def _self_test() -> int:
         ("second report cut, not dropped whole",
          "startup report repeat (step 60) cut to 3 of 8 lines" in text),
         ("the repeat keeps its observation bias line",
-         "observation bias env0..3 (D-182, tip_rel 12:15): [[0.00060]]" in text),
+         "observation bias env0..3 (tip_rel 12:15): [[0.00060]]" in text),
         ("the repeat keeps its grasp belief line",
-         "grasp belief error env0..3 (D-183): [0.00060]" in text),
+         "grasp belief error env0..3: [0.00060]" in text),
         ("the repeat keeps its step line, so the numbers can be told apart",
          "step 60 of (2, 60, 180, 258)" in text),
         ("the repeat still drops the lines that DO repeat",

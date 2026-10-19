@@ -1,4 +1,4 @@
-r"""Widen rsl_rl observations from 21 to 25 channels (D-034, D-037).
+r"""Widen rsl_rl observations from 21 to 25 channels.
 
 Append zero input columns to actor/critic first layers; initialise added
 normaliser means to 0 and variance/std to 1. For identical first 21 inputs,
@@ -226,7 +226,7 @@ def main() -> int:
     print(
         "\nNEXT: this is a claim, not a result. Replay the expanded checkpoint at tilt 0 "
         "(must reproduce 100 %) and at --fixture-tilt 5 (must reproduce ~50 %). Those two "
-        "numbers are on disk from D-036 and are the only proof that the widening was neutral."
+        "reference replay results are the only proof that the widening was neutral."
     )
     return 0
 
