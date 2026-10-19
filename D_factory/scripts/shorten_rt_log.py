@@ -1,18 +1,14 @@
 #!/usr/bin/env python3
-"""shorten_rt_log.py -- cut a training-PC log down to what /rt-check reads.
+"""shorten_rt_log.py -- retain relevant diagnostics from a training-PC log.
 
-WHY (2026-09-05, user request after RT-150). One rt_log run is ~680 lines,
-and ~600 of them are Isaac/Kit boot noise plus the INSERTION STARTUP REPORT
-printed three times (steps 2, 60, 180). The user pastes the whole thing into
-`rt_logs/inbox.txt` by hand, and the JSON the script wrote (`--out`) has to
-be pasted separately -- RT-135's JSONs went missing that way and three
-expectation points could not be judged. This script produces ONE short file
-that carries everything `/rt-check` needs, so one paste is the whole handover.
+Preserves run identity, errors, relevant startup diagnostics and metrics
+while removing repeated Isaac/Kit boot output (RT-150). Embedded metrics
+keep the diagnostic output and JSON together (RT-135).
 
 WHAT IT KEEPS, in order of precedence:
   1. every `[rt_log]` line (header, cmd, git, exit code) -- the run identity;
   2. everything from the first `Traceback` to the run's exit line;
-  3. any line `filter_rt_log.ANOMALY_RE` matches (FAIL, Error, error:, ...);
+  3. any line `filter_rt_log.ANOMALY_RE` matches (FAIL, Error, error: ...);
   4. the FIRST startup report of each run in full; a later repeat becomes one
      line naming the step, PLUS the lines that genuinely differ between
      printouts -- the observation bias and the grasp belief error. Those are

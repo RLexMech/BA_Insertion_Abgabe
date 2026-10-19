@@ -30,11 +30,11 @@ OWN LIMIT. A RESUMED run counts from ``start_iter``, not 0; the rule above
 holds for a fresh run only. The reader cannot see a resume and refuses
 nothing about it. Our runs are fresh.
 
-RL_GAMES (D-200, ``Pläne/D-200_Grafikpfad.md`` Part A). The factor is
+RL_GAMES (D-200). The factor is
 ``(horizon_length, num_envs)``: exactly one ``horizon_length:`` in
 ``agent.yaml``, directly under ``params:`` -> ``config:``; ``num_envs`` by the
 rule above. rl_games writes its tags on THREE step axes (measured in
-``rt_logs/RT-240c/RT-240c_scalars.csv``; ``Pläne/D-200_Bauplan.md`` Part 2
+``rt_logs/RT-240c/RT-240c_scalars.csv``; D-200
 (6)), with F = horizon_length x num_envs:
 
 * ``Episode/*``, ``*/iter``: step = epoch, from 1 -> x = step * F

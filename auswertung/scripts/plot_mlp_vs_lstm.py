@@ -56,7 +56,7 @@ ABLATIONS = {
 }
 NAME, NETS = ABLATIONS["lstm"]
 BOUNDS_TOTAL = 75.0   # 5 floor rungs + 7 boundaries x 10 steps (autodr.DR_DIMS, RT-242s OUTCOME P3)
-# Each panel's plot area 10 % taller than the 1.62 in of the PNG before (user 2026-10-11; 487 px spine at 300 dpi).
+# Plot-area height per panel in inches.
 AXES_H = 1.79
 EXTRA = {"bounds": "Episode/dr/bounds_version", "length": "episode_lengths/iter"}
 

@@ -15,7 +15,7 @@ table -- no height, no overlay -- because the mean success rate cannot
 show whether the LARGE angles were learned or only the small ones, and the
 reader must see how many episodes each percentage stands on.
 
-THE EDGES ARE THE ENV'S, AND THEY MOVED (2026-09-12, user). They were
+THE EDGES ARE THE ENV'S, AND THEY MOVED. They were
 3/6/9/12/15 deg, D-037's superseded ladder; the last edge is now the AutoDR
 tilt ceiling of 10 deg (``autodr.DR_DIMS``), the rule D-178 (7) states and
 ``scripts/check_autodr.py`` holds. THE BIN COUNT DID NOT MOVE -- five then,

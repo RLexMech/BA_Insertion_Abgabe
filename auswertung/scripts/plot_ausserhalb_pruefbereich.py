@@ -1,5 +1,5 @@
 """H17: success of Auto-DR and Fixed-DR inside and outside the Prüfbereich, with
-the number of test cases at every point (user 2026-10-08, thesis 5.2.2).
+the number of test cases at every point (thesis 5.2.2).
 
 One row per disturbance (Startversatz, |Gierung|, Kippung, Reibwert), one column
 per arm. Inside the Prüfbereich: the main test's bins (F3's data, ``data_f3``).

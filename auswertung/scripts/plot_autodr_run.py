@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 r"""Eight report figures for ONE AutoDR run (RT-206 series; rl_games runs since
-D-200, ``Pläne/D-200_Grafikpfad.md``), PNG + PDF.
+D-200), PNG + PDF.
 
 WHAT IT DRAWS (``<out-dir>/<run>_<name>.png`` and ``.pdf``)
 ------------------------------------------------------------
@@ -27,7 +27,7 @@ WHAT IT DRAWS (``<out-dir>/<run>_<name>.png`` and ``.pdf``)
 RL_GAMES RUNS: the library is told from ``--agent-yaml``
 (``run_axis.read_run_factor``); the x of every tag follows its rl_games step
 axis (``run_axis.rl_games_x``); the AutoDR state is the checkpoint's
-``env_state`` saved as json (``Pläne/D-200_Grafikpfad.md`` Part C), whose
+``env_state`` saved as json (D-200), whose
 ``autodr`` key has the same form as the rsl_rl sidecar's. Tag names: see
 ``RL_GAMES_TAG``.
 
@@ -73,8 +73,7 @@ sys.modules["run_axis"] = run_axis
 _spec.loader.exec_module(run_axis)
 
 XLABEL = "Policy-Schritte in Mio."   # D-195 CURVE AXIS
-# fig_stufen: each panel's plot area 10 % taller than the 1.38 in of the PNG before
-# (user 2026-10-11; RT-201_stufen, 413 px spine at 300 dpi).
+# fig_stufen: plot-area height per panel in inches (RT-201_stufen).
 STUFEN_AXES_H = 1.51
 RUN = "#3B6FD4"   # series 1 (plot_run_curves.py precedent, validated with REF)
 REF = "#D97706"   # series 2
@@ -406,7 +405,7 @@ def dauer_points(rows, factor, lib: str) -> list[tuple[int, int, int]]:
     """``(x, median steps, p90 steps)`` per iteration over the successful
     episodes of ``episodes.csv``. rsl_rl: episode 0 of each env is dropped
     (init_at_random_ep_len, its steps is not its length); rl_games starts no
-    env at a random step (``Pläne/D-200_Bauplan.md`` Part 2 (7))."""
+    env at a random step (D-200)."""
     by_it: dict[int, list[int]] = {}
     for r in rows:
         if r["outcome"] != "success" or (lib == "rsl_rl" and int(r["episode"]) == 0):

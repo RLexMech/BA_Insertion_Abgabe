@@ -655,7 +655,7 @@ def build_checks(ns, torch) -> list:
 
     # -- provenance: four ceilings marked, the friction band sourced ---------
     # D-181 (2) gives the friction band a SOURCE, so it is the one quantity
-    # without the marker (user, 2026-09-12). The four ceilings are decided and
+    # without the marker. The four ceilings are decided and
     # not derived, which is exactly what the marker means.
     check("every quantity but friction carries [TESTWERT]",
           set(testwert_dims(DR_DIMS)) == {d.name for d in DR_DIMS} - {"friction"},
@@ -717,7 +717,7 @@ def build_checks(ns, torch) -> list:
     check("the last YAW bin edge is the yaw magnitude ceiling",
           same_number(_yaw_edges[-1], _yaw_ceil_deg),
           f"edge {_yaw_edges[-1]:.10g} deg vs ceiling {_yaw_ceil_deg:.10g} deg")
-    # The TILT twin (2026-09-12, user). D-178 (7) re-cut lateral and yaw and
+    # The TILT twin. D-178 (7) re-cut lateral and yaw and
     # left this table on D-037's superseded ladder, (3, 6, 9, 12, 15) deg:
     # against the 10 deg ceiling the [12, inf) bin could never fill and
     # [9, 12) only ever saw 9-10 deg, so two of the five bins carried no
@@ -783,7 +783,7 @@ def build_checks(ns, torch) -> list:
     # replayed with a freshly drawn belief error is not the same episode --
     # and so that a run with the magnitude at 0.0 consumes exactly the same
     # random numbers as one with it on.
-    #
+
     # BY NAME, because the env asks for the NAME
     # (`self._col["grasp_obs_x"]`): a rename here is a KeyError at the
     # first reset, or a header mismatch against a table CSV written under
@@ -1063,7 +1063,7 @@ def build_checks(ns, torch) -> list:
     check("a bound event writes a marked [autodr] line",
           ev.line().startswith("[autodr] tilt_hi:"), ev.line())
 
-    # -- the start floor (SBC step 0, Pläne/SBC_Schritt0_Entwurf.md) --------
+    # -- the start floor (start-height curriculum) --------
     FloorSpec = ns["FloorSpec"]
     FLOOR_KEY = ns["FLOOR_KEY"]
     H_MIN = CENTRES["start_height"]
@@ -1204,7 +1204,7 @@ def build_checks(ns, torch) -> list:
           and nd.bounds()["start_height"] == (H_MIN, _sh_table.hi_max),
           f"{nd.keys}, {nd.bounds()}")
 
-    # -- STAGNATION READINGS (user, 2026-09-14): last_rate, holds, STALL note --
+    # -- STAGNATION READINGS: last_rate, holds, STALL note --
     # A boundary parked between the thresholds moves nothing and bumps no
     # version. Its last full-buffer rate and its run of unmoved buffers are
     # the two curves that make it visible; the STALL note is a review

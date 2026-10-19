@@ -14,11 +14,10 @@ the tracked `results/training_rlgames/fortsetzung_RT-253.csv`. Two steps:
     .venv-analysis/Scripts/python.exe scripts/plot_fortsetzung_fixeddr.py
         -> docs/figures/eval_rlgames/H25_fortsetzung_fixed_dr.{pdf,svg,png}
 
-Each seed's line breaks at the resume (two runs). Three runs: each seed is its own line, no mean and no band (rl-diagramme U4,
-2-4 runs). No smoothing. Raw values, as H6: s1 and s2 log no success rate in
+Each seed's line breaks at the resume (two runs). Three runs: each seed is its own line, no mean and no band (2-4 runs). No smoothing. Raw values, as H6: s1 and s2 log no success rate in
 epoch 101 (no episode ended), s5's epochs 101/102 read 1.000/0.987 -- censoring
 right after the reset of all environments (RT-253 OUTCOME), not a reading; the
-caption names it. The script prints the caption facts. Built 2026-10-12.
+caption names it. The script prints the caption facts.
 """
 import argparse
 import csv
@@ -102,7 +101,7 @@ def draw(d: dict) -> list:
     # Direct labels at the right end (C7): s5 alone at the top, s1 and s2 on top of each other at 0.
     end = {s: 100 * v["rate"][-1] for s, v in d["seeds"].items()}
     ax.text(LAST_EPOCH - 2, end[5] - 4, "Seed 5", color=EF.INK, fontsize=EF.FONT_PT, ha="right", va="top")
-    # s1 and s2 run on the x axis line at 0 %: an arrow from their label down to them (user 2026-10-12).
+    # s1 and s2 run on the x axis line at 0 %: an arrow from their label down to them.
     ax.annotate("Seed 1 und Seed 2", xy=(LAST_EPOCH - 30, max(end[1], end[2])),
                 xytext=(LAST_EPOCH - 30, max(end[1], end[2]) + 18), color=EF.INK, fontsize=EF.FONT_PT,
                 ha="center", va="bottom",

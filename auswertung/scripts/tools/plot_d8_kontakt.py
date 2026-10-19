@@ -3,7 +3,7 @@
 Reads the frames straight from rt_logs/D8/D8_RT-243s4_fuegen.mkv (ffmpeg on PATH).
 Times were found by matching the tiles of docs/figures/standbilder/D8_RT-243s4_bildfolge.png
 against the video (tile crop = 440x400 at (310, 170), mean squared error 0.0 per tile).
-Contact marks and descriptions are added by hand in the thesis (user 2026-10-08).
+Contact marks and descriptions are added by hand in the thesis.
 
     python scripts/tools/plot_d8_kontakt.py
 """
@@ -26,7 +26,7 @@ CROP = (310 + 40, 170 + 90, 310 + 300, 170 + 330)
 
 # video time [s] of tiles 4-8 of the 8-frame sequence, plus 198.240 s between the first two:
 # the part on the rim with its orientation changed against (a), chosen by eye from 12 frames
-# between 193.833 and 210.000 s (user 2026-10-12, six panels like the C sequence)
+# between 193.833 and 210.000 s (six panels like the C sequence)
 TIMES = [193.833, 198.240, 210.000, 225.000, 237.733, 251.933]
 
 

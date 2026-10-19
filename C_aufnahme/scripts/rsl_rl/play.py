@@ -70,7 +70,7 @@ parser.add_argument(
     type=str,
     default=None,
     metavar="PATH",
-    help="RT-149 replay trace (Plan-Merge 2026-09-05): write the raw policy "
+    help="RT-149 replay trace: write the raw policy "
     "observation slices tip_rel (12:15), ee_quat (15:19, added 2026-09-06 so "
     "the trace carries TILT and not only yaw), yaw_cos_sin (19:21) and force (25:28), "
     "the sampled action and the done flag PER STEP for every env to this JSON. "

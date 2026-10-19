@@ -30,7 +30,7 @@ OUT = REPO / "docs/figures/standbilder/RT-272b_C_ausrichten"
 CROP = (330, 280, 330 + 260, 280 + 240)
 
 # video time [s]: start, descent, just above the opening, at the opening, half way in
-# (44.3 s, user 2026-10-12), seated
+# (44.3 s), seated
 TIMES = [39.6, 41.2, 42.4, 42.8, 44.3, 45.3]
 
 

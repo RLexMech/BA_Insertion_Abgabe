@@ -1,7 +1,6 @@
 r"""Appendix tables to thesis 5.2.1 and 5.2.2: force and interpenetration over ALL
 trials (successes and failures) per training condition, main test beside the
-T-ood blocks / the doubled observation errors (user 2026-10-09: "in den Anhang
-und nur einen kurzen Absatz").
+T-ood blocks / the doubled observation errors.
 
 One row per test and condition, over its policies with >= 90 % in their own main
 test (D-226): range over the policies of the median and of the 95 % value of the

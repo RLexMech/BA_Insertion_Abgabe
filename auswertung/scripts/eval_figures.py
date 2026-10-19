@@ -28,7 +28,7 @@ Wilson intervals and the bin rule are imported from ``eval_stats.py`` (one home)
   F12 every T-ood seed of each arm: OOD block minus its own T-final, Newcombe
       interval per seed, mean of the seeds as a short line (p6 db85986c; D-208: both arms)
 F7-F12 were added AFTER the results were known: descriptive, no criterion.
-Main-text set H1-H4 (user 2026-10-02 "B": F1-F12 go to the appendix; forms from
+Main-text set H1-H4 (F1-F12 go to the appendix; forms from
 docs/reference/literature_check_figure_types_for_evaluation_2026-10-02.md § 4),
 plain German, the same data functions (since D-218 WITH the 95 % intervals):
   H1  per method: bar "ohne Störung" (hollow) beside "mit voller Störung" (filled),
@@ -54,24 +54,24 @@ plain German, the same data functions (since D-218 WITH the 95 % intervals):
   H14 robustness curve (RT-264/265, own root --sweep results/eval_rlgames_sweep/):
       success of all 15 policies over the tilt and the friction sweep, F7's
       curve form per panel, test range shaded -- data_h14
-  H15 interpenetration over the training (user 2026-10-07): per arm the mean over
+  H15 interpenetration over the training: per arm the mean over
       the seeds and its 95 % bootstrap interval, each point H15_EPOCHS epochs; top:
       success with peak interpenetration < t1, bottom: share of the successes at or
       above t1 (only seeds with a success at every point; the others are named),
       seeds as thin lines (D-219). Reads ``<training>/penetration.csv`` (extract_penetration) -- data_h15
   H18 T-ood outside the Prüfbereich, Auto-DR vs Fixed-DR, every seed with its Wilson
-      interval, the seed mean with its bootstrap interval (rl-diagramme skill form) -- data_h18
+      interval, the seed mean with its bootstrap interval -- data_h18
   H19 H18's blocks, H20 the three doubled observation errors (D-226): only the policies
       with >= LEARNED_MIN in their own main test; a mean and its bootstrap interval only
-      for an arm with >= LEARNED_MEAN_MIN_N of them (skill U4); grey band = the shown
+      for an arm with >= LEARNED_MEAN_MIN_N of them; grey band = the shown
       policies' main-test range; the left-out policies named under the legend -- data_learned.
-  H22 appendix to H20 (user 2026-10-09): the three doubled observation errors for ALL
+  H22 appendix to H20: the three doubled observation errors for ALL
       policies -- data_h22
-  Since 2026-10-11 (user) H18, H19, H20 and H22 share ONE form, H1's bars: one panel per
+  H18, H19, H20 and H22 share ONE form, H1's bars: one panel per
       arm, its policies' own main test once (hollow), then each block (filled), dots per
       seed; an arm without a mean shows its dots only (draw_pair_bars; data_h18_pairs,
-      data_h19_pairs, data_h20_pairs, data_h22_pairs; was the pair form of 2026-10-09);
-      since 2026-10-12 (user) H19 and H20 on a shortened rate axis (PAIR_YAXIS, _pair_floor);
+      data_h19_pairs, data_h20_pairs, data_h22_pairs; shared reference-test comparison);
+      H19 and H20 on a shortened rate axis (PAIR_YAXIS, _pair_floor);
       the words of all figures are the constants after METHOD_LABEL, the markers METHOD_MARKER (O1).
 D-218: every mean over the seeds carries its 95 % percentile bootstrap interval
 (``_boot_ci``; F3, F6, F7, F10, H1, H2, H5, H6, H12, H9/H11 in plot_mlp_vs_lstm.py),
@@ -86,7 +86,7 @@ H5/H6 draw over the iteration, not over env steps (D-212, an exception to D-195
 CURVE AXIS): only when every run collects the same env steps per iteration
 (``iteration_factor``); the axis label names that factor.
 Every figure is written as PDF + SVG (vector) and PNG at 300 dpi.
-Fixed-DR (D-192, added afterwards; user 2026-09-23 "B"): F1, F2 (two K5
+Fixed-DR (D-192, added afterwards): F1, F2 (two K5
 rows), F3, F5, F6, F7, F9, F10 draw it as a third arm when T-nominal-F AND
 T-final-F exist (F7: when its training runs were extracted); otherwise every
 figure is the two-method one. F4 and F11 show the final policy, which since
@@ -101,7 +101,7 @@ the column ``env_steps`` (D-195 CURVE AXIS, ``tools/run_axis.py``) is written
 with that run's own factor, and F7/F8 draw over it. rl_games seed chains
 (D-200) take ``--arm ARM=PREFIX`` per arm (files in ``rt_logs/<prefix>/``);
 F8 then needs each AutoDR seed's ``<prefix><N>_autodr_final.json`` (the
-checkpoint's AutoDR state, Pläne/D-200_Grafikpfad.md Part C) and is left out
+checkpoint's AutoDR state, D-200) and is left out
 until they exist. F11/F12 are drawn when ``<results>/T-ood`` exists.
 
     .venv-analysis/Scripts/python.exe scripts/eval_figures.py --extract-training rt_logs
@@ -141,7 +141,7 @@ ES = _load_module("eval_stats", REPO / "scripts" / "eval_stats.py")
 KEY = ES.KEY
 # D-195 CURVE AXIS: training curves over total env steps, one home for the rule.
 run_axis = _load_module("run_axis", REPO / "scripts" / "tools" / "run_axis.py")
-XLABEL_TRAINING = "Policy-Schritte in Mio."   # F7, F8; user's wording 2026-10-06, "in Mio." 2026-10-08 (rule C3)
+XLABEL_TRAINING = "Policy-Schritte in Mio."   # F7, F8
 
 
 def _mio_axis(ax):
@@ -149,12 +149,11 @@ def _mio_axis(ax):
     Call after ``_style``, which only replaces a plain ScalarFormatter."""
     from matplotlib.ticker import FuncFormatter
     ax.xaxis.set_major_formatter(FuncFormatter(lambda v, _: _de_digits(f"{v / 1e6:g}")))
-# H5/H6/H9/H11: the training round. The thesis word is "Epoche" (user 2026-10-04;
-# rl_games' own name, ``max_epochs``); rsl_rl calls the same round an iteration.
+# H5/H6/H9/H11: the training round. The thesis word is "Epoche",
+# also used by rl_games (``max_epochs``); rsl_rl calls the same round an iteration.
 # The code keeps its column name ``iteration``.
 def xlabel_epoch(factor: int) -> str:
-    return f"Epoche (je {_thousands(factor)} Policy-Schritte)"   # user's wording, 2026-10-06
-
+    return f"Epoche (je {_thousands(factor)} Policy-Schritte)"
 # House pair (plot_run_curves.py:52-53, plot_autodr_run.py:47-48). Fixed-DR
 # (D-192) takes the dataviz reference palette's third slot, aqua, at its darker
 # step #199e70 (references/palette.md, dark column): the light step #1baf7a
@@ -164,17 +163,17 @@ def xlabel_epoch(factor: int) -> str:
 # Colour follows the METHOD.
 METHOD_COLOR = {"autodr": "#3B6FD4", "nodr": "#D97706", "fixeddr": "#199e70"}
 METHOD_LABEL = {"autodr": "Auto-DR", "nodr": "No-DR", "fixeddr": "Fixed-DR"}
-# Grafik_Regelwerk O1 (user 2026-10-11): a second encoding beside the colour, because
+# Grafik_Regelwerk O1: a second encoding beside the colour, because
 # No-DR and Fixed-DR have the same lightness in grey (L* 59,9 / 57,9).
 METHOD_MARKER = {"autodr": "o", "nodr": "^", "fixeddr": "s"}
-# Grafik_Regelwerk G (user 2026-10-11): the words of the figures, as the thesis
+# Grafik_Regelwerk G: the words of the figures, as the thesis
 # text uses them (Kap. 4.3.2, Tab. 4-1, Tab. 4-13). One home; the other plot scripts import them.
 TEST_MAIN = "Haupttest"
 TEST_NOMINAL = "Test ohne Streuung"
 YLABEL_RATE = "Erfolgsrate in %"
 YLABEL_TRAINING_RATE = "Erfolgsrate im Training in %"
 YLABEL_OPENING = "Öffnung der Grenzen in %"   # 0 = Nennwert, 100 = Maximum (T2)
-POLICY_DOT_LABEL = "Punkt: Policy je Seed"   # user 2026-10-11
+POLICY_DOT_LABEL = "Punkt: Policy je Seed"
 # The ablation pair of H9 / H11 / H12 (one home; plot_mlp_vs_lstm.py reads it):
 # the reference arm keeps the Auto-DR blue, the ablation takes the reference
 # palette's magenta (dark step) and a dashed line as second encoding. Pair
@@ -222,7 +221,7 @@ NODR_ENV_KEYS = ("dr_mode", "start_lateral_offset", "fixture_yaw_rad", "fixture_
 
 # F3 panels: episodes_all column, axis label, factor to the axis unit.
 F3_PANELS = (
-    # Labels: the user's wording (2026-10-06).
+    # Labels for the disturbance dimensions.
     ("lat_r_mm", "Startversatz in mm", 1.0),
     # Thesis words (Tab. 4-1), 2026-10-11; two lines, in one the H2 panel titles ran into each other.
     ("yaw_abs_deg", "Betrag der Gierung\nder Aufnahme in °", 1.0),
@@ -235,8 +234,8 @@ K3_ORDER = ("lat_r_hi", "yaw_lo", "yaw_hi", "tilt_hi", "start_height_hi", "frict
 K3_LABEL = {"lat_r_hi": "Versatz\nmax", "yaw_lo": "Gier\nmin", "yaw_hi": "Gier\nmax",
             "tilt_hi": "Kippung\nmax", "start_height_hi": "Starthöhe\nmax",
             "friction_lo": "Reibung\nmin", "friction_hi": "Reibung\nmax"}
-# Words as F3_PANELS (user's wording, 2026-10-06); yaw is signed here, so no "Betrag".
-# Thesis words (Tab. 4-1, user 2026-10-11); plot_autodr_run.fig_stufen reads them too.
+# Words as F3_PANELS; yaw is signed here, so no "Betrag".
+# Thesis words (Tab. 4-1); plot_autodr_run.fig_stufen reads them too.
 F8_PANELS = (("start_height_floor", "Starthöhe, untere Grenze\n(Startcurriculum)"), ("lat_r", "Startversatz"),
              ("yaw", "Gierung"), ("tilt", "Kippung"), ("start_height", "Starthöhe, obere Grenze"),
              ("friction", "Reibwert"))
@@ -245,10 +244,10 @@ PNG_DPI = 300   # print resolution; PDF and SVG are vector
 # No timestamps in the files: two runs on the same input write the same bytes.
 SAVE_META = {"pdf": {"CreationDate": None}, "svg": {"Date": None}, "png": None}
 # The thesis body is Helvetica (thesis/includes/preamble.tex: helvet + \sfdefault);
-# Arial has Helvetica's metrics and is on the laptop (user 2026-09-23).
+# Arial has Helvetica's metrics and is on the laptop.
 FONT = "Arial"
 # Legend, axis titles and tick numbers as large as the Word body text, Arial 12
-# (user 2026-10-11); holds only while the PNG stands in Word at its own 16 cm width.
+# holds only while the PNG stands in Word at its own 16 cm width.
 FONT_PT = 12
 
 
@@ -493,7 +492,7 @@ def data_f6(df: pd.DataFrame) -> dict:
             f = np.sort(ok.loc[ok["seed"] == s, "force_max_filtered_n"].to_numpy(dtype=float))
             if len(f) == 0:
                 # A seed without one success has no force ECDF (RT-232: Fixed-DR
-                # s1/s2, 0 of 1000). User 2026-09-25 ("A"): (a) averages the
+                # s1/s2, 0 of 1000). (a) averages the
                 # seeds that have one and names the others; (b) keeps them all.
                 no_success.append(int(s))
                 continue
@@ -577,7 +576,7 @@ def data_f8(curves: pd.DataFrame, sidecars: dict) -> dict:
     for s, gs in g.groupby("seed", sort=True):
         side = sidecars.get(("autodr", int(s)))
         if side is None:
-            raise FigError(f"F8: no AutoDR state for autodr s{s} (Pläne/D-200_Grafikpfad.md Part C)")
+            raise FigError(f"F8: no AutoDR state for autodr s{s} (D-200)")
         ad = side["autodr"]
         dims = {d["name"]: d for d in ad["dims"]}
         fl = ad["floor"]
@@ -721,11 +720,11 @@ def data_f12(summary: dict, sidecar: dict) -> dict:
     return out
 
 
-# H18 (thesis 5.2.2, user 2026-10-08): the T-ood blocks outside the Prüfbereich.
+# H18 (thesis 5.2.2): the T-ood blocks outside the Prüfbereich.
 # The start-height block stays at factor 1.0 (D-206 Bauplan A2), so it is not
-# outside and is left out. Words as F3_PANELS (user's wording, 2026-10-06).
+# outside and is left out. Words as F3_PANELS.
 H18_KEYS = tuple(k for k in K3_ORDER if k != "start_height_hi")
-# "Start-/versatz" in two lines: at 12 pt it ran into its neighbours under seven bars (user 2026-10-11).
+# "Start-/versatz" in two lines: at 12 pt it ran into its neighbours under seven bars.
 H18_WORD = {"lat_r": "Start-\nversatz", "yaw": "Gierung", "tilt": "Kippung", "friction": "Reibwert"}
 H18_ARMS = ("autodr", "fixeddr")
 
@@ -777,12 +776,12 @@ def data_h18(summary: dict, sidecar: dict) -> dict:
 
 # H19/H20 (D-226): T-ood and the doubled observation errors, only the policies
 # that learned the task. The rule reads each policy's OWN main test, never the
-# block shown (rl-diagramme skill D7). Arms with fewer than five such policies
-# get no mean and no interval (skill U4: 2-4 runs individually).
+# block shown. Arms with fewer than five such policies
+# get no mean and no interval (2-4 runs individually).
 LEARNED_MIN = 0.90
 LEARNED_MEAN_MIN_N = 5
 H20_WORD = {"pn2": "Lagefehler\nder Aufnahme", "gx2": "Greifversatz", "py2": "Gierfehler\nder Aufnahme"}
-# Rate axis (lower end, tick step) of thesis 5-9 (H19) and 5-11 (H20): user 2026-10-12, an
+# Rate axis (lower end, tick step) of thesis 5-9 (H19) and 5-11 (H20): an
 # exception to Grafik_Regelwerk C4 (bars from 0); every other bar figure keeps (0, 20).
 PAIR_YAXIS = {"H19": (50, 10), "H20": (80, 5)}
 
@@ -874,8 +873,7 @@ def data_h22(summary: dict) -> dict:
 
 
 def _add_pairs(d: dict, policies: dict, fig: str) -> dict:
-    """The pair form (user 2026-10-09 for H20; since 2026-10-11 for H18, H19, H22 too,
-    Grafik_Regelwerk G): per shown policy the Wilson interval of its OWN main
+    """The pair form (H18, H19, H20, H22): per shown policy the Wilson interval of its OWN main
     test from summary.json's k and n (``ref_wilson``), and for an arm with a mean
     the mean of those main tests with the same bootstrap as the block mean
     (``ref_mean``, ``ref_ci``); ``n_ref`` = the main test's test cases."""
@@ -901,7 +899,7 @@ def data_h20_pairs(summary: dict) -> dict:
 
 
 def data_h19_pairs(summary: dict, sidecar: dict) -> dict:
-    """H19 in H20's pair form (user 2026-10-11): the learned policies on the T-ood blocks."""
+    """H19 in H20's pair form: the learned policies on the T-ood blocks."""
     return _add_pairs(data_h19(summary, sidecar), summary["OOD"]["policies"], "H19")
 
 
@@ -1067,7 +1065,7 @@ def data_h12(summary: dict) -> dict:
 
 # H13 (D-221): the doubled observation errors (D-206 (3), D-208) for every
 # policy that played them, in H1's form: per arm each seed's own untagged main
-# test (hollow; Fixed-DR: T-final-F) once, then the blocks (filled; user 2026-10-11).
+# test (hollow; Fixed-DR: T-final-F) once, then the blocks (filled).
 # Replaces the thesis' hand-made figure 5-7 (BA_Anpassungen_Statistik.md A8).
 
 
@@ -1374,7 +1372,7 @@ def extract_training_rl_games(src: pathlib.Path, out: pathlib.Path, arms: dict) 
     return res
 
 
-# H15 (user 2026-10-07): the interpenetration over the training. The per-episode
+# H15: the interpenetration over the training. The per-episode
 # record ``<run>_episodes.csv`` (check_episode_log.py) is git-ignored; this keeps
 # per run and epoch the three counts H15 needs. All runs or none (as the sidecars).
 PEN_FILE = "penetration.csv"
@@ -1419,7 +1417,7 @@ def extract_penetration(src: pathlib.Path, out: pathlib.Path, arms: dict) -> int
 def copy_rl_games_sidecars(folder: pathlib.Path, out: pathlib.Path, prefix: str, last_epoch: dict) -> list:
     """F8's AutoDR state per seed: ``<prefix><N>_autodr_final.json`` = the
     checkpoint's ``env_state`` plus its file name under ``checkpoint``
-    (Pläne/D-200_Grafikpfad.md Part C, training PC; the laptop has no torch).
+    (D-200, training PC; the laptop has no torch).
     All seeds or none; each must name its own run and the epoch its curve ends
     on. Copied as ``autodr_s<N>_autodr_ep<E>.json``, never under rsl_rl's
     ``_1499`` name. Returns the copies; none -> [] (F8 waits)."""
@@ -1473,7 +1471,7 @@ def _style(ax, ylabel: str = "", xlabel: str = ""):
         ax.spines[side].set_visible(False)
     for side in ("left", "bottom"):
         ax.spines[side].set_color(INK_MUTED)
-    ax.tick_params(colors=INK_MUTED, labelcolor=INK, labelsize=FONT_PT)   # numbers black (user 2026-09-24)
+    ax.tick_params(colors=INK_MUTED, labelcolor=INK, labelsize=FONT_PT)   # numbers black
     if ylabel:
         ax.set_ylabel(ylabel, color=INK, fontsize=FONT_PT)
     if xlabel:
@@ -1507,11 +1505,8 @@ def _curve_extra(n_seeds: int) -> tuple:
 
 
 def _title(target, what: str, n_seeds: int):
-    """Short title in the figure (user 2026-09-24, after the example
-    'Lernkurven im Vergleich — Mittel ± Std. über 3 Seeds'). ``target``: an
-    axes, or the figure when it has several panels."""
-    # One step above the axis labels, well clear of the plot (user 2026-09-24,
-    # after trying 10 pt / default gap and 9 pt / pad 12).
+    """Short title for an axes or a figure containing several panels."""
+    # Keep the title clear of the axis labels and plot.
     # D-219: the figure draws the seeds themselves too (_seed_lines).
     text = f"{what} — {n_seeds} Seeds und ihr Mittel mit 95-%-KI"
     if hasattr(target, "suptitle"):
@@ -1614,7 +1609,7 @@ def draw_f3(plt, d, nodr):
     _title(fig, "Erfolgsrate je Störgröße", n_seeds)
     # No panel has a free corner (AutoDR runs along the top, No-DR and the
     # training marks along the bottom); inside the middle of a panel read badly
-    # (user 2026-09-24): below the panels in two columns (D-219), or the free sixth cell.
+    # below the panels in two columns (D-219), or the free sixth cell.
     extra = _curve_extra(n_seeds)
     if spare is not None:
         # The sixth cell is narrow: the band text breaks before "des" (as H2).
@@ -1695,7 +1690,7 @@ def draw_f5(plt, rows):
 def draw_f6(plt, d):
     fig, (a1, a2) = plt.subplots(1, 2, figsize=(FIG_W, 3.1))
     # Both panels as F7: the seeds first (D-219), then all bands, then all
-    # means; lines 20 % under the old 1.6 / 1.8 (user 2026-09-24).
+    # means, using thinner lines for the individual seeds.
     for ax, part, x in ((a1, "ecdf", "x"), (a2, "cum", "k")):
         for m in d[part]:
             c = d[part][m]
@@ -1731,7 +1726,7 @@ def draw_f6(plt, d):
 
 def _band(ax, x, ci, colour, rate=True):
     """The 95 % bootstrap interval of the seed mean (``_boot_ci``) as a shaded
-    band (D-218; was +-1 SD, user 2026-09-24). A rate is drawn in %;
+    band (D-218; was +-1 SD). A rate is drawn in %;
     ``rate=False`` (a return, a length) draws the band as it is."""
     lo, hi = (np.asarray(v, dtype=float) for v in ci)
     k = 100.0 if rate else 1.0
@@ -1768,8 +1763,8 @@ def _seed_line_handle():
 
 def _panel_grid(plt, n: int):
     """F3/H2: one panel per disturbance. Four fit 2 x 2; five take 3 x 2 and
-    the sixth cell carries the legend (2 x 3 had no room for 12 pt tick numbers,
-    user 2026-10-11). Returns (fig, panels, spare cell or None, the first-column panels)."""
+    the sixth cell carries the legend (2 x 3 had no room for 12 pt tick numbers).
+    Returns (fig, panels, spare cell or None, the first-column panels)."""
     rows, cols = (2, 2) if n <= 4 else (3, 2)
     fig, axes = plt.subplots(rows, cols, figsize=(FIG_W, 2.2 * rows), sharey=True)
     flat = list(axes.flat)
@@ -1780,7 +1775,7 @@ def _panel_grid(plt, n: int):
 
 # x ticks of the per-disturbance panels (F3, H2, H8), in the axis unit: the whole
 # tested range from its first to its last bin edge, start and end labelled, in
-# even steps (user 2026-10-02: the tilt axis showed only "5", the end of the
+# even steps (the tilt axis showed only "5", the end of the
 # range was not readable). Lateral, yaw, tilt, start height step = one bin.
 PANEL_TICK_STEP = {"lat_r_mm": 6.0, "yaw_abs_deg": 1.0, "tilt_deg": 2.0, "start_height_m": 50.0, "friction": 0.03}
 
@@ -1803,14 +1798,14 @@ def _arm_x(p, j: int, n: int):
     return np.asarray(p["x"]) + (j - (n - 1) / 2) * 0.14 * w
 
 
-# H2 (user 2026-10-11): Auto-DR leaves the figure for a table
+# H2: Auto-DR leaves the figure for a table
 # (scripts/tools/table_h2_autodr.py); its values sat at 100 % where no one could read them.
 H2_ARMS = ("nodr", "fixeddr")
 
 
 def _seed_dots(ax, x, seeds, colour):
     """H2 (D-219): one dot per seed and bin at the bin centre ``x`` -- every value
-    where it belongs, overlaps accepted (user 2026-10-11) -- so a mean between two
+    where it belongs, overlaps accepted -- so a mean between two
     groups of runs shows where the runs really are. Nearly opaque ("vollere Farbe")."""
     for v in seeds.values():
         ax.scatter(x, 100 * np.asarray(v, dtype=float), s=9, color=colour, alpha=0.9, linewidths=0, zorder=2)
@@ -1840,7 +1835,7 @@ def _bar_handle(label: str, color: str = INK_MUTED):
 
 # H2/H5/H6 legend: the interval's name (D-218), one home for both forms. A band
 # over a curve holds point by point, not for the whole curve at once (D-219).
-CI_LABEL = "95-%-KI des Mittelwerts (Bootstrap)"   # KI, not spelled out (user 2026-10-12)
+CI_LABEL = "95-%-KI des Mittelwerts (Bootstrap)"   # KI, not spelled out
 CI_LABEL_CURVE = CI_LABEL.replace("(Bootstrap)", "(Bootstrap, punktweise)")
 SEED_LINE_LABEL = "dünne Linie: ein Trainingslauf (Seed)"
 
@@ -1848,18 +1843,17 @@ SEED_LINE_LABEL = "dünne Linie: ein Trainingslauf (Seed)"
 def _band_patch(n_seeds: int):
     """Legend entry of ``_band`` (F3, F6, F7, F10, H5/H6, H9/H11 in plot_mlp_vs_lstm.py; D-218, D-219)."""
     from matplotlib.patches import Patch
-    # User 2026-10-11: short form; method and "punktweise" go to the caption.
+    # short form; method and "punktweise" go to the caption.
     # Two lines: at 12 pt one line runs past the 6.3 in figure width.
     return Patch(facecolor=INK_MUTED, alpha=0.2,
                  label=f"Band: 95-%-KI\ndes Mittelwerts über {n_seeds} Seeds")
 
 
-# 5-6 / 5-c (user 2026-10-11): thin seed lines only for these arms; Auto-DR's and
+# 5-6 / 5-c: thin seed lines only for these arms; Auto-DR's and
 # No-DR's runs lie close together, their band says enough. Fixed-DR splits into
 # runs near 0 % and near 100 %, which only the single lines show.
 SEED_LINE_ARMS = ("fixeddr",)
-# Training curves (user 2026-10-11, option A): plot area 10 % taller than the
-# 2.0 in of the PNGs before (5-6: 611 px, 5-c: 598 px spine at 300 dpi), width kept.
+# Height of the training-curve plot area in inches.
 CURVE_AXES_H = 2.2
 
 
@@ -1900,7 +1894,7 @@ def _wilson_handle():
 
 def draw_f7(plt, d):
     fig, ax = plt.subplots(figsize=(FIG_W, 3.0))
-    # The seeds first (D-219; only SEED_LINE_ARMS, user 2026-10-11), then all bands,
+    # The seeds first (D-219; only SEED_LINE_ARMS), then all bands,
     # then all means: no method's band may cover the other method's mean.
     for m in d:
         if m in SEED_LINE_ARMS:
@@ -1908,7 +1902,7 @@ def draw_f7(plt, d):
     for m in d:
         _band(ax, d[m]["x"], d[m]["ci"], METHOD_COLOR[m])
     for j, m in enumerate(d):
-        _mean_line(ax, d[m]["x"], 100 * d[m]["mean"], m, j)   # lw 1.8 x 0.8 (user 2026-09-24: 20 % thinner)
+        _mean_line(ax, d[m]["x"], 100 * d[m]["mean"], m, j)   # lw 1.8 x 0.8 (20 % thinner)
     ax.set_ylim(0, 102)
     _style(ax, YLABEL_TRAINING_RATE, XLABEL_TRAINING)
     _mio_axis(ax)
@@ -1975,7 +1969,7 @@ def draw_f9(plt, d):
                 ax.text(b, a - 0.25, f"n={r['rows'][a, b]}", ha="center", va="center", fontsize=6.5,
                         color="white" if (not np.isnan(v) and v > 0.6) else INK_MUTED)
         # Three panels leave ~0.35 in per cell: 7 pt labels run into each other,
-        # so they stand at 45 deg there (6.5 pt, the n= size the user set).
+        # so they stand at 45 deg there (6.5 pt, the n= label size).
         three = len(arms) > 2
         ax.set_xticks(range(len(le)), xl, fontsize=6.5 if three else 7, rotation=45 if three else 0,
                       ha="right" if three else "center", rotation_mode="anchor")
@@ -2079,7 +2073,7 @@ def draw_f12(plt, d):
 
 # Main-text figures H1-H4: no new colours (the method hues and the status
 # palette, both validated 2026-09-23); a second condition is a hollow bar.
-# Hollow = the reference test, filled = the test under study (Grafik_Regelwerk G, user 2026-10-11).
+# Hollow = the reference test, filled = the test under study (Grafik_Regelwerk G).
 H_CONDITION = (("T-nominal", f"hohl: {TEST_NOMINAL}"), ("T-final", f"voll: {TEST_MAIN}"))
 H_RUN_LABEL = POLICY_DOT_LABEL
 # The mean above each bar: two numbers per group must not run into each other.
@@ -2095,8 +2089,8 @@ def _mean_bar(ax, x, r, c, ls, filled, w, y_num=104):
     hollow or filled bar, one dot per seed, the bootstrap interval of the mean
     beside the dots (D-218), the mean as a number in one row above the plot (a
     number on the bar top ran into the seed dots above a low mean). ``r["mean"]``
-    None (an arm below LEARNED_MEAN_MIN_N policies, skill U4): the dots only, no
-    bar, interval or number (user 2026-10-11)."""
+    None (an arm below LEARNED_MEAN_MIN_N policies): the dots only, no
+    bar, interval or number."""
     dx = np.linspace(-0.08, 0.08, len(r["rates"])) if len(r["rates"]) > 1 else np.zeros(1)
     ax.scatter(x + dx, [100 * v for v in r["rates"]], s=14, color=INK, edgecolors="white", linewidths=0.5,
                zorder=3)
@@ -2106,7 +2100,7 @@ def _mean_bar(ax, x, r, c, ls, filled, w, y_num=104):
            linestyle=ls, zorder=2)
     lo, hi = r["ci"]
     ax.errorbar(x + w / 2 - 0.05, 100 * r["mean"], yerr=[[100 * (r["mean"] - lo)], [100 * (hi - r["mean"])]],
-                fmt="none", ecolor=INK, elinewidth=1.0, capsize=2.5, zorder=3)   # INK: grey vanished on the filled bar (user 2026-10-12)
+                fmt="none", ecolor=INK, elinewidth=1.0, capsize=2.5, zorder=3)   # INK: grey vanished on the filled bar
     ax.text(x, y_num, f"{_num(100 * r['mean'], '.1f')} %", ha="center", va="bottom", fontsize=BAR_NUMBER_PT,
             color=INK)
 
@@ -2123,7 +2117,7 @@ def _bars_axes(ax, ymin=0, step=20):
 def _bars_legend(fig, hollow: str | None = None, filled: str | None = None):
     """Legend of H1's form, below the figure, room measured. Without ``hollow``
     and ``filled`` the tick labels name the tests and the legend leaves them
-    out (Art 4, user 2026-10-11)."""
+    out (Art 4)."""
     from matplotlib.lines import Line2D
     from matplotlib.patches import Patch
     tests = ([] if hollow is None else
@@ -2157,12 +2151,12 @@ def _condition_bars(plt, groups, conditions):
 
 
 def _ref_block_bars(plt, d, blocks, ymin=0, step=20):
-    """Art 4 in H1's form (user 2026-10-11, example A-3): one panel per arm, its
+    """Art 4 in H1's form: one panel per arm, its
     own main test once as the hollow bar, then one filled bar per test block.
     ``d``: {arm: {"ref": r, block: r}} with r as in _mean_bar; ``blocks``:
     [(block key, tick label)] -- the labels of the pair form, with their values.
     The tick labels name the tests under every panel, so neither an axis title
-    nor hollow/filled in the legend (user 2026-10-11)."""
+    nor hollow/filled in the legend."""
     # Each panel taller than H1's single one: its own tick labels take three lines.
     fig, axes = plt.subplots(len(d), 1, figsize=(FIG_W, 3.4 * len(d)), sharex=True)
     axes = np.atleast_1d(axes)
@@ -2211,7 +2205,7 @@ def _pair_floor(bars: dict, ymin: float, fig: str) -> None:
 
 def draw_pair_bars(plt, d, fig):
     """H18, H19, H20, H22 (thesis A-2, 5-9, 5-11, A-3) in H1's form, one panel per
-    arm (user 2026-10-11; was draw_pairs); the rate axis from PAIR_YAXIS. Prints
+    arm; the rate axis from PAIR_YAXIS. Prints
     the caption note on the policies left out and on the axis start."""
     ymin, step = PAIR_YAXIS.get(fig, (0, 20))
     gone = "; ".join(f"{METHOD_LABEL[m]} Seed {', '.join(str(s) for s, _r in lst)} ({TEST_MAIN} "
@@ -2232,10 +2226,8 @@ def draw_h1(plt, d):
 
 def draw_h2(plt, d, nodr):
     """Mean over the seeds as a line (markers at the bin centres), the 95 %
-    percentile bootstrap interval of that mean as a band (D-218; was +-1 SD,
-    D-213; error bars 2026-10-02 to 2026-10-11, then a band again, user
-    2026-10-11). Line, band and one dot per seed (D-219) all at the bin centre,
-    no arm shifted (user 2026-10-11: values where they belong). Only H2_ARMS
+    percentile bootstrap interval of that mean as a band (D-218, D-213). Line, band and one dot per seed (D-219) all at the bin centre,
+    no arm shifted. Only H2_ARMS
     (Auto-DR: its own table)."""
     from matplotlib.lines import Line2D
     panels = [pn for pn in F3_PANELS if pn[0] in d]
@@ -2250,7 +2242,7 @@ def draw_h2(plt, d, nodr):
             ax.axvline(nodr[col], color=INK_MUTED, linewidth=1.0, linestyle=":")
         for m in methods:
             c = p["methods"][m]
-            x = np.asarray(p["x"])   # the bin centre itself, no step between the arms (user 2026-10-11)
+            x = np.asarray(p["x"])   # the bin centre itself, no step between the arms
             _seed_dots(ax, x, c["seeds"], METHOD_COLOR[m])
             _band(ax, x, c["ci"], METHOD_COLOR[m])
             _arm_line(ax, x, 100 * np.asarray(c["mean"]), METHOD_COLOR[m], METHOD_MARKER[m])
@@ -2264,7 +2256,7 @@ def draw_h2(plt, d, nodr):
                   Line2D([], [], color=INK_MUTED, marker="o", markersize=3.5, alpha=0.9, linestyle="none",
                          label=H_RUN_LABEL),
                   Line2D([], [], color=INK_MUTED, linewidth=1.0, linestyle=":",
-                         label="gepunktet: Wert von No-DR\nim Training")])   # user 2026-10-11
+                         label="gepunktet: Wert von No-DR\nim Training")])
     if spare is not None:
         spare.legend(handles=handles, loc="center", frameon=False, fontsize=FONT_PT)
         fig.tight_layout()
@@ -2343,7 +2335,7 @@ def _draw_training(plt, d, factor: int, ylabel: str, rate: bool):
     fig, ax = plt.subplots(figsize=(FIG_W, 3.0))
     k = 100.0 if rate else 1.0
     for m in d:
-        if m in SEED_LINE_ARMS:   # user 2026-10-11, as F7
+        if m in SEED_LINE_ARMS:   # as F7
             _seed_lines(ax, d[m]["it"], d[m]["seeds"], METHOD_COLOR[m], rate=rate)
     for m in d:
         _band(ax, d[m]["it"], d[m]["ci"], METHOD_COLOR[m], rate=rate)
@@ -2414,7 +2406,7 @@ def draw_h8(plt, d):
     """Peak force of the successful trials per bin, one panel per disturbance:
     median as a line, the quartiles (the middle half of the trials) as an
     error bar at each bin, each policy set slightly apart, the force limit as
-    a dashed line (user 2026-10-02: bars, as H2)."""
+    a dashed line (bars, as H2)."""
     from matplotlib.lines import Line2D
     panels = [pn for pn in F3_PANELS if pn[0] in d["panels"]]
     fig, axes, spare, first_col = _panel_grid(plt, len(panels))
@@ -2454,7 +2446,7 @@ def draw_h12(plt, d):
 
 
 def draw_h13(plt, d, labels):
-    """H1's form per arm (user 2026-10-11): the arm's own main test once
+    """H1's form per arm: the arm's own main test once
     (hollow), then each block with one observation error doubled (filled).
     ``labels``: _noise_blocks' tick labels, in H7_NOISE order."""
     return _ref_block_bars(plt, d, list(zip([t for t, _l in H7_NOISE], labels)))
@@ -2488,8 +2480,8 @@ def draw_h14(plt, d):
     return fig
 
 
-# H18 in the form of the rl-diagramme skill (user 2026-10-09 chose it over H2's bars):
-# shape and line style carry the arm in greyscale too (skill G4).
+# H18: comparison of the out-of-range blocks:
+# shape and line style carry the arm in greyscale too.
 H18_MARKER = METHOD_MARKER   # old name, read by plot_kraft_durchdringung.py
 
 
@@ -2663,7 +2655,7 @@ def draw_all(results: pathlib.Path, training: pathlib.Path, out: pathlib.Path, o
         "H8": lambda: draw_h8(plt, data_h8(df, {m: s for m, s in best_policies(summary).items() if m in H8_ARMS})),
         "H12": lambda: draw_h12(plt, data_h12(summary)),
         "H13": lambda: draw_h13(plt, data_h13(summary), _noise_blocks(summary, "H13")[2]),
-        # One form for all four (user 2026-10-11): per arm its own main test, then the blocks, H1's bars.
+        # One form for all four: per arm its own main test, then the blocks, H1's bars.
         "H18": lambda: draw_pair_bars(plt, data_h18_pairs(summary, _ood_inputs(results, _ood_sidecar_path())), "H18"),
         "H19": lambda: draw_pair_bars(plt, data_h19_pairs(summary, _ood_inputs(results, _ood_sidecar_path())), "H19"),
         "H20": lambda: draw_pair_bars(plt, data_h20_pairs(summary), "H20"),
@@ -2678,7 +2670,7 @@ def draw_all(results: pathlib.Path, training: pathlib.Path, out: pathlib.Path, o
         available = {k: ("" if k == "H12" else FORCE_ROOT_ONLY) for k in NAMES}
     else:
         if not sidecars:
-            available["F8"] = f"no AutoDR state in {training} (Pläne/D-200_Grafikpfad.md Part C)"
+            available["F8"] = f"no AutoDR state in {training} (D-200)"
         if not (results / "T-ood").is_dir():
             available["F11"] = available["F12"] = available["H3"] = available["H7"] = available["H18"] = (
                 available["H19"]) = f"no T-ood block in {results}"
@@ -2921,7 +2913,7 @@ CHECKS = (
     "H14: steps sorted by value (friction 0.08, 0.20, 0.26 from keys hi_x1, hi_x2, lo_x1), test range = centre "
     "to the factor-1.0 steps (tilt 0-10, friction 0.08-0.20), mean = mean of the seeds; a step set other than "
     "the sidecar's is refused",
-    # User 2026-10-07: H15, the interpenetration over the training.
+    # H15, the interpenetration over the training.
     "H15: per seed and 10 epochs, clean = (successes - successes >= t1) / episodes (autodr s1 0.6), share = "
     "successes >= t1 / successes (0.25), no success -> NaN (nodr s2 block 2); the share mean leaves that seed "
     "out and names it (nodr: 2 of 3, left_out [2]), clean keeps it; two t1 values are refused",
@@ -2930,13 +2922,13 @@ CHECKS = (
     "exactly 0.90; fixeddr s2, s4, not s1 0.0 / s3 0.5), sorted by seed, rule on the reference not on the "
     "block (autodr s5 block 0.6 stays); mean only for autodr (5), none for fixeddr (2); left_out and ref_range "
     "right; an arm without a learned policy is refused",
-    # User 2026-10-09: H22, all policies of the noise blocks.
+    # H22, all policies of the noise blocks.
     "H22: data_learned with min_rate 0 keeps every policy (fixeddr s1 at 0.0 too), both arms get a mean, "
     "ref_mean = mean of the arm's own main tests (fixeddr 0.586); an arm under LEARNED_MEAN_MIN_N is refused",
-    # User 2026-10-09: H20 as pairs.
+    # H20 as pairs.
     "H20 pairs: each shown policy's own main test carries Wilson(k, n) of its reference (autodr s1 990/1000), "
     "autodr gets ref_mean 0.97 with a bootstrap interval around it, fixeddr (2 policies) gets none",
-    # User 2026-10-12: shortened axis of 5-9/5-11.
+    # shortened axis of 5-9/5-11.
     "PAIR_YAXIS floor: a dot (0.79) or an interval end (0.795) under the axis start 80 % is refused with the figure "
     "and arm named; dots and interval ends at 0.80 and above pass, an arm without a mean (ci None) too",
 )
@@ -3867,7 +3859,7 @@ MUTATIONS = (
     ("h14-steps-in-key-order", "order = sorted(xs, key=xs.get)", "order = sorted(xs)", (CHECKS[57],)),
     ("h14-range-without-the-centre", ' + [unit(side["centres"][side["dim"]])]', "", (CHECKS[57],)),
     ("h14-accepts-another-step-set", 'if set(g["boundary_key"]) != set(steps):', "if False:", (CHECKS[57],)),
-    # H15 (user 2026-10-07).
+    # H15.
     ("h15-clean-counts-every-success", '"clean": (k - kg) / n,', '"clean": k / n,', (CHECKS[58],)),
     ("h15-share-over-episodes", "np.divide(kg, k, out=", "np.divide(kg, n, out=", (CHECKS[58],)),
     ("h15-share-keeps-seeds-without-success", 'used = [s for s, v in seeds.items() if np.isfinite(v["share_ge"]).all()]',
@@ -3881,17 +3873,17 @@ MUTATIONS = (
      (CHECKS[59], CHECKS[60], CHECKS[61])),
     ("learned-accepts-an-empty-arm", "        if not keep:\n            raise FigError(",
      "        if False:\n            raise FigError(", (CHECKS[59],)),
-    # User 2026-10-09: H22.
+    # H22.
     ("h22-keeps-the-rule", 'd = data_learned(*_noise_blocks(summary, "H22"), "H22", min_rate=0.0)',
      'd = data_learned(*_noise_blocks(summary, "H22"), "H22")', (CHECKS[60],)),
     ("h22-accepts-an-arm-without-a-mean", '        if "mean" not in a:\n            raise FigError(f"H22',
      '        if False:\n            raise FigError(f"H22', (CHECKS[60],)),
-    # User 2026-10-09: H20 as pairs.
+    # H20 as pairs.
     ("h20-ref-wilson-from-n-minus-1", 'ES.wilson(r["k"], r["n"]) for r in refs',
      'ES.wilson(r["k"], r["n"] - 1) for r in refs', (CHECKS[61],)),
     ("h20-ref-mean-is-the-block-mean", 'a["ref_mean"] = float(np.mean(a["ref"]))\n            lo, hi',
      'a["ref_mean"] = float(np.mean(a["mean"]))\n            lo, hi', (CHECKS[61],)),
-    # User 2026-10-12: PAIR_YAXIS floor.
+    # PAIR_YAXIS floor.
     ("pair-floor-ignores-the-interval", 'low = min(list(r["rates"]) + ([r["ci"][0]] if r["ci"] is not None else []))',
      'low = min(r["rates"])', (CHECKS[62],)),
     ("pair-floor-never-refuses", "if 100 * low < ymin:", "if False:", (CHECKS[62],)),

@@ -1,6 +1,5 @@
 """H23 / H24: force and interpenetration over ALL trials (successes and failures),
-Auto-DR against Fixed-DR, the main test beside the robustness blocks (user
-2026-10-09: option "A", all trials, in the rl-diagramme skill's form).
+Auto-DR against Fixed-DR, the main test beside the robustness blocks.
 
   H23  thesis 5.2.2: the three doubled observation errors (pn2, gx2, py2), H20's
        policies (``eval_figures.data_h20``). Every block replays the main test's
@@ -15,10 +14,10 @@ group, over ALL its trials: the peak filtered force (``force_max_filtered_n``, t
 signal the force abort reads) and the largest interpenetration over the episode
 (``ip_max_mm``): median, quartiles and the 5 / 95 % values by the env's nearest-rank
 rule (``eval_stats.pct_nearest_rank``). The bars are the spread of the trials, not
-intervals; no mean over the seeds (Fixed-DR has two policies, skill U4). Above the
+intervals; no mean over the seeds (Fixed-DR has two policies). Above the
 force limit: per policy the trials whose peak force reached it (``force_abort``,
 read from the force as ``eval_stats`` counts it). The main-test group is shaded
-(skill F: the training range as a grey area). The success counts and the abort
+(the training range as a grey area). The success counts and the abort
 counts are held against summary.json (``NOISE`` / ``OOD`` and ``policies``); a
 mismatch stops the figure.
 
@@ -52,7 +51,7 @@ MAIN = "main"   # group key of the main test (T-final / T-final-F, untagged)
 OOD_BLOCK = "T-ood"
 FORCE = "force_max_filtered_n"
 ABORT = "force_abort"   # eval_collect: peak filtered force >= limit
-SHADE = "#ebebeb"       # rl-diagramme skill, family F
+SHADE = "#ebebeb"       # Shading for the main-test group
 PANELS = ((FORCE, "Spitzenkraft je Versuch (geglättet)", "Kraft in N"),
           ("ip_max_mm", "Größte Durchdringung je Versuch", "Durchdringung in mm"))
 QUANTILES = (("p05", 0.05), ("q25", 0.25), ("median", 0.5), ("q75", 0.75), ("p95", 0.95))

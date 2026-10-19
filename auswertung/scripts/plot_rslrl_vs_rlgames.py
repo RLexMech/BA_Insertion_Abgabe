@@ -13,8 +13,7 @@ figure shows the switch as a whole, not one cause (D-200, consequence 4).
 Both collect 256 envs x 128 steps = 32 768 env steps per iteration/epoch, so
 the x axis is total env steps for both (D-195), one seed each, lines only.
 
-Two panels side by side on one y axis (user 2026-10-08: the figure says "fewer
-steps to open every boundary and to insert"; Grafik_Regelwerk A1, A5): training
+Two panels side by side on one y axis: training
 success rate and AutoDR opening (bounds_version / 75). A dotted line per run
 marks the first step with all 75 opening steps done; the footer names both
 values (C9). Both runs are the AutoDR arm, so rl_games keeps the Auto-DR blue
@@ -53,7 +52,7 @@ BOUNDS_TOTAL = 75.0   # 5 floor rungs + 7 boundaries x 10 steps (RT-240s1 / RT-2
 # factor = steps x ENVS; all four runs used --num_envs 256).
 #  H10: the D-200 switch alone, same task (D.3).
 #  H16: the end state of stage C against the end state of stage D, AutoDR seed 1
-#       (user 2026-10-08). NOT the same task: D spreads the fixture +-50 mm in
+# NOT the same task: D spreads the fixture +-50 mm in
 #       x, y, z instead of +-5 mm in x, y, starts higher and adds the yaw belief
 #       error (eval_manifest.json of both studies); the caption must say so (D-200 (4)).
 #       RT-206s1: rsl_rl num_steps_per_env 16 at git 5a6cc8e (agents/rsl_rl_ppo_cfg.py:30).
@@ -63,12 +62,12 @@ PAIRS = {
                        "vorher: rsl_rl, PPO-Werte der Isaac-Lab-Vorlage"),
             "rl_games": (REPO / "rt_logs" / "RT-240s1" / "RT-240s1_scalars.csv", 128,
                          "nachher: rl_games, PPO-Konfiguration von Factory")},
-    # Legend words: user 2026-10-11 ("reicht Endstand C und Endstand D"); runs and changes go to the caption.
+    # Run identifiers and configuration differences are given in the caption.
     "H16": {"name": "H16_endstand_c_gegen_d",
             "rsl_rl": (REPO / "docs" / "figures" / "RT-206s1_scalars.csv", 16, "Endstand C"),
             "rl_games": (REPO / "rt_logs" / "RT-242s" / "RT-242s1_scalars.csv", 128, "Endstand D")},
 }
-# Plot area 10 % taller than the 1.69 in of the PNG before (user 2026-10-11; 507 px spine at 300 dpi).
+# Plot-area height per panel in inches.
 AXES_H = 1.86
 # rl_games keeps the Auto-DR blue of H5/H6 (the setup every later run uses);
 # rsl_rl is the same arm in the older setup: grey, solid (Grafik_Regelwerk D7 --
@@ -132,7 +131,7 @@ def all_open(s: dict):
 def draw(plt, d: dict, pair: dict):
     from matplotlib.lines import Line2D
     fig, axes = plt.subplots(1, 2, figsize=(EF.FIG_W, 2.9), sharex=True, sharey=True)
-    # Each panel its own y axis word (Grafik_Regelwerk G, T1/T2; user 2026-10-11): one shared
+    # Each panel its own y axis word (Grafik_Regelwerk G, T1/T2): one shared
     # "Anteil in %" named neither quantity. Two lines: at 12 pt one line is taller than the panel.
     panels = (("success", EF.YLABEL_TRAINING_RATE.replace(" im Training", "\nim Training"), 100.0),
               ("bounds", EF.YLABEL_OPENING.replace(" Grenzen", "\nGrenzen"), 100.0 / BOUNDS_TOTAL))

@@ -612,8 +612,7 @@ distributed over the part's shape. Mass and COM are right; the inertia tensor
 is an approximation, and it is named here rather than left to be discovered
 from behaviour during training.
 
-PART_FLIPPED_IN_PLACE was here from 2026-08-23 and is CLOSED 2026-08-28
-(user): the part is welded the right way round -- the flange was turned by
+Part orientation: the part is welded the right way round -- the flange was turned by
 180 degrees and the code has carried that correctly for some time. The blind
 spot it named was real (RT-21 rotated the part about its own centre and none
 of the twenty-one authoring checks moved, because an axis-aligned bounding
@@ -621,8 +620,7 @@ box is the same box either way), so the lesson stays even though the entry
 goes: a wrong orientation is caught by a geometric FEATURE, never by another
 bound.
 
-PART_LUG_SPAN_VS_BBOX was here from 2026-08-28 and is CLOSED 2026-08-29
-(user): the USD and the part STEP never disagreed. The lug is a cylinder, so
+Lug span: the USD and the part STEP agree. The lug is a cylinder, so
 its outermost point lies mid-arc and no vertex or point-cloud query returns
 it; read from the surface the span is 96.410 mm against the USD's 96.409 mm.
 The note above PART_BBOX_M carries the numbers and the lesson."""

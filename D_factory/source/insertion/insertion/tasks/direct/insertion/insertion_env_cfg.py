@@ -234,13 +234,13 @@ CURRICULUM_PENDING: tuple[str, ...] = (
 RL_PLACEHOLDERS: dict = {
     "force_abort_f_max_n": (
         "[placeholder] no longer INVENTED -- that was 2026-08-28..2026-09-01 "
-        "(user, no source). D-169 on 2026-09-06 set it off RT-157: across "
+        "(no source). D-169 on 2026-09-06 set it off RT-157: across "
         "every SUCCESSFUL first episode of the two probed start heights that "
         "limit aborted none, while the search force of D-166 would abort about "
-        "half of them. On 2026-09-15 the user LOWERED it for the restarted "
-        "seed study, below the force p95 the RT-201 family measured, so the "
-        "abort now also ends a share of episodes that would have succeeded "
-        "(inbox entry 'Seed study restart'). NOT a measurement. Still only an "
+        "half of them. For the restarted "
+        "seed study it was lowered below the force p95 the RT-201 family measured, so the "
+        "abort now also ends a share of episodes that would have succeeded."
+        " NOT a measurement. Still only an "
         "upper bound on OUR OWN simulation, not a "
         "damage limit of the real part, and it describes ONE policy at TWO "
         "heights. In the simulation this limit is only the brake against "
@@ -253,9 +253,9 @@ RL_PLACEHOLDERS: dict = {
     ),
     "engaged_depth_m": (
         "[placeholder] the fraction of the seat depth behind it is AD HOC "
-        "(user, 2026-08-30) and was downgraded again on 2026-09-01. The rule "
-        "'measured capture depth of the tilted scripted insertion' (inbox "
-        "entry Reward-Ueberarbeitung) was WITHDRAWN the same day: RT-129 "
+        "and has not been measured. The rule "
+        "'measured capture depth of the tilted scripted insertion' "
+        "was WITHDRAWN: RT-129 "
         "showed that depth to be the controller's own tilt ramp. Proposed "
         "replacement, not decided: read the depth at which the lateral offset "
         "stays inside half the cross play off the TRAINED policy's "
@@ -343,8 +343,8 @@ RL_PLACEHOLDERS: dict = {
     ),
     "obs_noise_pocket_pos_std_m": (
         "[placeholder] the HALF WIDTH of the per-episode uniform bias on the "
-        "pocket-position channels, in metres (the name still says std; user "
-        "2026-09-15). TacSL's Appendix C Table V names a uniform socket "
+        "pocket-position channels, in metres (the name still says std"
+        "). TacSL's Appendix C Table V names a uniform socket "
         "observation noise and that is the source; reading it as THIS env's "
         "per-episode bias is our own step, because TacSL does not state when "
         "it is drawn. NAMED TENSION: the uniform's sigma lies above the one "
@@ -361,7 +361,7 @@ RL_PLACEHOLDERS: dict = {
     "torque_obs_noise_std_nm": (
         "[placeholder] the per-step Gaussian on the torque channels "
         "(obs_wrench_mode='wrench' only), in newton metres. OFF and OPEN "
-        "(user decision, observation noise is a parking suspect); the UR5e "
+        "(disabled; observation noise may contribute to parking); the UR5e "
         "datasheet's torque precision is the candidate when it is widened, "
         "read as a sigma by the same assumption as the force. Home: "
         "DECISIONS.md, the wrench-mode entry; Belege_Streuwerte.md, row B-four-c."
@@ -371,7 +371,7 @@ RL_PLACEHOLDERS: dict = {
         "part's short axis, in metres, seen ONLY by the observation. "
         "Factory's held-asset position noise and FORGE's Table II carry the "
         "same magnitude for their peg; that the gripper on THIS part slips "
-        "by as much is the user's estimate from a CAD side view, not a "
+        "by as much is an estimate from a CAD side view, not a "
         "measurement. Home: DECISIONS.md, D-183."
     ),
     "pocket_obs_yaw_rad": (

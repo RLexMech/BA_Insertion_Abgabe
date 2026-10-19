@@ -1,5 +1,5 @@
 r"""Table to figure H2 (thesis Abb. 5-8): Auto-DR's success in the main test per
-value range of the five disturbances. Auto-DR left the figure (user 2026-10-11):
+value range of the five disturbances. Auto-DR left the figure:
 at 100 % its values could not be read there. Same numbers H2 drew: the seed mean,
 its 95 % percentile bootstrap interval, the lowest and highest seed.
 
