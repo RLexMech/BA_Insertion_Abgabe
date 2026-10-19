@@ -149,7 +149,7 @@ def draw(plt, d: dict, factor: int):
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--rt-logs", default=str(REPO / "rt_logs"))
+    ap.add_argument("--rt-logs", default=str(REPO / "daten" / "endstudie_rl_games" / "trainingslaeufe"))
     ap.add_argument("--out", default=str(REPO / "docs" / "figures" / "eval_rlgames"))
     ap.add_argument("--ablation", choices=sorted(ABLATIONS), default="lstm",
                     help="lstm = H9 (RT-242s vs RT-260s, default); force = H11 (RT-242s vs RT-261s)")

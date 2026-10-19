@@ -183,8 +183,8 @@ def draw_h17(plt, d: dict):
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--results", type=pathlib.Path, default=REPO / "results/eval_rlgames")
-    ap.add_argument("--sweep", type=pathlib.Path, default=REPO / "results/eval_rlgames_sweep")
+    ap.add_argument("--results", type=pathlib.Path, default=REPO / "daten/endstudie_rl_games/evaluation")
+    ap.add_argument("--sweep", type=pathlib.Path, required=True, help="sweep evaluation directory (not included in the submission)")
     ap.add_argument("--out", type=pathlib.Path, default=REPO / "docs/figures/eval_rlgames")
     args = ap.parse_args()
     import matplotlib

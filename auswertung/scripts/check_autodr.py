@@ -32,7 +32,7 @@ import sys
 import tempfile
 import types
 
-ROOT = pathlib.Path(__file__).resolve().parents[1]
+ROOT = pathlib.Path(__file__).resolve().parents[2] / "D_factory"
 PKG_DIR = ROOT / "source" / "insertion" / "insertion" / "tasks" / "direct" / "insertion"
 AUTODR_SRC = PKG_DIR / "autodr.py"
 CURRICULUM_SRC = PKG_DIR / "curriculum.py"
@@ -906,7 +906,7 @@ def build_checks(ns, torch) -> list:
     # first reset `(1000,)`, written into a (1000, 16) `_reset_unit`.
     # Read with the csv module, NOT with RowTable.from_csv: a mutation that
     # breaks the reader must flip the reader's checks, not this one.
-    with open(ROOT / "scripts" / "eval" / "eval_table_seed20.csv", newline="",
+    with open(ROOT / "scripts" / "eval" / "eval_table_seed20_c18.csv", newline="",
               encoding="utf-8") as _fh:
         _eval_rows = [[float(v) for v in r] for r in list(csv.reader(_fh))[1:]]
     # The width of the FILE, not `width`: a mutation that shortens

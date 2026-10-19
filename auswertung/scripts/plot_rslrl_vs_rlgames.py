@@ -56,14 +56,14 @@ BOUNDS_TOTAL = 75.0   # 5 floor rungs + 7 boundaries x 10 steps (RT-240s1 / RT-2
 #       RT-206s1: rsl_rl num_steps_per_env 16 at git 5a6cc8e (agents/rsl_rl_ppo_cfg.py:30).
 PAIRS = {
     "H10": {"name": "H10_rsl_rl_gegen_rl_games",
-            "rsl_rl": (REPO.parent / "p5_mitAktion" / "rt_logs" / "RT-238s1" / "RT-238s1_scalars.csv", 128,
+            "rsl_rl": (None, 128,
                        "vorher: rsl_rl, PPO-Werte der Isaac-Lab-Vorlage"),
-            "rl_games": (REPO / "rt_logs" / "RT-240s1" / "RT-240s1_scalars.csv", 128,
+            "rl_games": (None, 128,
                          "nachher: rl_games, PPO-Konfiguration von Factory")},
     # Run identifiers and configuration differences are given in the caption.
     "H16": {"name": "H16_endstand_c_gegen_d",
-            "rsl_rl": (REPO / "docs" / "figures" / "RT-206s1_scalars.csv", 16, "Endstand C"),
-            "rl_games": (REPO / "rt_logs" / "RT-242s" / "RT-242s1_scalars.csv", 128, "Endstand D")},
+            "rsl_rl": (REPO / "daten" / "experiment_C_rsl_rl" / "trainingslaeufe" / "RT-206s1" / "RT-206s1_scalars.csv", 16, "Endstand C"),
+            "rl_games": (REPO / "daten" / "endstudie_rl_games" / "trainingslaeufe" / "RT-242s" / "RT-242s1_scalars.csv", 128, "Endstand D")},
 }
 # Plot-area height per panel in inches.
 AXES_H = 1.86
@@ -161,10 +161,19 @@ def draw(plt, d: dict, pair: dict):
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--pair", choices=sorted(PAIRS), default="H10")
+    ap.add_argument("--pair", choices=sorted(PAIRS), default="H16")
     ap.add_argument("--out", default=str(REPO / "docs" / "figures" / "eval_rlgames"))
+    ap.add_argument("--rslrl-scalars", type=pathlib.Path, help="rsl_rl CSV; required for H10 (RT-238s1)")
+    ap.add_argument("--rlgames-scalars", type=pathlib.Path, help="rl_games CSV; required for H10 (RT-240s1)")
     args = ap.parse_args()
-    pair = PAIRS[args.pair]
+    pair = dict(PAIRS[args.pair])
+    for lib, override in (("rsl_rl", args.rslrl_scalars), ("rl_games", args.rlgames_scalars)):
+        path = override if override is not None else pair[lib][0]
+        if path is None:
+            ap.error("H10 requires --rslrl-scalars and --rlgames-scalars; RT-238s1/RT-240s1 are not included.")
+        if not pathlib.Path(path).is_file():
+            ap.error(f"Missing {lib} CSV: {path}")
+        pair[lib] = (path, *pair[lib][1:])
     d = {lib: read(pathlib.Path(pair[lib][0]), lib, pair[lib][1]) for lib in RUNS}
     for lib, s in d.items():
         x, sr = s["success"]

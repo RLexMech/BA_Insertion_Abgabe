@@ -20,6 +20,7 @@ Jede Datei steht mit Quelle und sha256 in [HERKUNFT.csv](HERKUNFT.csv). Es gibt 
   Dazu die Dateien, die diese Skripte laden: `check_eval_conditions.py`, `check_autodr.py`, `tools/run_axis.py`, die Testtabellen `scripts/eval/eval_table_*`.
 - Python mit `matplotlib`, `numpy`, `pandas`, `scipy`, `statsmodels`; für `tools/table_*.py` zusätzlich `python-docx`. Schrift Arial muss installiert sein (`eval_figures.py` bricht sonst ab).
 - Alle Befehle unten in diesem Ordner (`auswertung/`) ausführen. `Q` = `daten`.
+- Die Produktionsprüfungen in `check_autodr.py` und `check_eval_conditions.py` verwenden den benachbarten Ordner `D_factory/`.
 - `--out` immer auf einen eigenen Ordner setzen. Sonst schreibt das Skript nach `docs/figures/…` unter diesem Ordner.
 
 ## Ordner
@@ -104,14 +105,9 @@ daten/
 
 `eval_figures.py` druckt für 5-9, 5-11, A-2 und A-3 je eine Zeile `caption:` (nicht gezeigte Policies). Sie gehört in die Bildunterschrift.
 
-**Feste Pfade.** `plot_rslrl_vs_rlgames.py` und `plot_fortsetzung_fixeddr.py` haben keinen Daten-Parameter. Sie lesen relativ zu `auswertung/`. Vor dem Lauf diese Kopien anlegen:
+**Datenpfade.** Die Skripte für Abb. 5-5 und H25 lesen direkt aus `daten/`; zusätzliche Kopien sind nicht erforderlich. H25 unterstützt `--out <ziel>` und `--data <CSV>`.
 
-| Pfad, den das Skript liest | Kopie von |
-|---|---|
-| `docs/figures/RT-206s1_scalars.csv` | `daten/experiment_C_rsl_rl/trainingslaeufe/RT-206s1/RT-206s1_scalars.csv` |
-| `rt_logs/RT-242s/RT-242s1_scalars.csv` | `daten/endstudie_rl_games/trainingslaeufe/RT-242s/RT-242s1_scalars.csv` |
-| `results/training_rlgames/curves.csv` | `daten/endstudie_rl_games/training_auszug/curves.csv` |
-| `results/training_rlgames/fortsetzung_RT-253.csv` | `daten/endstudie_rl_games/training_auszug/fortsetzung_RT-253.csv` |
+Die ältere Vergleichsabbildung H10 benötigt externe RT-238s1-/RT-240s1-CSV-Dateien (`--rslrl-scalars`, `--rlgames-scalars`). H17 benötigt externe Sweep-Daten (`--sweep`). Diese Zusatzdaten und die Videos sind nicht enthalten.
 
 ## Geprüft am 2026-10-12
 

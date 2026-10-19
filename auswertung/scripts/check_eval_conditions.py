@@ -515,11 +515,14 @@ CASES = (
 )
 
 
+PRODUCTION_ROOT = pathlib.Path(__file__).resolve().parents[2] / "D_factory"
+
+
 def _applied_columns_vs_env() -> tuple[bool, str]:
     """``APPLIED_COLUMNS`` against the tuple the env WRITES,
     ``insertion_env.APPLIED_LOG_COLUMNS``, read as AST (the env needs Isaac).
     Only the column NAMES are shared; the mapping stays the check's own."""
-    env_py = (pathlib.Path(__file__).resolve().parents[1] / "source" / "insertion" / "insertion"
+    env_py = (PRODUCTION_ROOT / "source" / "insertion" / "insertion"
               / "tasks" / "direct" / "insertion" / "insertion_env.py")
     for node in ast.parse(env_py.read_text(encoding="utf-8")).body:
         if isinstance(node, ast.Assign) and any(
@@ -546,7 +549,7 @@ def _noise_tags_vs_run_eval() -> tuple[bool, str]:
     """``NOISE_TAGS`` against the Hydra overrides ``scripts/rl_games/run_eval.ps1``
     hands the env (``$NoiseOverride``, read as text): the widths the check
     EXPECTS must be the ones the runs GET."""
-    ps1 = pathlib.Path(__file__).resolve().parent / "rl_games" / "run_eval.ps1"
+    ps1 = PRODUCTION_ROOT / "scripts" / "rl_games" / "run_eval.ps1"
     got = {t: {k: float(v)} for t, k, v in re.findall(
         r"^\s*(\w+)\s*=\s*'env\.(\w+)=([-+0-9.eE]+)'\s*$", ps1.read_text(encoding="utf-8"), re.M)}
     ok = set(got) == set(NOISE_TAGS) and all(
@@ -572,7 +575,7 @@ def _oracle_vs_production(table_name: str = "eval_table_seed20_c18.csv",
     import importlib.util
 
     repo = pathlib.Path(__file__).resolve().parents[1]
-    pkg = repo / "source" / "insertion" / "insertion" / "tasks" / "direct" / "insertion"
+    pkg = PRODUCTION_ROOT / "source" / "insertion" / "insertion" / "tasks" / "direct" / "insertion"
 
     def _load(name, path):
         spec = importlib.util.spec_from_file_location(name, path)
@@ -584,7 +587,7 @@ def _oracle_vs_production(table_name: str = "eval_table_seed20_c18.csv",
     # Loaded ONCE per process (p6 019ae3d8): a second torch_shim.load() finds
     # the shim already registered as `torch` and fails.
     if "production" not in _ORACLE_CACHE:
-        torch, _ = _load("torch_shim", repo / "scripts" / "tools" / "torch_shim.py").load()
+        torch, _ = _load("torch_shim", PRODUCTION_ROOT / "scripts" / "tools" / "torch_shim.py").load()
         sys.modules.setdefault("torch", torch)
         # autodr.py has a relative import; check_autodr.py owns the scaffolding for it.
         autodr = _load("check_autodr", repo / "scripts" / "check_autodr.py").load_autodr()

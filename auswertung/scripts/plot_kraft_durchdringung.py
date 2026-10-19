@@ -21,7 +21,7 @@ read from the force as ``eval_stats`` counts it). The main-test group is shaded
 counts are held against summary.json (``NOISE`` / ``OOD`` and ``policies``); a
 mismatch stops the figure.
 
-Input: ``results/eval_rlgames/`` (summary.json, episodes_all.csv, T-ood manifests).
+Input: ``daten/endstudie_rl_games/evaluation/`` (summary.json, episodes_all.csv, T-ood manifests).
 Reuses ``eval_figures`` / ``eval_stats`` and changes nothing there. ``.venv-analysis``:
 
     .venv-analysis/Scripts/python.exe scripts/plot_kraft_durchdringung.py [--only H23|H24]
@@ -45,7 +45,7 @@ from eval_figures import FigError  # noqa: E402
 
 ES = EF.ES
 NAMES = {"H23": "H23_beobachtungsfehler_kraft_durchdringung", "H24": "H24_ausserhalb_kraft_durchdringung"}
-RESULTS = REPO / "results" / "eval_rlgames"
+RESULTS = REPO / "daten" / "endstudie_rl_games" / "evaluation"
 OUT = REPO / "docs" / "figures" / "eval_rlgames"
 MAIN = "main"   # group key of the main test (T-final / T-final-F, untagged)
 OOD_BLOCK = "T-ood"

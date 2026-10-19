@@ -224,7 +224,7 @@ CHECKS = (
 )
 _REAL = (_REPO / "rt_logs" / "RT-235s1" / "RT-235s1_agent.yaml",
          _REPO / "rt_logs" / "RT-235s1" / "RT-235s1_env.yaml")
-_REAL_OSC_ENV = _REPO / "rt_logs" / "RT-242s" / "RT-242s1_env.yaml"
+_REAL_OSC_ENV = _REPO / "daten" / "endstudie_rl_games" / "trainingslaeufe" / "RT-242s" / "RT-242s1_env.yaml"
 _REAL_RLG_CSV = _REPO / "rt_logs" / "RT-240c" / "RT-240c_scalars.csv"
 
 

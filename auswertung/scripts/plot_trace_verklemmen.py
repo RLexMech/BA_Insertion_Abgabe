@@ -2,21 +2,20 @@
 (time limit) against seed 4 (success): true insertion depth and smoothed force
 (thesis 5.2.1; RT-271).
 
-Source: RT-271 (`rt_logs/RT-271_expectation.md`, OUTCOME), `rl_games/play.py
+Source: RT-271, `D_factory/scripts/rl_games/play.py
 --trace-obs` on the four-row view table of T-ood friction_hi, env 0 = row 906,
 FIRST episode only. Both values come from the trace's `truth` block, read
 before the observation noise: depth = -tip_true_m z (pocket frame,
 `insertion_math.part_tip_pose`), force = |force_ema_n| (the EMA the force abort
-reads); a step with `wrench_valid` false carries no force. Two steps, because
-the traces are git-ignored and the figure must redraw from a tracked file:
+reads); a step with `wrench_valid` false carries no force. Extract the supplied traces before drawing:
 
     .venv-analysis/Scripts/python.exe scripts/plot_trace_verklemmen.py --extract
-        rt_logs/RT-271/RT-271_s{2,4}_trace.json -> results/traces/RT-271_zeile906.csv
+        daten/endstudie_rl_games/spuren/RT-271/RT-271_s{2,4}_trace.json -> results/traces/RT-271_zeile906.csv
     .venv-analysis/Scripts/python.exe scripts/plot_trace_verklemmen.py
         -> docs/figures/eval_rlgames/H21_verklemmen_zeile906.{pdf,svg,png}
 
 Reference lines: the success depth and the pocket entrance (depth 0), both from
-the run's own manifest (`results/eval_rlgames/T-ood/autodr_s2/eval_manifest.json`
+the run's own manifest (`daten/endstudie_rl_games/evaluation/T-ood/autodr_s2/eval_manifest.json`
 `env_cfg.fixed_asset.success_depth`; the depth is measured from the entrance).
 One trace per seed: an exemplary case, no rate.
 """
@@ -33,9 +32,9 @@ sys.path.insert(0, str(REPO / "scripts"))
 NAME = "H21_verklemmen_zeile906"
 ENV = 0          # view table row 0 = T-ood table row 906 (RT-271 expectation, step 2)
 SEEDS = ("2", "4")
-TRACE = REPO / "rt_logs" / "RT-271" / "RT-271_s{}_trace.json"
+TRACE = REPO / "daten" / "endstudie_rl_games" / "spuren" / "RT-271" / "RT-271_s{}_trace.json"
 DATA = REPO / "results" / "traces" / "RT-271_zeile906.csv"
-MANIFEST = REPO / "results" / "eval_rlgames" / "T-ood" / "autodr_s2" / "eval_manifest.json"
+MANIFEST = REPO / "daten" / "endstudie_rl_games" / "evaluation" / "T-ood" / "autodr_s2" / "eval_manifest.json"
 OUT = REPO / "docs" / "figures" / "eval_rlgames"
 COLUMNS = ("seed", "step", "t_s", "depth_mm", "force_n", "done")
 
@@ -114,9 +113,13 @@ def draw() -> list:
 
 
 def main() -> int:
+    global OUT, DATA
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--extract", action="store_true", help="step 1: RT-271 traces -> results/traces CSV")
+    ap.add_argument("--out", type=pathlib.Path, default=OUT)
+    ap.add_argument("--data", type=pathlib.Path, default=DATA, help="extracted trace CSV")
     a = ap.parse_args()
+    OUT, DATA = a.out, a.data
     if a.extract:
         extract()
     else:

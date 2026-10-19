@@ -3,14 +3,14 @@
 outside the method comparison). Training success rate over the epoch, as H6.
 
 Sources: epochs 1..100 = RT-243s1/s2/s5, read from the tracked
-`results/training_rlgames/curves.csv` (method fixeddr; the one home of the
+`daten/endstudie_rl_games/training_auszug/curves.csv` (method fixeddr; the one home of the
 final-study curves, written by `eval_figures.py --extract-training`).
-Epochs 101..250 = RT-253s1/s2/s5 (`rt_logs/RT-253s/`, git-ignored), reduced by
+Epochs 101..250 = RT-253s1/s2/s5 (`daten/endstudie_rl_games/trainingslaeufe/RT-253s/`), reduced by
 `--extract` with `eval_figures.read_rl_games_run` (the one rl_games reader) to
-the tracked `results/training_rlgames/fortsetzung_RT-253.csv`. Two steps:
+the tracked `daten/endstudie_rl_games/training_auszug/fortsetzung_RT-253.csv`. Two steps:
 
     .venv-analysis/Scripts/python.exe scripts/plot_fortsetzung_fixeddr.py --extract
-        rt_logs/RT-253s/RT-253s{1,2,5}_* -> results/training_rlgames/fortsetzung_RT-253.csv
+        daten/endstudie_rl_games/trainingslaeufe/RT-253s/RT-253s{1,2,5}_* -> <CSV>
     .venv-analysis/Scripts/python.exe scripts/plot_fortsetzung_fixeddr.py
         -> docs/figures/eval_rlgames/H25_fortsetzung_fixed_dr.{pdf,svg,png}
 
@@ -32,9 +32,9 @@ sys.path.insert(0, str(REPO / "scripts"))
 NAME = "H25_fortsetzung_fixed_dr"
 SEEDS = (1, 2, 5)
 RUN = "RT-253s{}"
-SRC = REPO / "rt_logs" / "RT-253s"
-CURVES = REPO / "results" / "training_rlgames" / "curves.csv"
-DATA = REPO / "results" / "training_rlgames" / "fortsetzung_RT-253.csv"
+SRC = REPO / "daten" / "endstudie_rl_games" / "trainingslaeufe" / "RT-253s"
+CURVES = REPO / "daten" / "endstudie_rl_games" / "training_auszug" / "curves.csv"
+DATA = REPO / "daten" / "endstudie_rl_games" / "training_auszug" / "fortsetzung_RT-253.csv"
 OUT = REPO / "docs" / "figures" / "eval_rlgames"
 COLUMNS = ("method", "seed", "iteration", "env_steps", "Episode/success_rate")
 RESUME_AT = 100     # last epoch of the final study; RT-253 resumes from ep_100
@@ -137,9 +137,13 @@ def caption_facts(d: dict) -> None:
 
 
 def main() -> int:
+    global OUT, DATA
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--extract", action="store_true", help="step 1: RT-253 scalars -> results/training_rlgames CSV")
+    ap.add_argument("--extract", action="store_true", help="step 1: RT-253 scalars -> --data CSV")
+    ap.add_argument("--out", type=pathlib.Path, default=OUT)
+    ap.add_argument("--data", type=pathlib.Path, default=DATA, help="extracted continuation CSV")
     a = ap.parse_args()
+    OUT, DATA = a.out, a.data
     if a.extract:
         extract()
         return 0

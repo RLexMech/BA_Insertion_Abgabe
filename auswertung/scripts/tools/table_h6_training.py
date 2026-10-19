@@ -5,7 +5,7 @@ training success stays at or above 95 % until the last epoch.
 Two steps, because no one Python here has both libraries (as table_ood_newcombe.py):
 
   .venv-analysis\Scripts\python.exe scripts/tools/table_h6_training.py --csv
-      reads results/training_rlgames/curves.csv through eval_figures.data_f7
+      reads daten/endstudie_rl_games/training_auszug/curves.csv through eval_figures.data_f7
       (the data function H6 draws, never recomputed here); writes
       docs/tabellen/Tab_A_H6_lernkurve.csv        every epoch, mean + interval + seeds
       docs/tabellen/Tab_A_H6_95_prozent.csv       per seed the "stays >= 95 %" epoch
@@ -21,7 +21,7 @@ Third table (thesis 5.2.1, 2026-10-09): per Auto-DR seed the "stays >= 95 %" epo
 from above, the epoch from which the AutoDR friction boundary ``dr/friction_hi``
 (curves.csv) stays at its ceiling ``hi_max`` (``autodr_s<N>_autodr_ep100.json``
 ``dims``), the epochs at that ceiling, and the success in the T-ood blocks
-friction_hi / friction_lo (``results/eval_rlgames/episodes_all.csv``). Step 1
+friction_hi / friction_lo (``daten/endstudie_rl_games/evaluation/episodes_all.csv``). Step 1
 writes ``docs/tabellen/Tab_A_reibung_seeds.csv``, step 2 its ``.docx``.
 """
 import argparse
@@ -33,8 +33,8 @@ REPO = pathlib.Path(__file__).resolve().parents[2]
 OUT_CURVE = REPO / "docs" / "tabellen" / "Tab_A_H6_lernkurve"
 OUT_95 = REPO / "docs" / "tabellen" / "Tab_A_H6_95_prozent"
 OUT_FRIC = REPO / "docs" / "tabellen" / "Tab_A_reibung_seeds"
-TRAINING = REPO / "results" / "training_rlgames"
-EPISODES = REPO / "results" / "eval_rlgames" / "episodes_all.csv"
+TRAINING = REPO / "daten" / "endstudie_rl_games" / "training_auszug"
+EPISODES = REPO / "daten" / "endstudie_rl_games" / "evaluation" / "episodes_all.csv"
 THRESHOLD = 0.95
 STEP = 5   # docx rows: epoch 1 and every STEP-th epoch
 
@@ -195,7 +195,7 @@ def write_docx() -> None:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--csv", action="store_true", help="step 1 (.venv-analysis): curves.csv -> CSV")
-    ap.add_argument("--curves", default=str(REPO / "results" / "training_rlgames" / "curves.csv"))
+    ap.add_argument("--curves", default=str(REPO / "daten" / "endstudie_rl_games" / "training_auszug" / "curves.csv"))
     a = ap.parse_args()
     if a.csv:
         write_csv(pathlib.Path(a.curves))

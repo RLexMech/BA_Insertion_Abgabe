@@ -733,7 +733,7 @@ def build_checks(ns, torch) -> list:
           and float(unit[1, 3]) == 0.5,
           f"{float(unit[0, 3])}, {float(unit[2, 6])}, {float(unit[1, 3])}")
 
-    with open(ROOT / "scripts" / "eval" / "eval_table_seed20.csv", newline="",
+    with open(ROOT / "scripts" / "eval" / "eval_table_seed20_c18.csv", newline="",
               encoding="utf-8") as _fh:
         _eval_rows = [[float(v) for v in r] for r in list(csv.reader(_fh))[1:]]
     _w = len(_eval_rows[0])

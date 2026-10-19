@@ -4,7 +4,7 @@ each against its OWN main test, with the Newcombe interval of the difference.
 Two steps, because no one Python here has both libraries:
 
   .venv-analysis\Scripts\python.exe scripts/tools/table_ood_newcombe.py --csv
-      reads results/eval_rlgames/summary.json (rates, 95 % Newcombe as eval_stats
+      reads daten/endstudie_rl_games/evaluation/summary.json (rates, 95 % Newcombe as eval_stats
       wrote them, never recomputed) and adds the Bonferroni reading over all
       comparisons of the table (statsmodels, the same call as eval_stats);
       writes docs/tabellen/Tab_A_ausserhalb_newcombe.csv
@@ -83,7 +83,7 @@ def write_docx() -> None:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--csv", action="store_true", help="step 1 (.venv-analysis): summary.json -> CSV")
-    ap.add_argument("--summary", default=str(REPO / "results" / "eval_rlgames" / "summary.json"))
+    ap.add_argument("--summary", default=str(REPO / "daten" / "endstudie_rl_games" / "evaluation" / "summary.json"))
     a = ap.parse_args()
     if a.csv:
         write_csv(pathlib.Path(a.summary))

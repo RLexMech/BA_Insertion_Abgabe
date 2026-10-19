@@ -43,7 +43,7 @@ Usage:
     .venv-analysis/Scripts/python.exe scripts/eval_figures.py --extract-training rt_logs
     .venv-analysis/Scripts/python.exe scripts/eval_figures.py --results results/eval
     .venv-analysis/Scripts/python.exe scripts/eval_figures.py --extract-training rt_logs --arm autodr=RT-242s --arm nodr=RT-244s --arm fixeddr=RT-243s --training results/training_rlgames
-    .venv-analysis/Scripts/python.exe scripts/eval_figures.py --results results/eval_rlgames --training results/training_rlgames --out docs/figures/eval_rlgames
+    .venv-analysis/Scripts/python.exe scripts/eval_figures.py --results daten/endstudie_rl_games/evaluation --training daten/endstudie_rl_games/training_auszug --out docs/figures/eval_rlgames
     .venv-analysis/Scripts/python.exe scripts/eval_figures.py --self-test
 """
 
@@ -137,7 +137,7 @@ HEAT_CMAP = "Purples"   # one hue, light -> dark; neither method hue
 
 # The ten frozen policies (eval_plan.md "Kontext"; scripts/run_eval.ps1).
 TRAINING_RUNS = {(m, s): f"RT-{206 if m == 'autodr' else 207}s{s}" for m in METHODS for s in range(1, 6)}
-# The five Fixed-DR training runs (rt_logs/RT-231_expectation.md): F7
+# The five Fixed-DR training runs (RT-231): F7
 # only, extracted when all five folders exist, refused when some do.
 FIXED_RUNS = {("fixeddr", s): f"RT-231s{s}" for s in range(1, 6)}
 # H5's return: the env's undiscounted reward sum per episode, mean over the
@@ -3856,17 +3856,20 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--self-test", action="store_true")
     ap.add_argument("--extract-training", type=str, default=None, metavar="RT_LOGS")
-    ap.add_argument("--results", type=str, default="results/eval")
-    ap.add_argument("--training", type=str, default="results/training")
+    ap.add_argument("--results", type=str, default=str(REPO / "daten" / "endstudie_rl_games" / "evaluation"))
+    ap.add_argument("--training", type=str, default=None)
     ap.add_argument("--out", type=str, default="docs/figures/eval")
     ap.add_argument("--only", type=str, default="", help="comma list, e.g. F1,F9")
-    ap.add_argument("--sweep", type=str, default="results/eval_rlgames_sweep",
+    ap.add_argument("--sweep", type=str, default=None,
                     help="root of the tilt/friction sweep (RT-264/265), H14 only")
     ap.add_argument("--arm", action="append", default=[], metavar="ARM=PREFIX",
                     help="with --extract-training: an rl_games seed chain, e.g. autodr=RT-242s (repeat per arm)")
     args = ap.parse_args()
     if args.self_test:
         return self_test()
+    if args.training is None:
+        args.training = "results/training" if args.extract_training else str(
+            REPO / "daten" / "endstudie_rl_games" / "training_auszug")
     print(f"[eval_figures] marker: {SCRIPT_MARKER}")
     if args.arm and not args.extract_training:
         raise SystemExit("--arm belongs to --extract-training")
@@ -3885,7 +3888,7 @@ def main() -> int:
         return 0
     only = {x.strip() for x in args.only.split(",") if x.strip()} or None
     for p in draw_all(pathlib.Path(args.results), pathlib.Path(args.training), pathlib.Path(args.out), only,
-                      pathlib.Path(args.sweep)):
+                      pathlib.Path(args.sweep) if args.sweep else None):
         print(f"[eval_figures] wrote {p}")
     return 0
 

@@ -55,7 +55,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--arm", action="append", required=True, metavar="ARM=PREFIX",
                     help=f"arm ({', '.join(EF.ARMS)}) = run prefix under --rt-logs, e.g. autodr=RT-242s")
-    ap.add_argument("--rt-logs", default=str(REPO / "rt_logs"))
+    ap.add_argument("--rt-logs", default=str(REPO / "daten" / "endstudie_rl_games" / "trainingslaeufe"))
     ap.add_argument("--out", required=True, help="folder for <prefixes>_F7_lernkurven.pdf/.png")
     args = ap.parse_args()
     d, prefixes = {}, []
