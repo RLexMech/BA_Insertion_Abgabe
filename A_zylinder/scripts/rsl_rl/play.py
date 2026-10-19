@@ -14,7 +14,7 @@ from isaaclab.app import AppLauncher
 
 import cli_args  # isort: skip
 
-parser = argparse.ArgumentParser(description="Train an RL agent with RSL-RL.")
+parser = argparse.ArgumentParser(description="Replay an RSL-RL checkpoint.")
 parser.add_argument("--video", action="store_true", default=False, help="Record videos during training.")
 parser.add_argument("--video_length", type=int, default=200, help="Length of the recorded video (in steps).")
 parser.add_argument(
@@ -32,9 +32,13 @@ parser.add_argument(
     help="Use the pre-trained checkpoint from Nucleus.",
 )
 parser.add_argument("--real-time", action="store_true", default=False, help="Run in real-time, if possible.")
+parser.add_argument("--export-policy", action="store_true", help="Also export JIT and ONNX files (optional).")
+parser.add_argument("--max-steps", type=int, default=0, help="Stop after this many control steps; 0 runs until the window closes.")
 cli_args.add_rsl_rl_args(parser)
 AppLauncher.add_app_launcher_args(parser)
 args_cli, hydra_args = parser.parse_known_args()
+if args_cli.max_steps < 0:
+    parser.error("--max-steps must be non-negative")
 if args_cli.video:
     args_cli.enable_cameras = True
 
@@ -75,10 +79,28 @@ from isaaclab_rl.rsl_rl import (
     RslRlVecEnvWrapper,
     export_policy_as_jit,
     export_policy_as_onnx,
-    handle_deprecated_rsl_rl_cfg,
-    handle_deprecated_rsl_rl_checkpoint,
 )
-from isaaclab_rl.utils.pretrained_checkpoint import get_published_pretrained_checkpoint
+try:
+    from isaaclab_rl.rsl_rl import handle_deprecated_rsl_rl_cfg
+except ImportError:
+    def handle_deprecated_rsl_rl_cfg(agent_cfg, _installed_version):
+        return agent_cfg
+
+try:
+    from isaaclab_rl.rsl_rl import handle_deprecated_rsl_rl_checkpoint
+except ImportError:
+    def handle_deprecated_rsl_rl_checkpoint(resume_path, _installed_version):
+        return resume_path
+
+try:
+    from isaaclab_rl.utils.pretrained_checkpoint import get_published_pretrained_checkpoint
+except ImportError:
+    def get_published_pretrained_checkpoint(*_args, **_kwargs):
+        raise RuntimeError(
+            "--use_pretrained_checkpoint is unavailable: this Isaac Lab installation ships no "
+            "isaaclab_rl.utils.pretrained_checkpoint. Pass --checkpoint with a local path instead."
+        )
+
 
 import isaaclab_tasks  # noqa: F401
 from isaaclab_tasks.utils import get_checkpoint_path
@@ -116,7 +138,7 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
 
     log_dir = os.path.dirname(resume_path)
 
-    env_cfg.log_dir = log_dir
+    env_cfg.log_dir = os.path.join(log_dir, "replay")
 
     env = gym.make(args_cli.task, cfg=env_cfg, render_mode="rgb_array" if args_cli.video else None)
 
@@ -144,30 +166,33 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     else:
         raise ValueError(f"Unsupported runner class: {agent_cfg.class_name}")
     resume_path = handle_deprecated_rsl_rl_checkpoint(resume_path, installed_version)
-    runner.load(resume_path)
+    runner.load(resume_path, load_optimizer=False)
 
     policy = runner.get_inference_policy(device=env.unwrapped.device)
 
-    export_model_dir = os.path.join(os.path.dirname(resume_path), "exported")
-
-    if version.parse(installed_version) >= version.parse("4.0.0"):
-        runner.export_policy_to_jit(path=export_model_dir, filename="policy.pt")
-        runner.export_policy_to_onnx(path=export_model_dir, filename="policy.onnx")
-    else:
+    policy_nn = None
+    if version.parse(installed_version) < version.parse("4.0.0"):
         if version.parse(installed_version) >= version.parse("2.3.0"):
             policy_nn = runner.alg.policy
         else:
             policy_nn = runner.alg.actor_critic
 
-        if hasattr(policy_nn, "actor_obs_normalizer"):
-            normalizer = policy_nn.actor_obs_normalizer
-        elif hasattr(policy_nn, "student_obs_normalizer"):
-            normalizer = policy_nn.student_obs_normalizer
-        else:
-            normalizer = None
+    if args_cli.export_policy:
+        export_model_dir = os.path.join(os.path.dirname(resume_path), "exported")
 
-        export_policy_as_jit(policy_nn, normalizer=normalizer, path=export_model_dir, filename="policy.pt")
-        export_policy_as_onnx(policy_nn, normalizer=normalizer, path=export_model_dir, filename="policy.onnx")
+        if version.parse(installed_version) >= version.parse("4.0.0"):
+            runner.export_policy_to_jit(path=export_model_dir, filename="policy.pt")
+            runner.export_policy_to_onnx(path=export_model_dir, filename="policy.onnx")
+        else:
+            if hasattr(policy_nn, "actor_obs_normalizer"):
+                normalizer = policy_nn.actor_obs_normalizer
+            elif hasattr(policy_nn, "student_obs_normalizer"):
+                normalizer = policy_nn.student_obs_normalizer
+            else:
+                normalizer = None
+
+            export_policy_as_jit(policy_nn, normalizer=normalizer, path=export_model_dir, filename="policy.pt")
+            export_policy_as_onnx(policy_nn, normalizer=normalizer, path=export_model_dir, filename="policy.onnx")
 
     dt = env.unwrapped.step_dt
 
@@ -182,10 +207,11 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
                 policy.reset(dones)
             else:
                 policy_nn.reset(dones)
-        if args_cli.video:
-            timestep += 1
-            if timestep == args_cli.video_length:
-                break
+        timestep += 1
+        if args_cli.max_steps and timestep >= args_cli.max_steps:
+            break
+        if args_cli.video and timestep >= args_cli.video_length:
+            break
 
         sleep_time = dt - (time.time() - start_time)
         if args_cli.real_time and sleep_time > 0:
