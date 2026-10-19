@@ -49,7 +49,7 @@ Test ohne Streuung: im zweiten Befehl `--eval-width nominal` setzen.
 Andere vier Fälle: im ersten Befehl z. B. `--first-row 4` ergänzen und in beiden Befehlen einen neuen Ausgabedateinamen statt `haupttest.csv` verwenden.
 Eigene Bedingungen: an den Befehl aus Schritt 3 z. B. `--fixture-offset 0.01 0 --fixture-tilt 2 --fixture-yaw 1` anhängen (Versatz in Metern, Winkel in Grad).
 
-## 5. Selbst trainieren (optional)
+## 5. Selbst trainieren
 
 Block unverändert einfügen. Trainiert Auto-DR mit Seed 1 für 1500 Iterationen.
 
@@ -79,33 +79,3 @@ Die übrigen C-Blöcke zu Abbildung B-1 (Anhang B.1), ebenfalls direkt kopierbar
 
 Ergebnisse: `results/eval/`. Für eine erneute Wiederholung neue `-Rt`-Nummern und `-ResultsRoot results/eval_wiederholung` verwenden.
 Die vollständigen Trainingslogs liegen unter `training_logs/<RT>/`.
-
-
-## 7. Ergebnisse prüfen
-
-Nach den gewünschten Evaluationsläufen diesen Block einfügen. Er prüft die
-Testbedingungen und zeigt die Erfolgsrate je Methode und Testblock direkt an.
-Für eine Wiederholung mit anderem Ergebnisordner den Pfad entsprechend ändern.
-
-```powershell
-python -B scripts/eval_collect.py --results results/eval
-```
-
-Erwartete Haupttestwerte der Bachelorarbeit über jeweils fünf Modelle:
-Auto-DR **97,02 %**, No-DR **26,24 %**, Fixed-DR **57,38 %**.
-Der vollständige Wiederholungslauf vom 19.10.2026 hat diese Werte für jeden Seed bestätigt.
-Ausgewertet wird ausschließlich der erste abgeschlossene Versuch jeder Umgebung.
-`VERDICT OK` bestätigt die geprüften Testbedingungen; die Erfolgsraten stehen darunter.
-Je Modell: `results/eval/summary_tables.csv`; Einzelversuche: `results/eval/episodes_all.csv`;
-Prüfprotokoll: `results/eval/collect_report.json`.
-
-Die ursprünglichen Ergebnisse der Arbeit liegen unter
-`../auswertung/daten/experiment_C_rsl_rl/evaluation/`.
-Die dort vorhandene `summary_tables.csv` enthält die archivierte Auswertung.
-Dieses Archiv einschließlich zusätzlicher historischer Versuche bleibt unverändert.
-Die hier wiederholbare Evaluation umfasst ausschließlich Haupttest und Test ohne Streuung.
-
-Die verbliebenen `check_*.py` prüfen Mathematik, Auto-DR, Kontaktgeometrie,
-Erfolgskriterium und Ergebnisdaten. Sie werden für die obigen Modellaufrufe
-nicht zusätzlich benötigt. Frühere Entwicklungs- und Diagnoseversuche sind
-nicht Bestandteil dieses Endstands.
