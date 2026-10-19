@@ -2,3 +2,18 @@
 auswertung/** -text
 
 D_factory/models/**/*.pth filter=lfs diff=lfs merge=lfs -text
+
+A_zylinder/source/proxytask/proxytask/tasks/direct/proxytask/assets/** filter=lfs diff=lfs merge=lfs -text
+A_zylinder/models/** -text
+A_zylinder/models/**/*.pt filter=lfs diff=lfs merge=lfs -text
+A_zylinder/training_logs/** -text
+A_zylinder/training_logs/**/*.pt filter=lfs diff=lfs merge=lfs -text
+A_zylinder/training_logs/**/*.pth filter=lfs diff=lfs merge=lfs -text
+A_zylinder/training_logs/**/events.out.tfevents* filter=lfs diff=lfs merge=lfs -text
+B_quader/source/proxytask/proxytask/tasks/direct/proxytask/assets/** filter=lfs diff=lfs merge=lfs -text
+B_quader/models/** -text
+B_quader/models/**/*.pt filter=lfs diff=lfs merge=lfs -text
+B_quader/training_logs/** -text
+B_quader/training_logs/**/*.pt filter=lfs diff=lfs merge=lfs -text
+B_quader/training_logs/**/*.pth filter=lfs diff=lfs merge=lfs -text
+B_quader/training_logs/**/events.out.tfevents* filter=lfs diff=lfs merge=lfs -text
