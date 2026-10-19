@@ -1,37 +1,22 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-r"""G1-G3 of eval_plan.md: did the evaluation run play THE table, every row once,
-under the conditions the table says?
+r"""Validate evaluation-table identity, coverage and applied conditions.
 
-Reads one evaluation folder (``play.py --eval-table`` writes it):
-``applied.csv``, ``applied_meta.json``, ``episodes.csv``, ``eval_manifest.json``
--- and the committed table CSV with its ``.json`` sidecar.
+Read applied.csv, applied_meta.json, episodes.csv, eval_manifest.json,
+the committed table and its JSON sidecar.
+G1: hashes must agree across these files, all log reports and --filehash.
+Without external log/filehash evidence G1 is incomplete, never PASS.
+G2: exactly one episode==0 per env, N table rows/envs, all first episodes done.
+G3: independently map table rows with float64 math, tolerance 1e-6; compare
+configured and recorded ranges. Noise tags pn2/gx2/py2 double their named
+widths (D-191, D-206). Values outside [0,1] require matching OOD/wide
+sidecar authorisation and run switch (D-227).
 
-  G1  ONE hash everywhere: the table file's bytes, its sidecar, the manifest,
-      ``applied_meta.json``, EVERY ``[eval-table]`` line of the run log (--log;
-      one per startup report, at least one)
-      and the training PC's ``Get-FileHash`` (--filehash). The last two are
-      EVIDENCE FROM OUTSIDE; without both G1 is INCOMPLETE, never PASS.
-  G2  ``episodes.csv`` holds exactly one ``episode == 0`` row per env id
-      0..N-1, N = table rows = manifest ``num_envs``, and the manifest says
-      every env finished its first episode.
-  G3  ``applied.csv`` = the table row mapped by THIS script, tolerance 1e-6.
-      The observation-noise widths are EXPECTED from the run's tag
-      (``NOISE_TAGS``: ``pn2`` / ``gx2`` / ``py2`` double one of them, D-191 (3),
-      D-206 (3)) and held against the run's records (G3b); G3c maps with the
-      expected grasp and pocket-yaw widths. G3e: values outside [0, 1] only
-      where an OOD sidecar nails them or inside the column range a wide
-      sidecar stretches (D-227), and the run's switch matches.
+The mapping does not reuse environment math. Stdlib-only; --self-test
+uses synthetic runs.
 
-THE MAPPING IS THE CHECK'S OWN (float64, stdlib ``math``), not an import of
-``autodr`` / ``insertion_math``: a check that maps with the env's functions
-holds the env against itself. The bands are own literals from eval_plan.md
-section 1.1 and are FIRST held against the bands the env wrote into
-``applied_meta.json``.
-
-Stdlib only; runs on either machine.
-
+Usage:
     python scripts/check_eval_conditions.py --self-test
     python scripts/check_eval_conditions.py --run-dir <eval folder> ^
         --table scripts/eval/eval_table_seed20_c18.csv --log rt_logs/RT-N/RT-N.txt --filehash <HEX>

@@ -561,18 +561,10 @@ stage 2 allows PLAY_Y / 2 = 0.8 mm, so the seated state is clear by 7.0847 mm;
 stage 1 allows POCKET_STAGE1_Y_RANGE[1] - PART_BBOX_M[1] / 2 = 8.7000 mm,
 which is MORE than this offset. That gap is the open exposure D-153 names,
 and `insertion_env._max_stage1_lat_y` is the instrument that measures it."""
-"""Total lateral play [m]: X 0.0005876 (0.5876 mm), Y 0.00160 (1.60 mm).
-
-X CHANGED on 2026-08-28, from 0.2876 mm, when PART_BODY_X was read out of the
-part CAD -- see there. Everything derived from the cross play doubles with it:
-the SAPU threshold, the fine kernel width, and the D-106 yaw and across-tilt
-bounds.
-
-The SAPU threshold and fine kernel width are derived below from the cross
-play (D-106, D-109). The yaw and across-tilt bounds document the wall
-constraints; they are not checked in code and have no constants.
-
-Y is unaffected: 145.1 - 143.50, settled by D-088."""
+"""Total lateral play [m]: X=0.0005876, Y=0.00160 (D-088).
+SAPU threshold and fine kernel width derive from PLAY_X (D-106, D-109).
+Yaw/across-tilt wall constraints are documented but not checked in code.
+"""
 
 
 INTERPEN_THRESH = 0.5 * PLAY_X

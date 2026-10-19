@@ -1,51 +1,23 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-r"""Eight report figures for ONE AutoDR run (RT-206 series; rl_games runs since
-D-200), PNG + PDF.
+r"""Plot eight diagnostics for one AutoDR run (RT-206; rl_games: D-200).
 
-WHAT IT DRAWS (``<out-dir>/<run>_<name>.png`` and ``.pdf``)
-------------------------------------------------------------
-    erfolg     success rate over env steps, phase-dr and all-at-max marked
-    stufen     AutoDR boundary progress per dimension, 0 % = centre, 100 % = maximum
-               (small multiples; start floor as its own panel)
-    kraft      per-episode peak force: mean and p95 with the abort limit;
-               below it the force-abort rate (two panels, never two y-axes)
-    ppo        episode reward, surrogate loss, value loss, entropy
-               (EV and KL are not logged, D-116)
-    physik     max depth (with the pocket-gate floor), below-fixture rate,
-               engaged reward, mean interpenetration
-    endfenster final-window bin tables of demo_metrics.json: success per
-               start height / tilt / yaw / lateral bin, force abort per height
-    randerfolg success rate of the last FULL boundary buffer per AutoDR key
-               (``dr/<key>_last_rate``, -1 = none yet, not drawn) with the
-               advance / retreat thresholds: which boundary stalls
-    dauer      steps to success per iteration from ``episodes.csv`` (median
-               and p90, in s = steps x ``run_axis.read_policy_dt``), episode cap
-               dashed; only with ``--episodes`` and ``--episodes-meta``
+erfolg: success with phase/all-at-max markers; stufen: normalised boundaries;
+kraft: peak-force mean/p95 and abort rate; ppo: reward/losses/entropy
+(EV/KL unavailable, D-116); physik: depth, below-fixture rate, engagement,
+penetration; endfenster: final-window bins; randerfolg: last full-buffer
+success and thresholds, omitting -1; dauer: successful episode median/p90
+duration and episode cap, requiring --episodes and --episodes-meta.
 
-RL_GAMES RUNS: the library is told from ``--agent-yaml``
-(``run_axis.read_run_factor``); the x of every tag follows its rl_games step
-axis (``run_axis.rl_games_x``); the AutoDR state is the checkpoint's
-``env_state`` saved as json (D-200), whose
-``autodr`` key has the same form as the rsl_rl sidecar's. Tag names: see
-``RL_GAMES_TAG``.
+Read curves from scalars.csv, boundaries/floor from the AutoDR sidecar,
+force limit and gate floor from demo_metrics.json. Read YAML to choose the
+library and per-run step factor (D-195); rl_games uses tag-specific axes.
+Duration uses the effective policy timestep. Missing required tags/keys
+fail. Event markers share the curve axis; wall time is reported separately.
+Outputs use <out-dir>/<run>_<name> with PNG/PDF siblings.
 
-WHERE THE NUMBERS COME FROM
----------------------------
-* curves: the run's ``scalars.csv`` (``scripts/export_tb_scalars.py``). Only
-  rows that carry ``Episode/success_rate`` are iteration rows; the others
-  hold the two ``*/time`` tags only.
-* x axis: TOTAL env steps, all envs summed (D-195 CURVE AXIS,
-  ``tools/run_axis.py``), factor from the run's own ``params/agent.yaml``
-  and ``params/env.yaml``. The event markers take the same x. Wall time is
-  one console line, never a figure.
-* normalisation of the boundaries: ``dims`` and ``floor`` of the run's
-  ``autodr_<it>.json`` sidecar -- never typed here.
-* abort limit and gate floor: ``demo_metrics.json`` (``force_norm_n.f_max_n``,
-  ``below_fixture_rate.underside_depth_mm``).
-A missing tag or key stops the script with its name (fail fast).
-
+Usage:
     python scripts/plot_autodr_run.py --scalars docs/figures/RT-206s1_scalars.csv \
         --metrics docs/figures/RT-206s1_demo_metrics.json \
         --autodr docs/figures/RT-206s1_autodr_1499.json --run RT-206s1 \

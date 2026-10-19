@@ -1,43 +1,21 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-r"""Success rate over START HEIGHT, one bar per PROBE RUN.
+r"""Plot one success-rate/episode-count bar per fixed start-height run.
 
-WHAT IT DRAWS
--------------
-One bar per ``demo_metrics.json``, at the FIXED start height that run was
-measured at, with the episode count under the bar. This is the
-generalisation probe: a policy trained on starts sampled in [-30, +30] mm
-is replayed at heights it never saw, one run per height, and the bars show
-where it stops working.
+Compare against the training interval [-30,+30] mm. Within-run bins cannot
+identify an out-of-range +40 mm probe because the +30 mm bin is open above.
+Each repeated --metrics input must have equal start_tip_above_entrance_mm
+and start_tip_above_entrance_low_mm; sampled heights are rejected. Optional
+--label values follow input order, otherwise labels use heights.
+Offline JSON + matplotlib; --self-test uses temporary synthetic data and
+checks missing success rates and sampled-height rejection.
 
-WHY THIS IS NOT ``plot_start_height_bins.py``. That script draws the six
-bins INSIDE one run. Its bin edges are the environment's and stop at
-+30 mm (``insertion_env.py:677``), and the last bin catches everything at
-or above the last edge (``insertion_env.py:2056``). A run started at
-+40 mm therefore lands entirely in a bin LABELLED "+20..+30 mm" -- one bar,
-wrong label. Across-run heights need their own instrument, and this is it.
-
-INPUT
------
-``--metrics FILE`` once per run, in the order the bars should appear.
-Each file must be a FIXED-height run: ``start_tip_above_entrance_mm`` and
-``start_tip_above_entrance_low_mm`` equal. A sampled run is refused --
-its episodes have no single height, so a single bar would state something
-false. ``--label`` may be given once per file for the legend line; without
-it the height is the label.
-
-Offline, no Isaac: ``json`` + ``matplotlib``.
-
+Usage:
     python scripts/plot_probe_start_heights.py \
         --metrics run_h30/demo_metrics.json --metrics run_h40/demo_metrics.json \
         --run RT-157 --out docs/Blockberichte/RT-157_probe_starthoehen.pdf
     python scripts/plot_probe_start_heights.py --self-test
-
-``--self-test`` builds SYNTHETIC metrics files in a temporary directory,
-checks the reader on a good file, on a sampled file (must be refused) and
-on a file without a success rate (must be refused), draws once to a
-temporary path, and never writes under ``docs/``.
 """
 
 from __future__ import annotations

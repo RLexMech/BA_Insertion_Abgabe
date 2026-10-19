@@ -1,37 +1,18 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-r"""Success rate over START HEIGHT, one bar per bin, episodes per bin printed.
+r"""Plot trailing-window success and episode counts for six start-height bins.
 
-WHAT IT DRAWS
--------------
-The ``success_by_start_height_bin`` table of one ``demo_metrics.json``
-(plan step C / SBC, D-165): six bins of 10 mm over the opening plane, the
-trailing-window success rate of each as a bar, the number of episodes that
-fell in the bin under the bar. It draws exactly that table -- height only,
-no tilt, no overlay -- because the table is the SBC readout (success in the
-inside bins with 0 at +30 mm is IndustReal's "partially-inserted" overfit,
-success at +30 mm is the claim the run has to earn) and the reader must see
-how many episodes each percentage stands on.
+Read success_by_start_height_bin from JSON or the last table in a text log.
+Require six bins and preserve recorded edges (D-165). Current bins span
+10 mm each above the opening. Failure at +30 mm despite success inside the
+opening can indicate partial-insertion overfitting (IndustReal).
+Offline JSON + matplotlib; --self-test uses temporary synthetic data.
 
-INPUT
------
-``--metrics FILE`` is either a ``demo_metrics.json`` itself or any text file
-that CONTAINS the table (an ``rt_logs`` dump, ``rt_logs/inbox.txt``). The
-table is located by its key and decoded with ``json``; if the file holds it
-more than once the LAST occurrence is used (a run's dump ends with its final
-window). A table with a bin count other than six is refused: the bins are the
-env's, not this script's, and a different count means a different env.
-
-Offline, no Isaac: ``json`` + ``matplotlib``.
-
+Usage:
     python scripts/plot_start_height_bins.py --metrics rt_logs/inbox.txt --run RT-138 \
         --out docs/figures/RT-138_success_by_start_height.png
     python scripts/plot_start_height_bins.py --self-test
-
-``--self-test`` draws a SYNTHETIC table (marked as such in its title) to a
-temporary file, checks the extractor on JSON-in-text and on a refused row
-count, and never writes under ``docs/``.
 """
 
 from __future__ import annotations

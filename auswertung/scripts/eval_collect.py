@@ -1,39 +1,22 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-r"""Collect every evaluation run into ONE long table.
+r"""Collect validated evaluation runs into episodes_all.csv and collect_report.json.
 
-Input layout (copied from the training PC, one folder per play.py run):
+Input: <results>/<block>/<method>_s<seed>[_<tag>]/ with episodes.csv,
+episodes_meta.json, applied.csv, applied_meta.json and eval_manifest.json.
+Validate table/width, G1a/G2/G3, clean and consistent code/plan commits,
+method/seed identity and unique untagged policies. Fail with exit 1.
 
-    results/eval/<block>/<method>_s<seed>[_<tag>]/
-        episodes.csv  episodes_meta.json  applied.csv  applied_meta.json  eval_manifest.json
+Fixed-DR uses T-final-F/T-nominal-F, never the corresponding unsuffixed
+blocks; it also supports selection/OOD/boundary tests (D-192, D-208).
+The force-blind autodr_nf arm is identified by RT-261 run tags, not the
+shared _autodr_ marker used by RT-242 (D-215, D-216); use a separate root.
 
-``<block>`` is one of ``BLOCKS``; ``<method>`` is ``autodr``, ``nodr`` or
-``fixeddr``. The folder name is a CLAIM and is held against the manifest's
-checkpoint path, whose run folder train.py names ``..._autodr_..._seed<N>`` or
-``..._fixed_dr_..._seed<N>`` (``dr_mode`` tag; 'off' has none,
-train.py:339-340; seed tag train.py:449). Fixed-DR (D-192) plays T-final's
-and T-nominal's table in its own blocks ``T-final-F`` / ``T-nominal-F``, and
-those blocks hold nothing else; since D-208 it is a candidate like the other
-two arms and also plays T-auswahl, T-ood and (if selected) T-grenze.
-D-216: ``autodr_nf`` is the AutoDR arm trained with the actor blind to force
-(RT-261, D-215). Its run folder carries ``_autodr_`` like RT-242's, so the
-method is read from the run tag ``__RT-261s<N>_`` (``_RUN_TAG_METHOD``); it
-belongs in its own root (``results/eval_rlgames_kraft/``).
+Export episode==0 rows only (L-15); report G4/G6 shares without thresholds.
+--self-test uses synthetic runs.
 
-Refuses with exit 1 -- equality, never "not empty" -- when:
-  * a run fails G1a / G2 / G3 of ``check_eval_conditions.judge`` (reused, not copied);
-  * a manifest names another table or width than its block, or a dirty clone;
-  * the runs disagree on ``code_commit`` or ``plan_commit``, or a plan commit is missing;
-  * the folder name and the checkpoint path disagree on method or seed;
-  * a Fixed-DR folder sits in T-final / T-nominal (its runs there are the
-    ``-F`` blocks), or a non-Fixed-DR folder inside a ``-F`` block;
-  * two folders of one block are the same policy without a tag.
-
-Output: ``<results>/episodes_all.csv`` (only ``episode == 0`` rows -- the
-window is episodes.csv's own column, no second window rule, L-15) and
-``<results>/collect_report.json`` (per run, plus G4 and G6 as reported shares).
-
+Usage:
     .venv-analysis/Scripts/python.exe scripts/eval_collect.py --results results/eval
     .venv-analysis/Scripts/python.exe scripts/eval_collect.py --self-test
 """

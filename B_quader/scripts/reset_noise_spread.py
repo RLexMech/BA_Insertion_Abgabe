@@ -1,29 +1,11 @@
-"""Translate the env's per-joint reset noise (radians) into millimetres and degrees at the peg tip.
+r"""Estimate peg-tip position and tilt spread from uniform joint reset noise.
 
-The cfg knobs are joint-space, because randomising there needs no IK at
-reset. That makes them cheap but opaque: 0.01 rad on five joints plus
-+-45 deg on wrist_3 says nothing about how far the peg actually starts from
-the pocket, laterally and in yaw -- which are the numbers that matter
-against 1.0 mm of per-axis clearance and a +-3.96 deg free-yaw window, and
-the ones a thesis has to report.
+Uses UR forward kinematics and a 50 mm flange-to-tip offset; NumPy only.
+The estimate describes the commanded reset pose. Gravity-induced droop
+of about 13.4 mm (D-026) is a separate systematic offset, not included in
+the scatter. Joint noise changes both position and orientation.
 
-This runs the same closed-form UR forward kinematics that
-``scripts/tools/compute_home_pose.py`` verified on the dev PC (200 random
-FK -> IK -> FK round trips at 1e-9, and the DH table reproduced from the USD
-joint offsets), applies uniform noise to the six home-pose joint angles, and
-reports the resulting spread of the peg tip. numpy only -- no Isaac, no
-PyTorch, no simulation.
-
-Two caveats, both real:
-
-* This is the spread the *commanded* pose has at reset. The arm then droops
-  under gravity by about 13.4 mm (D-026), which is a systematic offset on
-  top of this scatter, not part of it.
-* Tip position is the flange pose advanced 50 mm along the tool axis, which
-  the training-machine report measured as exact (``tip along tool axis
-  +0.050000 m``). Joint noise therefore tilts the peg as well as moving it,
-  and the angular column reports that tilt.
-
+Usage:
     python scripts/reset_noise_spread.py
     python scripts/reset_noise_spread.py --noise 0.02 0.05 --yaw-noise 0.7854 --samples 20000
 """

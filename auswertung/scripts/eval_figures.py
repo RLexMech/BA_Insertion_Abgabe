@@ -1,108 +1,45 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-r"""The evaluation figures F1-F12, generated offline in ``.venv-analysis`` (D-189).
+r"""Render evaluation figures from summary.json; F6/F9/F10 also read episodes_all.csv.
+Offline matplotlib; output PDF, SVG and 300 dpi PNG. Statistical helpers
+and bin rules come from eval_stats.py. DATA and DRAW functions are separate.
 
-Every figure has a DATA function (pure; returns the arrays it draws; the
-self-test checks those) and a DRAW function (matplotlib). Numbers that
-``summary.json`` holds are read from there, never recomputed; only what it
-does not hold (F6 curves, F9 cells, F10 curve) comes from ``episodes_all.csv``.
-Wilson intervals and the bin rule are imported from ``eval_stats.py`` (one home).
+F1-F5: seed success, AutoDR-NoDR differences, disturbance sweeps, selected
+policy boundary tests and outcome shares. F6: successful peak-force ECDF
+and success-by-step fraction of all episodes. F7-F10: training success,
+normalised AutoDR boundaries, lateral/tilt cells with counts, and success
+under penetration thresholds (IndustReal Fig. 3). F11/F12 compare range
+edges/OOD and OOD-minus-own-T-final (Newcombe per seed, D-208).
+F7-F12 were added after the results were known; they are descriptive,
+not selection criteria. F2 contrasts use Welch and bootstrap intervals.
 
-  F1  success rate per seed (dot plot, Weissgerber 2015), T-nominal | T-final
-  F2  AutoDR - No-DR: Welch thick, bootstrap thin, per block, zero line
-  F3  success over each disturbance (5 panels; friction bins are own
-      construction, D-212), mean line, 95 % CI band of the mean (D-218), No-DR's training value marked
-  F4  final policy: 7 boundary blocks, overall T-final rate as line + Wilson band
-  F5  outcome per policy on T-final, stacked, status colours
-  F6  (a) peak force ECDF over successes with the abort limit, per seed, mean + 95 % CI band
-      (b) share of ALL episodes successful by step k
-  F7  training success over total env steps (mean line, 95 % CI band of the mean)
-  F8  AutoDR boundaries over total env steps, 0 = centre, 1 = maximum
-  F9  heat map lateral offset x tilt, T-final, seeds pooled, rate + row count
-  F10 success counted only below an interpenetration threshold (IndustReal Fig. 3), per seed,
-      mean line + 95 % CI band (D-218)
-  F11 final policy: each T-grenze block (x1.0) beside its T-ood block (D-191,
-      D-206 (3); ported from p6-TestAusserhalb 7d008ff1), reference as line + Wilson band
-  F12 every T-ood seed of each arm: OOD block minus its own T-final, Newcombe
-      interval per seed, mean of the seeds as a short line (p6 db85986c; D-208: both arms)
-F7-F12 were added AFTER the results were known: descriptive, no criterion.
-Main-text set H1-H4 (F1-F12 go to the appendix; forms from
-docs/reference/literature_check_figure_types_for_evaluation_2026-10-02.md § 4),
-plain German, the same data functions (since D-218 WITH the 95 % intervals):
-  H1  per method: bar "ohne Störung" (hollow) beside "mit voller Störung" (filled),
-      bar = mean over the seeds, one dot per seed (Peng 2018 Fig. 7; Weissgerber 2015),
-      bootstrap interval of the mean beside it (D-218) -- data_f1
-  H2  success over each disturbance, mean line, 95 % bootstrap interval of the mean as
-      error bars (D-218) -- data_f3
-  H3  final policy per range edge: "am Rand" beside "50 % darüber hinaus"
-      (IndustReal Fig. 4, AutoMate Fig. S18), Wilson bar per rate (D-218) -- data_f11
-  H4  one 100 % bar per method: success / force abort / timeout, seeds pooled
-      (own form: no source draws failures by type) -- data_h4
-  H5  training return (Episode_Reward/total) over the training iteration, mean line,
-      95 % bootstrap interval of the mean as band (D-212, D-218) -- data_h5
-  H6  training success rate over the training iteration, same form -- data_f7
-  H7  each arm's BEST policy (pre-registered rule on its own T-auswahl runs, D-213):
-      doubled observation errors and 50 % beyond the training range, Wilson bar per rate -- data_h7
-  H8  peak force of the successful trials of those best policies per disturbance
-      bin: median line, middle-50 % band, force limit -- data_h8
-  H12 force-sensor test (D-216, own root results/eval_rlgames_kraft/, the only
-      figure there): H1's form per arm (with / without force in the actor),
-      "Lagefehler wie im Training" hollow beside "Lagefehler ×2" filled, the H11
-      colour pair -- data_h12, numbers from summary.json FORCE
-  H14 robustness curve (RT-264/265, own root --sweep results/eval_rlgames_sweep/):
-      success of all 15 policies over the tilt and the friction sweep, F7's
-      curve form per panel, test range shaded -- data_h14
-  H15 interpenetration over the training: per arm the mean over
-      the seeds and its 95 % bootstrap interval, each point H15_EPOCHS epochs; top:
-      success with peak interpenetration < t1, bottom: share of the successes at or
-      above t1 (only seeds with a success at every point; the others are named),
-      seeds as thin lines (D-219). Reads ``<training>/penetration.csv`` (extract_penetration) -- data_h15
-  H18 T-ood outside the Prüfbereich, Auto-DR vs Fixed-DR, every seed with its Wilson
-      interval, the seed mean with its bootstrap interval -- data_h18
-  H19 H18's blocks, H20 the three doubled observation errors (D-226): only the policies
-      with >= LEARNED_MIN in their own main test; a mean and its bootstrap interval only
-      for an arm with >= LEARNED_MEAN_MIN_N of them; grey band = the shown
-      policies' main-test range; the left-out policies named under the legend -- data_learned.
-  H22 appendix to H20: the three doubled observation errors for ALL
-      policies -- data_h22
-  H18, H19, H20 and H22 share ONE form, H1's bars: one panel per
-      arm, its policies' own main test once (hollow), then each block (filled), dots per
-      seed; an arm without a mean shows its dots only (draw_pair_bars; data_h18_pairs,
-      data_h19_pairs, data_h20_pairs, data_h22_pairs; shared reference-test comparison);
-      H19 and H20 on a shortened rate axis (PAIR_YAXIS, _pair_floor);
-      the words of all figures are the constants after METHOD_LABEL, the markers METHOD_MARKER (O1).
-D-218: every mean over the seeds carries its 95 % percentile bootstrap interval
-(``_boot_ci``; F3, F6, F7, F10, H1, H2, H5, H6, H12, H9/H11 in plot_mlp_vs_lstm.py),
-every single-policy rate its Wilson interval (F1, F4, F11, H3, H7). No interval:
-H8 (quartiles = spread of the trials), F5/H4 (stacked), F9 (heat map), F8 (one line
-per run). The +-1 SD stays in the tables and the text (K4, D-211). H7/H8 are supplementary: the best of five is another
-algorithm than the method (Agarwal et al. 2021; D-210), H1/H2 stay the comparison.
-D-219: every mean over the seeds shows its seeds too -- thin lines under the curves
-(F3, F6, F7, F10, H5, H6; H9/H11 in plot_mlp_vs_lstm.py), small dots beside H2's bars
-(F1, H1, H12 had their dots already); a band over a curve is labelled pointwise.
-H5/H6 draw over the iteration, not over env steps (D-212, an exception to D-195
-CURVE AXIS): only when every run collects the same env steps per iteration
-(``iteration_factor``); the axis label names that factor.
-Every figure is written as PDF + SVG (vector) and PNG at 300 dpi.
-Fixed-DR (D-192, added afterwards): F1, F2 (two K5
-rows), F3, F5, F6, F7, F9, F10 draw it as a third arm when T-nominal-F AND
-T-final-F exist (F7: when its training runs were extracted); otherwise every
-figure is the two-method one. F4 and F11 show the final policy, which since
-D-208 may be a Fixed-DR one (reference: its T-final-F); F12 draws every arm
-that played T-ood. F8 (AutoDR growth) has no Fixed-DR content.
+H1-H4 compare arms with individual seeds (Peng 2018 Fig. 7,
+Weissgerber 2015, IndustReal Fig. 4, AutoMate S18). H5/H6 use iterations
+only when steps per iteration agree, with the factor labelled (D-195).
+H7/H8 supplement all-seed results with the policy selected by T-auswahl
+(D-213); best-of-five is a different algorithm (Agarwal 2021, D-210).
+H12 reads force-blind results from results/eval_rlgames_kraft (D-216).
+H14 uses all 15 policies in RT-264/265 tilt/friction sweeps.
+H15 reads training/penetration.csv at H15_EPOCHS: success below t1 and
+penetration >=t1 among successes; the latter requires success at every
+point and names excluded seeds. H18 shows OOD; H19/H20 restrict to policies
+with own main success >=LEARNED_MIN; an arm's mean requires at least
+LEARNED_MEAN_MIN_N qualifying policies.
+H22 includes all policies. Paired figures show reference/test dots; H19/H20
+use the PAIR_YAXIS truncation guard.
 
-Training curves: ``--extract-training rt_logs`` reduces the ten git-ignored
-rsl_rl ``*_scalars.csv`` to ``results/training/curves.csv`` (plus the AutoDR
-sidecars and No-DR's training values), which the figures then read. Each run
-needs ``<run>_agent.yaml`` and ``<run>_env.yaml`` beside its ``scalars.csv``:
-the column ``env_steps`` (D-195 CURVE AXIS, ``tools/run_axis.py``) is written
-with that run's own factor, and F7/F8 draw over it. rl_games seed chains
-(D-200) take ``--arm ARM=PREFIX`` per arm (files in ``rt_logs/<prefix>/``);
-F8 then needs each AutoDR seed's ``<prefix><N>_autodr_final.json`` (the
-checkpoint's AutoDR state, D-200) and is left out
-until they exist. F11/F12 are drawn when ``<results>/T-ood`` exists.
+Seed means use pointwise 95% percentile-bootstrap intervals; single-policy
+rates use Wilson intervals. Exceptions: H8 quartiles show spread, F5/H4
+stacks, F9 heatmap and F8 single-run lines (D-218). Show seeds as dots or
+thin lines (D-219); table/text SD remains a different summary (D-211).
 
+Fixed-DR is included when T-nominal-F and T-final-F exist (D-192), except F8.
+Training axes use each run's agent/env YAML through run_axis (D-195).
+For rl_games, --arm ARM=PREFIX selects runs; F8 additionally requires
+<prefix><N>_autodr_final.json (D-200). OOD figures require T-ood data.
+
+Usage:
     .venv-analysis/Scripts/python.exe scripts/eval_figures.py --extract-training rt_logs
     .venv-analysis/Scripts/python.exe scripts/eval_figures.py --results results/eval
     .venv-analysis/Scripts/python.exe scripts/eval_figures.py --extract-training rt_logs --arm autodr=RT-242s --arm nodr=RT-244s --arm fixeddr=RT-243s --training results/training_rlgames

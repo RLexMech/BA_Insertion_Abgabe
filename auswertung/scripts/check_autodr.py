@@ -1,46 +1,19 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-r"""Offline check of ``autodr.py`` -- the AutoDR boundary state machine.
+r"""Offline AutoDR state-machine and mutation tests (D-080).
 
-Same shape as ``check_curriculum_ladder.py``: load the module FROM SOURCE so
-the counter-proof can break a copy without touching the file, build every
-check, then prove each check can fail.
+Load source directly; use a NumPy shim for tensor helpers. Check seven
+boundaries/buffers, radial lateral offset (D-178), one-sided height
+(D-179), expansion/retreat/hold thresholds, buffer reset, clamping,
+mapping, sampling, bounds_version and state round-trip.
 
-``autodr.py`` is stdlib-only, so the state machine runs here for real. Its
-three ARRAY helpers take tensors; those are exercised against the numpy
-stand-in (``scripts/tools/torch_shim.py``), which grew ``.long()`` and
-``.clamp()`` for exactly this -- the house rule is that the module under test
-keeps the idiomatic torch form.
+Lateral/yaw/tilt histogram ceilings must match DR_DIMS; read the environment
+source without importing Isaac. Quantities without sources retain TESTWERT.
+--self-test requires each mutation to flip exactly its declared checks;
+every check needs a mutation or an explicit UNPROVABLE justification.
 
-CHECKED INVARIANTS
-------------------
-7 boundaries and 7 buffers: lateral offset is one radius (D-178), and start
-height is one-sided (D-179). No lower boundary on a one-sided quantity; 240 flags at 0.80 -> +delta, at 0.10
--> -delta, at 0.5 -> hold; 239 -> nothing; clamping at both ends; p_b over
-1e4 draws inside [0.47, 0.53]; map(0) == lo and map(1) == hi; bounds_version
-rises exactly on a movement; state round-trip; every quantity without a
-source carries [TESTWERT].
-
-ONE FACT READ FROM THE ENV
---------------------------
-The LAST bin edge of ``success_by_lateral_bin`` / ``success_by_yaw_bin`` /
-``success_by_tilt_bin`` must BE the matching ceiling (D-178 (7); the tilt twin
-added 2026-09-12). The edges live in ``insertion_env.py``, the ceilings in
-``DR_DIMS`` here, so these three checks are the only ones that read a second
-file -- as text, because the env imports isaaclab.
-
-BOTH DIRECTIONS OF D-080
-------------------------
-``--self-test`` proves two things, not one:
-
-  mutation -> check   every mutation flips EXACTLY the checks it declares.
-  check -> mutation   every check is named by SOME mutation, or is listed in
-                      ``UNPROVABLE`` with a reason. Without this second
-                      direction a suite can grow checks nobody ever proved
-                      could fail -- which is the quiet half of D-080, the one
-                      that certifies nothing and where nobody finds out.
-
+Usage:
     python scripts/check_autodr.py
     python scripts/check_autodr.py --self-test
 """

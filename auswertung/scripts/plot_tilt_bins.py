@@ -1,56 +1,23 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-r"""Success rate over FIXTURE TILT, one bar per bin, episodes per bin printed.
+r"""Plot trailing-window success and episode count per fixture-tilt bin.
 
-WHAT IT DRAWS
--------------
-The ``success_by_tilt_bin`` table of one ``demo_metrics.json`` (D-037,
-``insertion_env.py`` ``_success_by_tilt_bin``): five bins of 2 deg over the
-sampled fixture tilt magnitude (edges 2/4/6/8/10 deg, the last bin open at
-the top), the trailing-window success rate of each as a bar, the number of
-episodes that fell in the bin under the bar. Height only vs tilt only: this
-is the TILT twin of ``plot_start_height_bins.py`` and draws exactly that
-table -- no height, no overlay -- because the mean success rate cannot
-show whether the LARGE angles were learned or only the small ones, and the
-reader must see how many episodes each percentage stands on.
+Read success_by_tilt_bin from JSON or the last matching table in a text log.
+Require five bins; preserve the run's recorded edges. Current edges are
+2/4/6/8/10 degrees with the last bin open above; older 3/6/9/12/15-degree
+tables must not be relabelled (D-037, D-178). Empty bins show a dash.
+Static fixture_tilt_noise_rad=5 degrees fills only the first three bins;
+AutoDR instead samples its tilt boundary and requires static noise zero.
 
-THE EDGES ARE THE ENV'S, AND THEY MOVED. They were
-3/6/9/12/15 deg, D-037's superseded ladder; the last edge is now the AutoDR
-tilt ceiling of 10 deg (``autodr.DR_DIMS``), the rule D-178 (7) states and
-``scripts/check_autodr.py`` holds. THE BIN COUNT DID NOT MOVE -- five then,
-five now -- so every figure this script has already drawn keeps its own
-numbers and its own caption. A figure drawn from a run BEFORE that date
-carries the old edges and must not be relabelled.
+--out writes PNG and matching PDF. Offline json + matplotlib;
+--self-test validates synthetic tables and writes only temporary files.
 
-A run with ``fixture_tilt_noise_rad`` = 0.0873 (5 deg) fills the 0-2, 2-4
-and 4-6 deg bins ONLY; the two upper bins read ``episodes 0, rate None`` and
-are drawn as an empty slot with a dash, which is correct, not a defect.
-(That field is the STATIC tilt route; under ``dr_mode='autodr'`` the env
-refuses it non-zero and the `tilt` boundary draws the angle instead.)
-
-INPUT
------
-``--metrics FILE`` is either a ``demo_metrics.json`` itself or any text file
-that CONTAINS the table (an ``rt_logs`` dump, ``rt_logs/inbox.txt``). The
-table is located by its key and decoded with ``json``; if the file holds it
-more than once the LAST occurrence is used (a run's dump ends with its final
-window). A table with a bin count other than five is refused: the bins are
-the env's, not this script's, and a different count means a different env.
-
-``--out`` names the PNG; the PDF sibling (same stem, ``.pdf``) is written
-beside it, the thesis copy (same convention as ``plot_run_curves.py``).
-
-Offline, no Isaac: ``json`` + ``matplotlib``.
-
+Usage:
     python scripts/plot_tilt_bins.py --metrics docs/figures/RT-172_demo_metrics.json --run RT-172 \
         --window-note "Iteration 2000, 2000-Episoden-Fenster" \
         --out docs/figures/RT-172_success_by_tilt.png
     python scripts/plot_tilt_bins.py --self-test
-
-``--self-test`` draws a SYNTHETIC table (marked as such in its title) to a
-temporary file, checks the extractor on JSON-in-text and on a refused row
-count, and never writes under ``docs/``.
 """
 
 from __future__ import annotations

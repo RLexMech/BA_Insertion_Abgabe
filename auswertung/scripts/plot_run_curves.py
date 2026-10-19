@@ -1,51 +1,20 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-r"""Run curves over TOTAL env steps from a ``RT-<N>_scalars.csv``, PNG + PDF.
+r"""Plot reward, success, depth and force-abort curves as PNG and PDF.
 
-WHAT IT DRAWS
--------------
-One figure per curve, each as ``<out-dir>/RT-<N>_<curve>.png`` AND ``.pdf``
-(same figure, two ``savefig`` calls; the PDF is the thesis copy):
+Read wide scalars.csv; resolve the first available candidate tag and report
+missing curves. --reward-tag overrides the reward tag. Each main/reference
+run uses its own YAML-derived total-step factor (tools/run_axis.py, D-195).
+--smooth counts logged points, not environment steps. Report wall time
+separately. --ref adds a labelled comparison; --no-title omits the title.
+Offline CSV + matplotlib; --self-test uses temporary synthetic outputs.
 
-    reward       mean episode reward
-    success      trailing-window success rate, in %
-    depth        mean maximum insertion depth, mm
-    force_abort  force-abort rate, in %
-
-An optional reference run (``--ref``, ``--ref-run``) is drawn on the same
-axes in a second colour; the legend names the two run IDs.
-
-THE X AXIS (D-195 CURVE AXIS): total env steps, all envs summed,
-``tools/run_axis.py``. Each run gets ITS OWN factor from its own
-``params/agent.yaml`` and ``params/env.yaml`` (``--agent-yaml``/``--env-yaml``,
-``--ref-agent-yaml``/``--ref-env-yaml``), so a 16-step and a 128-step run
-share one axis. Wall time is one console line per run, never a figure.
-``--smooth`` is a window in logged points, not in steps.
-
-WHERE THE TAG NAMES COME FROM
------------------------------
-The CSV is the wide table of ``scripts/export_tb_scalars.py`` (header
-``step,wall_time,<tag>,...``). rsl_rl versions name their tags differently
-and the runner source is not on the laptop, so each curve has a CANDIDATE
-list and the first tag present wins. A curve none of whose candidates is in
-the file is SKIPPED with the file's tag list printed -- extend the list, or
-pass ``--reward-tag`` to pick the reward series by hand.
-
-Offline, no Isaac: ``csv`` + ``matplotlib``. Style follows
-``plot_start_height_bins.py`` (one hue per series, German axis labels with
-units, ``--no-title`` for thesis figures whose caption names them).
-
+Usage:
     python scripts/plot_run_curves.py --scalars docs/figures/RT-235s1_scalars.csv --run RT-235s1 \
         --agent-yaml rt_logs/RT-235s1/RT-235s1_agent.yaml --env-yaml rt_logs/RT-235s1/RT-235s1_env.yaml \
         --out-dir docs/figures
     python scripts/plot_run_curves.py --self-test
-
-``--self-test`` draws SYNTHETIC curves into a temp dir, checks the tag
-resolver (first candidate present, skip on miss), the header guard, the
-two output files, each run's own x grid through ``main`` and the named
-mutation "reference drawn with the main run's factor"; it never writes
-under ``docs/``.
 """
 
 from __future__ import annotations

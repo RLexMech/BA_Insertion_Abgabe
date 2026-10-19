@@ -1,63 +1,27 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-r"""One home for the training-curve x axis: TOTAL env steps (D-195 CURVE AXIS).
+r"""Convert training logs to total environment steps (D-195, D-200).
 
-THE RULE. x at logged iteration ``it`` = ``(it + 1) * num_steps_per_env *
-num_envs``. rsl_rl 3.0.1 ``runners/on_policy_runner.py`` (``v3.0.1`` tag):
-``learn()`` calls ``self.log(locals())`` AFTER the rollout and the update of
-iteration ``it``, and ``log()`` writes every scalar at step ``it``. So the
-row ``step = it`` of ``scalars.csv`` stands after ``it + 1`` rollouts of
-``num_steps_per_env`` steps in each of ``num_envs`` envs.
+rsl_rl 3.0.1 logs after rollout/update: x = (iteration+1)*num_steps_per_env*num_envs.
+Read num_steps_per_env from agent.yaml and scene.num_envs from env.yaml;
+missing, duplicate or misplaced keys fail. Conversion assumes fresh runs:
+resumption is not detected automatically. Wall time is reported separately.
 
-WHERE THE TWO FACTORS COME FROM: each run's own ``params/agent.yaml`` and
-``params/env.yaml``, never typed.
+For rl_games let F = horizon_length*num_envs (RT-240c):
+- Episode/* and */iter: x = step*F (epoch starts at 1).
+- info/* except cval_lr, losses a_loss/c_loss/entropy/bounds_loss,
+  performance/* and */step: x = step+F.
+- losses/cval_loss and info/cval_lr: x = step.
+- */time: seconds, excluded from step-axis curves.
+Read per tag because different axes can share a CSV row. Validate F against
+info/epochs. Read horizon_length from agent.yaml params.config.
 
-* ``num_steps_per_env``: exactly one top-level key of ``agent.yaml``.
-* ``num_envs``: exactly one ``num_envs:`` in the whole of ``env.yaml``, and
-  it sits directly under the top-level ``scene:`` block. A second one
-  anywhere, or the only one under another block, is refused: the reader
-  never guesses which of two counts the run used.
+read_policy_dt returns sim.dt times the effective decimation: OSC uses
+osc_decimation, not the pre-resolution decimation dumped in env.yaml
+(D-024). Readers are stdlib-only and require unambiguous keys.
 
-Missing or twice -> ``SystemExit`` naming the file and the key (fail fast,
-as ``plot_autodr_run.need``). Own construction: no existing reader takes a
-nested key (``eval_figures._env_value`` reads top-level keys only).
-
-WALL TIME gets one line of text, never a figure (D-195): ``wall_time_line``,
-last minus first ``wall_time`` of the iteration rows the caller passes.
-
-OWN LIMIT. A RESUMED run counts from ``start_iter``, not 0; the rule above
-holds for a fresh run only. The reader cannot see a resume and refuses
-nothing about it. This conversion assumes fresh runs.
-
-RL_GAMES (D-200). The factor is
-``(horizon_length, num_envs)``: exactly one ``horizon_length:`` in
-``agent.yaml``, directly under ``params:`` -> ``config:``; ``num_envs`` by the
-rule above. rl_games writes its tags on THREE step axes (measured in
-``rt_logs/RT-240c/RT-240c_scalars.csv``; D-200), with F = horizon_length x num_envs:
-
-* ``Episode/*``, ``*/iter``: step = epoch, from 1 -> x = step * F
-* ``info/*`` (not ``info/cval_lr``), ``losses/a_loss|c_loss|entropy|bounds_loss``,
-  ``performance/*``, ``*/step``: step = (epoch - 1) * F -> x = step + F
-* ``losses/cval_loss``, ``info/cval_lr``: step = epoch * F -> x = step
-* ``*/time``: seconds -> no curve; the largest is the wall time
-
-x after epoch e is e * F, the same count as rsl_rl's (it + 1) * F with
-it = e - 1, so both libraries share one axis. The three families can share a
-``step`` value (epoch 87 and 87 s land in one CSV row): read per TAG, never
-per row. ``check_rl_games_epochs`` refuses a CSV whose ``info/epochs`` rows
-disagree with F.
-
-``read_policy_dt``: the policy step in s = ``sim.dt`` x the decimation the
-env RUNS with (the ``dauer`` figure of ``plot_autodr_run.py``), same
-exactly-one rule. The dumped ``env.yaml`` holds the fields BEFORE
-``resolve_control_mode`` (``insertion_env_cfg.py``) writes ``osc_decimation``
-into ``decimation``: an OSC run's ``decimation:`` is the joint-PD 60 Hz
-(D-024), its policy runs at sim.dt x ``osc_decimation`` (15 Hz). So the key
-follows ``control_mode:``.
-
-Pure and stdlib, no yaml parser: the keys are read line by line.
-
+Usage:
     python scripts/tools/run_axis.py --self-test
 """
 

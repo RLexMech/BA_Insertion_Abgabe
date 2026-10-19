@@ -1,24 +1,13 @@
-"""Rank the training runs and name the best policy's checkpoint.
+r"""Rank logs/rsl_rl/<experiment> by demo_metrics.json success_rate_recent.
 
-Reads every run under ``logs/rsl_rl/<experiment>/`` and reports each one's
-recent success rate, the configuration it was trained under, and the
-checkpoint file to load. Needs no Isaac, no PyTorch and no running
-simulation: it reads the ``demo_metrics.json`` each run writes into its own
-log directory.
+Print the trailing-window rate, configuration and checkpoint; no Isaac or
+PyTorch required. Cumulative rates include early untrained episodes.
+Compare only matching training distributions, including reset_joint_noise_rad;
+this ranking does not establish generalisation.
 
-Ranking uses **success_rate_recent** (the trailing window the environment
-keeps), not the cumulative rate. The cumulative figure averages in the
-untrained start of the run, so a policy that learned late looks worse than
-it is -- the wrong basis for picking a checkpoint.
-
+Usage:
     python scripts/compare_runs.py
     python scripts/compare_runs.py --experiment demo_insertion --top 5
-
-Caveat worth stating when these numbers are used: the runs are ranked on
-their own training distribution. A run trained with little start
-randomisation can top this table and still fail under wider starts, so
-compare like with like, and read reset_joint_noise_rad in the table before
-concluding one policy is better than another.
 """
 
 from __future__ import annotations

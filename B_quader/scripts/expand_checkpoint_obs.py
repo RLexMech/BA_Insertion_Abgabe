@@ -1,50 +1,18 @@
-"""Widen a trained rsl_rl checkpoint from a 21-channel to a 25-channel observation.
+r"""Widen rsl_rl observations from 21 to 25 channels (D-034, D-037).
 
-D-037 appends the pocket quaternion as observation channels 21:25. That changes
-the input width of the policy and value networks, so the D-034 checkpoint
-``model_3950.pt`` (99.65 % training, 100 % replay at tilt 0, 50 % at 5 deg)
-cannot be loaded into the new env as it stands. Training the tilt curriculum
-from scratch would throw that policy away; at the fixed pose the same rung cost
-77 789 episodes to reach 90 %.
+Append zero input columns to actor/critic first layers; initialise added
+normaliser means to 0 and variance/std to 1. For identical first 21 inputs,
+the expanded network must compute the same function as the original.
+Drop Adam moments because their shapes change; retain parameter groups.
 
-**What this script does.** Every tensor whose input dimension is the OLD
-observation width is widened to the new width, and the added entries are
-neutral:
+Historical reference model_3950.pt: 99.65% training success, 100% replay
+at zero tilt and about 50% at 5 degrees. These are replay checks, not a
+guarantee for other checkpoints. Requires torch. --self-test checks a
+synthetic checkpoint; real-checkpoint replay must be verified separately.
 
-- first-layer weight matrices ``(out, 21) -> (out, 25)``: the four new columns
-  are ZERO,
-- observation-normaliser buffers ``(21,) -> (25,)``: new mean 0, new variance
-  and standard deviation 1, so the new channels pass through unscaled and are
-  then multiplied by the zero columns above.
-
-The observation enters the network at exactly one place -- the first linear
-layer of the actor and of the critic -- so zero columns there make the widened
-network compute the **same function** as the original for every input whose
-first 21 channels agree. The expanded policy is therefore not "close to" the
-old one, it is the old one, and its first measurement is a regression test with
-two numbers already on disk: replay at tilt 0 must reproduce 100 %, and
-``--fixture-tilt 5`` must reproduce ~50 %. A deviation means this script was
-wrong, not that the policy changed.
-
-**Optimizer state is deliberately dropped** (``state`` emptied, param groups
-kept). Its Adam moments are per-parameter tensors whose shapes no longer match,
-and they are keyed by parameter index rather than by name, so widening them
-correctly would mean reconstructing the model's parameter order -- a guess this
-script refuses to make. Adam re-initialises its moments lazily on the first
-update; the cost is a few iterations of adaptation at the start of a run that is
-changing task anyway.
-
-Usage (training machine, inside the Isaac conda env; needs torch, nothing else):
-
+Usage:
     python scripts/expand_checkpoint_obs.py --self-test
     python scripts/expand_checkpoint_obs.py IN.pt OUT.pt
-
-``--self-test`` builds a synthetic checkpoint with the same structure, runs the
-same transform over it and asserts every invariant. Run it first: it separates
-"the script is broken" from "this checkpoint has an unexpected layout" before
-either can be blamed for a bad replay.
-
-UNVERIFIED: written on the dev PC, which has no torch.
 """
 
 from __future__ import annotations

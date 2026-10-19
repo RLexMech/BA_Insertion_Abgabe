@@ -1,30 +1,15 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-r"""Refuse a checkpoint whose actor was trained on another observation width.
+r"""Reject actor observation-width mismatch before runner.load (D-188).
 
-WHY (D-188, 2026-09-13). Since the ``wrench`` observation mode exists there
-are two widths a checkpoint can carry: 28 (``force``) and 31 (``wrench``).
-rsl_rl 3.0.1 stores no observation width of its own; ``runner.load`` calls
-``load_state_dict`` strictly and dies with ``size mismatch for
-actor.0.weight`` -- correct, but the message names neither the env's mode
-nor the one that would fit. This module reads the width the actor's first
-linear layer expects and turns the mismatch into ONE readable line before
-``runner.load`` is reached. No zero-padding, no weight transfer: a 28-wide
-policy is not a 31-wide policy with three inputs it ignores, because the
-normaliser and the first layer were fitted to the other layout.
+Force mode needs 28 channels; wrench mode needs 31. For rsl_rl 3.0.1,
+read the second dimension of the first 2-D actor.<n>.weight in
+model_state_dict. Unknown layouts return None and defer to runner.load.
+Do not pad or transfer weights: observation layout and normalisation are
+trained together. Stdlib-only shape inspection; --self-test needs no torch.
 
-THE ONLY THING ASSUMED about the checkpoint is the rsl_rl 3.0.1 layout:
-``loaded["model_state_dict"]`` holds the ``ActorCritic`` state, whose actor
-is an ``nn.Sequential`` so its first ``Linear`` is ``actor.0.weight`` of
-shape ``(hidden, obs_width)``. The key is searched, not indexed: the first
-``actor.<n>.weight`` with two dimensions counts. When no such key exists the
-result is ``None`` and the caller lets ``runner.load`` speak -- this guard
-never turns an unknown layout into a refusal.
-
-Pure and stdlib: the state dict may hold anything with a ``.shape``, so the
-self-test runs without torch.
-
+Usage:
     python scripts/tools/checkpoint_width.py --self-test
 """
 

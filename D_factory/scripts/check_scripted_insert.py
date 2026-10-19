@@ -1,29 +1,14 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-r"""Offline check of ``scripted_policy.py`` -- the D-108 gate's pure math.
+r"""Check scripted-policy observation-to-joint-action math offline (D-108).
 
-WHAT IT CHECKS
---------------
-``scripted_policy.py`` turns the OBSERVATION into the env's joint-delta action
-for the scripted insertion (D-108's gate). It imports only ``torch`` and
-``insertion_math``, so this check executes the WHOLE file under the numpy
-stand-in (``scripts/tools/torch_shim.py``) -- no Isaac, no torch, no GPU.
+NumPy with a torch shim; no Isaac, GPU or torch required. Check the
+pocket-to-environment-to-robot-base frame chain using known rotations.
+--self-test mutates one condition at a time: exactly its declared checks
+must fail; missing or additional failures fail the test (D-080).
 
-The frame chain is the reason this check exists in this shape. The command
-travels pocket frame -> env frame -> robot base frame, and a swapped rotation
-direction is the failure mode that stays plausible in review and only shows up
-as "the arm drives sideways" on the training PC. Each hop therefore gets its
-own check against a KNOWN rotation, never against a second copy of the same
-expansion.
-
-THE COUNTER-PROOF (D-080)
--------------------------
-``--self-test`` breaks the source in exactly one way per mutation and requires
-EXACTLY the named checks to flip. A mutation that flips nothing proves the
-checks can never fail; one that flips extra checks proves they are not
-surgical. Both are reported as failures of the CHECK, not of the math.
-
+Usage:
     python scripts/check_scripted_insert.py
     python scripts/check_scripted_insert.py --self-test
 """

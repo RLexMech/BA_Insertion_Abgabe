@@ -561,18 +561,10 @@ stage 2 allows PLAY_Y / 2 = 0.8 mm, so the seated state is clear by 7.0847 mm;
 stage 1 allows POCKET_STAGE1_Y_RANGE[1] - PART_BBOX_M[1] / 2 = 8.7000 mm,
 which is MORE than this offset. That gap is the open exposure D-153 names,
 and `insertion_env._max_stage1_lat_y` is the instrument that measures it."""
-"""Total lateral play [m]: X 0.0005876 (0.5876 mm), Y 0.00160 (1.60 mm).
-
-X CHANGED on 2026-08-28, from 0.2876 mm, when PART_BODY_X was read out of the
-part CAD -- see there. Everything derived from the cross play doubles with it:
-the SAPU threshold, the fine kernel width, and the D-106 yaw and across-tilt
-bounds.
-
-The SAPU threshold and fine kernel width are derived below from the cross
-play (D-106, D-109). The yaw and across-tilt bounds document the wall
-constraints; they are not checked in code and have no constants.
-
-Y is unaffected: 145.1 - 143.50, settled by D-088."""
+"""Total lateral play [m]: X=0.0005876, Y=0.00160 (D-088).
+SAPU threshold and fine kernel width derive from PLAY_X (D-106, D-109).
+Yaw/across-tilt wall constraints are documented but not checked in code.
+"""
 
 
 INTERPEN_THRESH = 0.5 * PLAY_X
@@ -597,27 +589,10 @@ ENGAGED_DEPTH = ENGAGED_DEPTH_FRACTION * POCKET_SEAT_DEPTH
 TOOL_SPAN_LOCAL_Z_M = (0.0, 0.152004)
 
 TOOL_CHAIN_PENDING: tuple[str, ...] = ("GRASP_POS_NOISE", "TOOL_DIAGONAL_INERTIA")
-"""Named unknowns of the tool chain, same contract as WORKCELL_PENDING: the
-chain is internally consistent without them, but the grasp is deterministic
-until GRASP_POS_NOISE is filled in. The startup report prints this tuple.
-
-TOOL_DIAGONAL_INERTIA, added 2026-08-23: the weld writes mass and centre of
-mass but leaves ``physics:diagonalInertia`` unauthored, so PhysX derives the
-inertia from the collision geometry -- which is the PART only, since the
-gripper deliberately carries no collider. The gripper's mass is therefore
-distributed over the part's shape. Mass and COM are right; the inertia tensor
-is an approximation, and it is named here rather than left to be discovered
-from behaviour during training.
-
-Part orientation: the part is welded the right way round -- the flange was turned by
-180 degrees and the code has carried that correctly for some time. The blind
-spot it named was real (RT-21 rotated the part about its own centre and none
-of the twenty-one authoring checks moved, because an axis-aligned bounding
-box is the same box either way), so the lesson stays even though the entry
-goes: a wrong orientation is caught by a geometric FEATURE, never by another
-bound.
-
-Lug span: the USD and the part STEP agree. The lug is a cylinder, so
-its outermost point lies mid-arc and no vertex or point-cloud query returns
-it; read from the surface the span is 96.410 mm against the USD's 96.409 mm.
-The note above PART_BBOX_M carries the numbers and the lesson."""
+"""Tool-chain assumptions reported at startup. Grasp is deterministic until
+GRASP_POS_NOISE is set. PhysX derives inertia from part-only collision
+geometry: gripper mass/COM are included, but its inertia is approximate.
+Check orientation using geometric features, not an invariant bounding box
+(RT-21). The cylindrical lug span is 96.410 mm in STEP vs 96.409 mm in USD;
+vertices alone do not capture its mid-arc extremum.
+"""
