@@ -28,14 +28,13 @@ last minus first ``wall_time`` of the iteration rows the caller passes.
 
 OWN LIMIT. A RESUMED run counts from ``start_iter``, not 0; the rule above
 holds for a fresh run only. The reader cannot see a resume and refuses
-nothing about it. Our runs are fresh.
+nothing about it. This conversion assumes fresh runs.
 
 RL_GAMES (D-200). The factor is
 ``(horizon_length, num_envs)``: exactly one ``horizon_length:`` in
 ``agent.yaml``, directly under ``params:`` -> ``config:``; ``num_envs`` by the
 rule above. rl_games writes its tags on THREE step axes (measured in
-``rt_logs/RT-240c/RT-240c_scalars.csv``; D-200
-(6)), with F = horizon_length x num_envs:
+``rt_logs/RT-240c/RT-240c_scalars.csv``; D-200), with F = horizon_length x num_envs:
 
 * ``Episode/*``, ``*/iter``: step = epoch, from 1 -> x = step * F
 * ``info/*`` (not ``info/cval_lr``), ``losses/a_loss|c_loss|entropy|bounds_loss``,

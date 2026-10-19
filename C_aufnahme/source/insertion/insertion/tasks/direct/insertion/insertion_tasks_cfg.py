@@ -568,12 +568,9 @@ part CAD -- see there. Everything derived from the cross play doubles with it:
 the SAPU threshold, the fine kernel width, and the D-106 yaw and across-tilt
 bounds.
 
-REDONE 2026-08-30 by the concept stream. The sentence that stood here --
-"those derivations live in D-106 / D-109 and are the concept stream's to redo;
-this module only supplies the input" -- is no longer true of the first two: the
-SAPU threshold and the fine kernel width are DECIDED and are derived from this
-line, immediately below. The yaw and across-tilt bounds stay documentation of
-what the walls enforce and are checked nowhere, so they get no constant.
+The SAPU threshold and fine kernel width are derived below from the cross
+play (D-106, D-109). The yaw and across-tilt bounds document the wall
+constraints; they are not checked in code and have no constants.
 
 Y is unaffected: 145.1 - 143.50, settled by D-088."""
 

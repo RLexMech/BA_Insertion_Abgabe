@@ -16,7 +16,7 @@ Two steps, because no one Python here has both libraries:
   python scripts/tools/table_kraft_durchdringung.py
       (system Python, python-docx) -> the same names as .docx
 
-Built 2026-10-09.
+
 """
 import argparse
 import csv

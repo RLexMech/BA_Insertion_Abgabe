@@ -1,7 +1,7 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-r"""Collect every evaluation run into ONE long table (eval_plan.md section 8b, step 1).
+r"""Collect every evaluation run into ONE long table.
 
 Input layout (copied from the training PC, one folder per play.py run):
 
@@ -55,7 +55,7 @@ SCRIPT_MARKER = "eval_collect-2026-09-30b"
 REPO = pathlib.Path(__file__).resolve().parents[1]
 TABLE_DIR = REPO / "scripts" / "eval"
 
-# eval_plan.md section 3.2: block -> (table file, width). `technik` runs both
+# block -> (table file, width). `technik` runs both
 # widths on the practice table, so its width is read from the manifest.
 # The 18-column tables (D-204 (4) appended fixture_noise_z); the 17-column
 # `_c17` ones (D-194) and the 16-column ones stay the identities of the
@@ -203,7 +203,7 @@ def collect_run(block: str, folder: str, run: dict, table: dict) -> tuple[list, 
             "boundary_key": keys[rid // per_block] if per_block else "",
             "outcome": r["outcome"],
             "success_train": int(ok),
-            # eval_plan.md section 4: success AND below the abort limit. The
+            # success AND below the abort limit. The
             # env aborts at `>=` (insertion_math.py:1223), so strict is `<`.
             "success_strict": int(ok and f_filt < limit),
             # Read from the force, not from `outcome`: a success in the abort
@@ -234,7 +234,7 @@ def collect_run(block: str, folder: str, run: dict, table: dict) -> tuple[list, 
 
 def g6_report(rows: list) -> list:
     """G6: the same policy on the same table twice (technik, two tags) -- share of
-    rows whose outcome differs. Reported, no pass line (eval_plan.md section 6)."""
+    rows whose outcome differs. Reported, no pass line."""
     by = {}
     for r in rows:
         if r["block"] != "technik":
@@ -422,7 +422,7 @@ CASES = (
     ("folder-says-nodr-checkpoint-says-fixed-dr",
      lambda runs, tables: runs.__setitem__(("T-final-F", "nodr_s1"), runs.pop(("T-final-F", "fixeddr_s1"))),
      "checkpoint path says"),
-    # eval_plan.md section 3.2: Fixed-DR plays T-final's table only as T-final-F.
+    # Fixed-DR plays T-final's table only as T-final-F.
     ("fixed-dr-run-in-T-final",
      lambda runs, tables: runs.__setitem__(("T-final", "fixeddr_s1"), runs.pop(("T-final-F", "fixeddr_s1"))),
      "takes only"),

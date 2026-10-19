@@ -71,9 +71,9 @@ APPLIED_COLUMNS = (
 )
 FRICTION_READBACKS = APPLIED_COLUMNS[15:]
 
-# eval_plan.md section 1.1 (homes: autodr.DR_DIMS, D-178/179/181). `nominal`:
+# Parameter sources ( autodr.DR_DIMS, D-178/179/181). `nominal`:
 # everything but the start height sits on its centre; friction centre 0.140 is
-# D-111's CONTACT_FRICTION, read back in RT-207s1 (inbox 2026-09-21, V1).
+# D-111's CONTACT_FRICTION, read back in RT-207s1.
 BANDS = {
     "target": {
         "lat_r": (0.0, 0.030),
@@ -90,7 +90,7 @@ BANDS = {
         "friction": (0.140, 0.140),
     },
 }
-FIXTURE_NOISE_XY_M = 0.05    # eval_plan.md 1.1, cfg fixture_pos_noise_xy (D-203/D-204)
+FIXTURE_NOISE_XY_M = 0.05    # cfg fixture_pos_noise_xy (D-203/D-204)
 FIXTURE_NOISE_Z_M = 0.05     # cfg fixture_pos_noise_z (D-204 (4))
 GRASP_OBS_X_M = 0.003        # D-183
 POCKET_OBS_YAW_RAD = 0.0223402   # D-194, Belege_Streuwerte B6 (the run's value)

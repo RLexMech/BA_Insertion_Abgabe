@@ -13,11 +13,10 @@ stand-in (``scripts/tools/torch_shim.py``), which grew ``.long()`` and
 ``.clamp()`` for exactly this -- the house rule is that the module under test
 keeps the idiomatic torch form.
 
-WHAT THE PLAN ASKS FOR (section 11)
------------------------------------
-7 boundaries, 7 buffers (the plan's section 11 counted 11, before D-178 made the
-lateral offset one radius and D-179 made the start height one-sided); no lower
-boundary on a one-sided quantity; 240 flags at 0.80 -> +delta, at 0.10
+CHECKED INVARIANTS
+------------------
+7 boundaries and 7 buffers: lateral offset is one radius (D-178), and start
+height is one-sided (D-179). No lower boundary on a one-sided quantity; 240 flags at 0.80 -> +delta, at 0.10
 -> -delta, at 0.5 -> hold; 239 -> nothing; clamping at both ends; p_b over
 1e4 draws inside [0.47, 0.53]; map(0) == lo and map(1) == hi; bounds_version
 rises exactly on a movement; state round-trip; every quantity without a
@@ -416,8 +415,8 @@ def build_checks(ns, torch) -> list:
           f"{[e.action for e in ev]} -> {p.value('lat_r_hi'):.6g} vs {delta:.6g}")
     check("a processed buffer is emptied", p.fill()["lat_r_hi"] == 0,
           str(p.fill()["lat_r_hi"]))
-    # n_steps, NOT a literal 10: DELTA_STEPS is [TESTWERT] and the smoke run
-    # may change it. A suite that fails for that would get "fixed" wrongly.
+    # Use n_steps rather than a literal 10: DELTA_STEPS is a configurable
+    # [TESTWERT], so the test must remain valid when its value changes.
     _ns = dim_of["lat_r"].n_steps
     check("the delta is (maximum - centre) / n_steps",
           abs(delta - (dim_of["lat_r"].hi_max - 0.0) / float(_ns)) < 1e-18,
@@ -500,7 +499,7 @@ def build_checks(ns, torch) -> list:
           p.value("friction_lo") == dim_of["friction"].lo_max,
           f"{p.value('friction_lo'):.17g} vs {dim_of['friction'].lo_max:.17g}")
 
-    # -- bounds_version: only a REAL change (plan section 4, risk R12) -------
+    # -- bounds_version: only a REAL change -------
     p = fresh()
     fill(p, "yaw_hi", 240, 240)
     p.update()
@@ -538,7 +537,7 @@ def build_checks(ns, torch) -> list:
     check("all_at_max turns True only when EVERY boundary is at its maximum",
           p.all_at_max() is True, str(p.as_dict()["steps"]))
 
-    # -- resume (plan section 5, risk R13) -----------------------------------
+    # -- resume -----------------------------------
     p = fresh()
     fill(p, "tilt_hi", 240, 240)
     p.update()
@@ -930,7 +929,7 @@ def build_checks(ns, torch) -> list:
             lambda: GridTable(grid_rows, "x", ("lat_r", "tilt", "yaw"), cells=3, reps=2))
     refuses("a grid pair that repeats one quantity refuses",
             lambda: GridTable(grid_rows, "x", ("lat_r", "lat_r"), cells=3, reps=2))
-    # Plan section 8: the azimuth is explicitly NOT a pair partner.
+    # the azimuth is explicitly NOT a pair partner.
     refuses("a grid pair naming a non-randomised column refuses",
             lambda: GridTable(grid_rows, "x", ("lat_r", "tilt_azimuth"),
                               cells=3, reps=2))
@@ -2324,7 +2323,7 @@ MUTATIONS: tuple = (
         ),
     ),
     (
-        # The evaluation provider (plan section 3) is the one every policy is
+        # The evaluation provider is the one every policy is
         # scored against; at anything but full width the shared table is
         # mapped onto bounds nobody agreed on.
         "eval-provider-does-not-start-at-full-width",

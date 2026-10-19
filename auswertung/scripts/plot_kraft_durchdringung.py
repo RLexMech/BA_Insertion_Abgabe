@@ -28,7 +28,7 @@ Reuses ``eval_figures`` / ``eval_stats`` and changes nothing there. ``.venv-anal
     .venv-analysis/Scripts/python.exe scripts/plot_kraft_durchdringung.py --self-test
 
 Writes ``docs/figures/eval_rlgames/H23_beobachtungsfehler_kraft_durchdringung.*`` and
-``H24_ausserhalb_kraft_durchdringung.*`` (pdf, svg, png). Built 2026-10-09.
+``H24_ausserhalb_kraft_durchdringung.*`` (pdf, svg, png).
 """
 import argparse
 import json

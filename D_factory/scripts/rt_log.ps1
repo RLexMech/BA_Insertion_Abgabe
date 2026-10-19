@@ -107,6 +107,5 @@ if ($runRoots) {
 Write-Host "[rt_log] Log (voll): $logFile"
 Write-Host "[rt_log] Log (kurz): $clipSource"
 Write-Host "[rt_log] $clip"
-Write-Host "[rt_log] Am Laptop in rt_logs\inbox.txt einfuegen, dann /rt-check"
 
 exit $code

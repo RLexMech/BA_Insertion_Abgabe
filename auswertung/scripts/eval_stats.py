@@ -1,8 +1,7 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-r"""Every number of the evaluation, from ``episodes_all.csv`` (eval_plan.md section 5,
-section 8b step 2). Laptop only, in ``.venv-analysis`` (D-189).
+r"""Every number of the evaluation, from ``episodes_all.csv``, generated offline in ``.venv-analysis`` (D-189).
 
 Headline key is ``success_train``. Library functions, no own interval code:
 
@@ -79,7 +78,7 @@ NOISE_REFERENCE_TAG = ""
 
 
 class StatsError(RuntimeError):
-    """The input cannot answer the question the plan asks."""
+    """The input is insufficient for the requested statistic."""
 
 
 def wilson(k: int, n: int) -> list:
@@ -97,8 +96,7 @@ def pct_nearest_rank(values, q: float) -> float | None:
 
 def policy_rows(df: pd.DataFrame, t1_mm: float | None = None) -> list:
     """One dict per (block, method, seed, tag): rates with Wilson, outcomes,
-    force, steps and interpenetration over the SUCCESSES only (eval_plan.md
-    section 4)."""
+    force, steps and interpenetration over the SUCCESSES only."""
     out = []
     for (block, method, seed, tag), g in df.groupby(["block", "method", "seed", "tag"], sort=True):
         n = int(len(g))
@@ -192,13 +190,13 @@ def method_rates(pol: list, block: str) -> tuple[list, list]:
     return seed_rates(pol, block, "autodr"), seed_rates(pol, block, "nodr")
 
 
-# K5 (D-192, eval_plan.md section 1.4, section 5 point 7): AutoDR's rates from
+# K5 (D-192): AutoDR's rates from
 # the block K1/K2 already read, Fixed-DR's from its own -F block (same table).
 K5_BLOCKS = (("K5", "T-final", "T-final-F"), ("K5_nominal", "T-nominal", "T-nominal-F"))
 
 
 def k5_reading(ci) -> str:
-    """The three pre-registered readings of eval_plan.md section 1.4; no "met"."""
+    """The three pre-registered readings for the evaluation; no "met"."""
     lo, hi = ci
     return "above_0" if lo > 0.0 else ("below_0" if hi < 0.0 else "contains_0")
 
@@ -225,7 +223,7 @@ def k5(pol: list, blocks: set) -> dict:
 # Bonferroni cross-check of the method differences (Patterson et al. 2024,
 # Sec. 4.5, p. 32): k = the method differences actually computed, each Welch
 # interval at 1 - ALPHA / k. Report only -- K1/K2 "met" and the K5 reading stay
-# on the pre-registered 95 % interval (eval_plan.md section 5 point 8). The
+# on the pre-registered 95 % interval. The
 # family boundary (these four, not FORCE) is own choice, named there.
 METHOD_FAMILY = ("K1", "K2", "K5", "K5_nominal")
 
@@ -257,7 +255,7 @@ def final_block(method: str) -> str:
 
 
 def select_final(pol: list) -> dict:
-    """eval_plan.md section 2 B, on T-auswahl: highest rate; tie -> smaller force
+    """On T-auswahl: highest rate; tie -> smaller force
     p95 over the successes; tie -> smaller seed number. Candidates are every
     method that played T-auswahl (D-208: AutoDR, No-DR AND Fixed-DR). A tie that
     survives all three (same seed number in two methods) is not settled by the plan."""
@@ -493,7 +491,7 @@ def summarize(df: pd.DataFrame, t1_mm: float | None = None) -> dict:
         except StatsError as exc:
             out["FORCE"] = {"error": str(exc)}
     k4 = {}
-    # K4 per method (eval_plan.md 1.4), Fixed-DR from its T-final-F (D-208).
+    # K4 per method, Fixed-DR from its T-final-F (D-208).
     for m in ("autodr", "nodr", "fixeddr"):
         r = [p[KEY] for p in pol if p["block"] == final_block(m) and p["tag"] == "" and p["method"] == m]
         if r:
@@ -923,7 +921,7 @@ MUTATIONS = (
      "int(math.ceil(q * len(v))) - 1", "int(q * len(v))",
      # The ip p95 of 40 successes moves from index 37 to 38.
      (CHECKS[9], CHECKS[27])),
-    # K5 (D-192, eval_plan.md section 5 point 7).
+    # K5 (D-192).
     ("k5-swaps-the-arms",
      "d = method_diff(a, f, names=", "d = method_diff(f, a, names=",
      (CHECKS[11], CHECKS[12])),

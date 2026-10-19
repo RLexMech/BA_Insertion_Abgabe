@@ -1,7 +1,7 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-"""The evaluation run's folder name and its ``eval_manifest.json`` (eval_plan.md section 7, step C)."""
+"""The evaluation run's folder name and its ``eval_manifest.json``."""
 
 from __future__ import annotations
 

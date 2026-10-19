@@ -249,7 +249,7 @@ RL_PLACEHOLDERS: dict = {
         "is WITHDRAWN (rigid chain, no sim-to-real). D-167's condition for "
         "lowering did NOT hold: it asked for p95 far under the D-166 search "
         "force, and RT-157 read above it. Read force_norm_n p95 and "
-        "force_abort_rate off every run. Home: DECISIONS.md, D-169."
+        "force_abort_rate off every run. D-169."
     ),
     "engaged_depth_m": (
         "[placeholder] the fraction of the seat depth behind it is AD HOC "
@@ -261,14 +261,11 @@ RL_PLACEHOLDERS: dict = {
         "stays inside half the cross play off the TRAINED policy's "
         "trajectories (D-071: the tilt is learned). Only consumer: the engaged "
         "display bonus. Factory's own fraction was rejected: at this pocket it "
-        "lands inside the success band. Home: docs/decisions_inbox.md, entry "
-        "'The tilted scripted insertion is SPENT ...' (2026-09-01)."
+        "lands inside the success band."
     ),
     "abort_payment": (
         "[placeholder] the FORM is Beltran-Hernandez via D-114 (a fixed "
-        "negative on abort) and the MAGNITUDE was decided 2026-09-01 (grill; "
-        "inbox entry Reward-Ueberarbeitung, the abort-payment point), which "
-        "closes D-114's [open] and un-couples it from the F_max measurement: "
+        "negative on abort). The magnitude is independent of F_max: "
         "one kernel peak, i.e. the per-step maximum of the shaping term. That "
         "is a SCALE ANCHOR, our own choice, openly labelled, with an optional "
         "decade sensitivity row per the D-109 width template. It stays in this "
@@ -277,8 +274,8 @@ RL_PLACEHOLDERS: dict = {
     ),
     "osc_kp_pos": (
         "[placeholder] task-space position stiffness, N/m. NOT adopted: "
-        "Decision (four) of the inbox entry 'Audit 2026-09-03 (a)' DERIVES it "
-        "as kp <= F_search / (Lambda_max * step_limit), with F_search the "
+        "The proposed bound is "
+        "kp <= F_search / (Lambda_max * step_limit), with F_search the "
         "literature search-band force and Lambda_max the task-space inertia "
         "the startup report prints at the reset pose. Until that is done the "
         "measurement runs two values (the OSC cfg default and five times it). "
@@ -339,7 +336,7 @@ RL_PLACEHOLDERS: dict = {
         "physics rate / this). No source of ours; Factory's decimation "
         "(factory_env_cfg.py, FactoryEnvCfg). D-024's rate is the controller "
         "rate now. The episode is kept as a STEP count (D-113) and its seconds "
-        "follow; re-deriving the length is owed (audit, section six)."
+        "follow; the duration has not been independently validated."
     ),
     "obs_noise_pocket_pos_std_m": (
         "[placeholder] the HALF WIDTH of the per-episode uniform bias on the "
@@ -348,23 +345,21 @@ RL_PLACEHOLDERS: dict = {
         "observation noise and that is the source; reading it as THIS env's "
         "per-episode bias is our own step, because TacSL does not state when "
         "it is drawn. NAMED TENSION: the uniform's sigma lies above the one "
-        "at which FORGE reports unstable training. Home: p1-thesis "
-        "docs/decisions_inbox.md 2026-09-15, replacing D-182's value."
+        "at which FORGE reports unstable training (D-182)."
     ),
     "force_obs_noise_std_n": (
         "[placeholder] the per-step Gaussian on the force channels, in "
         "newtons. The UR5e datasheet gives a force-sensing PRECISION for the "
         "tool flange; reading that figure as a standard deviation is an "
         "ASSUMPTION, because the datasheet does not define it as one. FORGE "
-        "uses a smaller per-timestep sigma. Home: DECISIONS.md, D-182."
+        "uses a smaller per-timestep sigma. D-182."
     ),
     "torque_obs_noise_std_nm": (
         "[placeholder] the per-step Gaussian on the torque channels "
         "(obs_wrench_mode='wrench' only), in newton metres. OFF and OPEN "
         "(disabled; observation noise may contribute to parking); the UR5e "
         "datasheet's torque precision is the candidate when it is widened, "
-        "read as a sigma by the same assumption as the force. Home: "
-        "DECISIONS.md, the wrench-mode entry; Belege_Streuwerte.md, row B-four-c."
+        "read as a sigma by the same assumption as the force. The torque precision is not a measured noise standard deviation."
     ),
     "grasp_obs_offset_x_m": (
         "[placeholder] the half width of the uniform grasp offset along the "
@@ -372,14 +367,14 @@ RL_PLACEHOLDERS: dict = {
         "Factory's held-asset position noise and FORGE's Table II carry the "
         "same magnitude for their peg; that the gripper on THIS part slips "
         "by as much is an estimate from a CAD side view, not a "
-        "measurement. Home: DECISIONS.md, D-183."
+        "measurement. D-183."
     ),
     "pocket_obs_yaw_rad": (
         "[placeholder] the half width of the uniform pocket-yaw belief error "
         "about the pocket's own axis, in radians, seen ONLY by the "
         "observation. OFF by default. The width is derived by us from a "
         "published MEAN camera error (Litvak et al.), not measured on this "
-        "cell. Home: DECISIONS.md, D-194; Belege_Streuwerte.md, row B-six."
+        "cell. D-194."
     ),
 }
 
@@ -403,7 +398,7 @@ PROXY_TASK_VALUES: dict = {
     "cfg.gate_min_alignment": (
         "[proxy] tool-axis alignment floor, calibrated on the square peg. "
         "The real bound is D-106's across-tilt limit, which D-121 reopened "
-        "and the concept stream has not recomputed."
+        "and has not been recomputed."
     ),
     "tasks.SIDE_CLEARANCE": (
         "[proxy] half-clearance per axis of the square pair. The real task "
@@ -492,8 +487,7 @@ def resolve_control_mode(cfg) -> str:
     mode = str(cfg.control_mode)
     if mode not in CONTROL_MODES:
         raise RlConfigIncomplete(
-            f"control_mode is {mode!r}; the only modes are {CONTROL_MODES} "
-            "(inbox entry 'Audit 2026-09-03 (a)', Decision (2))."
+            f"control_mode is {mode!r}; the only modes are {CONTROL_MODES}."
         )
     if mode == "osc":
         dec = int(cfg.osc_decimation)

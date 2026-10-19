@@ -94,7 +94,7 @@ RL_GAMES_TAG = {
     "Loss/value_function": "losses/cval_loss",
     "Loss/entropy": "losses/entropy",
 }
-# Words, font, size and resolution from eval_figures (Grafik_Regelwerk F2 and G, 2026-10-11).
+# Words, font, size and resolution from eval_figures.
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import eval_figures as EF  # noqa: E402
 
@@ -179,7 +179,7 @@ def style(ax, ylabel: str, xlabel: bool = True):
         ax.spines[side].set_visible(False)
     for side in ("left", "bottom"):
         ax.spines[side].set_color(INK_MUTED)
-    ax.tick_params(colors=INK_MUTED, labelcolor=INK, labelsize=EF.FONT_PT)   # numbers black (Grafik_Regelwerk C5)
+    ax.tick_params(colors=INK_MUTED, labelcolor=INK, labelsize=EF.FONT_PT)   # numbers black
     ax.set_ylabel(ylabel, color=INK, fontsize=EF.FONT_PT)
     if xlabel:
         env_axis(ax)
@@ -235,7 +235,6 @@ def fig_stufen(plt, c, sidecar, ev):
             # line carries its own symbol (filled circle / open triangle), evenly spaced
             # along the line and shifted by half a spacing so the two never coincide.
             # Lower limit in grey, not REF: orange means No-DR in every other figure
-            # (Grafik_Regelwerk D1, D7).
             hx, hy = need(c, f"dr/{name}_hi")
             ax.plot(hx, [100 * (y - d["centre"]) / (d["hi_max"] - d["centre"]) for y in hy], color=RUN,
                     linewidth=1.2, marker="o", markersize=2.5, markevery=(0.0, 0.1), label="obere Grenze")
@@ -451,7 +450,7 @@ def draw_all(scalars, factor, metrics_path, autodr_path, run, out_dir, lib="rsl_
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-    # The thesis font (Grafik_Regelwerk C8), as eval_figures.draw_all sets it.
+    # The thesis font, as eval_figures.draw_all sets it.
     plt.rcParams.update({"font.size": EF.FONT_PT, "pdf.fonttype": 42, "svg.fonttype": "none", "svg.hashsalt": "eval_figures",
                          "font.family": "sans-serif", "font.sans-serif": [EF.FONT]})
 
@@ -510,7 +509,7 @@ def draw_all(scalars, factor, metrics_path, autodr_path, run, out_dir, lib="rsl_
     written = []
     for name in [n for n in NAMES if n in figs]:
         fig = figs[name]
-        for ext in ("png", "pdf", "svg"):   # 300 dpi + vector (Grafik_Regelwerk E3)
+        for ext in ("png", "pdf", "svg"):   # 300 dpi + vector
             p = out_dir / f"{run}_{name}.{ext}"
             fig.savefig(p, dpi=EF.PNG_DPI, bbox_inches="tight", metadata=EF.SAVE_META[ext])
             written.append(p)

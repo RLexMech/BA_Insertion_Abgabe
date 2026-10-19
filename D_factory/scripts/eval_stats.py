@@ -47,7 +47,7 @@ NOISE_REFERENCE_TAG = ""
 
 
 class StatsError(RuntimeError):
-    'The input cannot answer the question the plan asks.'
+    'The input is insufficient for the requested statistic.'
 
 
 def wilson(k: int, n: int) -> list:
@@ -168,7 +168,7 @@ K5_BLOCKS = (("K5", "T-final", "T-final-F"), ("K5_nominal", "T-nominal", "T-nomi
 
 
 def k5_reading(ci) -> str:
-    'The three pre-registered readings of eval_plan.md section 1.4; no "met".'
+    'The three pre-registered readings for the evaluation; no "met".'
     lo, hi = ci
     return "above_0" if lo > 0.0 else ("below_0" if hi < 0.0 else "contains_0")
 
@@ -219,7 +219,7 @@ def final_block(method: str) -> str:
 
 
 def select_final(pol: list) -> dict:
-    'eval_plan.md section 2 B, on T-auswahl: highest rate; tie -> smaller force'
+    'On T-auswahl: highest rate; tie -> smaller force'
     cand = [p for p in pol if p["block"] == "T-auswahl" and p["tag"] == ""]
     if not cand:
         raise StatsError("no T-auswahl runs: the final policy cannot be selected")

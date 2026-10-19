@@ -24,7 +24,7 @@ file is named with its size and NOT appended (the printing script is
 expected to carry a SUMMARY block of its own -- `check_seated_success.py`
 reward curve does since 2026-09-05).
 
-Stdlib only; runs on the laptop. `--self-test` builds a synthetic log and
+Stdlib only; runs without the simulator. `--self-test` builds a synthetic log and
 applies the D-080 mutations (a repeat report that must vanish, a Traceback
 inside noise that must survive, a `[rt_log]` line that must never drop).
 The noise/anomaly/divider rules are IMPORTED from `filter_rt_log.py`, the

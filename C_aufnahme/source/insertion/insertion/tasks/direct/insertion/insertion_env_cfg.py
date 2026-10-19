@@ -316,7 +316,7 @@ PROXY_TASK_VALUES: dict = {
     "cfg.gate_min_alignment": (
         "[proxy] tool-axis alignment floor, calibrated on the square peg. "
         "The real bound is D-106's across-tilt limit, which D-121 reopened "
-        "and the concept stream has not recomputed."
+        "and has not been recomputed."
     ),
     "tasks.SIDE_CLEARANCE": (
         "[proxy] half-clearance per axis of the square pair. The real task "

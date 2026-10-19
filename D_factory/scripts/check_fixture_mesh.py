@@ -41,13 +41,11 @@ ADDRESS and a DISTANCE to the two volumes the part actually sweeps.
 WHAT IT DECIDES: NOTHING
 ------------------------
 No task number is written by this file. It reports a location and a clearance;
-whether that clearance is enough is a decision, and decisions live in
-``DECISIONS.md``.
+whether that clearance is sufficient requires a separate task-level assessment.
 
 THE THREE NUMBERS IT USES, AND WHERE EACH LIVES
 ------------------------------------------------
-* **903 / 757** -- the fixture OBJ's vertex and face counts, MEASURED by RT-86
-  (``rt_logs/VERDICTS.md``). A different pair is the wrong OBJ, not a finding.
+* **903 / 757** -- the fixture OBJ's vertex and face counts, MEASURED by RT-86. A different pair is the wrong OBJ, not a finding.
 * **1.0e-4 m** -- the frame guard's tolerance. Home:
   ``export_asset_mesh.py --tol`` (default 0.1 mm), the tolerance the SAME export
   path already uses for "did the export preserve the geometry", which is exactly

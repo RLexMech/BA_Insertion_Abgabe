@@ -830,8 +830,8 @@ parser.add_argument(
         "the SDF distance, the kernel term alone, both bonus predicates and "
         "the reward the env actually pays. It answers ONE question -- how far "
         "from the seat does the D-109 shaping signal still have a magnitude a "
-        "policy could follow? Nothing here judges the task; the verdict is "
-        "made by /rt-check against an expectation written BEFORE the run."
+        "policy could follow? Compare the results with expectations defined "
+        "before the run."
     ),
 )
 probe = parser.add_argument_group("probe (measurement settings, not task decisions)")

@@ -250,7 +250,7 @@ class InsertionEnv(DirectRLEnv):
                     "start_tip_above_entrance) and let the boundaries open, or use "
                     "dr_mode='off'. fixture_pos_noise_xy, the joint noise and the tilt "
                     "azimuth are NOT in this set -- no boundary tracks them and they stay "
-                    "live (plan section 1)."
+                    "live."
                 )
         self._eval_table = None
         if str(cfg.dr_mode) == "table":
@@ -2397,11 +2397,11 @@ class InsertionEnv(DirectRLEnv):
                   f"jacobian row block {self._osc_jacobi_idx}), tip offset {self._tip_offset_local.tolist()} m")
             print(f"  rates:        policy {_rate:.1f} Hz (decimation {cfg.decimation} [placeholder, Factory]), "
                   f"controller {1.0 / cfg.sim.dt:.1f} Hz; episode {self.max_episode_length} steps = "
-                  f"{cfg.episode_length_s:.4f} s (step count kept, seconds follow -- re-derivation owed)")
+                  f"{cfg.episode_length_s:.4f} s (step count fixed; duration follows, not independently validated)")
         else:
             print(f"control_mode:   joint_pd -- D-108 joint-target integrator on the USD drives "
                   f"(action_scale {cfg.action_scale} rad/step), policy {_rate:.1f} Hz; the PD half of the "
-                  f"Audit 2026-09-03 (a) measurement, not a training option")
+                  f"controller comparison measurement, not a training option")
         try:
             _view = self.robot.root_physx_view
             _stiff = _view.get_dof_stiffnesses()[0].tolist()
@@ -2520,10 +2520,9 @@ class InsertionEnv(DirectRLEnv):
                       f"({self._fixture_pose_reach}) and the tilt reach is "
                       f"{self._tilt_reach}. fixture_pos_noise_xy "
                       f"({float(cfg.fixture_pos_noise_xy):.4f} m), the joint noise, the "
-                      f"tilt azimuth and the lateral angle lat_phi stay LIVE by design (plan "
-                      f"section 1, D-178 (2)) and no boundary tracks them.")
-            print("  NOT VERIFIED IN A SIMULATOR: this build has never run. Read the "
-                  "[autodr] lines and dr/ curves of THIS run before believing it.")
+                      f"tilt azimuth and the lateral angle lat_phi stay LIVE by design (D-178 (2)) and no boundary tracks them.")
+            print("  Verify AutoDR behavior using the [autodr] lines and dr/ curves "
+                  "of this run.")
         print(f"fixture pose noise (D-034): xy +-{cfg.fixture_pos_noise_xy:.3f} m, "
               f"yaw +-{cfg.fixture_yaw_noise_rad:.4f} rad "
               f"({'ACTIVE -- kinematic fixture teleported per reset' if (cfg.fixture_pos_noise_xy > 0.0 or cfg.fixture_yaw_noise_rad > 0.0) else 'inactive -- fixture stays at the spawn pose'})")

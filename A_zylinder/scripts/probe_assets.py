@@ -83,7 +83,7 @@ def report_shipped_cfgs() -> list[str]:
     print()
     print(f"  -> UR10e_CFG shipped: {'YES' if has_ur10e else 'NO'}")
     if not has_ur10e:
-        print("  -> Outcome B or C: define our own ArticulationCfg (plan section 2.1).")
+        print("  -> Outcome B or C: define our own ArticulationCfg.")
     return found
 
 

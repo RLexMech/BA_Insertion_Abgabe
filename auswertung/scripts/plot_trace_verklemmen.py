@@ -18,7 +18,7 @@ the traces are git-ignored and the figure must redraw from a tracked file:
 Reference lines: the success depth and the pocket entrance (depth 0), both from
 the run's own manifest (`results/eval_rlgames/T-ood/autodr_s2/eval_manifest.json`
 `env_cfg.fixed_asset.success_depth`; the depth is measured from the entrance).
-One trace per seed: an exemplary case, no rate. Built 2026-10-09.
+One trace per seed: an exemplary case, no rate.
 """
 import argparse
 import csv
@@ -78,7 +78,7 @@ def draw() -> list:
     cfg = json.loads(MANIFEST.read_text(encoding="utf-8"))["env_cfg"]
     seat_mm = 1000.0 * float(cfg["fixed_asset"]["success_depth"])
     cap_s = float(cfg["episode_length_s"])
-    # Not dashed: dashed means "Ablation" (Grafik_Regelwerk D4). Two lines of one method:
+    # Not dashed: dashed means "Ablation". Two lines of one method:
     # the one under study in the method colour, the reference in grey (D7), 2026-10-11.
     style = {"2": dict(ls="-", color=EF.METHOD_COLOR["autodr"], label="Auto-DR Seed 2 (Zeitlimit)"),
              "4": dict(ls="-", color=EF.INK_MUTED, label="Auto-DR Seed 4 (Erfolg)")}

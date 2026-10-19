@@ -13,7 +13,7 @@ Two steps, because no one Python here has both libraries:
       docs/tabellen/Tab_A_ausserhalb_newcombe.docx
 
 The learned policies come from eval_figures.data_learned's rule (LEARNED_MIN on
-the own main test), read from eval_figures, not restated. Built 2026-10-09.
+the own main test), read from eval_figures, not restated.
 """
 import argparse
 import csv

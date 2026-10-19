@@ -115,7 +115,7 @@ def draw(plt, d: dict, factor: int):
         ("success", "Erfolgsrate im Training", "in %", True),
         ("return", "Return je Episode", "Reward-Summe", False),
         ("length", "Episodenlänge", "Schritte", False),
-        # T2's word (Grafik_Regelwerk G, 2026-10-11); "of the 75 steps" goes to the caption.
+        # T2's word; "of the 75 steps" goes to the caption.
         ("bounds", EF.YLABEL_OPENING.removesuffix(" in %"), "in %", True),
     )
     for ax, (key, title, unit, rate) in zip(axes.flat, panels):

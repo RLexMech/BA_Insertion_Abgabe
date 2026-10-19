@@ -15,7 +15,7 @@ Two steps, because no one Python here has both libraries (as table_ood_newcombe.
 
 "Reaches 95 %" is read as "stays at or above 95 % from this epoch to the last":
 every seed starts above 95 % in epochs 1-2 (the start phase), so a first crossing
-says nothing. Built 2026-10-09.
+says nothing.
 
 Third table (thesis 5.2.1, 2026-10-09): per Auto-DR seed the "stays >= 95 %" epoch
 from above, the epoch from which the AutoDR friction boundary ``dr/friction_hi``

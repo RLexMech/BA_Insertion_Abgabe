@@ -252,7 +252,7 @@ class InsertionEnv(DirectRLEnv):
                     "start_tip_above_entrance) and let the boundaries open, or use "
                     "dr_mode='off'. fixture_pos_noise_xy, the joint noise and the tilt "
                     "azimuth are NOT in this set -- no boundary tracks them and they stay "
-                    "live (plan section 1)."
+                    "live."
                 )
         self._eval_table = None
         if str(cfg.dr_mode) == "table":
@@ -2446,7 +2446,7 @@ class InsertionEnv(DirectRLEnv):
     def _print_controller_report(self) -> None:
         """Report controller settings, measured joint drives, task-space inertia and Jacobian conditioning."""
         cfg = self.cfg
-        print("--- controller (inbox entry 'Audit 2026-09-03 (a)') ---")
+        print("--- controller ---")
         _rate = 1.0 / (cfg.sim.dt * cfg.decimation)
         if self._control_mode == "osc":
             print(f"control_mode:   osc -- 6-D pose delta, Isaac Lab OperationalSpaceController, "
@@ -2488,11 +2488,11 @@ class InsertionEnv(DirectRLEnv):
                   f"jacobian row block {self._osc_jacobi_idx}), tip offset {self._tip_offset_local.tolist()} m")
             print(f"  rates:        policy {_rate:.1f} Hz (decimation {cfg.decimation} [placeholder, Factory]), "
                   f"controller {1.0 / cfg.sim.dt:.1f} Hz; episode {self.max_episode_length} steps = "
-                  f"{cfg.episode_length_s:.4f} s (step count kept, seconds follow -- re-derivation owed)")
+                  f"{cfg.episode_length_s:.4f} s (step count fixed; duration follows, not independently validated)")
         else:
             print(f"control_mode:   joint_pd -- D-108 joint-target integrator on the USD drives "
                   f"(action_scale {cfg.action_scale} rad/step), policy {_rate:.1f} Hz; the PD half of the "
-                  f"Audit 2026-09-03 (a) measurement, not a training option")
+                  f"controller comparison measurement, not a training option")
         try:
             _view = self.robot.root_physx_view
             _stiff = _view.get_dof_stiffnesses()[0].tolist()
@@ -2613,10 +2613,9 @@ class InsertionEnv(DirectRLEnv):
                       f"{self._tilt_reach}. fixture_pos_noise_xy "
                       f"({float(cfg.fixture_pos_noise_xy):.4f} m) and _z "
                       f"({float(cfg.fixture_pos_noise_z):.4f} m), the joint noise, the "
-                      f"tilt azimuth and the lateral angle lat_phi stay LIVE by design (plan "
-                      f"section 1, D-178 (2)) and no boundary tracks them.")
-            print("  NOT VERIFIED IN A SIMULATOR: this build has never run. Read the "
-                  "[autodr] lines and dr/ curves of THIS run before believing it.")
+                      f"tilt azimuth and the lateral angle lat_phi stay LIVE by design (D-178 (2)) and no boundary tracks them.")
+            print("  Verify AutoDR behavior using the [autodr] lines and dr/ curves "
+                  "of this run.")
         print(f"fixture pose noise (D-034, D-204): xy +-{cfg.fixture_pos_noise_xy:.3f} m, "
               f"z +-{cfg.fixture_pos_noise_z:.3f} m, "
               f"yaw +-{cfg.fixture_yaw_noise_rad:.4f} rad "
@@ -2695,7 +2694,7 @@ class InsertionEnv(DirectRLEnv):
         print(f"obs mode {insertion_math.obs_version(self._obs_mode)}: "
               f"{'torque 28:31 IN the policy observation' if self._obs_mode == 'wrench' else 'torque read and logged, NOT in the policy observation'}; "
               f"torque_obs_noise_std_nm {cfg.torque_obs_noise_std_nm} (0 = off, OPEN per D-188); "
-              f"the wrench EMA skips the reset step and advances once per step (inbox 2026-09-13).")
+              f"the wrench EMA skips the reset step and advances once per step.")
         spawn_cfg = cfg.robot_cfg.spawn
         declared = (
             "activate_contact_sensors" in {f.name for f in dataclasses.fields(spawn_cfg)}

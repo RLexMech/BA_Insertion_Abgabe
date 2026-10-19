@@ -13,7 +13,7 @@ Two steps, because no one Python here has both libraries (as table_h6_training.p
       (system Python, python-docx) turns it into
       docs/tabellen/Tab_H2_autodr_stoergroessen.docx
 
-Built 2026-10-11.
+
 """
 import argparse
 import csv

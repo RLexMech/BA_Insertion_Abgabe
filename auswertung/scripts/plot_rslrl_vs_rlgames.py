@@ -18,8 +18,7 @@ success rate and AutoDR opening (bounds_version / 75). A dotted line per run
 marks the first step with all 75 opening steps done; the footer names both
 values (C9). Both runs are the AutoDR arm, so rl_games keeps the Auto-DR blue
 and rsl_rl takes grey, solid (D1, D4, D7). Return and learning rate are read
-and printed, not drawn (rsl_rl's learning rate sat at its 1e-5 floor, VERDICTS
-RT-238s1). Axis rules: rsl_rl `tools/run_axis.env_steps`; rl_games
+and printed, not drawn (rsl_rl's learning rate sat at its 1e-5 floor, RT-238s1). Axis rules: rsl_rl `tools/run_axis.env_steps`; rl_games
 `run_axis.rl_games_x` with F = 256 x 128 (`--num_envs 256` in the RT-240s1
 command, `horizon_length: 128` in the yaml at `de2c319`), checked against the
 CSV's `info/epochs` rows by `run_axis.check_rl_games_epochs`.
@@ -70,8 +69,8 @@ PAIRS = {
 # Plot-area height per panel in inches.
 AXES_H = 1.86
 # rl_games keeps the Auto-DR blue of H5/H6 (the setup every later run uses);
-# rsl_rl is the same arm in the older setup: grey, solid (Grafik_Regelwerk D7 --
-# the 2026-10-03 ochre read as No-DR's orange, and dashed means ablation, D4).
+# rsl_rl uses grey to distinguish it from No-DR; solid lines distinguish
+# these runs from ablations, which use dashed lines.
 RUNS = {
     "rsl_rl": {"colour": EF.INK_MUTED, "style": "-",
                "tags": {"success": "Episode/success_rate", "bounds": "dr/bounds_version",
@@ -131,7 +130,7 @@ def all_open(s: dict):
 def draw(plt, d: dict, pair: dict):
     from matplotlib.lines import Line2D
     fig, axes = plt.subplots(1, 2, figsize=(EF.FIG_W, 2.9), sharex=True, sharey=True)
-    # Each panel its own y axis word (Grafik_Regelwerk G, T1/T2): one shared
+    # Each panel its own y axis word: one shared
     # "Anteil in %" named neither quantity. Two lines: at 12 pt one line is taller than the panel.
     panels = (("success", EF.YLABEL_TRAINING_RATE.replace(" im Training", "\nim Training"), 100.0),
               ("bounds", EF.YLABEL_OPENING.replace(" Grenzen", "\nGrenzen"), 100.0 / BOUNDS_TOTAL))

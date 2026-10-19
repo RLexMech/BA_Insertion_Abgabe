@@ -44,10 +44,9 @@ parser.add_argument(
     type=float,
     default=None,
     metavar="RATE",
-    help="AutoDR stop rule (Phase 5 plan, section 4): stop once ALL AutoDR boundaries sit "
-    "at their maximum AND the FRESH regular-episode success rate reaches RATE. The bar is "
-    "owned by Laufplan_Phase5.md (stop bar); it is deliberately NOT defaulted or restated "
-    "here -- the run must pass it, so a changed bar can never hide in this file. Checked between "
+    help="AutoDR stop rule: stop once ALL AutoDR boundaries sit "
+    "at their maximum AND the FRESH regular-episode success rate reaches RATE. The run must "
+    "pass RATE explicitly; there is no default. Checked between "
     "blocks of --stop-check-every iterations; --max_iterations stays the backstop. "
     "Requires env.dr_mode=autodr. Cannot be combined with --stop-at-success-rate: the two "
     "read different windows and reporting one as the other would misstate the stop. "
@@ -165,7 +164,7 @@ SIDECAR_FORMAT = "autodr-sidecar-1"
 
 
 def _autodr_sidecar_path(model_path: str) -> str:
-    """``.../model_1500.pt`` -> ``.../autodr_1500.json`` (plan section 5)."""
+    """``.../model_1500.pt`` -> ``.../autodr_1500.json``."""
     head, name = os.path.split(model_path)
     stem = os.path.splitext(name)[0]
     if stem.startswith("model_"):
@@ -366,8 +365,8 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
             raise SystemExit(
                 f"algorithm Distillation together with dr_mode={env_cfg.dr_mode!r}: the "
                 "checkpoint being loaded is a TEACHER, not this run's own earlier self, "
-                "so its AutoDR state is not this run's state. Plan section 5 calls this "
-                "a warm start and gives it its own condition. Run distillation with "
+                "so its AutoDR state is not this run's state. This is "
+                "a warm start, a separate experimental condition. Run distillation with "
                 "dr_mode='off'."
             )
         if _dr is not None:
@@ -375,7 +374,7 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
             if not os.path.isfile(_side):
                 raise SystemExit(
                     f"--resume under dr_mode={env_cfg.dr_mode!r}, but the AutoDR state "
-                    f"beside the checkpoint is missing: {_side} . Plan section 5: a "
+                    f"beside the checkpoint is missing: {_side}. A "
                     "resume is the same run -- same seed, same fixture, same AutoDR "
                     "state. Starting the boundaries at width 0 under a trained policy "
                     "is a WARM START and is its own condition, not this one."
@@ -392,7 +391,7 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
                 raise SystemExit(
                     f"--resume from a run with seed {_doc.get('seed')!r} while this run "
                     f"has seed {agent_cfg.seed!r} (state file {_side}, written by run "
-                    f"{_doc.get('run')!r}). Plan section 5: a resume is the SAME run -- "
+                    f"{_doc.get('run')!r}). A resume is the SAME run -- "
                     "same seed, same fixture, same AutoDR state. Initialising from "
                     "ANOTHER run's policy is a WARM START and is its own condition "
                     "with its own five seeds."
@@ -424,7 +423,7 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
         return ("fire" if (filled and rate >= target) else "wait"), line
 
     def _criterion_dr_max():
-        """The AutoDR rule (plan section 4)."""
+        """The AutoDR rule."""
         base = env.unwrapped
         dr = getattr(base, "_dr", None)
         fresh = getattr(base, "_fresh_successes", None)
@@ -461,7 +460,7 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
                 "[stop-criterion] NOTE: dr/train_success_regular_fresh is a TRAINING rate "
                 "under PPO exploration noise, over the regular episodes of the current "
                 "bounds_version. It is NOT the test rate -- that one comes from the "
-                "evaluation table (plan section 3) and never from a training log."
+                "evaluation table and never from a training log."
             )
         block = max(1, int(args_cli.stop_check_every))
         trained = 0

@@ -24,8 +24,8 @@ AKKAYA_CONSTANT_SOURCE = (
 BUFFER_M = 240
 P_BOUNDARY = 0.5
 DELTA_STEPS_SOURCE = (
-    "[TESTWERT] Phase-5 plan section 1: Delta = maximum/10 from a fill-rate "
-    "estimate, NOT Akkaya's absolute 0.02; confirm after the smoke run"
+    "[TESTWERT] Delta = maximum/10 from a fill-rate "
+    "estimate, NOT Akkaya's absolute 0.02; requires empirical validation"
 )
 DELTA_STEPS = 10
 
@@ -240,7 +240,7 @@ class BoundEvent:
         return self.action in ("expand", "shrink") and self.after != self.before
 
     def line(self) -> str:
-        """The marked log line. `/rt-check` greps for the `[autodr]` prefix."""
+        """The marked log line uses the `[autodr]` prefix."""
         return (
             f"[autodr] {self.key}: rate {self.rate:.4f} over {self.buffer_m} "
             f"-> {self.action} {self.before:.6g} -> {self.after:.6g}" + self.note
@@ -248,7 +248,7 @@ class BoundEvent:
 
 
 class _Provider:
-    """Shared surface of every bounds provider (the plan's `BoundsProvider`)."""
+    """Shared surface of every bounds provider (`BoundsProvider`)."""
 
     p_boundary: float = 0.0
 
@@ -549,7 +549,7 @@ class AutoDR(_Provider):
         return out
 
     def state_dict(self) -> dict:
-        """Everything a resume needs (plan section 5, risk R13)."""
+        """Everything a resume needs."""
         return {
             "format": "autodr-3",
             "floor": self._floor_block(),
@@ -719,12 +719,12 @@ class FixedWidth(_Provider):
 
     @classmethod
     def at_centre(cls, dims) -> "FixedWidth":
-        """Width 0 -- the No-DR condition (plan section 2)."""
+        """Width 0 -- the No-DR condition."""
         return cls(dims, steps=0)
 
     @classmethod
     def at_max(cls, dims) -> "FixedWidth":
-        """Full width -- what the evaluation table is mapped onto (plan section 3)."""
+        """Full width -- what the evaluation table is mapped onto."""
         steps = {d.n_steps for d in dims}
         if len(steps) != 1:
             raise AutoDRError(
@@ -952,7 +952,7 @@ class RowTable:
 
 
 class GridTable(RowTable):
-    """A raster table (plan section 8): ``cells * reps`` rows for ONE pair."""
+    """A raster table: ``cells * reps`` rows for ONE pair."""
 
     def __init__(self, rows, sha256, pair, cells: int, reps: int, path: str = "") -> None:
         super().__init__(rows, sha256, path)

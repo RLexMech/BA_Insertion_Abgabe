@@ -1,8 +1,7 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-r"""The evaluation figures F1-F12 (docs/eval_figures_plan.md; eval_plan.md section 8b
-step 3). Laptop only, in ``.venv-analysis`` (D-189).
+r"""The evaluation figures F1-F12, generated offline in ``.venv-analysis`` (D-189).
 
 Every figure has a DATA function (pure; returns the arrays it draws; the
 self-test checks those) and a DRAW function (matplotlib). Numbers that
@@ -145,7 +144,7 @@ XLABEL_TRAINING = "Policy-Schritte in Mio."   # F7, F8
 
 
 def _mio_axis(ax):
-    """x ticks in millions with the decimal comma, no "1e6" offset (Grafik_Regelwerk C3).
+    """x ticks in millions with the decimal comma, no "1e6" offset.
     Call after ``_style``, which only replaces a plain ScalarFormatter."""
     from matplotlib.ticker import FuncFormatter
     ax.xaxis.set_major_formatter(FuncFormatter(lambda v, _: _de_digits(f"{v / 1e6:g}")))
@@ -154,19 +153,16 @@ def _mio_axis(ax):
 # The code keeps its column name ``iteration``.
 def xlabel_epoch(factor: int) -> str:
     return f"Epoche (je {_thousands(factor)} Policy-Schritte)"
-# House pair (plot_run_curves.py:52-53, plot_autodr_run.py:47-48). Fixed-DR
-# (D-192) takes the dataviz reference palette's third slot, aqua, at its darker
-# step #199e70 (references/palette.md, dark column): the light step #1baf7a
-# gave 2.82:1 on white. Validator 2026-09-23, light, surface #FFFFFF, all
-# pairs: ALL CHECKS PASS; worst CVD #199e70<->#D97706 protan 9.0, tritan 7.4
-# (6-8 band: legal with the legend / axis labels every figure carries).
-# Colour follows the METHOD.
+# Colour follows the method (D-192). Fixed-DR uses #199e70 because the
+# lighter #1baf7a has only 2.82:1 contrast on white. For the #199e70 / #D97706
+# pair, the checked colour-vision distances were 9.0 (protan) and 7.4 (tritan);
+# labels and distinct markers provide additional identification.
 METHOD_COLOR = {"autodr": "#3B6FD4", "nodr": "#D97706", "fixeddr": "#199e70"}
 METHOD_LABEL = {"autodr": "Auto-DR", "nodr": "No-DR", "fixeddr": "Fixed-DR"}
-# Grafik_Regelwerk O1: a second encoding beside the colour, because
+# a second encoding beside the colour, because
 # No-DR and Fixed-DR have the same lightness in grey (L* 59,9 / 57,9).
 METHOD_MARKER = {"autodr": "o", "nodr": "^", "fixeddr": "s"}
-# Grafik_Regelwerk G: the words of the figures, as the thesis
+# the words of the figures, as the thesis
 # text uses them (Kap. 4.3.2, Tab. 4-1, Tab. 4-13). One home; the other plot scripts import them.
 TEST_MAIN = "Haupttest"
 TEST_NOMINAL = "Test ohne Streuung"
@@ -187,7 +183,7 @@ FORCE_ARM_STYLE = {"autodr": (METHOD_COLOR["autodr"], "-", "Kraft in der Beobach
 # is drawn where its blocks exist (ARM_BLOCK), else the figure keeps two methods.
 METHODS = ("autodr", "nodr")
 ARMS = (*METHODS, "fixeddr")
-# Fixed-DR plays the same tables in its own blocks (eval_plan.md section 3.2).
+# Fixed-DR plays the same tables in its own blocks.
 ARM_BLOCK = {"T-nominal": "T-nominal-F", "T-final": "T-final-F"}
 INK = "#1F2933"
 INK_MUTED = "#6B7280"
@@ -244,7 +240,7 @@ PNG_DPI = 300   # print resolution; PDF and SVG are vector
 # No timestamps in the files: two runs on the same input write the same bytes.
 SAVE_META = {"pdf": {"CreationDate": None}, "svg": {"Date": None}, "png": None}
 # The thesis body is Helvetica (thesis/includes/preamble.tex: helvet + \sfdefault);
-# Arial has Helvetica's metrics and is on the laptop.
+# Arial has Helvetica-compatible metrics and must be installed.
 FONT = "Arial"
 # Legend, axis titles and tick numbers as large as the Word body text, Arial 12
 # holds only while the PNG stands in Word at its own 16 cm width.
@@ -252,7 +248,7 @@ FONT_PT = 12
 
 
 class FigError(RuntimeError):
-    """The input cannot draw what the plan asks."""
+    """The input is insufficient for the requested figure."""
 
 
 # ---------------------------------------------------------------------------
@@ -445,7 +441,7 @@ def _final(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def _mean_std(stack, fig: str):
-    """Mean and sample standard deviation (ddof=1, eval_plan.md section 5) over
+    """Mean and sample standard deviation (ddof=1) over
     axis 0 = the seeds. Since D-218 the figures draw the mean (and the seeds,
     D-219), not the SD; the SD stays for the printed numbers and the tables."""
     a = np.asarray(stack, dtype=float)
@@ -782,7 +778,7 @@ LEARNED_MIN = 0.90
 LEARNED_MEAN_MIN_N = 5
 H20_WORD = {"pn2": "Lagefehler\nder Aufnahme", "gx2": "Greifversatz", "py2": "Gierfehler\nder Aufnahme"}
 # Rate axis (lower end, tick step) of thesis 5-9 (H19) and 5-11 (H20): an
-# exception to Grafik_Regelwerk C4 (bars from 0); every other bar figure keeps (0, 20).
+# exception to the usual zero baseline for bars; every other bar figure keeps (0, 20).
 PAIR_YAXIS = {"H19": (50, 10), "H20": (80, 5)}
 
 
@@ -937,8 +933,7 @@ H8_ARMS = ("autodr", "fixeddr")
 
 
 def best_policies(summary: dict) -> dict:
-    """{arm: seed}: the pre-registered selection rule (eval_plan.md 2 B,
-    eval_stats.select_final: highest T-auswahl rate, then smaller force p95,
+    """{arm: seed}: the pre-registered selection rule (eval_stats.select_final: highest T-auswahl rate, then smaller force p95,
     then smaller seed) applied to ONE arm's runs. A supplementary view (D-213):
     the best of five is another algorithm than the method (Agarwal et al. 2021;
     D-210), so it never replaces the all-seed comparison (H1, H2)."""
@@ -1203,7 +1198,7 @@ def _env_value(path: pathlib.Path, key: str) -> str:
 
 def _log_factor(d: pathlib.Path, run: str) -> tuple:
     """(num_steps_per_env, num_envs) when the run has no ``<run>_agent.yaml``
-    (RT-206/207/231 on the laptop, 2026-10-11): rsl_rl's console prints
+    (RT-206/207/231): rsl_rl's console prints
     ``Total timesteps: (it + 1) x F`` after every iteration; every printed value
     must be a multiple k x F of the first, and F / num_envs (env.yaml) a whole number."""
     log = next((p for p in (d / f"{run}.txt", d / f"{run}.short.txt") if p.is_file()), None)
@@ -1417,7 +1412,7 @@ def extract_penetration(src: pathlib.Path, out: pathlib.Path, arms: dict) -> int
 def copy_rl_games_sidecars(folder: pathlib.Path, out: pathlib.Path, prefix: str, last_epoch: dict) -> list:
     """F8's AutoDR state per seed: ``<prefix><N>_autodr_final.json`` = the
     checkpoint's ``env_state`` plus its file name under ``checkpoint``
-    (D-200, training PC; the laptop has no torch).
+    (D-200).
     All seeds or none; each must name its own run and the epoch its curve ends
     on. Copied as ``autodr_s<N>_autodr_ep<E>.json``, never under rsl_rl's
     ``_1499`` name. Returns the copies; none -> [] (F8 waits)."""
@@ -1726,7 +1721,7 @@ def draw_f6(plt, d):
 
 def _band(ax, x, ci, colour, rate=True):
     """The 95 % bootstrap interval of the seed mean (``_boot_ci``) as a shaded
-    band (D-218; was +-1 SD). A rate is drawn in %;
+    band (D-218). A rate is drawn in %;
     ``rate=False`` (a return, a length) draws the band as it is."""
     lo, hi = (np.asarray(v, dtype=float) for v in ci)
     k = 100.0 if rate else 1.0
@@ -1748,7 +1743,7 @@ def _seed_lines(ax, x, seeds, colour, rate=True, linestyle="-"):
 
 
 def _mean_line(ax, x, y, m, j: int = 0):
-    """The mean curve of arm ``m`` with its marker (Grafik_Regelwerk O1) at every
+    """The mean curve of arm ``m`` with its marker at every
     tenth of its points, arm ``j`` shifted by a third of that step so equal curves keep apart (D6)."""
     step = max(len(x) // 10, 1)
     ax.plot(x, y, color=METHOD_COLOR[m], linewidth=1.44, marker=METHOD_MARKER[m], markersize=4,
@@ -1906,7 +1901,7 @@ def draw_f7(plt, d):
     ax.set_ylim(0, 102)
     _style(ax, YLABEL_TRAINING_RATE, XLABEL_TRAINING)
     _mio_axis(ax)
-    # No title in the figure (Grafik_Regelwerk C6): the caption carries it.
+    # No title in the figure: the caption carries it.
     # Below the figure in two columns (D-219), as F6: inside, lower right was empty only
     # while every curve sat above 40 %; Fixed-DR's band reaches 5 % (RT-231).
     leg = _legend_methods(fig, methods=tuple(d), extra=_training_extra(d, "F7"), ncol=CURVE_LEGEND_NCOL)
@@ -1914,7 +1909,7 @@ def draw_f7(plt, d):
     return fig
 
 
-# F8's two limits (Grafik_Regelwerk D6, D7, as plot_autodr_run.fig_stufen): own
+# F8's two limits (as in plot_autodr_run.fig_stufen): own
 # symbol each, and the lower one in grey -- both are Auto-DR, so a second method
 # colour would claim a method that is not there (D1).
 F8_HI = dict(marker="o", markersize=2.5, markevery=(0.0, 0.1))
@@ -2073,7 +2068,7 @@ def draw_f12(plt, d):
 
 # Main-text figures H1-H4: no new colours (the method hues and the status
 # palette, both validated 2026-09-23); a second condition is a hollow bar.
-# Hollow = the reference test, filled = the test under study (Grafik_Regelwerk G).
+# Hollow = the reference test, filled = the test under study.
 H_CONDITION = (("T-nominal", f"hohl: {TEST_NOMINAL}"), ("T-final", f"voll: {TEST_MAIN}"))
 H_RUN_LABEL = POLICY_DOT_LABEL
 # The mean above each bar: two numbers per group must not run into each other.
@@ -2123,12 +2118,12 @@ def _bars_legend(fig, hollow: str | None = None, filled: str | None = None):
     tests = ([] if hollow is None else
              [Patch(facecolor="white", edgecolor=INK_MUTED, linewidth=1.4, label=hollow),
               Patch(facecolor=INK_MUTED, edgecolor=INK_MUTED, label=filled)])
-    # Without the test entries both columns are wide ones: closer together, else 1901 px (Grafik_Regelwerk E1).
+    # Without the test entries both columns are wide ones: closer together, else 1901 px.
     kw = {} if hollow is not None else {"columnspacing": 1.0}
     leg = _h_legend(fig, tests + [Line2D([], [], color=INK, marker="o", linestyle="none", markersize=4,
                                          label=H_RUN_LABEL),
                                   Line2D([], [], linestyle="none", label="Zahl über dem Balken: Mittelwert"),
-                                  # Two lines: at 12 pt one line runs past the figure width (Grafik_Regelwerk E1).
+                                  # Two lines: at 12 pt one line runs past the figure width.
                                   _bar_handle("Strich: " + CI_LABEL.replace(" des ", "\ndes ", 1), INK)], 2, **kw)
     _legend_room(fig, leg)
 
@@ -2238,7 +2233,7 @@ def draw_h2(plt, d, nodr):
         if col != "start_height_m" and col in nodr:
             # No-DR saw only this value; the start height it trained over its whole range (caption).
             # Named in the legend: Fixed-DR's band (0-95 %) leaves no free spot for a text in the panel.
-            # Dotted, not dashed: dashed means "Ablation" (Grafik_Regelwerk D4).
+            # Dotted, not dashed: dashed means "Ablation".
             ax.axvline(nodr[col], color=INK_MUTED, linewidth=1.0, linestyle=":")
         for m in methods:
             c = p["methods"][m]
@@ -2328,7 +2323,7 @@ def _thousands(n: int) -> str:
 
 def _draw_training(plt, d, factor: int, ylabel: str, rate: bool):
     """H5/H6: per arm the mean over the seeds as a line, the 95 % percentile
-    bootstrap interval of that mean as a band (D-218; was +-1 SD), over the
+    bootstrap interval of that mean as a band (D-218), over the
     training iteration (D-212). The seeds first as thin lines (D-219), then
     all bands, then all means (as F7)."""
     from matplotlib.lines import Line2D
@@ -2406,7 +2401,7 @@ def draw_h8(plt, d):
     """Peak force of the successful trials per bin, one panel per disturbance:
     median as a line, the quartiles (the middle half of the trials) as an
     error bar at each bin, each policy set slightly apart, the force limit as
-    a dashed line (bars, as H2)."""
+    a dashed line."""
     from matplotlib.lines import Line2D
     panels = [pn for pn in F3_PANELS if pn[0] in d["panels"]]
     fig, axes, spare, first_col = _panel_grid(plt, len(panels))
@@ -2617,7 +2612,7 @@ def draw_all(results: pathlib.Path, training: pathlib.Path, out: pathlib.Path, o
                          "svg.hashsalt": "eval_figures",   # fixed element ids: SVG bytes repeat
                          "font.family": "sans-serif", "font.sans-serif": [FONT]})
     summary = json.loads((results / "summary.json").read_text(encoding="utf-8"))
-    # Git-ignored; results/eval (Experiment C) has none on the laptop. Only F6, F9, F10, H8 read it.
+    # Optional episode-level data used by F6, F9, F10 and H8.
     episodes = results / "episodes_all.csv"
     df = (pd.read_csv(episodes, keep_default_na=False, dtype={"tag": str, "boundary_key": str})
           if episodes.is_file() else None)
