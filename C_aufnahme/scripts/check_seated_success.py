@@ -1,7 +1,10 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-"""The TELEPORT SUCCESS IDENTITY TEST (strict order, step 2; M2.4b NEXT C)."""
+"""Check the insertion success criterion at controlled poses.
+
+Includes offline checks (--self-test) and Isaac Sim pose measurements.
+The latter use the task geometry, force and interpenetration limits."""
 
 from __future__ import annotations
 

@@ -1,72 +1,10 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-r"""RT-91 (b): WHERE do the fixture mesh's open edges sit? No GPU, no Isaac.
+"""Check fixture mesh identity, coordinate frame and open-edge locations.
 
-THE QUESTION, AND WHY THE COUNT IS NOT IT
-------------------------------------------
-``wp.mesh_query_point`` carries the note ``Mesh must be watertight!`` and says
-nothing about what happens when it is not. SAPU (D-109 point (10)) queries the
-part's sample points against the FIXTURE mesh, and that surface is provably
-open. So the sign of the interpenetration distance is in question -- but only
-WHERE the surface is open. If the open edges sit on the outer rim, no sample
-point of a seated part ever comes near them and the worry is empirically dead;
-if they sit in the pocket wall, SAPU reads its sign exactly there.
-
-**The count is not the criterion. The LOCATION is.** RT-90 makes that concrete
-in both directions: the PART mesh carries 380 unpaired edges and its sign still
-measured correct -- but it was measured AT LEAST TWO FULL EXTENTS OUTSIDE the
-mesh, and SAPU reads the sign AT THE SURFACE. Neither run transfers to the
-other.
-
-WHAT IS ALREADY MEASURED, AND WHAT IS NOT
-------------------------------------------
-The USD measurement in RT-61 found nine open edges after a position weld, all at ``y = 90.450 mm`` and
-``z = +15.000 mm``, spanning x from ``-84.794`` to ``+65.206`` -- the outer top
-rim where the tab meets the body at +Y, 17.90 mm outside ``POCKET_WALL_Y`` and
-above the opening plane.
-
-That is not this run's answer, for one reason: **Warp never sees the USD, and
-Warp does not weld.** ``SdfDistanceQuery`` builds ``wp.Mesh`` from
-``trimesh.load(obj, process=False)``, so the topology Warp receives is the
-OBJ's AS AUTHORED. Nobody has counted that. RT-86's parity argument does not
-settle it either: 757 triangles carry 2271 half-edges, and ``2271 = 2*1131 + 9``
-and ``2271 = 2*684 + 903`` are both true, so an odd count rules nothing in.
-
-This script therefore measures the OBJ twice -- as authored, which is what Warp
-gets, and welded, which is what RT-61 measured -- and gives every survivor an
-ADDRESS and a DISTANCE to the two volumes the part actually sweeps.
-
-WHAT IT DECIDES: NOTHING
-------------------------
-This script reports edge locations and clearances without changing task
-parameters. These measurements alone do not establish sufficient clearance.
-
-THE THREE NUMBERS IT USES, AND WHERE EACH LIVES
-------------------------------------------------
-* **903 / 757** -- the fixture OBJ's vertex and face counts, MEASURED by RT-86
-  (``rt_logs/VERDICTS.md``). A different pair is the wrong OBJ, not a finding.
-* **1.0e-4 m** -- the frame guard's tolerance. Home:
-  ``export_asset_mesh.py --tol`` (default 0.1 mm), the tolerance the SAME export
-  path already uses for "did the export preserve the geometry", which is exactly
-  the claim the frame guard makes. Not picked here.
-* **the weld tolerance series** -- not a number at all: fractions of the mesh's
-  own bounding-box diagonal, derived by ``tools/mesh_spacing.py`` from the
-  measured closest distinct pair. That indirection is what RT-61's unit defect
-  earned, where absolute metre tolerances silently reached 0.1 um on a
-  millimetre mesh.
-
-NO AppLauncher, ON PURPOSE
---------------------------
-Nothing here opens a USD stage. The OBJ is read with the repo's own stdlib
-parser and the pocket constants come out of ``insertion_tasks_cfg.py`` with
-``isaaclab`` stubbed -- the route ``check_workcell_geometry.py`` established.
-The project's AppLauncher-first rule applies to scripts that import Isaac, and
-this one does not. It costs seconds and needs no GPU.
-
-    python scripts/check_fixture_mesh.py --self-test
-    .\scripts\rt_log.ps1 RT-91 python scripts\check_fixture_mesh.py
-"""
+Reports whether open edges intersect the part sweep. Does not repair the OBJ.
+Use --self-test for the offline geometry checks."""
 
 from __future__ import annotations
 

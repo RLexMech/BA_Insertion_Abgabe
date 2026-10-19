@@ -1,29 +1,11 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-r"""Every number of the evaluation, from ``episodes_all.csv`` (eval_plan.md section 5,
-section 8b step 2). Laptop only, in ``.venv-analysis`` (D-189).
+"""Compute evaluation statistics from episodes_all.csv.
 
-Headline key is ``success_train``. Library functions, no own interval code:
-
-  Wilson          statsmodels proportion_confint(method="wilson")
-  Newcombe (K3)   statsmodels confint_proportions_2indep(method="newcomb", compare="diff")
-  K1/K2 headline  scipy ttest_ind(equal_var=False).confidence_interval  (Welch)
-  K1/K2 beside    scipy bootstrap(paired=False, method="percentile")    (fixed seed)
-  K5              the same two, AutoDR (T-final / T-nominal) - Fixed-DR (T-final-F /
-                  T-nominal-F); a reading (above_0 / below_0 / contains_0), no "met"
-
-The unit of the method comparison is the SEED: each policy is one rate
-(literature check 2026-09-21). Percentiles of force and steps use the env's
-nearest-rank rule (`insertion_env._pct`), so a thesis number and a training-log
-number mean the same.
-
-Writes ``summary.json`` (sorted keys; two runs on the same input are byte-equal)
-and ``summary_tables.csv`` (one row per policy and block).
-
-    .venv-analysis/Scripts/python.exe scripts/eval_stats.py --results results/eval
-    .venv-analysis/Scripts/python.exe scripts/eval_stats.py --self-test
-"""
+Uses NumPy, pandas, SciPy and statsmodels for intervals and method comparisons.
+Outputs summary.json and summary_tables.csv. Missing test blocks are reported.
+Usage: python scripts/eval_stats.py --results results/eval"""
 
 from __future__ import annotations
 

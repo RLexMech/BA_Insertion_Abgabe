@@ -1,42 +1,11 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-r"""The evaluation figures F1-F10 (docs/eval_figures_plan.md; eval_plan.md section 8b
-step 3). Laptop only, in ``.venv-analysis`` (D-189).
+"""Generate evaluation figures from collected results and training curves.
 
-Every figure has a DATA function (pure; returns the arrays it draws; the
-self-test checks those) and a DRAW function (matplotlib). Numbers that
-``summary.json`` holds are read from there, never recomputed; only what it
-does not hold (F6 curves, F9 cells, F10 curve) comes from ``episodes_all.csv``.
-Wilson intervals and the bin rule are imported from ``eval_stats.py`` (one home).
-
-  F1  success rate per seed (dot plot, Weissgerber 2015), T-nominal | T-final
-  F2  AutoDR - No-DR: Welch thick, bootstrap thin, per block, zero line
-  F3  success over each disturbance (4 panels; friction has no bin edges),
-      seeds thin, mean thick, No-DR's training value marked
-  F4  final policy: 7 boundary blocks, overall T-final rate as line + Wilson band
-  F5  outcome per policy on T-final, stacked, status colours
-  F6  (a) peak force ECDF over successes with the abort limit
-      (b) share of ALL episodes successful by step k
-  F7  training success over PPO iteration (seeds thin, mean thick)
-  F8  AutoDR boundaries over training, 0 = centre, 1 = maximum
-  F9  heat map lateral offset x tilt, T-final, seeds pooled, rate + row count
-  F10 success counted only below an interpenetration threshold (IndustReal Fig. 3)
-F7-F10 were added AFTER the results were known: descriptive, no criterion.
-Fixed-DR (added after the initial two-method analysis): F1, F2 (two K5
-rows), F3, F5, F6, F7, F9, F10 draw it as a third arm when T-nominal-F AND
-T-final-F exist (F7: when RT-231s1..s5 were extracted); otherwise every
-figure is the two-method one. F4 (final policy) and F8 (AutoDR growth) have
-no Fixed-DR content.
-
-Training curves: ``--extract-training rt_logs`` reduces the ten git-ignored
-``*_scalars.csv`` to ``results/training/curves.csv`` (plus the AutoDR sidecars
-and No-DR's training values), which the figures then read.
-
-    .venv-analysis/Scripts/python.exe scripts/eval_figures.py --extract-training rt_logs
-    .venv-analysis/Scripts/python.exe scripts/eval_figures.py --results results/eval
-    .venv-analysis/Scripts/python.exe scripts/eval_figures.py --self-test
-"""
+Requires matplotlib and the dependencies of eval_stats.py. --only selects figure IDs.
+Training curves can be extracted with --extract-training RT_LOGS.
+Use --help for result, training and output paths."""
 
 from __future__ import annotations
 

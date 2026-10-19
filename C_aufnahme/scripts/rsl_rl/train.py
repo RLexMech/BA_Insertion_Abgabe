@@ -286,9 +286,7 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     if not getattr(env_cfg, "rl_terms_enabled", True):
         raise SystemExit(
             "rl_terms_enabled is False: this env computes no real reward, no force "
-            "abort and no curriculum. That is the measurement configuration -- use "
-            "scripts/zero_agent.py or scripts/random_agent.py for it. Training with "
-            "it is always a mistake."
+            "abort and no curriculum. Enable rl_terms_enabled for training."
         )
 
     if args_cli.stop_when_dr_max is not None and args_cli.stop_at_success_rate is not None:

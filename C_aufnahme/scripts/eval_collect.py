@@ -1,35 +1,13 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-r"""Collect every evaluation run into ONE long table (eval_plan.md section 8b, step 1).
+"""Validate evaluation runs and collect their first episodes.
 
-Input layout (copied from the training PC, one folder per play.py run):
-
-    results/eval/<block>/<method>_s<seed>[_<tag>]/
-        episodes.csv  episodes_meta.json  applied.csv  applied_meta.json  eval_manifest.json
-
-``<block>`` is one of ``BLOCKS``; ``<method>`` is ``autodr``, ``nodr`` or
-``fixeddr``. The folder name is a CLAIM and is held against the manifest's
-checkpoint path, whose run folder train.py names ``..._autodr_..._seed<N>`` or
-``..._fixed_dr_..._seed<N>`` (``dr_mode`` tag; 'off' has none,
-train.py:334-335; seed tag train.py:444). Fixed-DR (D-192) plays only in
-``T-nominal-F`` / ``T-final-F``, and those blocks hold nothing else.
-
-Refuses with exit 1 -- equality, never "not empty" -- when:
-  * a run fails G1a / G2 / G3 of ``check_eval_conditions.judge`` (reused, not copied);
-  * a manifest names another table or width than its block, or a dirty clone;
-  * the runs disagree on ``code_commit`` or ``plan_commit``, or a plan commit is missing;
-  * the folder name and the checkpoint path disagree on method or seed;
-  * a Fixed-DR folder sits outside the ``-F`` blocks, or another one inside;
-  * two folders of one block are the same policy without a tag.
-
-Output: ``<results>/episodes_all.csv`` (only ``episode == 0`` rows -- the
-window is episodes.csv's own column, no second window rule, L-15) and
-``<results>/collect_report.json`` (per run, plus G4 and G6 as reported shares).
-
-    .venv-analysis/Scripts/python.exe scripts/eval_collect.py --results results/eval
-    .venv-analysis/Scripts/python.exe scripts/eval_collect.py --self-test
-"""
+Input: RESULTS/<block>/<method>_s<seed>/ with episodes, applied conditions
+and evaluation manifest. Checks table identity, conditions, checkpoint identity
+and a consistent clean code revision. Repeated episodes are excluded.
+Outputs episodes_all.csv and collect_report.json; prints success rates.
+Usage: python scripts/eval_collect.py --results results/eval"""
 
 from __future__ import annotations
 
@@ -425,6 +403,19 @@ def main() -> int:
         print(f"[eval_collect]   PROBLEM {p}")
     print(f"[eval_collect] {len(rows)} rows -> {results / 'episodes_all.csv'}; "
           f"VERDICT {'OK' if not problems else 'REFUSED'}")
+    if not problems:
+        groups = {}
+        for row in rows:
+            key = (row["block"], row["method"])
+            group = groups.setdefault(key, {"seeds": set(), "cases": 0, "successes": 0})
+            group["seeds"].add(row["seed"])
+            group["cases"] += 1
+            group["successes"] += int(row["success_train"])
+        print("\nBlock / method | models | successes / cases | success rate")
+        for (block, method), group in sorted(groups.items()):
+            n, success = group["cases"], group["successes"]
+            print(f"{block} / {method} | {len(group['seeds'])} | "
+                  f"{success} / {n} | {100.0 * success / n:.2f}%")
     return 0 if not problems else 1
 
 

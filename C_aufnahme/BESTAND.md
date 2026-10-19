@@ -41,3 +41,18 @@ eine neue GPU-/GUI-Wiedergabe und neue Evaluationen sind hier nicht erfolgt.
 Auf dem Trainings-PC gemeldet: Isaac Sim 5.1.0.0, Isaac Lab 2.3.2.post1,
 RSL-RL 3.0.1, PyTorch 2.7.0+cu118, NumPy 2.4.6. Dies ist eine Bestandsaufnahme,
 keine neu erzeugte vollständige Environment-Sperrdatei.
+
+
+## Abschlussprüfung und Umfang, 19.10.2026
+
+Die GUI-Wiedergabe und der vollständige Haupttest wurden auf dem Trainings-PC
+bestätigt. T-final und T-final-F umfassen 15 Originalmodelle mit jeweils 1000
+abgeschlossenen Erstepisoden. Collector: VERDICT OK. Alle protokollierten
+Erstepisodenwerte stimmen mit dem Archiv überein, abgesehen vom neuen Laufnamen.
+Haupttest: Auto-DR 97,02 %, No-DR 26,24 %, Fixed-DR 57,38 %.
+
+C enthält den Endstand mit Training, Wiedergabe, Evaluation und zugehörigen
+Prüfungen. Frühere Asset-Erstellung, Reparatur, Diagnose und Entwicklungsproben
+wurden entfernt; ihre Wiederholung gehört nicht zum Abgabeumfang. Der Hauptcode,
+Modelle, Assets und Testtabellen bleiben unverändert. Frühere Nachweise verbleiben
+im Auswertungsarchiv und die entfernten Hilfen in der Git-Historie.

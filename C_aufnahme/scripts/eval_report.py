@@ -1,26 +1,12 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-r"""ONE command for the whole evaluation report (eval_plan.md section 8b):
-collect -> stats -> figures, plus ``report_manifest.json``. Laptop only, in
-``.venv-analysis`` (D-189).
+"""Build the complete evaluation report: collect, statistics and figures.
 
-The collector compares ``code_commit`` over EVERY run it finds, and
-``results/eval/technik/`` can contain runs from different code versions.
-The chain therefore runs on a
-temporary COPY of exactly the four evaluation blocks, plus the two Fixed-DR
-blocks ``T-nominal-F`` / ``T-final-F`` (D-192) when BOTH exist -- one without
-the other is refused; nothing in ``technik/`` is read, moved or changed. Its outputs are copied back into ``--results``:
-``episodes_all.csv``, ``collect_report.json``, ``summary.json``,
-``summary_tables.csv``. The figures are drawn from there.
-
-``report_manifest.json`` names every input by SHA-256 (all files of the staged
-blocks, the training folder), every output, the library versions and the git
-commit, so a figure in the thesis can be traced to the bytes it came from.
-
-    .venv-analysis/Scripts/python.exe scripts/eval_report.py
-    .venv-analysis/Scripts/python.exe scripts/eval_report.py --self-test
-"""
+Requires T-nominal, T-auswahl, T-final and T-grenze; Fixed-DR blocks must
+include both T-nominal-F and T-final-F when present. Unrelated runs are excluded.
+Writes CSV/JSON summaries, figures and a manifest of input/output hashes.
+For a main-test-only check, use eval_collect.py instead."""
 
 from __future__ import annotations
 

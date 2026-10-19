@@ -1,4 +1,4 @@
-"""Retrieval layer over a rt_logs/*.txt training-PC console dump."""
+"""Classify console log lines for compact logs while preserving errors and metrics."""
 
 from __future__ import annotations
 

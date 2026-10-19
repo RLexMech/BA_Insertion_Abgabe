@@ -1,49 +1,10 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-r"""Dump every TensorBoard scalar of ONE run folder to a small wide CSV.
+"""Export TensorBoard scalars from one training run as a wide CSV.
 
-WHY
----
-The reward / success / depth curves over iterations exist only in the
-``events.out.tfevents*`` files of ``logs/rsl_rl/ur5e_insertion/<run>/`` on
-the training PC. ``logs/`` never leaves that machine (gitignored, large).
-This script turns the scalars of one run into a CSV of a few hundred KB that
-travels by hand like ``demo_metrics.json`` and is committed under
-``docs/figures/RT-<N>_scalars.csv`` (the ``*.csv`` ignore rule has an
-exception for exactly that name). ``scripts/plot_run_curves.py`` draws the
-run figures from it on the laptop.
-
-NO TAG NAME IS ASSUMED. rsl_rl versions differ in how they name their tags
-(``Loss/value`` vs ``Loss/value_function``, ``Policy/mean_std`` vs
-``Policy/mean_noise_std``) and the runner source is not on the laptop. So
-every scalar tag of the run is exported and printed; the plotter resolves
-its curves from candidate lists and shows this list on a miss.
-
-FORMAT (wide, one row per logged step)
---------------------------------------
-    step,wall_time,<tag_1>,<tag_2>,...
-
-rsl_rl writes every scalar once per iteration, so the rows are dense; a
-tag missing at a step leaves its cell empty. ``wall_time`` is the seconds
-since the epoch of the first tag seen at that step. Wide was chosen over
-long (``tag,step,value``) because it is about seven times smaller for the
-same run and reads as a table.
-
-RUN ON THE TRAINING PC (conda env active, repo root):
-
-    python scripts\export_tb_scalars.py --run-dir <absolute run folder> --out docs\figures\RT-156_scalars.csv
-    python scripts\export_tb_scalars.py --load-run 09-05_19-45-03 --out docs\figures\RT-156_scalars.csv
-
-``--load-run`` matches the START of a folder name under ``--log-root``
-(default ``logs/rsl_rl/ur5e_insertion``) and refuses anything but exactly
-one match; ``play.py --load_run`` likewise interprets the name as a regex.
-``--tags SUBSTR ...`` keeps only tags containing one of the substrings.
-
-``--self-test`` runs WITHOUT tensorboard (the import is lazy): it writes a
-synthetic wide table, reads it back, checks the tag filter and the folder
-resolver in a temp dir, and never touches ``docs/``.
-"""
+Preserves available tags and iteration indices. Called by train.py after
+training; also usable separately with --help."""
 
 from __future__ import annotations
 

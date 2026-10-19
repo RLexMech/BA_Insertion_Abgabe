@@ -5,7 +5,7 @@ $ErrorActionPreference = 'Continue'
 
 if (-not $Name -or $Command.Count -eq 0) {
     Write-Host "usage: .\scripts\rt_log.ps1 <NAME> <command...>"
-    Write-Host "  e.g. .\scripts\rt_log.ps1 RT-5 python scripts/zero_agent.py --num_envs 4 --headless"
+    Write-Host "  e.g. .\scripts\rt_log.ps1 RT-902 python scripts/rsl_rl/play.py --help"
     Write-Host "  self-test: .\scripts\rt_log.ps1 PROBE cmd /c echo hallo"
     exit 2
 }

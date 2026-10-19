@@ -1,42 +1,10 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-r"""Generate a fixed evaluation table without overwriting an existing file.
+"""Generate a fixed evaluation table without overwriting an existing file.
 
-The committed table defines the test cases: every policy plays row ``i`` in env
-``i``. Whether numpy ``default_rng`` returns the same values on two numpy
-versions is UNKNOWN, so the training PC never redraws -- it reads the
-committed file, and ``RowTable.from_csv`` hashes its RAW BYTES
-(``autodr.py``, ``from_csv``). Hence: LF line endings written as bytes, a
-``-text`` line in ``.gitattributes``, and ``repr(float)`` cells so the text
-round-trips to the same float64.
-
-TWO KINDS
----------
-``rows``      N rows x 16 columns, uniform in [0, 1): ``default_rng(seed)``.
-``boundary``  one block per AutoDR boundary (seven for ``autodr.DR_DIMS``),
-              ``--rows-per-block`` rows each. Block ``b`` has the column of
-              boundary ``b`` nailed with ``autodr.apply_boundary`` (0.0 = lower
-              edge, 1.0 = upper edge); every other column stays drawn. Block of
-              a row = ``row_id // rows_per_block``; the key order is
-              ``autodr.boundary_keys(DR_DIMS)`` and the sidecar names it.
-              The draw uses ``default_rng([seed, BOUNDARY_STREAM])``, NOT
-              ``default_rng(seed)``: the latter's first rows ARE the ``rows``
-              table of the same seed, and `eval_plan.md` K3 compares a block
-              against that table as two INDEPENDENT rates.
-
-The layout (columns, boundaries, sides) is READ from ``autodr.py`` through
-``check_autodr.load_autodr`` -- nothing of it is typed here.
-
-NEVER OVERWRITES. An existing file with the same bytes reports ``identical``
-(that is also the way to ask "does this numpy still reproduce the table?");
-an existing file with other bytes is refused with a non-zero exit. To redraw
-a table, delete it by hand -- and know that its hash is the test's identity.
-
-    python scripts/make_eval_table.py --kind rows --seed 10
-    python scripts/make_eval_table.py --kind boundary --seed 10
-    python scripts/make_eval_table.py --self-test
-"""
+For reproducing the thesis, use the committed tables: their exact bytes
+define the test cases, independently of random-generator library versions."""
 
 from __future__ import annotations
 

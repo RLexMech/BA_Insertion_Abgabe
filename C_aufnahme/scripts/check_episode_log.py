@@ -1,35 +1,10 @@
 # Copyright (c) 2026.
 # SPDX-License-Identifier: BSD-3-Clause
 
-r"""Check a run folder's episode record (``episodes.csv``) -- stdlib only.
+"""Validate episodes.csv and episodes_meta.json for one run.
 
-WHAT IT READS
--------------
-``insertion_env._append_episode_rows`` writes one row per finished episode to
-``<run folder>/episodes.csv`` and, once, ``episodes_meta.json`` beside it. This
-script reads a run folder and answers "is the record complete and
-self-consistent", so no run of the seed study has to be repeated for a column
-that was empty or wrong.
-
-THE CHECKS (names printed verbatim)
------------------------------------
-C1-C11 are claims about the file alone. C12-C16 tie the file to
-``demo_metrics.json`` of the SAME run: that file's trailing window holds the
-last ``interpen_max_mm.episodes`` harvested episodes ending at episode count
-``episodes``, and the env extends its deques and writes the CSV rows in the
-same call and the same order, so the window is exactly
-``rows[episodes - W : episodes]``. The two numbers must agree to the
-precision the CSV writes (6 decimals in mm, 4 in N).
-
-WHAT IT DOES NOT SHOW
----------------------
-That the interpenetration VALUES are physically right. That is the pose
-ladder, ``check_insertion_sdf.py --pose-ladder``.
-
-    python scripts/check_episode_log.py --self-test
-    python scripts/check_episode_log.py --find-run RT-206a
-    python scripts/check_episode_log.py --run-dir logs\rsl_rl\ur5e_insertion\<folder>
-"""
+Use --run-dir PATH for recorded data or --self-test for offline fixtures.
+Checks episode identity, outcomes and recorded measurement ranges."""
 
 from __future__ import annotations
 
