@@ -12,7 +12,7 @@ WHAT IT DRAWS (``<out-dir>/<run>_<name>.png`` and ``.pdf``)
     kraft      per-episode peak force: mean and p95 with the abort limit;
                below it the force-abort rate (two panels, never two y-axes)
     ppo        episode reward, surrogate loss, value loss, entropy
-               (the CLAUDE.md order; EV and KL are not logged, D-116)
+               (EV and KL are not logged, D-116)
     physik     max depth (with the pocket-gate floor), below-fixture rate,
                engaged reward, mean interpenetration
     endfenster final-window bin tables of demo_metrics.json: success per

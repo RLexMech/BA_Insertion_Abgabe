@@ -628,7 +628,7 @@ def data_f10(df: pd.DataFrame, t1_mm: float) -> dict:
     out = {"tau": taus, "t1": t1_mm, "methods": {}, "ci": {}}
     for m in arms_in(df):
         # Per seed first, then the mean over the seeds and its interval (D-218):
-        # the policies are not pooled into one sample (CLAUDE.md, Auswertung).
+        # the policies are not pooled into one sample.
         seeds = []
         for _s, g in fin[fin["method"] == m].groupby("seed", sort=True):
             ok = g[KEY].to_numpy(dtype=int) == 1

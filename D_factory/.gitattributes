@@ -1,4 +1,4 @@
-# Both machines run Windows (CLAUDE.md, "Two machines, one repository").
+# Both machines run Windows.
 # The rule below is kept anyway: a .sh file is read by a POSIX shell
 # (Git Bash, WSL), and those want LF. No .sh file is tracked today.
 *.sh text eol=lf

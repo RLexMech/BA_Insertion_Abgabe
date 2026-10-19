@@ -8,9 +8,6 @@
     "T-nominal-F"
   ],
   "git_commit": "22df3f2de03dc2c6d3289e1950b66ce5368237e4",
-  "git_dirty_paths": [
-    "M Bild/CLAUDE.md"
-  ],
   "inputs": {
     "results/eval/T-auswahl/autodr_s1/RT-223_autodr_s1.short.txt": "6e2cb86c0d6edbf7bf00f9fb2486d8b9413893b5f4d4edbecc29ab218a422518",
     "results/eval/T-auswahl/autodr_s1/RT-223_autodr_s1.txt": "322a6f79f6907c714fc3e23f430a27c570e39ca382dd346cedbd3be162163eb5",
