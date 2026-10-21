@@ -34,11 +34,11 @@ python -u scripts/rsl_rl/play.py --task Ur5e-Insertion-Direct-v0 --kit_args=--/a
 ```
 
 Zufällige Bedingungen im vollständigen C-Trainingsbereich: `env.dr_mode=off` durch `env.dr_mode=fixed_dr` ersetzen.
-Der C-Player lädt den gespeicherten Auto-DR-Zustand nicht automatisch; für die Testbedingungen der Arbeit Schritt 4 verwenden.
+Der C-Player lädt den gespeicherten Auto-DR-Zustand nicht automatisch; für die festgelegten Testbedingungen Schritt 4 verwenden.
 
-## 4. Ansehen im Haupttest der Arbeit
+## 4. Ansehen im Haupttest
 
-Block unverändert einfügen. Jeder der vier Roboter bekommt einen festen Testfall aus der Arbeit. Das ist eine kurze Vorschau: Sie endet automatisch, sobald alle vier Roboter ihren ersten Versuch beendet haben. Die vollständige Evaluation steht in Schritt 6.
+Block unverändert einfügen. Jeder der vier Roboter bekommt einen festen Testfall aus der Evaluationstabelle. Das ist eine kurze Vorschau: Sie endet automatisch, sobald alle vier Roboter ihren ersten Versuch beendet haben. Die vollständige Evaluation steht in Schritt 6.
 
 ```powershell
 python -B scripts/view_table.py scripts/eval/eval_table_seed10.csv results/view_tables/haupttest.csv --count 4
@@ -61,7 +61,7 @@ python scripts/rsl_rl/train.py --task Ur5e-Insertion-Direct-v0 --headless --num_
 Fixed-DR: `RT-231s1` und `env.dr_mode=fixed_dr`. No-DR: `RT-207s1` und `env.dr_mode=off`.
 Ansehen: in Schritt 2 `.\models\` durch `.\logs\rsl_rl\ur5e_insertion\` ersetzen und den gewünschten Trainingsordner wählen, falls mehrere Läufe denselben Namen tragen.
 
-## 6. Evaluation der Arbeit wiederholen
+## 6. Evaluation wiederholen
 
 Block unverändert einfügen. Das ist der Haupttest von Auto-DR und No-DR (10 Modelle), ohne Fenster.
 
@@ -69,7 +69,7 @@ Block unverändert einfügen. Das ist der Haupttest von Auto-DR und No-DR (10 Mo
 .\scripts\run_eval.ps1 -Block T-final -Rt RT-902
 ```
 
-Die übrigen C-Blöcke zu Abbildung B-1 (Anhang B.1), ebenfalls direkt kopierbar:
+Die übrigen C-Evaluationsblöcke, ebenfalls direkt kopierbar:
 
 | Test | Aufruf |
 |---|---|

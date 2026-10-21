@@ -1,6 +1,6 @@
 """H21: one T-ood case at friction 0.23 (table row 906) over time, Auto-DR seed 2
 (time limit) against seed 4 (success): true insertion depth and smoothed force
-(thesis 5.2.1; RT-271).
+(RT-271).
 
 Source: RT-271, `D_factory/scripts/rl_games/play.py
 --trace-obs` on the four-row view table of T-ood friction_hi, env 0 = row 906,

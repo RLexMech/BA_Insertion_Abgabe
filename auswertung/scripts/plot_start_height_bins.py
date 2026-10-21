@@ -93,8 +93,7 @@ def draw(table: list[dict], run: str, out: pathlib.Path, window_note: str | None
         ax.spines[side].set_color(GRID)
     ax.tick_params(colors=INK_MUTED, length=0)
     if title:
-        # A thesis figure carries its title in the \caption; --no-title
-        # leaves the frame out so the caption is not said twice.
+        # --no-title omits the in-figure title.
         text = f"{run}: Erfolgsrate je Starthöhen-Stufe"
         if window_note:
             text += f"  ({window_note})"
@@ -151,7 +150,7 @@ def main() -> int:
     ap.add_argument("--run", default="", help="run label for the title, e.g. RT-138")
     ap.add_argument("--out", type=pathlib.Path, help="PNG path, e.g. docs/figures/RT-138_success_by_start_height.png")
     ap.add_argument("--window-note", default=None, help="text after the title, e.g. 'Iteration 1499, 2000-Episoden-Fenster'")
-    ap.add_argument("--no-title", action="store_true", help="omit the in-figure title (thesis: the caption names it)")
+    ap.add_argument("--no-title", action="store_true", help="omit the in-figure title")
     ap.add_argument("--self-test", action="store_true")
     a = ap.parse_args()
     if a.self_test:

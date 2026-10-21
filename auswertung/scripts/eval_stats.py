@@ -15,8 +15,8 @@ Headline key is ``success_train``. Library functions, no own interval code:
                   cross-check beside the pre-registered 95 % reading, no "met"
 
 The unit of the method comparison is the seed: each policy contributes one rate. Percentiles of force, steps and interpenetration
-use the env's nearest-rank rule (`insertion_env._pct`), so a thesis number and a
-training-log number mean the same. The interpenetration threshold t1 is read from
+use the env's nearest-rank rule (`insertion_env._pct`), so an evaluation result and a
+training-log result mean the same. The interpenetration threshold t1 is read from
 the runs' ``episodes_meta.json`` (one value over all blocks, else refused).
 
 Writes ``summary.json`` (sorted keys; two runs on the same input are byte-equal)
@@ -703,7 +703,7 @@ CHECKS = (
     "K4: Fixed-DR's five T-final-F rates beside AutoDR / No-DR",
     # friction bins, own construction.
     "friction bins: five equal bins over 0.08..0.20 (width 0.024), 0.20 lands in the LAST bin",
-    # Episode interpenetration for successful trials only (thesis Table 4.3).
+    # Episode interpenetration for successful trials only.
     "successes_ip_max_mm: nodr s1 T-final (40/100, ip 0.00..0.39 on the successes) -> median 0.195, "
     "p95 0.37, max 0.39, n_ge_t1 10; t1_mm in the summary",
     # the force-sensor ablation (autodr - autodr_nf, T-final and pn2).

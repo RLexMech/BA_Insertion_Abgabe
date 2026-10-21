@@ -1,12 +1,12 @@
 """H17: success of Auto-DR and Fixed-DR inside and outside the Prüfbereich, with
-the number of test cases at every point (thesis 5.2.2).
+the number of test cases at every point.
 
 One row per disturbance (Startversatz, |Gierung|, Kippung, Reibwert), one column
 per arm. Inside the Prüfbereich: the main test's bins (F3's data, ``data_f3``).
 Outside: the T-ood block at 1.5x the range limit (|yaw| pools yaw_lo and yaw_hi)
 and, for tilt and friction, the steps of the sweep (RT-264/265, ``data_h14``)
 that lie outside the range. Start height has no point outside (the controller's
-z range, Kapitel 4.3.2) and no row. Every mean over the five seeds carries its
+z range) and no row. Every mean over the five seeds carries its
 95 % percentile bootstrap interval and shows the seeds.
 
 Inputs (final study, Experiment D, RT-242/243/244): ``results/eval_rlgames/``

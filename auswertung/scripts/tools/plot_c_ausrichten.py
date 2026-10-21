@@ -1,6 +1,6 @@
 """Still sequence of the Experiment C final policy (RT-206s1) from the RT-272b recording, labelled (a)-(f) only.
 
-Same form as `plot_d8_kontakt.py` (Abb. 5-4): crops of one episode, 2 x 3 grid, Arial 10.
+Same form as `plot_d8_kontakt.py`: crops of one episode, 2 x 3 grid, Arial 10.
 Reads the frames straight from rt_logs/RT-272/RT-272b_C_ausrichten.mkv (ffmpeg on PATH).
 
 Episode: the FIRST of the nine in the recording (39.3-45.6 s), which is trace episode 0

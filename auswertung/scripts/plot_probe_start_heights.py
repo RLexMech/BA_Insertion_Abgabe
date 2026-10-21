@@ -14,7 +14,7 @@ checks missing success rates and sampled-height rejection.
 Usage:
     python scripts/plot_probe_start_heights.py \
         --metrics run_h30/demo_metrics.json --metrics run_h40/demo_metrics.json \
-        --run RT-157 --out docs/Blockberichte/RT-157_probe_starthoehen.pdf
+        --run RT-157 --out docs/figures/RT-157_probe_starthoehen.pdf
     python scripts/plot_probe_start_heights.py --self-test
 """
 

@@ -70,7 +70,7 @@ RL_GAMES_TAG = {
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import eval_figures as EF  # noqa: E402
 
-PANEL_LABEL = dict(EF.F8_PANELS)   # thesis words (Tab. 4-1), incl. "start_height_floor"
+PANEL_LABEL = dict(EF.F8_PANELS)   # shared labels, including "start_height_floor"
 DIM_LABEL = {k: v for k, v in PANEL_LABEL.items() if k != "start_height_floor"}
 
 
@@ -158,7 +158,7 @@ def style(ax, ylabel: str, xlabel: bool = True):
 
 
 def mio(x: float, digits: int | None = None) -> str:
-    """Env steps as millions with a decimal comma (German thesis text)."""
+    """Env steps as millions with a decimal comma."""
     s = f"{x / 1e6:g}" if digits is None else f"{x / 1e6:.{digits}f}"
     return s.replace(".", ",")
 
@@ -409,7 +409,7 @@ def fig_dauer(plt, pts, dt, cap_steps, ev):
 
 
 def events(c: dict) -> list:
-    """The two dotted markers every curve figure carries (thesis word: Startcurriculum)."""
+    """Markers for completion of the start curriculum and expansion of all bounds."""
     return [(first_step(c, "dr/phase", 1.0), "Startcurriculum fertig"),
             (first_step(c, "dr/all_at_max", 1.0), "alle Grenzen am Maximum")]
 
@@ -421,7 +421,7 @@ def draw_all(scalars, factor, metrics_path, autodr_path, run, out_dir, lib="rsl_
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-    # The thesis font, as eval_figures.draw_all sets it.
+    # Use the same font settings as eval_figures.draw_all.
     plt.rcParams.update({"font.size": EF.FONT_PT, "pdf.fonttype": 42, "svg.fonttype": "none", "svg.hashsalt": "eval_figures",
                          "font.family": "sans-serif", "font.sans-serif": [EF.FONT]})
 

@@ -35,9 +35,9 @@ Block unverändert einfügen. Ein Fenster mit vier Robotern öffnet sich.
 python -u scripts/rl_games/play.py --task Ur5e-Insertion-Direct-v0 --kit_args=--/app/vulkan=false --num_envs 4 --seed 1 --max-steps 1500 --autodr-state --checkpoint "$modell" "env.dr_mode=$modus" env.start_floor_m=-0.030 env.autodr_stall_buffers=3 env.obs_wrench_mode=force_prevact env.pocket_obs_yaw_rad=0.0223402
 ```
 
-## 4. Ansehen im Haupttest der Arbeit
+## 4. Ansehen im Haupttest
 
-Block unverändert einfügen. Jeder der vier Roboter bekommt einen festen Testfall aus der Arbeit.
+Block unverändert einfügen. Jeder der vier Roboter bekommt einen festen Testfall aus der Evaluationstabelle.
 
 ```powershell
 python -B scripts/prepare_view.py table scripts/eval/eval_table_seed10_c18.csv results/view_tables/haupttest.csv --count 4
@@ -64,7 +64,7 @@ python scripts/rl_games/train.py --task Ur5e-Insertion-Direct-v0 --headless --nu
 Fixed-DR: `RT-243s1` und `env.dr_mode=fixed_dr`. No-DR: `RT-244s1` und `env.dr_mode=off`.
 Ansehen: in Schritt 2 `.\models\` durch `.\logs\rl_games\ur5e_insertion\` ersetzen.
 
-## 6. Evaluation der Arbeit wiederholen
+## 6. Evaluation wiederholen
 
 Block unverändert einfügen. Das ist der Haupttest von Auto-DR und No-DR (10 Modelle), ohne Fenster.
 
@@ -72,7 +72,7 @@ Block unverändert einfügen. Das ist der Haupttest von Auto-DR und No-DR (10 Mo
 .\scripts\rl_games\run_eval.ps1 -Block T-final -Rt RT-801
 ```
 
-Jeder Aufruf braucht eine neue `-Rt`-Nummer. Die anderen Tests der Arbeit:
+Jeder Aufruf braucht eine neue `-Rt`-Nummer. Die weiteren Evaluationstests:
 
 | Test | `-Block` |
 |---|---|

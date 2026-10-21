@@ -1,8 +1,7 @@
 # Evaluation Experiment C
 
 Umfang: Haupttest und Test ohne Streuung des C-Endstands für Auto-DR, No-DR
-und Fixed-DR, entsprechend Abbildung B-1 in Anhang B.1 der finalen Bachelorarbeit
-(gedruckte Seite 105). Vier Blöcke, insgesamt 30 Modellläufe und 30.000 Testfälle.
+und Fixed-DR. Vier Blöcke, insgesamt 30 Modellläufe und 30.000 Testfälle.
 
 | Block | Modelle | Breite | Fälle je Modell |
 |---|---|---|---|

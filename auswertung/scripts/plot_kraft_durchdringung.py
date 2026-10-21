@@ -1,10 +1,10 @@
 """H23 / H24: force and interpenetration over ALL trials (successes and failures),
 Auto-DR against Fixed-DR, the main test beside the robustness blocks.
 
-  H23  thesis 5.2.2: the three doubled observation errors (pn2, gx2, py2), H20's
+  H23: the three doubled observation errors (pn2, gx2, py2), H20's
        policies (``eval_figures.data_h20``). Every block replays the main test's
        1000 rows; only one observation error differs.
-  H24  thesis 5.2.1: the six T-ood blocks at 1.5x (H18_KEYS), H19's policies
+  H24: the six T-ood blocks at 1.5x (H18_KEYS), H19's policies
        (``eval_figures.data_h19``). The blocks play their OWN table (150 rows each,
        the boundary table's independent stream, ``make_eval_table.py`` kind ood),
        so the main test is a reference with other test cases.

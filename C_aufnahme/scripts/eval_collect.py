@@ -22,7 +22,7 @@ import re
 import sys
 import tempfile
 
-SCRIPT_MARKER = "eval_collect-c-thesis-2026-10-19"
+SCRIPT_MARKER = "eval_collect-c-2026-10-19"
 REPO = pathlib.Path(__file__).resolve().parents[1]
 TABLE_DIR = REPO / "scripts" / "eval"
 
@@ -332,7 +332,7 @@ def self_test() -> int:
     fin = [r for r in rows if r["block"] == "T-final" and r["method"] == "autodr"]
     checks = [
         ("baseline has no problem", problems == []),
-        ("only thesis blocks are supported", set(BLOCKS) == {"T-final", "T-final-F", "T-nominal", "T-nominal-F"}),
+        ("only configured C evaluation blocks are supported", set(BLOCKS) == {"T-final", "T-final-F", "T-nominal", "T-nominal-F"}),
         ("summary counts first-episode successes per model",
          len(summarize_policies(rows)) == 5 and all(
              r["episodes"] == 4 and r["successes"] == 2 and r["success_rate_pct"] == 50.0
@@ -400,7 +400,7 @@ def main() -> int:
                          if p.is_dir() and p.name not in BLOCKS
                          and any(p.glob("*/eval_manifest.json")))
         if ignored:
-            print(f"[eval_collect] Outside C thesis scope, ignored: {', '.join(ignored)}")
+            print(f"[eval_collect] Outside C evaluation scope, ignored: {', '.join(ignored)}")
     rows, problems, report = collect(load_runs(results), load_tables())
     if not report["runs"]:
         print(f"[eval_collect] REFUSED: no run folder under {results}/<block>/")

@@ -17,7 +17,7 @@ Generate the CSV first, then the Word table (requires python-docx):
 every seed starts above 95 % in epochs 1-2 (the start phase), so a first crossing
 says nothing.
 
-Third table (thesis 5.2.1): per Auto-DR seed the "stays >= 95 %" epoch
+Third table: per Auto-DR seed the "stays >= 95 %" epoch
 from above, the epoch from which the AutoDR friction boundary ``dr/friction_hi``
 (curves.csv) stays at its ceiling ``hi_max`` (``autodr_s<N>_autodr_ep100.json``
 ``dims``), the epochs at that ceiling, and the success in the T-ood blocks

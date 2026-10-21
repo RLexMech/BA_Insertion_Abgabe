@@ -344,7 +344,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--reward-tag", default=None, help="tag to use for the reward curve instead of the candidates")
     ap.add_argument("--smooth", type=int, default=1,
                     help="trailing moving-average window in logged points, not in steps (1 = off)")
-    ap.add_argument("--no-title", action="store_true", help="omit the in-figure title (thesis: the caption names it)")
+    ap.add_argument("--no-title", action="store_true", help="omit the in-figure title")
     ap.add_argument("--self-test", action="store_true")
     a = ap.parse_args(argv)
     if a.self_test:

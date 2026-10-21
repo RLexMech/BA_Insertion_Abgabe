@@ -85,7 +85,7 @@ def _mio_axis(ax):
     Call after ``_style``, which only replaces a plain ScalarFormatter."""
     from matplotlib.ticker import FuncFormatter
     ax.xaxis.set_major_formatter(FuncFormatter(lambda v, _: _de_digits(f"{v / 1e6:g}")))
-# H5/H6/H9/H11: the training round. The thesis word is "Epoche",
+# H5/H6/H9/H11: the training round is labelled "Epoche",
 # also used by rl_games (``max_epochs``); rsl_rl calls the same round an iteration.
 # The code keeps its column name ``iteration``.
 def xlabel_epoch(factor: int) -> str:
@@ -96,8 +96,7 @@ METHOD_LABEL = {"autodr": "Auto-DR", "nodr": "No-DR", "fixeddr": "Fixed-DR"}
 # a second encoding beside the colour, because
 # No-DR and Fixed-DR have the same lightness in grey (L* 59,9 / 57,9).
 METHOD_MARKER = {"autodr": "o", "nodr": "^", "fixeddr": "s"}
-# the words of the figures, as the thesis
-# text uses them (Kap. 4.3.2, Tab. 4-1, Tab. 4-13). One home; the other plot scripts import them.
+# Shared figure labels imported by the other plot scripts.
 TEST_MAIN = "Haupttest"
 TEST_NOMINAL = "Test ohne Streuung"
 YLABEL_RATE = "Erfolgsrate in %"
@@ -160,7 +159,7 @@ K3_LABEL = {"lat_r_hi": "Versatz\nmax", "yaw_lo": "Gier\nmin", "yaw_hi": "Gier\n
             "tilt_hi": "Kippung\nmax", "start_height_hi": "Starthöhe\nmax",
             "friction_lo": "Reibung\nmin", "friction_hi": "Reibung\nmax"}
 # Words as F3_PANELS; yaw is signed here, so no "Betrag".
-# Thesis words (Tab. 4-1); plot_autodr_run.fig_stufen reads them too.
+# Shared labels also used by plot_autodr_run.fig_stufen.
 F8_PANELS = (("start_height_floor", "Starthöhe, untere Grenze\n(Startcurriculum)"), ("lat_r", "Startversatz"),
              ("yaw", "Gierung"), ("tilt", "Kippung"), ("start_height", "Starthöhe, obere Grenze"),
              ("friction", "Reibwert"))
@@ -168,11 +167,9 @@ FIG_W = 6.3   # inches, ~16 cm text width
 PNG_DPI = 300   # print resolution; PDF and SVG are vector
 # No timestamps in the files: two runs on the same input write the same bytes.
 SAVE_META = {"pdf": {"CreationDate": None}, "svg": {"Date": None}, "png": None}
-# The thesis body is Helvetica (thesis/includes/preamble.tex: helvet + \sfdefault);
 # Arial has Helvetica-compatible metrics and must be installed.
 FONT = "Arial"
-# Legend, axis titles and tick numbers as large as the Word body text, Arial 12
-# holds only while the PNG stands in Word at its own 16 cm width.
+# Legend, axis titles and tick numbers use Arial 12 at the native 16 cm width.
 FONT_PT = 12
 
 
@@ -203,7 +200,7 @@ def bin_lower(edges, i: int) -> float:
 
 
 def _de_digits(s: str) -> str:
-    """Decimal comma, as the thesis text sets it (thesis/includes/preamble.tex, siunitx)."""
+    """Format decimal separators as commas."""
     return s.replace(".", ",")
 
 
@@ -644,7 +641,7 @@ def data_f12(summary: dict, sidecar: dict) -> dict:
     return out
 
 
-# H18 (thesis 5.2.2): the T-ood blocks outside the Prüfbereich.
+# H18: the T-ood blocks outside the Prüfbereich.
 # The start-height block stays at factor 1.0, so it is not
 # outside and is left out. Words as F3_PANELS.
 H18_KEYS = tuple(k for k in K3_ORDER if k != "start_height_hi")
@@ -704,7 +701,7 @@ def data_h18(summary: dict, sidecar: dict) -> dict:
 LEARNED_MIN = 0.90
 LEARNED_MEAN_MIN_N = 5
 H20_WORD = {"pn2": "Lagefehler\nder Aufnahme", "gx2": "Greifversatz", "py2": "Gierfehler\nder Aufnahme"}
-# Rate axis (lower end, tick step) of thesis 5-9 (H19) and 5-11 (H20): an
+# Rate axis (lower end, tick step) for H19 and H20: an
 # exception to the usual zero baseline for bars; every other bar figure keeps (0, 20).
 PAIR_YAXIS = {"H19": (50, 10), "H20": (80, 5)}
 
@@ -987,7 +984,6 @@ def data_h12(summary: dict) -> dict:
 # H13: the doubled observation errors for every
 # policy that played them, in H1's form: per arm each seed's own untagged main
 # test (hollow; Fixed-DR: T-final-F) once, then the blocks (filled).
-# Replaces the thesis' hand-made figure 5-7 (BA_Anpassungen_Statistik.md A8).
 
 
 def data_h13(summary: dict) -> dict:
@@ -2119,7 +2115,7 @@ def _pair_floor(bars: dict, ymin: float, fig: str) -> None:
 
 
 def draw_pair_bars(plt, d, fig):
-    """H18, H19, H20, H22 (thesis A-2, 5-9, 5-11, A-3) in H1's form, one panel per
+    """H18, H19, H20, H22 in H1's form, one panel per
     arm; the rate axis from PAIR_YAXIS. Prints
     the caption note on the policies left out and on the axis start."""
     ymin, step = PAIR_YAXIS.get(fig, (0, 20))
