@@ -3,18 +3,12 @@
 
 r"""Validate evaluation-table identity, coverage and applied conditions.
 
-Read applied.csv, applied_meta.json, episodes.csv, eval_manifest.json,
-the committed table and its JSON sidecar.
-G1: hashes must agree across these files, all log reports and --filehash.
-Without external log/filehash evidence G1 is incomplete, never PASS.
-G2: exactly one episode==0 per env, N table rows/envs, all first episodes done.
-G3: independently map table rows with float64 math, tolerance 1e-6; compare
-configured and recorded ranges. Noise tags pn2/gx2/py2 double their named
-widths. Values outside [0,1] require matching OOD/wide
-sidecar authorisation and run switch.
-
-The mapping does not reuse environment math. Stdlib-only; --self-test
-uses synthetic runs.
+Checks:
+  G1  file hashes agree across applied.csv, applied_meta.json, episodes.csv,
+      eval_manifest.json, the table, its sidecar, the log and --filehash.
+      Without log or --filehash, G1 reports INCOMPLETE.
+  G2  one first episode per env, one table row per env, all first episodes done.
+  G3  every applied value matches its table row, mapped independently (tolerance 1e-6).
 
 Usage:
     python scripts/check_eval_conditions.py --self-test
@@ -45,8 +39,7 @@ TABLE_COLUMNS = (
     "joint_noise_4", "joint_noise_5", "grasp_obs_x", "pocket_obs_yaw",
     "fixture_noise_z",
 )
-# applied.csv, the check's own literal (insertion_env.APPLIED_LOG_COLUMNS; L-06:
-# the list comes from the function that WRITES the file).
+# applied.csv columns (insertion_env.APPLIED_LOG_COLUMNS).
 APPLIED_COLUMNS = (
     "row_id", "lat_x_m", "lat_y_m", "start_height_m", "yaw_rad",
     "pocket_qw", "pocket_qx", "pocket_qy", "pocket_qz",
@@ -56,9 +49,7 @@ APPLIED_COLUMNS = (
 )
 FRICTION_READBACKS = APPLIED_COLUMNS[15:]
 
-# Parameter sources ( autodr.DR_DIMS). `nominal`:
-# everything but the start height sits on its centre; friction centre 0.140 is
-# CONTACT_FRICTION, read back in RT-207s1.
+# Parameter ranges (autodr.DR_DIMS). `nominal`: every value at its centre except the start height.
 BANDS = {
     "target": {
         "lat_r": (0.0, 0.030),
@@ -80,10 +71,7 @@ FIXTURE_NOISE_Z_M = 0.05     # cfg fixture_pos_noise_z
 GRASP_OBS_X_M = 0.003
 POCKET_OBS_YAW_RAD = 0.0223402   # Belege_Streuwerte B6 (the run's value)
 POCKET_OBS_NOISE_M = 0.005   # cfg obs_noise_pocket_pos_std_m (uniform half width, Belege B4a)
-# the observation-noise blocks, x2 of ONE training value
-# each (IndustReal Table X; Belege_Streuwerte F3). The run's --eval-tag names the
-# block. `scripts/rl_games/run_eval.ps1` `$NoiseOverride` hands the same values to
-# the env; the self-test holds the two against each other.
+# Observation-noise blocks: x2 of one training value each (IndustReal Table X).
 NOISE_TAGS = {
     "pn2": {"obs_noise_pocket_pos_std_m": 2.0 * POCKET_OBS_NOISE_M},
     "gx2": {"grasp_obs_offset_x_m": 2.0 * GRASP_OBS_X_M},
@@ -114,8 +102,7 @@ CHECK_NAMES = (
 )
 
 
-# The table kinds whose nailed cells may leave [0, 1] (make_eval_table.py):
-# ``ood`` and ``sweep`` (RT-264), one sidecar schema.
+# Table kinds whose fixed cells may leave [0, 1]: ``ood`` and ``sweep``.
 OUTSIDE_KINDS = ("ood", "sweep")
 
 
@@ -178,15 +165,7 @@ def map_row(u: dict, width: str, grasp_x_m: float = GRASP_OBS_X_M,
 
 def judge(table, sidecar, table_sha, log_shas, filehash, ep_header, ep_rows,
           ap_header, ap_rows, meta, manifest) -> dict:
-    """``{check name: (ok, detail)}`` over CHECK_NAMES. ``ok`` is None for a
-    check whose outside evidence was not handed over (INCOMPLETE).
-
-    The noise widths are EXPECTED from the manifest's tag (``expected_noise``).
-    G3b holds the run's records against them: grasp and pocket yaw in
-    ``applied_meta.json`` AND in the manifest's ``noise``, pocket noise in the
-    manifest's ``noise`` (torch draws it, no applied column). G3c maps the table
-    with the expected grasp and yaw widths. So a x2 run passes only under its
-    own tag."""
+    """``{check name: (ok, detail)}`` over CHECK_NAMES; ``ok`` is None when outside evidence is missing."""
     want_noise = expected_noise(manifest.get("tag"))
     grasp_x_m = want_noise["grasp_obs_offset_x_m"]
     yaw_rad = want_noise["pocket_obs_yaw_rad"]
@@ -204,8 +183,7 @@ def judge(table, sidecar, table_sha, log_shas, filehash, ep_header, ep_rows,
     if log_shas is None:
         out[CHECK_NAMES[1]] = (None, "no --log given")
     else:
-        # One line per startup report (`report_at_steps`, RT-209: four). At
-        # least one, and EVERY one the table's hash -- never "any".
+        # One [eval-table] line per startup report; every one must carry the table's hash.
         out[CHECK_NAMES[1]] = (bool(log_shas) and all(h == table_sha for h in log_shas),
                                f"{len(log_shas)} [eval-table] line(s): {[h[:12] for h in log_shas]}")
     if filehash is None:
@@ -264,11 +242,7 @@ def judge(table, sidecar, table_sha, log_shas, filehash, ep_header, ep_rows,
     out[CHECK_NAMES[8]] = (mapped and fr_bad == 0,
                            f"{fr_bad} read-back(s) over {TOL:g}; worst {fr_worst:.3g} at {fr_at}")
 
-    # G3e: every cell outside [0, 1] is one the OOD sidecar nails, with its
-    # value, or lies in a column a wide sidecar stretches, inside its range
-    # Every constrained cell holds it; and the env ran with the switch ON
-    # exactly when the table is an OOD, sweep or wide table (applied_meta, env
-    # cfg dr_table_allow_outside). A record without the key reads as off.
+    # G3e: cells outside [0, 1] need an OOD, sweep or wide sidecar, and the run switch must match.
     nailed = ood_cells(sidecar)
     wide = wide_ranges(sidecar)
 
@@ -454,7 +428,7 @@ CASES = (
     ("ood-nailed-cell-not-held",
      _ood_then(lambda g: (g["table"][1].__setitem__(0, 1.0), _rebuild_applied(g))), ("G3e",)),
     ("plain-table-with-the-switch-on", lambda g: g["meta"]["table"].update(allow_outside=True), ("G3e",)),
-    # RT-264: a sweep sidecar nails like an OOD one; an unknown kind nails nothing.
+    # A sweep sidecar fixes cells like an OOD one; an unknown kind fixes nothing.
     ("sweep-table-with-its-sidecar-and-switch", lambda g: (_make_ood(g), g["sidecar"].update(kind="sweep")), ()),
     ("outside-values-under-an-unknown-kind", lambda g: (_make_ood(g), g["sidecar"].update(kind="other")), ("G3e",)),
     ("plain-table-with-a-value-outside", _stray_cell, ("G3e",)),
@@ -465,9 +439,6 @@ CASES = (
     ("wide-value-in-a-column-not-stretched", _wide_then(_stray_cell), ("G3e",)),
     ("wide-run-without-the-switch",
      _wide_then(lambda g: g["meta"]["table"].update(allow_outside=False)), ("G3e",)),
-    # (a766ae9e) and the observation-noise x2 blocks. The
-    # expected widths come from the manifest tag and are read back from the
-    # run's records.
     ("gx2-run-tagged-gx2", _tag(_grasp_run(2.0 * GRASP_OBS_X_M), "gx2"), ()),
     ("gx2-width-without-the-gx2-tag", _grasp_run(2.0 * GRASP_OBS_X_M), ("G3b", "G3c")),
     ("gx2-tag-but-the-run-used-d183", _tag(lambda g: None, "gx2"), ("G3b", "G3c")),
@@ -498,8 +469,7 @@ CASES = (
     ("manifest-names-another-table", lambda g: g["manifest"].update(table_sha256="00" * 32), ("G1a",)),
     ("log-line-carries-another-hash", lambda g: g.update(log_shas=["00" * 32]), ("G1b",)),
     ("log-has-no-eval-table-line", lambda g: g.update(log_shas=[]), ("G1b",)),
-    # RT-209: the env prints its startup report at every `report_at_steps`
-    # entry, four by default, each with its own [eval-table] line. Legal.
+    # Several startup reports, each with its own [eval-table] line, are legal.
     ("report-prints-four-times", lambda g: g.update(log_shas=[g["table_sha"]] * 4), ()),
     ("one-of-four-lines-carries-another-hash",
      lambda g: g.update(log_shas=[g["table_sha"]] * 2 + ["00" * 32, g["table_sha"]]), ("G1b",)),
@@ -519,9 +489,7 @@ PRODUCTION_ROOT = pathlib.Path(__file__).resolve().parents[2] / "D_factory"
 
 
 def _applied_columns_vs_env() -> tuple[bool, str]:
-    """``APPLIED_COLUMNS`` against the tuple the env WRITES,
-    ``insertion_env.APPLIED_LOG_COLUMNS``, read as AST (the env needs Isaac).
-    Only the column NAMES are shared; the mapping stays the check's own."""
+    """Compare ``APPLIED_COLUMNS`` with ``insertion_env.APPLIED_LOG_COLUMNS``, read as AST."""
     env_py = (PRODUCTION_ROOT / "source" / "insertion" / "insertion"
               / "tasks" / "direct" / "insertion" / "insertion_env.py")
     for node in ast.parse(env_py.read_text(encoding="utf-8")).body:
@@ -533,10 +501,7 @@ def _applied_columns_vs_env() -> tuple[bool, str]:
 
 
 def _yaw_belief_example() -> tuple[bool, str]:
-    """worked example, not recomputed: Belege_Streuwerte B6 says uniform in
-    +-0.0223402 rad, and the env maps the column like ``grasp_obs_x``
-    (``insertion_env._reset_idx``). Unit 0 / 0.5 / 1 -> lower edge / 0 / upper
-    edge, at every width (a belief error has no band)."""
+    """Pocket-yaw belief error: unit 0 / 0.5 / 1 maps to lower edge / 0 / upper edge."""
     base = {k: 0.5 for k in TABLE_COLUMNS}
     want = [-0.0223402, 0.0, 0.0223402] * len(BANDS)
     got = [map_row(dict(base, pocket_obs_yaw=u), w).get("pocket_obs_yaw_rad")
@@ -546,9 +511,7 @@ def _yaw_belief_example() -> tuple[bool, str]:
 
 
 def _noise_tags_vs_run_eval() -> tuple[bool, str]:
-    """``NOISE_TAGS`` against the Hydra overrides ``scripts/rl_games/run_eval.ps1``
-    hands the env (``$NoiseOverride``, read as text): the widths the check
-    EXPECTS must be the ones the runs GET."""
+    """``NOISE_TAGS`` must match the overrides in ``scripts/rl_games/run_eval.ps1``."""
     ps1 = PRODUCTION_ROOT / "scripts" / "rl_games" / "run_eval.ps1"
     got = {t: {k: float(v)} for t, k, v in re.findall(
         r"^\s*(\w+)\s*=\s*'env\.(\w+)=([-+0-9.eE]+)'\s*$", ps1.read_text(encoding="utf-8"), re.M)}
@@ -563,15 +526,7 @@ _ORACLE_CACHE: dict = {}
 
 def _oracle_vs_production(table_name: str = "eval_table_seed20_c18.csv",
                           n_rows: int = 1000) -> tuple[bool, str]:
-    """``map_row`` against the functions the env really calls, on the committed
-    seed-20 table with the shape the env hands over, (1000, 18) (L-14).
-
-    The baseline above builds its applied.csv WITH ``map_row``, so it cannot see
-    a wrong oracle. This can: ``autodr.map_unit_to_bounds``,
-    ``insertion_math.disk_offset`` and ``insertion_math.quat_mul`` run here under
-    ``torch_shim`` (or real torch) and must agree within ``TOL``. What stays
-    unproven offline is only that the ENV calls them as ``_reset_idx`` reads.
-    """
+    """``map_row`` against the env's own mapping functions on the seed-20 table, shape (1000, 18)."""
     import importlib.util
 
     repo = pathlib.Path(__file__).resolve().parents[1]
